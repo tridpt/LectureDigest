@@ -75,7 +75,19 @@
                 <div class="search-hint">
                     Try: CS lectures, TED Talks, coding tutorials, science lessons, history documentaries...
                 </div>
-            </div>
+                <!-- Language selector -->
+                <div class="lang-row" role="group" aria-label="Output language">
+                    <span class="lang-label">📝 Output in:</span>
+                    <div class="lang-options" id="langOptions">
+                        <button class="lang-btn" data-lang="English" onclick="setLang(this)">🇺🇸 English</button>
+                        <button class="lang-btn active" data-lang="Vietnamese" onclick="setLang(this)">🇻🇳 Tiếng Việt</button>
+                        <button class="lang-btn" data-lang="French" onclick="setLang(this)">🇫🇷 Français</button>
+                        <button class="lang-btn" data-lang="German" onclick="setLang(this)">🇩🇪 Deutsch</button>
+                        <button class="lang-btn" data-lang="Japanese" onclick="setLang(this)">🇯🇵 日本語</button>
+                        <button class="lang-btn" data-lang="Korean" onclick="setLang(this)">🇰🇷 한국어</button>
+                        <button class="lang-btn" data-lang="Chinese" onclick="setLang(this)">🇨🇳 中文</button>
+                    </div>
+                </div>
         </div>
 
         <!-- Feature cards -->

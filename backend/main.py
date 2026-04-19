@@ -34,7 +34,8 @@ def get_genai_client() -> genai.Client:
 
 class VideoRequest(BaseModel):
     url: str
-    language: str = "en"
+    language: str = 'en'            # transcript language preference
+    output_language: str = 'English'  # AI response language
 
 
 def extract_video_id(url: str) -> str:
@@ -199,6 +200,10 @@ Author: {video_info.get("author", "Unknown")}
 
 TRANSCRIPT (with timestamps):
 {full_transcript}
+
+⚠️ IMPORTANT: Generate ALL text in **{request.output_language}** — this includes the title, overview,
+topic titles, topic summaries, key takeaways, quiz questions, answer options, and explanations.
+Only timestamps and numeric values remain language-neutral.
 
 Analyze this lecture and return a JSON object with the EXACT structure below.
 Be thorough, accurate, and educational in your analysis.

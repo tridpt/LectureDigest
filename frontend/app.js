@@ -12,6 +12,7 @@ let ytPlayer         = null;
 let ytApiReady       = false;
 let pendingVideoId   = null;
 let analysisData     = null;
+let selectedLang     = 'Vietnamese'; // default output language
 
 const quizState = {
     questions:    [],
@@ -103,6 +104,15 @@ function resetToHero() {
 }
 
 // ──────────────────────────────────────
+// LANGUAGE SELECTOR
+// ──────────────────────────────────────
+function setLang(btn) {
+    selectedLang = btn.dataset.lang;
+    document.querySelectorAll('.lang-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+}
+
+// ──────────────────────────────────────
 // LOADING ANIMATION
 // ──────────────────────────────────────
 function startLoadingAnimation() {
@@ -155,7 +165,7 @@ async function analyzeVideo() {
         const res = await fetch(`${API_BASE}/api/analyze`, {
             method:  'POST',
             headers: { 'Content-Type': 'application/json' },
-            body:    JSON.stringify({ url, language: 'en' }),
+            body:    JSON.stringify({ url, language: 'en', output_language: selectedLang }),
         });
 
         stopAnimation();

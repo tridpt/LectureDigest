@@ -295,6 +295,51 @@ body {
     padding: 0 4px;
 }
 
+/* Language selector */
+.lang-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-top: 14px;
+    padding: 0 4px;
+    flex-wrap: wrap;
+}
+.lang-label {
+    font-size: 12px;
+    color: var(--text-muted);
+    font-weight: 500;
+    white-space: nowrap;
+}
+.lang-options {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+}
+.lang-btn {
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid var(--border);
+    color: var(--text-secondary);
+    padding: 5px 12px;
+    border-radius: 20px;
+    font-family: var(--font);
+    font-size: 12px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all var(--transition);
+    white-space: nowrap;
+}
+.lang-btn:hover {
+    border-color: rgba(139, 92, 246, 0.4);
+    color: var(--text-primary);
+    background: rgba(139, 92, 246, 0.08);
+}
+.lang-btn.active {
+    background: rgba(139, 92, 246, 0.15);
+    border-color: var(--accent);
+    color: var(--accent-light);
+    font-weight: 600;
+}
+
 /* Feature cards */
 .features {
     display: grid;
