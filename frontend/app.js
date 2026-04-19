@@ -720,13 +720,5 @@ document.addEventListener('DOMContentLoaded', () => {
         if (e.key === 'Enter') analyzeVideo();
     });
 
-    // Auto-submit on paste of a YouTube URL
-    urlInput?.addEventListener('paste', () => {
-        setTimeout(() => {
-            const v = urlInput.value.trim();
-            if (v.includes('youtube.com') || v.includes('youtu.be')) {
-                analyzeVideo();
-            }
-        }, 150);
-    });
+    // Paste: just focus the input, user clicks Analyze manually
 });
