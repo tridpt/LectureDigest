@@ -499,6 +499,111 @@ function restartQuiz() {
 }
 
 // ──────────────────────────────────────
+// FLASHCARD EXPORT
+// ──────────────────────────────────────
+function toggleFcMenu() {
+    const menu = document.getElementById('fcMenu');
+    const btn  = document.getElementById('fcToggleBtn');
+    const isOpen = !menu.classList.contains('hidden');
+
+    if (isOpen) {
+        menu.classList.add('hidden');
+        btn.classList.remove('open');
+        btn.setAttribute('aria-expanded', 'false');
+    } else {
+        menu.classList.remove('hidden');
+        btn.classList.add('open');
+        btn.setAttribute('aria-expanded', 'true');
+    }
+}
+
+// Close dropdown when clicking outside
+document.addEventListener('click', e => {
+    const dropdown = document.getElementById('fcDropdown');
+    if (dropdown && !dropdown.contains(e.target)) {
+        document.getElementById('fcMenu')?.classList.add('hidden');
+        document.getElementById('fcToggleBtn')?.classList.remove('open');
+        document.getElementById('fcToggleBtn')?.setAttribute('aria-expanded', 'false');
+    }
+});
+
+function exportFlashcards(format) {
+    // Close menu
+    document.getElementById('fcMenu')?.classList.add('hidden');
+    document.getElementById('fcToggleBtn')?.classList.remove('open');
+
+    if (!analysisData) return;
+    const d = analysisData;
+    const letters = ['A', 'B', 'C', 'D'];
+
+    const cards = []; // Each: { front, back, tags }
+
+    // ── 1. Quiz Q&As ──
+    (d.quiz || []).forEach((q, i) => {
+        const optsText = (q.options || []).map((o, oi) => `${letters[oi]}) ${o}`).join('\n');
+        const correct  = q.options?.[q.correct_index] ?? '';
+        const front = `Q${i + 1}: ${q.question}\n\n${optsText}`;
+        const back  = `✓ ${letters[q.correct_index] ?? 'A'}) ${correct}${q.explanation ? '\n\n' + q.explanation : ''}`;
+        cards.push({ front, back, tags: `LectureDigest quiz ${(q.difficulty || 'medium')}` });
+    });
+
+    // ── 2. Key Takeaways ──
+    (d.key_takeaways || []).forEach((t, i) => {
+        const front = `Key Takeaway #${i + 1}\n(From: ${d.title || 'Lecture'})`;
+        cards.push({ front, back: t, tags: 'LectureDigest takeaway' });
+    });
+
+    // ── 3. Key Moments / Highlights ──
+    (d.highlights || []).forEach(h => {
+        const front = `What happens at [${h.timestamp_str}] in "${d.title || 'Lecture'}"?`;
+        const back  = `${h.title}\n\n${h.description}`;
+        cards.push({ front, back, tags: `LectureDigest highlight ${h.type || ''}` });
+    });
+
+    if (cards.length === 0) { alert('No flashcard data available yet — please analyze a video first.'); return; }
+
+    let content, filename, mime;
+
+    if (format === 'anki') {
+        // Anki tab-separated format
+        const rows = cards.map(c =>
+            `${c.front.replace(/\t/g, ' ')}\t${c.back.replace(/\t/g, ' ')}\t${c.tags}`
+        );
+        content  = '#separator:tab\n#html:false\n#tags column:3\n' + rows.join('\n');
+        filename = `${slugify(d.title)}_flashcards_anki.txt`;
+        mime     = 'text/plain;charset=utf-8';
+    } else {
+        // Generic CSV (comma-separated, quoted)
+        const header = '"Front","Back","Tags"';
+        const rows   = cards.map(c =>
+            `${csvQuote(c.front)},${csvQuote(c.back)},${csvQuote(c.tags)}`
+        );
+        content  = header + '\n' + rows.join('\n');
+        filename = `${slugify(d.title)}_flashcards.csv`;
+        mime     = 'text/csv;charset=utf-8';
+    }
+
+    downloadFile(content, filename, mime);
+}
+
+function csvQuote(str) {
+    return '"' + String(str ?? '').replace(/"/g, '""') + '"';
+}
+function slugify(str) {
+    return String(str ?? 'flashcards').replace(/[^a-z0-9]/gi, '_').slice(0, 50);
+}
+function downloadFile(content, filename, mime) {
+    const blob = new Blob(['\uFEFF' + content], { type: mime }); // BOM for UTF-8
+    const url  = URL.createObjectURL(blob);
+    const a    = document.createElement('a');
+    a.href = url; a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+}
+
+// ──────────────────────────────────────
 // PDF EXPORT  (browser print → Save as PDF)
 // ──────────────────────────────────────
 function exportPDF() {

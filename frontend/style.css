@@ -806,11 +806,60 @@ body {
     transition: width 0.5s cubic-bezier(0.4, 0, 0.2, 1);
 }
 .quiz-progress-text { font-size: 12px; color: var(--text-muted); margin-bottom: 24px; }
+
+.quiz-header-right { display: flex; align-items: center; gap: 8px; margin-left: auto; }
 .quiz-score-badge {
     font-size: 13px; font-weight: 700; color: white;
     background: linear-gradient(135deg, var(--accent), var(--accent-dark));
     padding: 4px 12px; border-radius: 20px;
 }
+
+/* ── Flashcard export dropdown ── */
+.fc-dropdown { position: relative; }
+.fc-export-btn {
+    display: flex; align-items: center; gap: 6px;
+    background: rgba(251, 191, 36, 0.1);
+    border: 1px solid rgba(251, 191, 36, 0.3);
+    color: #fbbf24;
+    padding: 5px 12px;
+    border-radius: var(--radius-md);
+    font-family: var(--font);
+    font-size: 12px; font-weight: 600;
+    cursor: pointer;
+    transition: all var(--transition);
+    white-space: nowrap;
+}
+.fc-export-btn svg { width: 14px; height: 14px; }
+.fc-chevron { width: 12px !important; height: 12px !important; transition: transform var(--transition); }
+.fc-export-btn.open .fc-chevron { transform: rotate(180deg); }
+.fc-export-btn:hover { background: rgba(251,191,36,0.18); border-color: #fbbf24; }
+
+.fc-menu {
+    position: absolute; top: calc(100% + 8px); right: 0;
+    background: var(--bg-elevated);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    box-shadow: 0 16px 40px rgba(0,0,0,0.5);
+    min-width: 210px;
+    z-index: 100;
+    overflow: hidden;
+    animation: fadeInUp 0.15s ease both;
+}
+.fc-menu-item {
+    display: flex; align-items: center; gap: 12px;
+    padding: 12px 14px;
+    background: transparent;
+    border: none; border-bottom: 1px solid var(--border);
+    color: var(--text-primary);
+    font-family: var(--font);
+    cursor: pointer; width: 100%; text-align: left;
+    transition: background var(--transition);
+}
+.fc-menu-item:last-child { border-bottom: none; }
+.fc-menu-item:hover { background: rgba(255,255,255,0.05); }
+.fc-menu-icon { font-size: 18px; flex-shrink: 0; }
+.fc-menu-title { font-size: 13px; font-weight: 600; }
+.fc-menu-sub { font-size: 11px; color: var(--text-muted); margin-top: 1px; }
 
 /* Question */
 .quiz-question { animation: fadeInUp 0.35s ease both; }

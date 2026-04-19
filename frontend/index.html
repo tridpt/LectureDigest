@@ -221,7 +221,38 @@
                     <div class="card-header">
                         <span class="card-icon" aria-hidden="true">🧠</span>
                         <h3 class="card-title">Knowledge Quiz</h3>
-                        <span class="quiz-score-badge hidden" id="scoreBadge" aria-live="polite">0/0</span>
+                        <div class="quiz-header-right">
+                            <span class="quiz-score-badge hidden" id="scoreBadge" aria-live="polite">0/0</span>
+                            <!-- Flashcard export dropdown -->
+                            <div class="fc-dropdown" id="fcDropdown">
+                                <button class="fc-export-btn" onclick="toggleFcMenu()" aria-haspopup="true" aria-expanded="false" id="fcToggleBtn">
+                                    <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                                        <rect x="2" y="4" width="20" height="14" rx="2" stroke="currentColor" stroke-width="1.8"/>
+                                        <path d="M7 9h10M7 13h6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+                                    </svg>
+                                    Flashcards
+                                    <svg class="fc-chevron" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                                        <path d="M6 9l6 6 6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                    </svg>
+                                </button>
+                                <div class="fc-menu hidden" id="fcMenu" role="menu">
+                                    <button class="fc-menu-item" onclick="exportFlashcards('anki')" role="menuitem">
+                                        <span class="fc-menu-icon">📦</span>
+                                        <div>
+                                            <div class="fc-menu-title">Anki (TSV)</div>
+                                            <div class="fc-menu-sub">Import into Anki directly</div>
+                                        </div>
+                                    </button>
+                                    <button class="fc-menu-item" onclick="exportFlashcards('csv')" role="menuitem">
+                                        <span class="fc-menu-icon">📋</span>
+                                        <div>
+                                            <div class="fc-menu-title">CSV</div>
+                                            <div class="fc-menu-sub">Quizlet, Brainscape & others</div>
+                                        </div>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
                     </div>
 
                     <!-- Progress bar -->
