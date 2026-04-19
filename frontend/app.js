@@ -255,8 +255,60 @@ function renderResults(data) {
     // ── YouTube Player ──
     setTimeout(() => initYouTubePlayer(data.video_id), 80);
 
+    // ── Highlights ──
+    renderHighlights(data.highlights || []);
+
     // ── Quiz ──
     initQuiz(data.quiz || []);
+}
+
+// ──────────────────────────────────────
+// HIGHLIGHTS (KEY MOMENTS)
+// ──────────────────────────────────────
+const HL_LABELS = {
+    key_insight:   'Key Insight',
+    definition:    'Definition',
+    example:       'Example',
+    turning_point: 'Turning Point',
+    summary:       'Summary',
+};
+
+function renderHighlights(highlights) {
+    const card  = document.getElementById('highlightsCard');
+    const list  = document.getElementById('highlightsList');
+    const count = document.getElementById('highlightsCount');
+
+    if (!list) return;
+
+    if (!highlights || highlights.length === 0) {
+        card?.classList.add('hidden');
+        return;
+    }
+
+    card?.classList.remove('hidden');
+    if (count) count.textContent = `${highlights.length} moment${highlights.length !== 1 ? 's' : ''}`;
+
+    list.innerHTML = highlights.map(h => {
+        const type  = h.type || 'key_insight';
+        const label = HL_LABELS[type] || type;
+        return `
+        <div
+            class="highlight-card hl-${type}"
+            onclick="seekTo(${h.timestamp})"
+            role="listitem"
+            tabindex="0"
+            aria-label="${esc(h.title)} at ${esc(h.timestamp_str)}"
+            onkeydown="if(event.key==='Enter') seekTo(${h.timestamp})"
+        >
+            <div class="hl-header">
+                <span class="hl-type-badge">${label}</span>
+                <span class="hl-timestamp">${esc(h.timestamp_str)}</span>
+            </div>
+            <div class="hl-title">${esc(h.title)}</div>
+            <div class="hl-desc">${esc(h.description)}</div>
+            <div class="hl-seek">▶ Jump to moment</div>
+        </div>`;
+    }).join('');
 }
 
 // ──────────────────────────────────────

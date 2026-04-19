@@ -239,14 +239,25 @@ Be thorough, accurate, and educational in your analysis.
       "timestamp_str": "MM:SS",
       "difficulty": "easy or medium or hard"
     }}
+  ],
+  "highlights": [
+    {{
+      "timestamp": <seconds as integer>,
+      "timestamp_str": "MM:SS",
+      "title": "Short moment title (3-6 words)",
+      "description": "1-2 sentences explaining why this exact moment is crucial to understanding the lecture",
+      "type": "key_insight or definition or example or turning_point or summary"
+    }}
   ]
 }}
 
 REQUIREMENTS:
 - Generate 4-8 topic sections based on actual content structure
 - Generate 8-12 quiz questions covering different parts of the video
+- Generate 4-6 highlights: the most impactful, must-watch moments in the video
 - Timestamps must match actual content in the transcript
 - correct_index is 0-based (0=A, 1=B, 2=C, 3=D)
+- highlight types: key_insight (aha moment), definition (important term), example (concrete illustration), turning_point (shift in topic/perspective), summary (recap moment)
 - Return ONLY the JSON object — no markdown, no extra text, no code fences"""
 
     # 6. Call Gemini AI
