@@ -590,7 +590,15 @@ function csvQuote(str) {
     return '"' + String(str ?? '').replace(/"/g, '""') + '"';
 }
 function slugify(str) {
-    return String(str ?? 'flashcards').replace(/[^a-z0-9]/gi, '_').slice(0, 50);
+    return String(str ?? 'flashcards')
+        .normalize('NFD')               // decompose: ắ → a + combining marks
+        .replace(/[\u0300-\u036f]/g, '') // strip combining diacritical marks
+        .replace(/[đĐ]/g, 'd')           // Vietnamese đ doesn't decompose via NFD
+        .replace(/[^a-z0-9\s_-]/gi, '') // remove remaining non-ASCII
+        .trim()
+        .replace(/\s+/g, '_')            // spaces → underscores
+        .replace(/_+/g, '_')             // collapse multiple underscores
+        .slice(0, 60) || 'flashcards';
 }
 function downloadFile(content, filename, mime) {
     const blob = new Blob(['\uFEFF' + content], { type: mime }); // BOM for UTF-8
