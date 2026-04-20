@@ -1,6 +1,7 @@
 import os
 import re
 import json
+import time
 import base64
 import tempfile
 import atexit
@@ -427,22 +428,28 @@ REQUIREMENTS:
 - highlight types: key_insight (aha moment), definition (important term), example (concrete illustration), turning_point (shift in topic/perspective), summary (recap moment)
 - Return ONLY the JSON object — no markdown, no extra text, no code fences"""
 
-    # 6. Call Gemini AI (fallback to 1.5-flash if 2.5-flash quota exceeded)
+    import time
     try:
         client = get_genai_client()
-        models_to_try = ["gemini-2.5-flash", "gemini-1.5-flash"]
         response = None
-        for model in models_to_try:
+        last_error = None
+        for attempt in range(3):
             try:
-                response = client.models.generate_content(model=model, contents=prompt)
-                break
+                response = client.models.generate_content(
+                    model="gemini-2.5-flash", contents=prompt
+                )
+                break  # success
             except Exception as e:
-                if "429" in str(e) or "RESOURCE_EXHAUSTED" in str(e):
-                    print(f"[LectureDigest] {model} quota exceeded, trying next model...")
+                last_error = e
+                err_str = str(e)
+                if "503" in err_str or "UNAVAILABLE" in err_str:
+                    wait = 5 * (attempt + 1)
+                    print(f"[LectureDigest] 503 overload (attempt {attempt+1}/3), retrying in {wait}s...")
+                    time.sleep(wait)
                     continue
-                raise
+                raise  # non-503 error → fail immediately
         if response is None:
-            raise Exception("All Gemini models quota exceeded. Please try again later.")
+            raise Exception(f"Gemini server overloaded after 3 retries. Please try again in a few minutes. ({last_error})")
         text = response.text.strip()
 
         # Strip markdown code fences if present
@@ -542,7 +549,20 @@ correct_index is 0-based (0=A, 1=B, 2=C, 3=D)."""
 
     try:
         client = get_genai_client()
-        response = client.models.generate_content(model="gemini-2.5-flash", contents=prompt)
+        response, last_err = None, None
+        for attempt in range(3):
+            try:
+                response = client.models.generate_content(model="gemini-2.5-flash", contents=prompt)
+                break
+            except Exception as e:
+                last_err = e
+                if "503" in str(e) or "UNAVAILABLE" in str(e):
+                    wait = 5 * (attempt + 1)
+                    print(f"[LectureDigest] quiz 503, retrying in {wait}s...")
+                    time.sleep(wait); continue
+                raise
+        if response is None:
+            raise Exception(f"Gemini overloaded: {last_err}")
         text = response.text.strip()
         if text.startswith("```"):
             text = re.sub(r"^```(?:json)?\s*\n?", "", text)
@@ -607,7 +627,20 @@ Answer:"""
 
     try:
         client = get_genai_client()
-        response = client.models.generate_content(model="gemini-2.5-flash", contents=prompt)
+        response, last_err = None, None
+        for attempt in range(3):
+            try:
+                response = client.models.generate_content(model="gemini-2.5-flash", contents=prompt)
+                break
+            except Exception as e:
+                last_err = e
+                if "503" in str(e) or "UNAVAILABLE" in str(e):
+                    wait = 5 * (attempt + 1)
+                    print(f"[LectureDigest] chat 503, retrying in {wait}s...")
+                    time.sleep(wait); continue
+                raise
+        if response is None:
+            raise Exception(f"Gemini overloaded after retries: {last_err}")
         return {"reply": response.text.strip()}
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Chat failed: {str(e)}")
