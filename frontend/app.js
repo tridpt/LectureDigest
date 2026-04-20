@@ -2654,12 +2654,23 @@ function syncTranscriptHighlight() {
     const activeLine = lines[bestIdx];
     activeLine.classList.add('tl-sync-active');
 
-    // Auto-scroll the transcript container (unless user is scrolling)
+    // ── Smart scroll: ONLY move if line is outside visible area ──
     if (!tsSync_userScrolling) {
-        const lineTop    = activeLine.offsetTop;
-        const lineHeight = activeLine.offsetHeight;
-        const contHeight = container.clientHeight;
-        const target     = lineTop - (contHeight / 2) + (lineHeight / 2);
-        container.scrollTo({ top: Math.max(0, target), behavior: 'smooth' });
+        const MARGIN    = 0.20;   // 20% buffer zone top and bottom
+        const contH     = container.clientHeight;
+        const scrollTop = container.scrollTop;
+
+        // Position of line relative to container top
+        const lineTop    = activeLine.offsetTop - container.offsetTop;
+        const lineBottom = lineTop + activeLine.offsetHeight;
+
+        const visTop    = scrollTop + contH * MARGIN;
+        const visBottom = scrollTop + contH * (1 - MARGIN);
+
+        // Only scroll if line is outside the comfortable visible zone
+        if (lineTop < visTop || lineBottom > visBottom) {
+            const target = lineTop - (contH / 2) + (activeLine.offsetHeight / 2);
+            container.scrollTo({ top: Math.max(0, target), behavior: 'smooth' });
+        }
     }
 }
