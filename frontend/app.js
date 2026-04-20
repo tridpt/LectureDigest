@@ -289,20 +289,46 @@ function seekTo(seconds) {
     }
 }
 
-// ── Seek from bookmark — always scroll player into view ──
+// ── Seek from bookmark — scroll to top + overlay flash ──
 function seekToBookmark(secs) {
+    // 1. Seek + play
     if (ytPlayer && typeof ytPlayer.seekTo === 'function') {
         ytPlayer.seekTo(secs, true);
         ytPlayer.playVideo();
     }
-    // Always scroll to player
-    const player = document.getElementById('youtubePlayer');
-    if (player) {
-        player.scrollIntoView({ behavior: 'smooth', block: 'start' });
-        // Flash highlight on player
-        player.classList.add('player-seek-flash');
-        setTimeout(() => player.classList.remove('player-seek-flash'), 800);
+
+    // 2. Scroll to very top of page so player is visible
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+
+    // 3. Overlay flash on the player wrapper
+    const wrapper = document.getElementById('youtubePlayer');
+    if (!wrapper) return;
+
+    // Create a temporary flash overlay
+    let flash = document.getElementById('bmFlashOverlay');
+    if (!flash) {
+        flash = document.createElement('div');
+        flash.id = 'bmFlashOverlay';
+        flash.style.cssText =
+            'position:absolute;inset:0;border-radius:12px;pointer-events:none;z-index:10;'
+            + 'border:2px solid rgba(139,92,246,0);transition:border-color 0.1s,opacity 0.5s;opacity:0;';
+        // Ensure wrapper is positioned
+        wrapper.style.position = 'relative';
+        wrapper.appendChild(flash);
     }
+
+    // Animate: flash in then fade out
+    flash.style.borderColor = 'rgba(139,92,246,0.9)';
+    flash.style.opacity = '1';
+    flash.style.boxShadow = 'inset 0 0 0 3px rgba(139,92,246,0.4), 0 0 24px rgba(139,92,246,0.5)';
+    flash.style.transition = 'none';
+
+    setTimeout(() => {
+        flash.style.transition = 'border-color 0.6s ease, opacity 0.6s ease, box-shadow 0.6s ease';
+        flash.style.borderColor = 'rgba(139,92,246,0)';
+        flash.style.opacity = '0';
+        flash.style.boxShadow = 'none';
+    }, 300);
 }
 
 // ──────────────────────────────────────
@@ -2496,11 +2522,6 @@ function deleteBookmark(videoId, id) {
     const bms = loadBookmarks(videoId).filter(b => b.id !== id);
     saveBookmarks(videoId, bms);
     renderBookmarks(videoId);
-}
-
-// ── Seek video to a bookmark time ──
-function seekToBookmark(secs) {
-    seekTo(secs);
 }
 
 // ── Render the bookmarks list card ──
