@@ -347,6 +347,43 @@
                         <button class="action-btn retry-quiz-btn" onclick="restartQuiz()">↺ Retry Quiz</button>
                     </div>
                 </div>
+
+                <!-- Transcript Search Card -->
+                <div class="card transcript-card" id="transcriptCard">
+                    <div class="card-header">
+                        <span class="card-icon" aria-hidden="true">📜</span>
+                        <h3 class="card-title">Transcript</h3>
+                        <span class="transcript-count" id="transcriptCount"></span>
+                    </div>
+
+                    <!-- Search bar -->
+                    <div class="transcript-search-bar">
+                        <div class="transcript-search-wrap">
+                            <svg class="transcript-search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35" stroke-linecap="round"/>
+                            </svg>
+                            <input type="text" class="transcript-search-input" id="transcriptSearchInput"
+                                   placeholder="Tìm trong transcript..."
+                                   oninput="searchTranscript(this.value)"
+                                   aria-label="Tìm kiếm transcript">
+                            <button class="transcript-search-clear hidden" id="transcriptClearBtn"
+                                    onclick="clearTranscriptSearch()" aria-label="Xóa tìm kiếm">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M18 6L6 18M6 6l12 12" stroke-linecap="round"/>
+                                </svg>
+                            </button>
+                        </div>
+                        <div class="transcript-match-info hidden" id="transcriptMatchInfo">
+                            <button class="ts-nav-btn" onclick="navigateMatch(-1)" aria-label="Kết quả trước">‹</button>
+                            <span id="transcriptMatchText">0/0</span>
+                            <button class="ts-nav-btn" onclick="navigateMatch(1)" aria-label="Kết quả tiếp">›</button>
+                        </div>
+                    </div>
+
+                    <!-- Transcript lines -->
+                    <div class="transcript-list" id="transcriptList" role="list"></div>
+                </div>
+
             </main>
         </div>
     </section>
