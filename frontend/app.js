@@ -177,13 +177,39 @@ async function fetchTranscriptClientSide(videoId) {
         }
     };
 
-    // Step 1: Get player data
-    const playerRes = await proxyFetch(innertubeUrl, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload),
-    });
-    const playerData = await playerRes.json();
+    // Step 1: Get player data — try direct first, then via CORS proxy
+    let playerData = null;
+
+    // Direct fetch (YouTube InnerTube allows CORS from browsers)
+    try {
+        const res = await fetch(innertubeUrl, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload),
+        });
+        if (res.ok) {
+            playerData = await res.json();
+            console.log('[LectureDigest] InnerTube: direct fetch OK');
+        }
+    } catch (e) {
+        console.warn('[LectureDigest] InnerTube direct failed:', e.message);
+    }
+
+    // CORS proxy fallback for player data
+    if (!playerData) {
+        for (const proxyFn of CORS_PROXIES) {
+            try {
+                const res = await fetch(proxyFn(innertubeUrl), {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload),
+                });
+                if (res.ok) { playerData = await res.json(); break; }
+            } catch (_) {}
+        }
+    }
+
+    if (!playerData) throw new Error('Could not reach YouTube InnerTube API');
 
     // Step 2: Find caption track
     const tracks = playerData?.captions?.playerCaptionsTracklistRenderer?.captionTracks || [];
@@ -191,9 +217,23 @@ async function fetchTranscriptClientSide(videoId) {
     const track = tracks.find(t => t.languageCode?.startsWith('en')) || tracks[0];
     const captionUrl = track.baseUrl + '&fmt=json3';
 
-    // Step 3: Fetch caption JSON
-    const capRes = await proxyFetch(captionUrl);
-    const capData = await capRes.json();
+    // Step 3: Fetch caption data — try direct then proxied
+    let capData = null;
+    try {
+        const res = await fetch(captionUrl);
+        if (res.ok) capData = await res.json();
+    } catch (_) {}
+
+    if (!capData) {
+        for (const proxyFn of CORS_PROXIES) {
+            try {
+                const res = await fetch(proxyFn(captionUrl));
+                if (res.ok) { capData = await res.json(); break; }
+            } catch (_) {}
+        }
+    }
+
+    if (!capData) throw new Error('Could not fetch caption data');
 
     // Step 4: Parse events
     const snippets = [];
