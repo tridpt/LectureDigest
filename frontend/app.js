@@ -1864,3 +1864,271 @@ function buildShareText(d) {
     text += sep + '✨ Phan tich boi LectureDigest AI';
     return text;
 }
+
+
+// ══════════════════════════════════════════════════════════
+// MIND MAP  (D3.js radial tree)
+// ══════════════════════════════════════════════════════════
+
+let mmZoom = null;
+
+// ── Build D3 hierarchy data from analysisData ──
+function buildMindMapData(d) {
+    const truncate = (s, n) => s && s.length > n ? s.slice(0, n - 1) + '…' : (s || '');
+
+    const root = {
+        name: truncate(d.title || 'Video', 50),
+        type: 'root',
+        children: []
+    };
+
+    // Chapters branch
+    if (d.chapters && d.chapters.length) {
+        root.children.push({
+            name: '📑 Chapters',
+            type: 'category',
+            color: '#4f46e5',
+            children: d.chapters.map(c => ({
+                name: truncate(c.title, 40),
+                type: 'chapter',
+                extra: c.timestamp_str || '',
+                color: '#4f46e5'
+            }))
+        });
+    }
+
+    // Key Takeaways branch
+    if (d.key_takeaways && d.key_takeaways.length) {
+        root.children.push({
+            name: '💡 Takeaways',
+            type: 'category',
+            color: '#0891b2',
+            children: d.key_takeaways.map(t => ({
+                name: truncate(t, 45),
+                type: 'takeaway',
+                color: '#0891b2'
+            }))
+        });
+    }
+
+    // Highlights branch
+    if (d.highlights && d.highlights.length) {
+        root.children.push({
+            name: '🔥 Key Moments',
+            type: 'category',
+            color: '#b45309',
+            children: d.highlights.map(h => ({
+                name: truncate(h.title, 40),
+                type: 'highlight',
+                extra: h.timestamp_str || '',
+                color: '#b45309'
+            }))
+        });
+    }
+
+    // Key Terms from key_terms or vocabulary
+    const terms = d.key_terms || d.vocabulary || [];
+    if (terms.length) {
+        root.children.push({
+            name: '📖 Terms',
+            type: 'category',
+            color: '#059669',
+            children: terms.slice(0, 12).map(t => ({
+                name: truncate(typeof t === 'string' ? t : (t.term || t.word || ''), 35),
+                type: 'term',
+                color: '#059669'
+            }))
+        });
+    }
+
+    return root;
+}
+
+function openMindMap() {
+    if (!analysisData) return;
+
+    const overlay = document.getElementById('mmModalOverlay');
+    if (!overlay) return;
+    overlay.classList.remove('hidden');
+    document.body.style.overflow = 'hidden';
+
+    // Set title
+    const titleEl = document.getElementById('mmTitle');
+    const vid = analysisData.title || 'Sơ đồ tư duy';
+    if (titleEl) titleEl.textContent = vid.length > 50 ? vid.slice(0, 48) + '…' : vid;
+
+    // Render after DOM is ready
+    setTimeout(() => renderMindMap(), 50);
+
+    document.addEventListener('keydown', mmKeyHandler);
+}
+
+function closeMindMap() {
+    document.getElementById('mmModalOverlay')?.classList.add('hidden');
+    document.body.style.overflow = '';
+    document.removeEventListener('keydown', mmKeyHandler);
+}
+
+function mmKeyHandler(e) {
+    if (e.key === 'Escape') closeMindMap();
+}
+
+function renderMindMap() {
+    const svg = d3.select('#mmSvg');
+    svg.selectAll('*').remove();
+
+    const area   = document.getElementById('mmCanvasArea');
+    const W      = area.clientWidth  || 900;
+    const H      = area.clientHeight || 560;
+    const cx     = W / 2;
+    const cy     = H / 2;
+    const radius = Math.min(W, H) * 0.38;
+
+    // Build hierarchy
+    const rawData = buildMindMapData(analysisData);
+    const root    = d3.hierarchy(rawData);
+
+    // Radial tree layout
+    const treeLayout = d3.tree()
+        .size([2 * Math.PI, radius])
+        .separation((a, b) => (a.parent === b.parent ? 1 : 1.5) / a.depth);
+
+    treeLayout(root);
+
+    // Color map by type
+    const colorOf = (d) => {
+        if (d.data.type === 'root')     return '#7c3aed';
+        if (d.data.type === 'category') return d.data.color || '#4f46e5';
+        return d.data.color || '#6366f1';
+    };
+
+    // Zoom group
+    const g = svg.append('g').attr('id', 'mmGroup');
+
+    // Setup zoom
+    mmZoom = d3.zoom()
+        .scaleExtent([0.3, 4])
+        .on('zoom', (event) => g.attr('transform', event.transform));
+
+    svg.call(mmZoom)
+       .attr('width', W)
+       .attr('height', H);
+
+    // Center initial transform
+    svg.call(mmZoom.transform, d3.zoomIdentity.translate(cx, cy));
+
+    // ── Links ──
+    g.selectAll('.mm-link')
+        .data(root.links())
+        .join('path')
+        .attr('class', 'mm-link')
+        .attr('d', d3.linkRadial()
+            .angle(d => d.x)
+            .radius(d => d.y))
+        .attr('fill', 'none')
+        .attr('stroke', d => colorOf(d.target))
+        .attr('stroke-width', d => d.target.depth === 1 ? 2.5 : 1.5)
+        .attr('stroke-opacity', 0.5);
+
+    // ── Nodes ──
+    const node = g.selectAll('.mm-node')
+        .data(root.descendants())
+        .join('g')
+        .attr('class', 'mm-node')
+        .attr('transform', d =>
+            'rotate(' + (d.x * 180 / Math.PI - 90) + ') translate(' + d.y + ',0)'
+        );
+
+    // Node circles
+    node.append('circle')
+        .attr('r', d => d.depth === 0 ? 14 : d.depth === 1 ? 9 : 6)
+        .attr('fill', d => colorOf(d))
+        .attr('stroke', '#1a1a2e')
+        .attr('stroke-width', 2)
+        .style('cursor', 'pointer');
+
+    // Labels
+    node.append('text')
+        .attr('dy', '0.32em')
+        .attr('x', d => {
+            if (d.depth === 0) return 0;
+            return (d.x < Math.PI) === !d.children ? 14 : -14;
+        })
+        .attr('text-anchor', d => {
+            if (d.depth === 0) return 'middle';
+            return (d.x < Math.PI) === !d.children ? 'start' : 'end';
+        })
+        .attr('transform', d => {
+            if (d.depth === 0) return '';
+            return 'rotate(' + (-(d.x * 180 / Math.PI - 90)) + ')';
+        })
+        .attr('font-size', d => d.depth === 0 ? '13px' : d.depth === 1 ? '11.5px' : '10px')
+        .attr('font-weight', d => d.depth <= 1 ? '600' : '400')
+        .attr('fill', d => d.depth === 0 ? '#f1f1f1' : '#d1d5db')
+        .text(d => d.data.name)
+        .style('pointer-events', 'none');
+
+    // Tooltip on hover
+    const tooltip = document.getElementById('mmTooltip');
+    node.on('mouseover', function(event, d) {
+        if (!tooltip) return;
+        const txt = d.data.name + (d.data.extra ? '\n⏱ ' + d.data.extra : '');
+        tooltip.textContent = txt;
+        tooltip.classList.remove('hidden');
+        tooltip.style.left = (event.offsetX + 14) + 'px';
+        tooltip.style.top  = (event.offsetY - 10) + 'px';
+    }).on('mousemove', function(event) {
+        if (!tooltip) return;
+        tooltip.style.left = (event.offsetX + 14) + 'px';
+        tooltip.style.top  = (event.offsetY - 10) + 'px';
+    }).on('mouseleave', function() {
+        tooltip?.classList.add('hidden');
+    });
+}
+
+function mmResetZoom() {
+    const area = document.getElementById('mmCanvasArea');
+    const W = area?.clientWidth || 900;
+    const H = area?.clientHeight || 560;
+    const svg = d3.select('#mmSvg');
+    if (mmZoom) svg.transition().duration(400)
+        .call(mmZoom.transform, d3.zoomIdentity.translate(W / 2, H / 2));
+}
+
+function mmDownload() {
+    const svgEl = document.getElementById('mmSvg');
+    if (!svgEl) return;
+
+    // Inline styles into SVG for export
+    const serializer  = new XMLSerializer();
+    let   svgStr      = serializer.serializeToString(svgEl);
+
+    // Inject background
+    svgStr = svgStr.replace('<svg', '<svg style="background:#0f0f1e"');
+
+    const blob = new Blob([svgStr], { type: 'image/svg+xml;charset=utf-8' });
+    const url  = URL.createObjectURL(blob);
+
+    // Convert to PNG via canvas
+    const img = new Image();
+    img.onload = () => {
+        const canvas = document.createElement('canvas');
+        canvas.width  = svgEl.clientWidth  * 2;
+        canvas.height = svgEl.clientHeight * 2;
+        const ctx = canvas.getContext('2d');
+        ctx.fillStyle = '#0f0f1e';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+        URL.revokeObjectURL(url);
+
+        canvas.toBlob(blob2 => {
+            const a = document.createElement('a');
+            a.href = URL.createObjectURL(blob2);
+            const slug = (analysisData?.title || 'mindmap').slice(0, 30).replace(/\s+/g, '_');
+            a.download = slug + '_mindmap.png';
+            a.click();
+        }, 'image/png');
+    };
+    img.src = url;
+    showToast('⬇ Đang tải xuống PNG...', 2000);
+}
