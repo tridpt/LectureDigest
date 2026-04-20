@@ -210,6 +210,7 @@ function showSection(id) {
     });
     const target = document.getElementById(id);
     if (target) target.classList.remove('hidden');
+    updateChatFabVisibility();
 }
 
 function showToast(message, duration = 3000) {
@@ -1315,11 +1316,4 @@ function updateChatFabVisibility() {
         chatState.isOpen = false;
         document.getElementById('chatPanel')?.classList.add('hidden');
     }
-}
-
-// Patch showSection to update FAB visibility
-const _originalShowSection = showSection;
-function showSection(id) {
-    _originalShowSection(id);
-    updateChatFabVisibility();
 }
