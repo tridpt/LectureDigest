@@ -175,8 +175,87 @@ def _snippets_to_list(fetched) -> list:
     return result
 
 
+def fetch_transcript_innertube(video_id: str) -> list:
+    """Fetch transcript via YouTube InnerTube API using Android client headers.
+    This bypasses IP blocks that affect regular web requests from cloud servers.
+    """
+    # ── Step 1: Get player data ───────────────────────────────────────────────
+    innertube_url = "https://www.youtube.com/youtubei/v1/player"
+    payload = json.dumps({
+        "videoId": video_id,
+        "context": {
+            "client": {
+                "clientName": "ANDROID",
+                "clientVersion": "17.31.35",
+                "androidSdkVersion": 30,
+                "userAgent": "com.google.android.youtube/17.31.35 (Linux; U; Android 11) gzip",
+                "hl": "en",
+                "timeZone": "UTC",
+                "utcOffsetMinutes": 0,
+            }
+        },
+    }).encode()
+
+    headers = {
+        "Content-Type": "application/json",
+        "User-Agent": "com.google.android.youtube/17.31.35 (Linux; U; Android 11) gzip",
+        "X-YouTube-Client-Name": "3",
+        "X-YouTube-Client-Version": "17.31.35",
+        "Origin": "https://www.youtube.com",
+    }
+
+    req = urllib.request.Request(innertube_url, data=payload, headers=headers, method="POST")
+    with urllib.request.urlopen(req, timeout=15) as resp:
+        player_data = json.loads(resp.read())
+
+    # ── Step 2: Find a caption track ──────────────────────────────────────────
+    tracks = (
+        player_data
+        .get("captions", {})
+        .get("playerCaptionsTracklistRenderer", {})
+        .get("captionTracks", [])
+    )
+    if not tracks:
+        raise ValueError("No caption tracks found (video may have no captions)")
+
+    track = next((t for t in tracks if t.get("languageCode", "").startswith("en")), tracks[0])
+    base_url = track.get("baseUrl", "")
+    if not base_url:
+        raise ValueError("Caption track has no baseUrl")
+
+    # ── Step 3: Fetch caption JSON ────────────────────────────────────────────
+    caption_url = base_url + "&fmt=json3"
+    req2 = urllib.request.Request(caption_url, headers={"User-Agent": "Mozilla/5.0"})
+    with urllib.request.urlopen(req2, timeout=15) as resp2:
+        cap_data = json.loads(resp2.read())
+
+    # ── Step 4: Parse events ──────────────────────────────────────────────────
+    snippets = []
+    for event in cap_data.get("events", []):
+        if "segs" not in event:
+            continue
+        start_sec = event.get("tStartMs", 0) / 1000.0
+        text = "".join(seg.get("utf8", "") for seg in event["segs"]).strip()
+        if text:
+            snippets.append({"text": text, "start": start_sec})
+
+    if not snippets:
+        raise ValueError("Transcript is empty")
+
+    print(f"[LectureDigest] InnerTube: fetched {len(snippets)} segments")
+    return snippets
+
+
 def get_transcript(video_id: str, language: str = "en") -> list:
-    """Fetch transcript using youtube-transcript-api v1.x."""
+    """Fetch transcript: InnerTube first (cloud-safe), youtube-transcript-api as fallback."""
+
+    # ── Primary: InnerTube Android client ─────────────────────────────────────
+    try:
+        return fetch_transcript_innertube(video_id)
+    except Exception as e:
+        print(f"[LectureDigest] InnerTube failed ({e}), trying youtube-transcript-api...")
+
+    # ── Fallback: youtube-transcript-api ──────────────────────────────────────
     try:
         api = get_yt_api()
         transcript_list = api.list(video_id)
@@ -186,7 +265,6 @@ def get_transcript(video_id: str, language: str = "en") -> list:
             detail=f"Could not fetch transcript. This video may not have captions enabled. ({str(e)})",
         )
 
-    # Priority order: manual preferred lang → generated preferred lang → manual EN → generated EN → any
     attempts = []
     if language != "en":
         attempts += [
@@ -204,7 +282,6 @@ def get_transcript(video_id: str, language: str = "en") -> list:
         except Exception:
             continue
 
-    # Last resort: first available transcript
     try:
         for transcript in transcript_list:
             return _snippets_to_list(transcript.fetch())
