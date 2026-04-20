@@ -119,6 +119,7 @@ class QuizRequest(BaseModel):
     title: str = ''
     output_language: str = 'English'
     transcript: list        # [{text, start}, ...]
+    existing_questions: list = []   # already-generated questions to avoid repeating
 
 
 
@@ -415,13 +416,22 @@ REQUIREMENTS:
 - highlight types: key_insight (aha moment), definition (important term), example (concrete illustration), turning_point (shift in topic/perspective), summary (recap moment)
 - Return ONLY the JSON object — no markdown, no extra text, no code fences"""
 
-    # 6. Call Gemini AI
+    # 6. Call Gemini AI (fallback to 1.5-flash if 2.5-flash quota exceeded)
     try:
         client = get_genai_client()
-        response = client.models.generate_content(
-            model="gemini-2.5-flash",
-            contents=prompt,
-        )
+        models_to_try = ["gemini-2.5-flash", "gemini-1.5-flash"]
+        response = None
+        for model in models_to_try:
+            try:
+                response = client.models.generate_content(model=model, contents=prompt)
+                break
+            except Exception as e:
+                if "429" in str(e) or "RESOURCE_EXHAUSTED" in str(e):
+                    print(f"[LectureDigest] {model} quota exceeded, trying next model...")
+                    continue
+                raise
+        if response is None:
+            raise Exception("All Gemini models quota exceeded. Please try again later.")
         text = response.text.strip()
 
         # Strip markdown code fences if present
@@ -437,6 +447,9 @@ REQUIREMENTS:
             result["title"] = video_info["title"]
         if not result.get("author"):
             result["author"] = video_info["author"]
+
+        # Include transcript so frontend can use it for quiz regeneration
+        result["transcript"] = transcript_data
 
         return result
 
@@ -456,7 +469,7 @@ async def health():
 
 @app.post("/api/quiz")
 async def regenerate_quiz(request: QuizRequest):
-    """Generate a fresh set of quiz questions for a video using stored transcript."""
+    """Generate additional quiz questions, avoiding duplicates with existing ones."""
     if not os.getenv("GEMINI_API_KEY"):
         raise HTTPException(status_code=500, detail="GEMINI_API_KEY not configured")
 
@@ -473,21 +486,37 @@ async def regenerate_quiz(request: QuizRequest):
     if len(full_transcript) > 40000:
         full_transcript = full_transcript[:40000] + "\n...[truncated]..."
 
-    prompt = f"""You are an expert educational content analyzer creating a NEW quiz set.
+    # Build list of existing question texts to avoid repetition
+    existing_count = len(request.existing_questions)
+    start_id = existing_count + 1
+    existing_block = ""
+    if request.existing_questions:
+        existing_list = "\n".join(
+            f"- {q.get('question', '')}" for q in request.existing_questions
+        )
+        existing_block = f"""
+
+ALREADY EXISTING QUESTIONS (DO NOT REPEAT these topics or rephrase these):
+{existing_list}
+"""
+
+    prompt = f"""You are an expert educational content analyzer adding MORE quiz questions.
 
 VIDEO TITLE: {request.title}
 TRANSCRIPT:
 {full_transcript}
-
+{existing_block}
 ⚠️ Generate ALL text in **{request.output_language}**.
 
-Create a DIFFERENT set of 8-12 multiple choice questions — cover topics not fully tested before,
-use different question styles (conceptual, application, recall, critical thinking).
+Create 8-10 NEW multiple choice questions that:
+- Cover topics NOT already covered in the existing questions above
+- Use varied question styles (conceptual, application, recall, critical thinking)
+- IDs start from {start_id} (continuing from existing {existing_count} questions)
 
-Return ONLY a valid JSON array with this exact format (no markdown, no extra text):
+Return ONLY a valid JSON array, no markdown, no extra text:
 [
   {{
-    "id": 1,
+    "id": {start_id},
     "question": "A thoughtful question testing understanding",
     "options": ["Option A", "Option B", "Option C", "Option D"],
     "correct_index": 0,
@@ -498,7 +527,7 @@ Return ONLY a valid JSON array with this exact format (no markdown, no extra tex
   }}
 ]
 
-Generate 8-12 questions. correct_index is 0-based."""
+correct_index is 0-based (0=A, 1=B, 2=C, 3=D)."""
 
     try:
         client = get_genai_client()
@@ -507,8 +536,8 @@ Generate 8-12 questions. correct_index is 0-based."""
         if text.startswith("```"):
             text = re.sub(r"^```(?:json)?\s*\n?", "", text)
             text = re.sub(r"\n?\s*```$", "", text)
-        questions = json.loads(text)
-        return {"quiz": questions}
+        new_questions = json.loads(text)
+        return {"quiz": new_questions, "total": existing_count + len(new_questions)}
     except json.JSONDecodeError as e:
         raise HTTPException(status_code=500, detail=f"Failed to parse AI response: {e}")
     except Exception as e:

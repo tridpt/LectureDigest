@@ -206,6 +206,24 @@ function showSection(id) {
     if (target) target.classList.remove('hidden');
 }
 
+function showToast(message, duration = 3000) {
+    const existing = document.getElementById('toastNotif');
+    if (existing) existing.remove();
+    const toast = document.createElement('div');
+    toast.id = 'toastNotif';
+    toast.style.cssText = `
+        position:fixed; bottom:24px; left:50%; transform:translateX(-50%);
+        background:#1e1e3a; border:1px solid rgba(139,92,246,0.4);
+        color:#f1f5f9; padding:12px 20px; border-radius:12px;
+        font-size:14px; font-weight:500; z-index:9999;
+        box-shadow:0 8px 32px rgba(0,0,0,0.5);
+        animation:slideUp 0.3s ease;
+    `;
+    toast.textContent = message;
+    document.body.appendChild(toast);
+    setTimeout(() => toast.remove(), duration);
+}
+
 function resetToHero() {
     showSection('hero');
     document.getElementById('urlInput').value = '';
@@ -330,8 +348,14 @@ async function analyzeVideo() {
 
         if (!analysisData.video_id) throw new Error('Response missing video_id');
 
+        // transcript is now included in server response (analysisData.transcript)
+        // override with clientTranscript only if server didn't return one
+        if (!analysisData.transcript?.length && clientTranscript?.length) {
+            analysisData.transcript = clientTranscript;
+        }
+
         renderResults(analysisData);
-        saveToHistory(analysisData);   // ← save to history
+        saveToHistory(analysisData);   // includes transcript for quiz regeneration
         showSection('resultsSection');
 
 
@@ -654,23 +678,36 @@ function restartQuiz() {
 async function regenerateQuiz() {
     if (!analysisData) return;
 
-    // Get transcript from history
-    const histEntry = loadHistory().find(h => h.video_id === analysisData.video_id);
-    const transcript = histEntry?.data?.transcript || analysisData.transcript;
-
-    if (!transcript || !transcript.length) {
-        alert('Không có transcript để tạo câu hỏi mới. Hãy analyze lại video.');
-        return;
-    }
-
     const btn = document.getElementById('regenQuizBtn');
     const origHtml = btn?.innerHTML || '';
+
+    // Get transcript — from current session, history, or re-fetch
+    const histEntry = loadHistory().find(h => h.video_id === analysisData.video_id);
+    let transcript = analysisData.transcript
+        || histEntry?.transcript
+        || histEntry?.data?.transcript;
+
+    // If still no transcript, try fetching it now client-side
+    if (!transcript?.length) {
+        if (btn) { btn.disabled = true; btn.textContent = 'Đang lấy transcript...'; }
+        try {
+            transcript = await fetchTranscriptClientSide(analysisData.video_id);
+            analysisData.transcript = transcript;
+        } catch (e) {
+            if (btn) { btn.disabled = false; btn.innerHTML = origHtml; }
+            alert('Không lấy được transcript. Hãy analyze lại video để dùng tính năng này.');
+            return;
+        }
+    }
+
     if (btn) {
         btn.disabled = true;
-        btn.innerHTML = `<svg class="spin" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" stroke-linecap="round" stroke-linejoin="round"/></svg> Đang tạo...`;
+        btn.innerHTML = `<svg class="spin" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 4v16m8-8H4" stroke-linecap="round" stroke-linejoin="round"/></svg> Đang tạo...`;
     }
 
     try {
+        const existingQuestions = analysisData.quiz || [];
+
         const res = await fetch(`${API_BASE}/api/quiz`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -678,6 +715,7 @@ async function regenerateQuiz() {
                 title: analysisData.title || '',
                 output_language: selectedLang,
                 transcript,
+                existing_questions: existingQuestions,  // send existing to avoid duplicates
             }),
         });
         if (!res.ok) {
@@ -687,18 +725,23 @@ async function regenerateQuiz() {
         const data = await res.json();
         if (!data.quiz?.length) throw new Error('No quiz questions returned');
 
-        // Update global state and re-render
-        analysisData.quiz = data.quiz;
-        initQuiz(data.quiz);
-        // Scroll to quiz
+        // APPEND new questions to existing ones
+        const merged = [...existingQuestions, ...data.quiz];
+        analysisData.quiz = merged;
+
+        saveToHistory(analysisData);  // persist updated quiz to history
+
+        // Restart quiz from beginning with all questions
+        initQuiz(merged);
         document.getElementById('quizCard')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+        // Show toast
+        showToast(`➕ Đã thêm ${data.quiz.length} câu hỏi mới! Tổng: ${merged.length} câu`);
+
     } catch (err) {
-        alert(`Tạo câu hỏi mới thất bại: ${err.message}`);
+        alert(`Thêm câu hỏi thất bại: ${err.message}`);
     } finally {
-        if (btn) {
-            btn.disabled = false;
-            btn.innerHTML = origHtml;
-        }
+        if (btn) { btn.disabled = false; btn.innerHTML = origHtml; }
     }
 }
 
