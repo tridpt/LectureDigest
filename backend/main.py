@@ -110,8 +110,9 @@ def get_yt_api() -> YouTubeTranscriptApi:
 
 class VideoRequest(BaseModel):
     url: str
-    language: str = 'en'            # transcript language preference
-    output_language: str = 'English'  # AI response language
+    language: str = 'en'
+    output_language: str = 'English'
+    transcript: list | None = None   # pre-fetched by browser — skips server-side YT fetch
 
 
 def extract_video_id(url: str) -> str:
@@ -309,7 +310,13 @@ async def analyze_video(request: VideoRequest):
 
     # 2. Fetch metadata & transcript
     video_info = get_video_info(video_id)
-    transcript_data = get_transcript(video_id, request.language)
+
+    if request.transcript:
+        # Browser pre-fetched the transcript — use it directly (bypasses cloud IP blocks)
+        print(f"[LectureDigest] Using client-provided transcript ({len(request.transcript)} segments)")
+        transcript_data = request.transcript
+    else:
+        transcript_data = get_transcript(video_id, request.language)
 
     # 3. Format transcript with timestamps
     lines = []

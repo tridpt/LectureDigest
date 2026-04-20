@@ -143,6 +143,72 @@ function startLoadingAnimation() {
 }
 
 // ──────────────────────────────────────
+// CLIENT-SIDE TRANSCRIPT FETCHER
+// Fetches from browser (not blocked by YouTube) and sends to backend.
+// Bypasses cloud IP blocks on Render/Railway/etc.
+// ──────────────────────────────────────
+const CORS_PROXIES = [
+    url => `https://corsproxy.io/?url=${encodeURIComponent(url)}`,
+    url => `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`,
+];
+
+async function proxyFetch(url, options = {}) {
+    for (const proxyFn of CORS_PROXIES) {
+        try {
+            const res = await fetch(proxyFn(url), options);
+            if (res.ok) return res;
+        } catch (_) { /* try next proxy */ }
+    }
+    throw new Error('All CORS proxies failed');
+}
+
+async function fetchTranscriptClientSide(videoId) {
+    const innertubeUrl = 'https://www.youtube.com/youtubei/v1/player';
+    const payload = {
+        videoId,
+        context: {
+            client: {
+                clientName: 'ANDROID',
+                clientVersion: '17.31.35',
+                androidSdkVersion: 30,
+                userAgent: 'com.google.android.youtube/17.31.35 (Linux; U; Android 11) gzip',
+                hl: 'en', timeZone: 'UTC', utcOffsetMinutes: 0,
+            }
+        }
+    };
+
+    // Step 1: Get player data
+    const playerRes = await proxyFetch(innertubeUrl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+    });
+    const playerData = await playerRes.json();
+
+    // Step 2: Find caption track
+    const tracks = playerData?.captions?.playerCaptionsTracklistRenderer?.captionTracks || [];
+    if (!tracks.length) throw new Error('No caption tracks found');
+    const track = tracks.find(t => t.languageCode?.startsWith('en')) || tracks[0];
+    const captionUrl = track.baseUrl + '&fmt=json3';
+
+    // Step 3: Fetch caption JSON
+    const capRes = await proxyFetch(captionUrl);
+    const capData = await capRes.json();
+
+    // Step 4: Parse events
+    const snippets = [];
+    for (const event of capData.events || []) {
+        if (!event.segs) continue;
+        const start = (event.tStartMs || 0) / 1000;
+        const text = event.segs.map(s => s.utf8 || '').join('').trim();
+        if (text) snippets.push({ text, start });
+    }
+    if (!snippets.length) throw new Error('Transcript is empty');
+    console.log(`[LectureDigest] Client transcript: ${snippets.length} segments`);
+    return snippets;
+}
+
+// ──────────────────────────────────────
 // MAIN ANALYSE FUNCTION
 // ──────────────────────────────────────
 async function analyzeVideo() {
@@ -162,10 +228,22 @@ async function analyzeVideo() {
     const stopAnimation = startLoadingAnimation();
 
     try {
+        // ── Try fetching transcript client-side first (works even on cloud deployments)
+        let clientTranscript = null;
+        try {
+            const videoId = url.match(/(?:v=|youtu\.be\/)([a-zA-Z0-9_-]{11})/)?.[1];
+            if (videoId) clientTranscript = await fetchTranscriptClientSide(videoId);
+        } catch (e) {
+            console.warn('[LectureDigest] Client transcript failed, server will try:', e.message);
+        }
+
+        const reqBody = { url, language: 'en', output_language: selectedLang };
+        if (clientTranscript?.length) reqBody.transcript = clientTranscript;
+
         const res = await fetch(`${API_BASE}/api/analyze`, {
             method:  'POST',
             headers: { 'Content-Type': 'application/json' },
-            body:    JSON.stringify({ url, language: 'en', output_language: selectedLang }),
+            body:    JSON.stringify(reqBody),
         });
 
         stopAnimation();
