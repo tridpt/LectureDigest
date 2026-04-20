@@ -1,6 +1,9 @@
 import os
 import re
 import json
+import base64
+import tempfile
+import atexit
 import urllib.request
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
@@ -30,6 +33,41 @@ def get_genai_client() -> genai.Client:
     if _genai_client is None:
         _genai_client = genai.Client(api_key=os.getenv("GEMINI_API_KEY"))
     return _genai_client
+
+
+# ── YouTube Transcript API with optional cookie auth ──────────────────────────
+_cookies_tmp_path: str | None = None
+
+def _init_cookies() -> str | None:
+    """Decode YOUTUBE_COOKIES_B64 env var into a temp Netscape cookies.txt file.
+    Used to bypass YouTube IP blocks on cloud servers (Render, Railway, etc.)."""
+    global _cookies_tmp_path
+    b64 = os.getenv("YOUTUBE_COOKIES_B64", "").strip()
+    if not b64:
+        return None
+    if _cookies_tmp_path and os.path.isfile(_cookies_tmp_path):
+        return _cookies_tmp_path  # reuse across requests
+    try:
+        content = base64.b64decode(b64).decode("utf-8")
+        tmp = tempfile.NamedTemporaryFile(
+            mode="w", suffix="_yt_cookies.txt", delete=False, encoding="utf-8"
+        )
+        tmp.write(content)
+        tmp.close()
+        _cookies_tmp_path = tmp.name
+        atexit.register(lambda: os.unlink(_cookies_tmp_path) if os.path.isfile(_cookies_tmp_path) else None)
+        print(f"[LectureDigest] YouTube cookies loaded from YOUTUBE_COOKIES_B64 ({len(content)} bytes)")
+        return _cookies_tmp_path
+    except Exception as e:
+        print(f"[LectureDigest] Warning: Could not decode YOUTUBE_COOKIES_B64 — {e}")
+        return None
+
+def get_yt_api() -> YouTubeTranscriptApi:
+    """Return a YouTubeTranscriptApi instance, using cookies if configured."""
+    cookies_path = _init_cookies()
+    if cookies_path:
+        return YouTubeTranscriptApi(cookie_path=cookies_path)
+    return YouTubeTranscriptApi()
 
 
 class VideoRequest(BaseModel):
@@ -105,7 +143,7 @@ def get_transcript(video_id: str, language: str = "en") -> list:
     """
     try:
         # v1.x uses instance; v0.x used class method — try v1.x first
-        api = YouTubeTranscriptApi()
+        api = get_yt_api()
         transcript_list = api.list(video_id)
     except (TypeError, AttributeError):
         # Fallback: old v0.x class-method style
