@@ -223,6 +223,17 @@
                 <!-- YouTube Embed -->
                 <div class="video-player-wrapper" id="youtubePlayer" aria-label="YouTube video player"></div>
 
+                <!-- Bookmark bar under player -->
+                <div class="bookmark-bar" id="bookmarkBar">
+                    <button class="add-bookmark-btn" onclick="addBookmark()" id="addBookmarkBtn" title="Đánh dấu timestamp hiện tại">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M19 21l-7-5-7 5V5a2 2 0 012-2h10a2 2 0 012 2z" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                        Bookmark
+                    </button>
+                    <span class="bookmark-current-time" id="bookmarkCurrentTime">00:00</span>
+                </div>
+
                 <!-- Overview Card -->
                 <div class="card overview-card">
                     <div class="card-header">
@@ -292,6 +303,23 @@
                             <div class="quiz-history-empty" id="quizHistoryEmpty">Chưa có lần làm quiz nào</div>
                         </div>
                         <div class="quiz-history-labels" id="quizHistoryLabels"></div>
+                    </div>
+                </div>
+
+                <!-- Bookmarks Card -->
+                <div class="card bookmarks-card" id="bookmarksCard">
+                    <div class="card-header">
+                        <span class="card-icon" aria-hidden="true">🔖</span>
+                        <h3 class="card-title">Bookmarks</h3>
+                        <span class="bookmarks-count" id="bookmarksCount"></span>
+                    </div>
+                    <div class="bookmarks-list" id="bookmarksList">
+                        <div class="bookmarks-empty" id="bookmarksEmpty">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" width="28" height="28" opacity="0.3">
+                                <path d="M19 21l-7-5-7 5V5a2 2 0 012-2h10a2 2 0 012 2z" stroke-linecap="round"/>
+                            </svg>
+                            <span>Chưa có bookmark nào<br>Nhấn Bookmark khi video đang chạy</span>
+                        </div>
                     </div>
                 </div>
             </aside>

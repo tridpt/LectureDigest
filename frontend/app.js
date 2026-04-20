@@ -169,6 +169,7 @@ function loadFromHistory(videoId) {
     initNotes(entry.video_id);           // load notes for this video
     renderTranscript(entry.data?.transcript || entry.transcript || []);  // transcript
     initProgress(entry.video_id);        // learning progress
+    initBookmarks(entry.video_id);       // bookmarks
     showSection('resultsSection');
 }
 
@@ -470,6 +471,7 @@ async function analyzeVideo() {
         initNotes(analysisData.video_id);    // load/init personal notes
         renderTranscript(analysisData.transcript || []);  // transcript search
         initProgress(analysisData.video_id);              // learning progress
+        initBookmarks(analysisData.video_id);             // bookmarks
         showSection('resultsSection');
 
 
@@ -2365,5 +2367,165 @@ function renderQuizChart(sessions) {
             const d = new Date(s.date);
             return '<span>' + d.toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit' }) + '</span>';
         }).join('');
+    }
+}
+
+
+// ══════════════════════════════════════════════════════════
+// BOOKMARK TIMESTAMPS
+// ══════════════════════════════════════════════════════════
+
+const BM_KEY_PREFIX = 'lectureDigest_bookmarks_';
+let bmCurrentVideoId = null;
+let bmTimeInterval   = null;
+
+function bmKey(videoId) { return BM_KEY_PREFIX + videoId; }
+
+function loadBookmarks(videoId) {
+    try { return JSON.parse(localStorage.getItem(bmKey(videoId)) || '[]'); }
+    catch { return []; }
+}
+
+function saveBookmarks(videoId, list) {
+    try { localStorage.setItem(bmKey(videoId), JSON.stringify(list)); } catch {}
+}
+
+// ── Init: called when a video is loaded ──
+function initBookmarks(videoId) {
+    bmCurrentVideoId = videoId;
+    stopBmTimer();
+    renderBookmarks(videoId);
+
+    // Update current time display every second
+    bmTimeInterval = setInterval(() => {
+        if (!ytPlayer || typeof ytPlayer.getCurrentTime !== 'function') return;
+        try {
+            const el = document.getElementById('bookmarkCurrentTime');
+            if (el) el.textContent = fmtSecs(Math.floor(ytPlayer.getCurrentTime() || 0));
+        } catch {}
+    }, 1000);
+}
+
+function stopBmTimer() {
+    if (bmTimeInterval) { clearInterval(bmTimeInterval); bmTimeInterval = null; }
+}
+
+// ── Add bookmark at current playback time ──
+function addBookmark() {
+    if (!bmCurrentVideoId) return;
+    if (!ytPlayer || typeof ytPlayer.getCurrentTime !== 'function') {
+        showToast('⚠️ Hãy phát video trước!'); return;
+    }
+    let secs = 0;
+    try { secs = Math.floor(ytPlayer.getCurrentTime() || 0); } catch {}
+
+    // Inline label prompt via a small inline form
+    showBookmarkLabelForm(secs);
+}
+
+function showBookmarkLabelForm(secs) {
+    const list = document.getElementById('bookmarksList');
+    if (!list) return;
+
+    // Remove existing form if any
+    document.getElementById('bmLabelForm')?.remove();
+
+    const ts = fmtSecs(secs);
+    const form = document.createElement('div');
+    form.id = 'bmLabelForm';
+    form.className = 'bm-label-form';
+    form.innerHTML =
+        '<span class="bm-form-ts">' + ts + '</span>' +
+        '<input class="bm-label-input" id="bmLabelInput" type="text" placeholder="Ghi chú (Enter để lưu)" maxlength="60" autofocus>' +
+        '<button class="bm-form-save" onclick="confirmBookmark(' + secs + ')" title="Lưu">✓</button>' +
+        '<button class="bm-form-cancel" onclick="cancelBookmarkForm()" title="Huỷ">✕</button>';
+
+    list.insertBefore(form, list.firstChild);
+
+    const inp = document.getElementById('bmLabelInput');
+    if (inp) {
+        inp.focus();
+        inp.addEventListener('keydown', e => {
+            if (e.key === 'Enter') confirmBookmark(secs);
+            if (e.key === 'Escape') cancelBookmarkForm();
+        });
+    }
+}
+
+function confirmBookmark(secs) {
+    const input = document.getElementById('bmLabelInput');
+    const label = input ? input.value.trim() : '';
+    cancelBookmarkForm();
+
+    const bms = loadBookmarks(bmCurrentVideoId);
+    bms.push({
+        id:        Date.now(),
+        time:      secs,
+        label:     label || fmtSecs(secs),
+        createdAt: new Date().toISOString()
+    });
+    // Sort by time
+    bms.sort((a, b) => a.time - b.time);
+    saveBookmarks(bmCurrentVideoId, bms);
+    renderBookmarks(bmCurrentVideoId);
+    showToast('🔖 Đã bookmark ' + fmtSecs(secs));
+}
+
+function cancelBookmarkForm() {
+    document.getElementById('bmLabelForm')?.remove();
+}
+
+// ── Delete a bookmark ──
+function deleteBookmark(videoId, id) {
+    const bms = loadBookmarks(videoId).filter(b => b.id !== id);
+    saveBookmarks(videoId, bms);
+    renderBookmarks(videoId);
+}
+
+// ── Seek video to a bookmark time ──
+function seekToBookmark(secs) {
+    seekTo(secs);
+}
+
+// ── Render the bookmarks list card ──
+function renderBookmarks(videoId) {
+    const list    = document.getElementById('bookmarksList');
+    const empty   = document.getElementById('bookmarksEmpty');
+    const counter = document.getElementById('bookmarksCount');
+    if (!list) return;
+
+    const bms = loadBookmarks(videoId);
+    if (counter) counter.textContent = bms.length ? bms.length + ' bookmark' : '';
+
+    if (!bms.length) {
+        if (empty) empty.style.display = 'flex';
+        // Remove all items except empty state
+        [...list.querySelectorAll('.bm-item')].forEach(el => el.remove());
+        return;
+    }
+    if (empty) empty.style.display = 'none';
+
+    // Rebuild items
+    [...list.querySelectorAll('.bm-item')].forEach(el => el.remove());
+
+    bms.slice().reverse().forEach(bm => {
+        const item = document.createElement('div');
+        item.className = 'bm-item';
+        item.dataset.id = bm.id;
+        item.innerHTML =
+            '<button class="bm-ts-badge" onclick="seekToBookmark(' + bm.time + ')" title="Nhảy đến ' + fmtSecs(bm.time) + '">' + fmtSecs(bm.time) + '</button>' +
+            '<span class="bm-label" contenteditable="true" onblur="saveBookmarkLabel(\'' + videoId + '\', ' + bm.id + ', this.textContent)" title="Click để sửa">' + escapeHtml(bm.label) + '</span>' +
+            '<button class="bm-delete-btn" onclick="deleteBookmark(\'' + videoId + '\', ' + bm.id + ')" title="Xoá bookmark">✕</button>';
+        list.appendChild(item);
+    });
+}
+
+// ── Inline edit label ──
+function saveBookmarkLabel(videoId, id, newLabel) {
+    const bms = loadBookmarks(videoId);
+    const bm  = bms.find(b => b.id === id);
+    if (bm) {
+        bm.label = newLabel.trim() || fmtSecs(bm.time);
+        saveBookmarks(videoId, bms);
     }
 }
