@@ -298,6 +298,14 @@
                                     </svg>
                                 </button>
                                 <div class="fc-menu hidden" id="fcMenu" role="menu">
+                                    <button class="fc-menu-item fc-study-item" onclick="openFlashcardStudy()" role="menuitem">
+                                        <span class="fc-menu-icon">&#127956;</span>
+                                        <div>
+                                            <div class="fc-menu-title">Học ngay</div>
+                                            <div class="fc-menu-sub">Ôn tập trực tiếp trong app</div>
+                                        </div>
+                                    </button>
+                                    <div class="fc-menu-divider"></div>
                                     <button class="fc-menu-item" onclick="exportFlashcards('anki')" role="menuitem">
                                         <span class="fc-menu-icon">📦</span>
                                         <div>
@@ -387,6 +395,74 @@
             </main>
         </div>
     </section>
+
+    <!-- ═══════════════════════════════ FLASHCARD STUDY MODAL ══════════════════════════════ -->
+    <div class="fc-modal-overlay hidden" id="fcModalOverlay" onclick="closeFcModal(event)" role="dialog" aria-modal="true" aria-label="Học Flashcard">
+        <div class="fc-modal" id="fcModal">
+
+            <!-- Modal header -->
+            <div class="fc-modal-header">
+                <div class="fc-modal-title">
+                    <span>🎴</span>
+                    <span id="fcModalTitle">Flashcards</span>
+                </div>
+                <div class="fc-modal-meta">
+                    <span class="fc-modal-badge" id="fcModeBadge">Tất cả</span>
+                    <span class="fc-card-counter" id="fcCardCounter">1 / 10</span>
+                </div>
+                <button class="fc-modal-close" onclick="closeFcModalBtn()" aria-label="Đóng">✕</button>
+            </div>
+
+            <!-- Progress bar -->
+            <div class="fc-modal-progress">
+                <div class="fc-modal-progress-fill" id="fcModalProgressFill"></div>
+            </div>
+
+            <!-- Card area -->
+            <div class="fc-card-area">
+                <div class="fc-card" id="fcCard" onclick="flipCard()" tabindex="0"
+                     onkeydown="if(event.key===' '||event.key==='Enter') flipCard()"
+                     role="button" aria-label="Click để lật thẻ">
+                    <div class="fc-card-inner" id="fcCardInner">
+                        <div class="fc-card-front">
+                            <div class="fc-side-label">Câu hỏi</div>
+                            <div class="fc-card-text" id="fcFrontText">Loading...</div>
+                            <div class="fc-flip-hint">👆 Click để xem đáp án</div>
+                        </div>
+                        <div class="fc-card-back">
+                            <div class="fc-side-label">Đáp án</div>
+                            <div class="fc-card-text" id="fcBackText"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Controls -->
+            <div class="fc-controls">
+                <button class="fc-ctrl-btn" id="fcPrevBtn" onclick="fcNavigate(-1)" aria-label="Thẻ trước">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 18l-6-6 6-6" stroke-linecap="round"/></svg>
+                </button>
+
+                <div class="fc-rate-btns" id="fcRateBtns">
+                    <button class="fc-rate-btn fc-rate-hard" onclick="rateCard('hard')" title="Khó — Ôn lại sau">😰 Khó</button>
+                    <button class="fc-rate-btn fc-rate-ok"   onclick="rateCard('ok')"   title="Ổn">🙂 Ổn</button>
+                    <button class="fc-rate-btn fc-rate-easy" onclick="rateCard('easy')"  title="Dễ — Đã thuộc">😊 Dễ</button>
+                </div>
+
+                <button class="fc-ctrl-btn" id="fcNextBtn" onclick="fcNavigate(1)" aria-label="Thẻ tiếp">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6" stroke-linecap="round"/></svg>
+                </button>
+            </div>
+
+            <!-- Footer: shuffle + filter -->
+            <div class="fc-modal-footer">
+                <button class="fc-footer-btn" onclick="shuffleFcCards()" title="Trộn thẻ">🔀 Trộn</button>
+                <button class="fc-footer-btn" onclick="fcFilterMode('all')"  id="fcFilterAll"  class="active">Tất cả</button>
+                <button class="fc-footer-btn" onclick="fcFilterMode('hard')" id="fcFilterHard">😰 Khó</button>
+                <button class="fc-footer-btn" onclick="fcRestart()">↺ Bắt đầu lại</button>
+            </div>
+        </div>
+    </div>
 
     <!-- Footer -->
     <footer class="footer">

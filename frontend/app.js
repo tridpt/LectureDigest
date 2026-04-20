@@ -859,8 +859,47 @@ async function regenerateQuiz() {
 
 
 // ──────────────────────────────────────
-// FLASHCARD EXPORT
+// FLASHCARD — EXPORT + STUDY VIEWER
 // ──────────────────────────────────────
+
+// ── Shared: build card list from analysisData ──
+function buildFlashcards() {
+    if (!analysisData) return [];
+    const d = analysisData;
+    const letters = ['A', 'B', 'C', 'D'];
+    const cards = [];
+
+    // Quiz Q&As
+    (d.quiz || []).forEach((q, i) => {
+        const optsText = (q.options || []).map((o, oi) => letters[oi] + ') ' + o).join('\n');
+        const correct  = q.options?.[q.correct_index] ?? '';
+        cards.push({
+            front: 'Q' + (i+1) + ': ' + q.question + '\n\n' + optsText,
+            back:  '\u2713 ' + (letters[q.correct_index] ?? 'A') + ') ' + correct + (q.explanation ? '\n\n' + q.explanation : ''),
+            tag: 'quiz', difficulty: q.difficulty || 'medium', rating: null
+        });
+    });
+
+    // Key Takeaways
+    (d.key_takeaways || []).forEach((t, i) => {
+        cards.push({
+            front: 'Key Takeaway #' + (i+1) + '\n(From: ' + (d.title || 'Lecture') + ')',
+            back: t, tag: 'takeaway', rating: null
+        });
+    });
+
+    // Highlights
+    (d.highlights || []).forEach(h => {
+        cards.push({
+            front: 'What happens at [' + h.timestamp_str + '] in "' + (d.title || 'Lecture') + '"?',
+            back: h.title + '\n\n' + h.description,
+            tag: 'highlight', rating: null
+        });
+    });
+
+    return cards;
+}
+
 function toggleFcMenu() {
     const menu = document.getElementById('fcMenu');
     const btn  = document.getElementById('fcToggleBtn');
@@ -969,6 +1008,183 @@ function downloadFile(content, filename, mime) {
     a.click();
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
+}
+
+// ──────────────────────────────────────
+// FLASHCARD STUDY VIEWER
+// ──────────────────────────────────────
+
+let fcCards    = [];   // all cards
+let fcFiltered = [];   // filtered subset (all or 'hard' only)
+let fcIndex    = 0;    // current card index in fcFiltered
+let fcFlipped  = false;
+let fcFilterKey = 'all';
+
+function openFlashcardStudy() {
+    // Close dropdown
+    document.getElementById('fcMenu')?.classList.add('hidden');
+    document.getElementById('fcToggleBtn')?.classList.remove('open');
+
+    fcCards = buildFlashcards();
+    if (!fcCards.length) { showToast('⚠️ Hãy analyze video trước!'); return; }
+
+    fcFilterKey = 'all';
+    fcFiltered  = [...fcCards];
+    fcIndex     = 0;
+
+    // Update header
+    const title = analysisData?.title || 'Flashcards';
+    const el = document.getElementById('fcModalTitle');
+    if (el) el.textContent = title.length > 40 ? title.slice(0, 38) + '…' : title;
+
+    updateFilterBtns();
+    renderFcCard();
+
+    // Show modal
+    document.getElementById('fcModalOverlay')?.classList.remove('hidden');
+    document.body.style.overflow = 'hidden';
+
+    // Keyboard handler
+    document.addEventListener('keydown', fcKeyHandler);
+}
+
+function closeFcModalBtn() {
+    document.getElementById('fcModalOverlay')?.classList.add('hidden');
+    document.body.style.overflow = '';
+    document.removeEventListener('keydown', fcKeyHandler);
+}
+
+function closeFcModal(e) {
+    if (e.target.id === 'fcModalOverlay') closeFcModalBtn();
+}
+
+function fcKeyHandler(e) {
+    if (e.key === 'ArrowLeft')  fcNavigate(-1);
+    if (e.key === 'ArrowRight') fcNavigate(1);
+    if (e.key === ' ' || e.key === 'Enter') { e.preventDefault(); flipCard(); }
+    if (e.key === 'Escape') closeFcModalBtn();
+}
+
+function renderFcCard() {
+    const card = fcFiltered[fcIndex];
+    if (!card) return;
+
+    // Reset flip
+    fcFlipped = false;
+    const inner = document.getElementById('fcCardInner');
+    if (inner) inner.style.transform = 'rotateY(0deg)';
+
+    // Set text
+    const front = document.getElementById('fcFrontText');
+    const back  = document.getElementById('fcBackText');
+    if (front) front.textContent = card.front;
+    if (back)  back.textContent  = card.back;
+
+    // Hide rate buttons until flipped
+    const rateBtns = document.getElementById('fcRateBtns');
+    if (rateBtns) rateBtns.style.opacity = '0.3';
+
+    // Counter + progress
+    const counter = document.getElementById('fcCardCounter');
+    if (counter) counter.textContent = (fcIndex + 1) + ' / ' + fcFiltered.length;
+
+    const pct = fcFiltered.length > 1 ? ((fcIndex) / (fcFiltered.length - 1)) * 100 : 100;
+    const fill = document.getElementById('fcModalProgressFill');
+    if (fill) fill.style.width = pct + '%';
+
+    // Prev/next btn state
+    document.getElementById('fcPrevBtn')?.toggleAttribute('disabled', fcIndex === 0);
+    document.getElementById('fcNextBtn')?.toggleAttribute('disabled', fcIndex === fcFiltered.length - 1);
+
+    // Tag badge
+    const badge = document.getElementById('fcModeBadge');
+    if (badge) {
+        const tagMap = { quiz: '🧠 Quiz', takeaway: '💡 Takeaway', highlight: '🔥 Highlight' };
+        badge.textContent = tagMap[card.tag] || card.tag;
+    }
+}
+
+function flipCard() {
+    fcFlipped = !fcFlipped;
+    const inner = document.getElementById('fcCardInner');
+    if (inner) inner.style.transform = fcFlipped ? 'rotateY(180deg)' : 'rotateY(0deg)';
+
+    // Show rate buttons when flipped
+    const rateBtns = document.getElementById('fcRateBtns');
+    if (rateBtns) rateBtns.style.opacity = fcFlipped ? '1' : '0.3';
+}
+
+function fcNavigate(dir) {
+    const next = fcIndex + dir;
+    if (next < 0 || next >= fcFiltered.length) return;
+    fcIndex = next;
+    renderFcCard();
+}
+
+function rateCard(rating) {
+    if (!fcFlipped) { flipCard(); return; } // must see answer first
+    const card = fcFiltered[fcIndex];
+    if (card) {
+        // Update rating in master list
+        const masterIdx = fcCards.indexOf(card);
+        if (masterIdx !== -1) fcCards[masterIdx].rating = rating;
+        card.rating = rating;
+    }
+    // Auto-advance
+    if (fcIndex < fcFiltered.length - 1) {
+        fcIndex++;
+        renderFcCard();
+    } else {
+        showFcSummary();
+    }
+}
+
+function showFcSummary() {
+    const hard = fcCards.filter(c => c.rating === 'hard').length;
+    const ok   = fcCards.filter(c => c.rating === 'ok').length;
+    const easy = fcCards.filter(c => c.rating === 'easy').length;
+    const unrated = fcCards.filter(c => !c.rating).length;
+    const msg = '\uD83C\uDF89 Xong rồi!\n\n\uD83D\uDE30 Khó: ' + hard + '  \uD83D\uDE42 Ổn: ' + ok + '  \uD83D\uDE0A Dễ: ' + easy
+        + (unrated ? '\n⏭ Bỏ qua: ' + unrated : '');
+    showToast(msg, 4000);
+}
+
+function shuffleFcCards() {
+    for (let i = fcFiltered.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [fcFiltered[i], fcFiltered[j]] = [fcFiltered[j], fcFiltered[i]];
+    }
+    fcIndex = 0;
+    renderFcCard();
+    showToast('🔀 Đã trộn thẻ!', 1500);
+}
+
+function fcRestart() {
+    // Reset all ratings
+    fcCards.forEach(c => c.rating = null);
+    fcFilterKey = 'all';
+    fcFiltered  = [...fcCards];
+    fcIndex     = 0;
+    updateFilterBtns();
+    renderFcCard();
+}
+
+function fcFilterMode(mode) {
+    fcFilterKey = mode;
+    if (mode === 'hard') {
+        fcFiltered = fcCards.filter(c => c.rating === 'hard');
+        if (!fcFiltered.length) { showToast('Chưa có thẻ nào được đánh dấu Khó!', 2000); return; }
+    } else {
+        fcFiltered = [...fcCards];
+    }
+    fcIndex = 0;
+    updateFilterBtns();
+    renderFcCard();
+}
+
+function updateFilterBtns() {
+    document.getElementById('fcFilterAll')?.classList.toggle('active', fcFilterKey === 'all');
+    document.getElementById('fcFilterHard')?.classList.toggle('active', fcFilterKey === 'hard');
 }
 
 // ──────────────────────────────────────
