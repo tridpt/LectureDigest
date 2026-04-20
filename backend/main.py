@@ -630,7 +630,7 @@ Answer:"""
         response, last_err = None, None
         for attempt in range(4):
             try:
-                response = client.models.generate_content(model="gemini-2.0-flash", contents=prompt)
+                response = client.models.generate_content(model="gemini-2.5-flash", contents=prompt)
                 break
             except Exception as e:
                 last_err = e
