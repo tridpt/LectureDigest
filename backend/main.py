@@ -628,15 +628,16 @@ Answer:"""
     try:
         client = get_genai_client()
         response, last_err = None, None
-        for attempt in range(3):
+        for attempt in range(4):
             try:
-                response = client.models.generate_content(model="gemini-2.5-flash", contents=prompt)
+                response = client.models.generate_content(model="gemini-2.0-flash", contents=prompt)
                 break
             except Exception as e:
                 last_err = e
-                if "503" in str(e) or "UNAVAILABLE" in str(e):
+                err_str = str(e)
+                if "503" in err_str or "429" in err_str or "UNAVAILABLE" in err_str or "overloaded" in err_str.lower():
                     wait = 5 * (attempt + 1)
-                    print(f"[LectureDigest] chat 503, retrying in {wait}s...")
+                    print(f"[LectureDigest] chat retry {attempt+1} in {wait}s: {err_str[:80]}")
                     time.sleep(wait); continue
                 raise
         if response is None:

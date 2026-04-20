@@ -275,7 +275,7 @@ function createPlayer(videoId) {
         height: '100%',
         width: '100%',
         videoId,
-        playerVars: { playsinline: 1, rel: 0, modestbranding: 1 },
+        playerVars: { playsinline: 1, rel: 0, modestbranding: 1, origin: window.location.origin },
         events: {
             onStateChange: onYtStateChange
         }
