@@ -193,6 +193,12 @@
                         </svg>
                         Export PDF
                     </button>
+                    <button class="share-btn" onclick="openShareModal()" id="shareBtn" aria-label="Chia sẻ kết quả">
+                        <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                            <path d="M4 12v8a2 2 0 002 2h12a2 2 0 002-2v-8M16 6l-4-4-4 4M12 2v13" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                        Chia sẻ
+                    </button>
                     <button class="new-video-btn" onclick="resetToHero()" aria-label="Phân tích video mới">
                         <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
                             <path d="M19 12H5M12 19l-7-7 7-7" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
@@ -537,5 +543,48 @@
     <!-- YouTube IFrame API (must come before app.js) -->
     <script src="https://www.youtube.com/iframe_api"></script>
     <script src="app.js"></script>
+
+    <!-- ══════════════════════════════ SHARE MODAL ══════════════════════════════ -->
+    <div class="share-modal-overlay hidden" id="shareModalOverlay" onclick="closeShareModal(event)" role="dialog" aria-modal="true" aria-label="Chia sẻ kết quả">
+        <div class="share-modal" id="shareModal">
+            <div class="share-modal-header">
+                <div class="share-modal-title">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18"><path d="M4 12v8a2 2 0 002 2h12a2 2 0 002-2v-8M16 6l-4-4-4 4M12 2v13" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                    Chia sẻ kết quả
+                </div>
+                <button class="share-modal-close" onclick="closeShareModalBtn()" aria-label="Đóng">✕</button>
+            </div>
+
+            <!-- Preview card -->
+            <div class="share-preview-card" id="sharePreviewCard">
+                <div class="share-preview-badge">📚 LectureDigest</div>
+                <div class="share-preview-title" id="sharePreviewTitle"></div>
+                <div class="share-preview-author" id="sharePreviewAuthor"></div>
+                <div class="share-preview-summary" id="sharePreviewSummary"></div>
+                <div class="share-preview-takeaways" id="sharePreviewTakeaways"></div>
+                <div class="share-preview-footer">
+                    <span id="sharePreviewUrl"></span>
+                    <span>LectureDigest AI</span>
+                </div>
+            </div>
+
+            <!-- Share action buttons -->
+            <div class="share-actions">
+                <button class="share-action-btn share-action-native" id="shareNativeBtn" onclick="shareNative()">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 12v8a2 2 0 002 2h12a2 2 0 002-2v-8M16 6l-4-4-4 4M12 2v13" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                    Chia sẻ
+                </button>
+                <button class="share-action-btn share-action-copy" onclick="copyShareText()">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>
+                    Copy nội dung
+                </button>
+                <button class="share-action-btn share-action-link" onclick="copyYouTubeLink()">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10 13a5 5 0 007.54.54l3-3a5 5 0 00-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 00-7.54-.54l-3 3a5 5 0 007.07 7.07l1.71-1.71"/></svg>
+                    Copy link video
+                </button>
+            </div>
+        </div>
+    </div>
+
 </body>
 </html>
