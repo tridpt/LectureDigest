@@ -1,0 +1,24 @@
+# Render.com Blueprint — deploy LectureDigest for free
+# Docs: https://render.com/docs/blueprint-spec
+#
+# How to use:
+#   1. Push this repo to GitHub
+#   2. Go to https://dashboard.render.com/select-repo
+#   3. Connect your GitHub repo — Render auto-detects this file
+#   4. Set GEMINI_API_KEY in the Environment Variables panel
+#   5. Click Deploy!
+
+services:
+  - type: web
+    name: lecturedigest
+    runtime: docker
+    dockerfilePath: ./Dockerfile
+    plan: free               # Free tier (750 hrs/month)
+    region: singapore        # Closest to Vietnam
+    autoDeploy: true         # Auto-deploy on every git push
+
+    envVars:
+      - key: GEMINI_API_KEY
+        sync: false          # You must set this manually in Render dashboard
+
+    healthCheckPath: /api/health

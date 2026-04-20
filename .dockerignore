@@ -1,0 +1,36 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.egg-info/
+dist/
+build/
+
+# Virtual environments
+venv/
+.venv/
+env/
+ENV/
+
+# Secrets — NEVER include in Docker image
+backend/.env
+*.env
+!backend/.env.example
+
+# IDEs & OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+*.swp
+
+# Git
+.git/
+.gitignore
+
+# Docs / dev files only
+*.md
+*.bat
+render.yaml
+docker-compose.yml
