@@ -78,6 +78,7 @@ function loadFromHistory(videoId) {
     document.getElementById('urlInput').value = entry.url;
     analysisData = entry.data;
     toggleHistoryPanel(false);
+    clearChat();             // fresh chat when loading from history
     renderResults(entry.data);
     showSection('resultsSection');
 }
@@ -374,6 +375,7 @@ async function analyzeVideo() {
             analysisData.transcript = clientTranscript;
         }
 
+        clearChat();            // fresh chat for each new video
         renderResults(analysisData);
         saveToHistory(analysisData);   // includes transcript for quiz regeneration
         showSection('resultsSection');
@@ -1163,7 +1165,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
 function toggleChat() {
     const panel  = document.getElementById('chatPanel');
-    const fab    = document.getElementById('chatFab');
     const unread = document.getElementById('chatUnread');
 
     chatState.isOpen = !chatState.isOpen;
@@ -1171,12 +1172,38 @@ function toggleChat() {
 
     if (chatState.isOpen) {
         unread?.classList.add('hidden');
-        // Focus input
         setTimeout(() => document.getElementById('chatInput')?.focus(), 150);
-        // Scroll messages to bottom
         const msgs = document.getElementById('chatMessages');
         if (msgs) msgs.scrollTop = msgs.scrollHeight;
     }
+}
+
+function clearChat() {
+    // Reset state
+    chatState.history = [];
+    chatState.isLoading = false;
+
+    // Reset messages DOM to welcome message only
+    const container = document.getElementById('chatMessages');
+    if (container) {
+        container.innerHTML = `
+            <div class="chat-msg assistant">
+                <div class="chat-bubble">
+                    👋 Xin chào! Tôi đã đọc toàn bộ nội dung bài giảng này. Bạn có thể hỏi tôi bất cứ điều gì về video — nội dung, khái niệm, ví dụ, hay bất kỳ phần nào bạn chưa hiểu rõ!
+                </div>
+            </div>`;
+    }
+
+    // Show suggestions again
+    document.getElementById('chatSuggestions')?.classList.remove('hidden');
+
+    // Re-enable send button
+    const sendBtn = document.getElementById('chatSendBtn');
+    if (sendBtn) sendBtn.disabled = false;
+
+    // Clear input
+    const input = document.getElementById('chatInput');
+    if (input) { input.value = ''; input.style.height = 'auto'; }
 }
 
 async function sendChatMessage() {

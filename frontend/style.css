@@ -1385,6 +1385,21 @@ body {
 .chat-close-btn:hover { background: rgba(255,255,255,0.12); color: var(--text-primary); }
 .chat-close-btn svg { width: 16px; height: 16px; }
 
+.chat-header-actions { display: flex; align-items: center; gap: 6px; }
+
+.chat-clear-btn {
+    width: 30px; height: 30px;
+    border-radius: 8px;
+    border: none;
+    background: rgba(239,68,68,0.08);
+    color: #f87171;
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    transition: all 0.15s;
+}
+.chat-clear-btn:hover { background: rgba(239,68,68,0.18); color: #ef4444; }
+.chat-clear-btn svg { width: 15px; height: 15px; }
+
 /* Messages area */
 .chat-messages {
     flex: 1;
