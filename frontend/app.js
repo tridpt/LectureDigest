@@ -1977,153 +1977,190 @@ function renderMindMap() {
     const svg = d3.select('#mmSvg');
     svg.selectAll('*').remove();
 
-    const area   = document.getElementById('mmCanvasArea');
-    const W      = area.clientWidth  || 960;
-    const H      = area.clientHeight || 580;
+    const area = document.getElementById('mmCanvasArea');
+    const W    = area.clientWidth  || 960;
+    const H    = area.clientHeight || 580;
 
-    // Colour palette per branch type
     const COLORS = {
-        root:     { node: '#7c3aed', glow: '#7c3aed', text: '#f1f1f1' },
-        category: { node: '#7c3aed', glow: '#7c3aed', text: '#e2e8f0' },
-        chapter:  { node: '#4f46e5', glow: '#6366f1', text: '#c7d2fe' },
-        takeaway: { node: '#0891b2', glow: '#22d3ee', text: '#a5f3fc' },
-        highlight:{ node: '#b45309', glow: '#f59e0b', text: '#fde68a' },
-        term:     { node: '#059669', glow: '#10b981', text: '#a7f3d0' },
+        root:     { node: '#7c3aed', glow: '#7c3aed', text: '#f1f1f1'  },
+        category: { node: '#7c3aed', glow: '#9333ea', text: '#e9d5ff'  },
+        chapter:  { node: '#4338ca', glow: '#6366f1', text: '#c7d2fe'  },
+        takeaway: { node: '#0e7490', glow: '#22d3ee', text: '#a5f3fc'  },
+        highlight:{ node: '#92400e', glow: '#f59e0b', text: '#fde68a'  },
+        term:     { node: '#065f46', glow: '#10b981', text: '#a7f3d0'  },
     };
-    const getColor = (d, prop) => {
-        const c = COLORS[d.data.type] || COLORS.chapter;
-        return c[prop] || c.node;
-    };
+    const getColor = (d, prop) => (COLORS[d.data.type] || COLORS.chapter)[prop];
 
-    // Build hierarchy
+    // ── Build data + layout ──
     const rawData = buildMindMapData(analysisData);
     const root    = d3.hierarchy(rawData);
-    const leafR   = Math.min(W, H) * 0.44;
+    const leaves  = root.leaves().length;
 
-    // Radial tree — more separation
+    // Enough radius so leaf labels don't overlap
+    // base radius for depth-1 nodes, leafR for depth-2
+    const innerR = Math.min(W, H) * 0.20;
+    const outerR = Math.min(W, H) * 0.44;
+
     const treeLayout = d3.tree()
-        .size([2 * Math.PI, leafR])
-        .separation((a, b) => (a.parent === b.parent ? 1.1 : 2) / a.depth);
+        .size([2 * Math.PI, outerR])
+        .separation((a, b) => {
+            if (a.depth === 0 || b.depth === 0) return 1;
+            return (a.parent === b.parent ? 1.3 : 2.2) / a.depth;
+        });
 
     treeLayout(root);
 
-    // SVG defs — glow filters
+    // Push depth-1 nodes to innerR
+    root.each(d => { if (d.depth === 1) d.y = innerR; });
+
+    // ── SVG defs — glow filters ──
     const defs = svg.append('defs');
-    ['root','chapter','takeaway','highlight','term'].forEach(type => {
-        const col = (COLORS[type] || COLORS.chapter).glow;
-        const f = defs.append('filter').attr('id', 'glow-' + type).attr('x', '-50%').attr('y', '-50%').attr('width', '200%').attr('height', '200%');
-        f.append('feGaussianBlur').attr('stdDeviation', '4').attr('result', 'blur');
-        const feMerge = f.append('feMerge');
-        feMerge.append('feMergeNode').attr('in', 'blur');
-        feMerge.append('feMergeNode').attr('in', 'SourceGraphic');
+    Object.entries(COLORS).forEach(([type, col]) => {
+        const f = defs.append('filter')
+            .attr('id', 'glow-' + type)
+            .attr('x', '-80%').attr('y', '-80%')
+            .attr('width', '260%').attr('height', '260%');
+        f.append('feGaussianBlur').attr('stdDeviation', '5').attr('result', 'blur');
+        const fm = f.append('feMerge');
+        fm.append('feMergeNode').attr('in', 'blur');
+        fm.append('feMergeNode').attr('in', 'SourceGraphic');
     });
 
-    // Zoom group centred
-    const g = svg.append('g').attr('id', 'mmGroup')
-        .attr('transform', 'translate(' + (W/2) + ',' + (H/2) + ')');
+    // ── Main group + zoom ──
+    const g = svg.append('g').attr('id', 'mmGroup');
 
     mmZoom = d3.zoom()
         .scaleExtent([0.25, 5])
-        .on('zoom', event => d3.select('#mmGroup').attr('transform', event.transform));
+        .on('zoom', ev => g.attr('transform', ev.transform));
 
     svg.call(mmZoom)
        .attr('width', W).attr('height', H)
        .call(mmZoom.transform, d3.zoomIdentity.translate(W/2, H/2));
 
-    // ── Links — gradient-stroke curved paths ──
+    // Helper: radial → cartesian
+    const pt = (angle, r) => [Math.sin(angle) * r, -Math.cos(angle) * r];
+
+    // ── Links ──
     g.selectAll('.mm-link')
         .data(root.links())
         .join('path')
         .attr('class', 'mm-link')
         .attr('d', d3.linkRadial().angle(d => d.x).radius(d => d.y))
         .attr('fill', 'none')
-        .attr('stroke', d => {
-            const t = d.target.data.type;
-            return (COLORS[t] || COLORS.chapter).glow;
-        })
+        .attr('stroke', d => getColor(d.target, 'glow'))
         .attr('stroke-width', d => d.target.depth === 1 ? 2.5 : 1.5)
-        .attr('stroke-opacity', d => d.target.depth === 1 ? 0.6 : 0.4)
+        .attr('stroke-opacity', d => d.target.depth === 1 ? 0.55 : 0.35)
         .attr('stroke-linecap', 'round');
 
-    // ── Nodes — use pointRadial for clean absolute positions ──
+    // ── Nodes ──
     const node = g.selectAll('.mm-node')
         .data(root.descendants())
         .join('g')
         .attr('class', 'mm-node')
         .attr('transform', d => {
-            const [x, y] = d3.pointRadial(d.x, d.y);
+            const [x, y] = pt(d.x, d.y);
             return 'translate(' + x + ',' + y + ')';
         });
 
-    // Glow circle (behind)
+    // Glow halo for depth 0-1
     node.filter(d => d.depth <= 1)
         .append('circle')
-        .attr('r', d => d.depth === 0 ? 22 : 14)
+        .attr('r', d => d.depth === 0 ? 26 : 16)
         .attr('fill', d => getColor(d, 'node'))
-        .attr('opacity', 0.2)
-        .attr('filter', d => 'url(#glow-' + (d.data.type === 'root' ? 'root' : d.data.type) + ')');
+        .attr('opacity', 0.18)
+        .attr('filter', d => 'url(#glow-' + d.data.type + ')');
 
     // Main circle
     node.append('circle')
         .attr('r', d => d.depth === 0 ? 14 : d.depth === 1 ? 9 : 5)
         .attr('fill', d => getColor(d, 'node'))
-        .attr('stroke', '#0a0a18')
+        .attr('stroke', '#08081a')
         .attr('stroke-width', d => d.depth === 0 ? 3 : 2)
-        .attr('filter', d => d.depth <= 1 ? 'url(#glow-' + (d.data.type === 'root' ? 'root' : d.data.type) + ')' : null)
-        .style('cursor', 'default');
+        .attr('filter', d => d.depth <= 1 ? 'url(#glow-' + d.data.type + ')' : null);
 
-    // ── Labels — absolute position, no group-level rotation ──
-    node.append('text')
-        .attr('dy', '0.35em')
-        .attr('x', d => {
-            if (d.depth === 0) return 0;
-            const [x] = d3.pointRadial(d.x, 0);   // x component determines left/right
-            const [nx] = d3.pointRadial(d.x, d.y);
-            return nx >= 0 ? (d.depth === 1 ? 14 : 10) : (d.depth === 1 ? -14 : -10);
-        })
-        .attr('text-anchor', d => {
-            if (d.depth === 0) return 'middle';
-            const [nx] = d3.pointRadial(d.x, d.y);
-            return nx >= 0 ? 'start' : 'end';
-        })
-        .attr('font-size', d => d.depth === 0 ? '13px' : d.depth === 1 ? '12px' : '10.5px')
-        .attr('font-weight', d => d.depth <= 1 ? '700' : '400')
-        .attr('fill', d => getColor(d, 'text'))
-        .attr('font-family', 'Inter, system-ui, sans-serif')
-        .text(d => d.data.name)
-        .style('pointer-events', 'none')
-        .style('paint-order', 'stroke')
-        .style('stroke', '#0a0a18')
-        .style('stroke-width', '3px')
-        .style('stroke-linejoin', 'round');
+    // ── Labels — carefully positioned, no overlap ──
+    node.each(function(d) {
+        const el = d3.select(this);
+        const [nx, ny] = pt(d.x, d.y);   // absolute pos (relative to g center)
+
+        if (d.depth === 0) {
+            // Root: short title BELOW the circle
+            const short = (analysisData.title || 'Video').slice(0, 28);
+            const label = short.length < (analysisData.title || '').length ? short + '…' : short;
+            el.append('text')
+              .attr('y', 24)
+              .attr('text-anchor', 'middle')
+              .attr('font-size', '11px')
+              .attr('font-weight', '600')
+              .attr('fill', '#c4b5fd')
+              .attr('font-family', 'Inter, system-ui, sans-serif')
+              .style('paint-order', 'stroke')
+              .style('stroke', '#08081a')
+              .style('stroke-width', '3px')
+              .text(label);
+            return;
+        }
+
+        // Determine left vs right based on x-coordinate of THIS node
+        const isRight = nx >= 0;
+        const pad = d.depth === 1 ? 15 : 10;
+
+        const txt = el.append('text')
+            .attr('dy', '0.35em')
+            .attr('x', isRight ? pad : -pad)
+            .attr('text-anchor', isRight ? 'start' : 'end')
+            .attr('font-size', d.depth === 1 ? '11.5px' : '10px')
+            .attr('font-weight', d.depth === 1 ? '700' : '400')
+            .attr('fill', getColor(d, 'text'))
+            .attr('font-family', 'Inter, system-ui, sans-serif')
+            .style('paint-order', 'stroke')
+            .style('stroke', '#08081a')
+            .style('stroke-width', '4px');
+
+        // Wrap text into ≤ 2 tspan lines of ~22 chars each
+        const name  = d.data.name || '';
+        const LIMIT = d.depth === 1 ? 24 : 22;
+        if (name.length <= LIMIT) {
+            txt.text(name);
+        } else {
+            // Break at space near LIMIT
+            const sp = name.lastIndexOf(' ', LIMIT);
+            const ln1 = name.slice(0, sp > 0 ? sp : LIMIT);
+            const ln2 = name.slice(sp > 0 ? sp + 1 : LIMIT);
+            const short2 = ln2.length > LIMIT ? ln2.slice(0, LIMIT - 1) + '…' : ln2;
+            txt.append('tspan')
+               .attr('x', isRight ? pad : -pad)
+               .attr('dy', '-0.6em')
+               .text(ln1);
+            txt.append('tspan')
+               .attr('x', isRight ? pad : -pad)
+               .attr('dy', '1.2em')
+               .text(short2);
+        }
+    });
 
     // ── Tooltip ──
     const tooltip = document.getElementById('mmTooltip');
-    node.on('mouseover', function(event, d) {
-        if (!tooltip || d.depth === 0) return;
-        const txt = d.data.name + (d.data.extra ? '\n⏱ ' + d.data.extra : '');
-        tooltip.textContent = txt;
-        tooltip.classList.remove('hidden');
-        positionTooltip(event);
-    }).on('mousemove', function(event) {
-        positionTooltip(event);
-    }).on('mouseleave', function() {
-        tooltip?.classList.add('hidden');
-    });
+    node.filter(d => d.depth > 0)
+        .on('mouseover', function(event, d) {
+            if (!tooltip) return;
+            const txt = d.data.name + (d.data.extra ? '\n⏱ ' + d.data.extra : '');
+            tooltip.textContent = txt;
+            tooltip.classList.remove('hidden');
+            moveTooltip(event);
+        })
+        .on('mousemove', moveTooltip)
+        .on('mouseleave', () => tooltip?.classList.add('hidden'));
 
-    function positionTooltip(event) {
+    function moveTooltip(event) {
         if (!tooltip) return;
         const rect = area.getBoundingClientRect();
-        const x = event.clientX - rect.left;
-        const y = event.clientY - rect.top;
-        tooltip.style.left = (x + 14) + 'px';
-        tooltip.style.top  = (y - 10) + 'px';
+        tooltip.style.left = (event.clientX - rect.left + 14) + 'px';
+        tooltip.style.top  = (event.clientY - rect.top  - 10) + 'px';
     }
 
-    // Fade-in animation
     g.style('opacity', 0).transition().duration(500).style('opacity', 1);
 }
-
 
 
 function mmResetZoom() {
