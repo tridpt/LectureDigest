@@ -655,62 +655,65 @@ class TranslateRequest(BaseModel):
 @app.post("/api/translate-transcript")
 async def translate_transcript(req: TranslateRequest):
     """
-    Translate transcript segments to the target language using Gemini.
-    Batches all text in a single API call to minimise latency.
+    Translate transcript segments in chunks of 40 to avoid Gemini overload.
     """
     if not req.transcript:
         raise HTTPException(status_code=400, detail="Transcript is empty")
 
-    client = get_genai_client()
+    client    = get_genai_client()
     SEPARATOR = "|||"
+    CHUNK_SIZE = 40   # Gemini handles ~40 short segments reliably
 
-    # Join all segments with the separator
-    combined = f"\n{SEPARATOR}\n".join(
-        seg.get("text", "").strip().replace("\n", " ")
-        for seg in req.transcript
-    )
+    def translate_chunk(segs: list) -> list[str]:
+        """Translate a chunk of segments, return list of translated strings."""
+        combined = f"\n{SEPARATOR}\n".join(
+            seg.get("text", "").strip().replace("\n", " ")
+            for seg in segs
+        )
+        prompt = (
+            f"You are a professional translator. Translate each segment to **{req.target_language}**.\n\n"
+            f"Rules:\n"
+            f"- Keep EXACTLY {len(segs)} segments — one translation per segment.\n"
+            f"- Separate each translated segment with a line containing only: {SEPARATOR}\n"
+            f"- No extra commentary, numbering, or headers.\n"
+            f"- Preserve meaning and tone naturally.\n\n"
+            f"Segments:\n{combined}"
+        )
+        last_err = None
+        for attempt in range(5):
+            try:
+                resp = client.models.generate_content(
+                    model="gemini-2.0-flash",
+                    contents=prompt,
+                )
+                parts = [p.strip() for p in resp.text.strip().split(SEPARATOR)]
+                return parts
+            except Exception as e:
+                last_err = e
+                wait = 2 ** attempt
+                if any(code in str(e) for code in ["503", "429", "overloaded"]):
+                    time.sleep(wait)
+                    continue
+                raise HTTPException(status_code=500, detail=f"Translation error: {e}")
+        raise HTTPException(status_code=503, detail=f"Gemini overloaded after retries: {last_err}")
 
-    prompt = (
-        f"You are a professional translator. Translate each of the following transcript "
-        f"segments to **{req.target_language}**.\n\n"
-        f"Rules:\n"
-        f"- Keep the EXACT number of segments — one translation per segment.\n"
-        f"- Separate each translated segment with a line that contains only: {SEPARATOR}\n"
-        f"- Do NOT add any extra commentary, numbering, or headers.\n"
-        f"- Preserve the meaning and tone naturally.\n\n"
-        f"Segments:\n{combined}"
-    )
+    # Split transcript into chunks and translate each
+    all_translations: list[str] = []
+    for chunk_start in range(0, len(req.transcript), CHUNK_SIZE):
+        chunk = req.transcript[chunk_start: chunk_start + CHUNK_SIZE]
+        translated = translate_chunk(chunk)
+        all_translations.extend(translated)
+        # Brief pause between chunks to avoid rate limiting
+        if chunk_start + CHUNK_SIZE < len(req.transcript):
+            time.sleep(0.5)
 
-    last_err = None
-    response = None
-    for attempt in range(4):
-        try:
-            response = client.models.generate_content(
-                model="gemini-2.0-flash",
-                contents=prompt,
-            )
-            break
-        except Exception as e:
-            last_err = e
-            wait = 2 ** attempt
-            if "503" in str(e) or "overloaded" in str(e).lower() or "429" in str(e):
-                time.sleep(wait)
-                continue
-            raise HTTPException(status_code=500, detail=f"Translation failed: {e}")
-
-    if response is None:
-        raise HTTPException(status_code=503, detail=f"Gemini overloaded: {last_err}")
-
-    raw = response.text.strip()
-    translated_parts = [p.strip() for p in raw.split(SEPARATOR)]
-
-    # Align with original — pad or trim if Gemini returns wrong count
+    # Align with original
     result = []
     for i, seg in enumerate(req.transcript):
         result.append({
-            "start": seg.get("start", 0),
-            "text":  seg.get("text", ""),
-            "translation": translated_parts[i] if i < len(translated_parts) else ""
+            "start":       seg.get("start", 0),
+            "text":        seg.get("text", ""),
+            "translation": all_translations[i] if i < len(all_translations) else ""
         })
 
     return {"translations": result, "target_language": req.target_language}

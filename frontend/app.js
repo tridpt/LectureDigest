@@ -2687,27 +2687,40 @@ async function translateTranscript() {
     if (!transcriptData || !transcriptData.length) {
         showToast('⚠️ Không có transcript để dịch'); return;
     }
-    const lang = document.getElementById('tsLangSelect')?.value || 'Vietnamese';
-    const btn  = document.getElementById('tsTranslateBtn');
+    const lang    = document.getElementById('tsLangSelect')?.value || 'Vietnamese';
+    const btn     = document.getElementById('tsTranslateBtn');
+    const chunks  = Math.ceil(transcriptData.length / 40);
+    const plural  = chunks > 1 ? ' (' + chunks + ' phần)' : '';
 
     // Loading state
     if (btn) { btn.disabled = true; btn.textContent = 'Đang dịch...'; }
-    showToast('🌐 Đang dịch transcript bằng Gemini...', 0);
+    showToast('🌐 Đang dịch transcript' + plural + '...', 0);
 
     try {
         const res = await fetch('/api/translate-transcript', {
-            method: 'POST',
+            method:  'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ transcript: transcriptData, target_language: lang })
+            body:    JSON.stringify({ transcript: transcriptData, target_language: lang })
         });
-        if (!res.ok) throw new Error(await res.text());
+
+        if (!res.ok) {
+            const errText = await res.text();
+            if (res.status === 503) {
+                showToast('⏳ Gemini đang bận, thử lại sau 10 giây...', 4000);
+                // Auto retry once after 10s
+                setTimeout(translateTranscript, 10000);
+                return;
+            }
+            throw new Error(errText);
+        }
+
         const data = await res.json();
-        tsTranslations  = data.translations || [];
+        tsTranslations    = data.translations || [];
         tsShowTranslation = true;
         renderTranslations();
         document.getElementById('tsTranslateToggle')?.classList.remove('hidden');
         document.getElementById('tsTranslateClear')?.classList.remove('hidden');
-        showToast('✅ Đã dịch xong!', 2000);
+        showToast('✅ Đã dịch xong ' + tsTranslations.length + ' đoạn!', 2500);
     } catch (e) {
         showToast('❌ Lỗi dịch: ' + e.message);
     } finally {
