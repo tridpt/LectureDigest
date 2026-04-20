@@ -63,21 +63,30 @@ def _init_cookies() -> str | None:
         return None
 
 def get_yt_api() -> YouTubeTranscriptApi:
-    """Return a YouTubeTranscriptApi instance, using cookies if configured."""
-    cookies_path = _init_cookies()
+    """Return a YouTubeTranscriptApi instance.
+    If YOUTUBE_COOKIES_B64 or YOUTUBE_COOKIES_PATH is set, loads cookies
+    into an httpx.Client to bypass YouTube cloud-IP blocks.
+    """
+    import httpx
+    from http.cookiejar import MozillaCookieJar
 
-    # Also support direct file path via YOUTUBE_COOKIES_PATH env var
+    cookies_path = _init_cookies()
     if not cookies_path:
-        direct_path = os.getenv("YOUTUBE_COOKIES_PATH", "").strip()
-        if direct_path and os.path.isfile(direct_path):
-            cookies_path = direct_path
+        direct = os.getenv("YOUTUBE_COOKIES_PATH", "").strip()
+        if direct and os.path.isfile(direct):
+            cookies_path = direct
 
     if cookies_path:
-        print(f"[LectureDigest] Using cookies file: {cookies_path}")
         try:
-            return YouTubeTranscriptApi(cookies=cookies_path)   # v1.x
-        except TypeError:
-            return YouTubeTranscriptApi(cookie_path=cookies_path)  # fallback
+            jar = MozillaCookieJar(cookies_path)
+            jar.load(ignore_discard=True, ignore_expires=True)
+            cookie_dict = {c.name: c.value for c in jar}
+            client = httpx.Client(cookies=cookie_dict)
+            print(f"[LectureDigest] Loaded {len(cookie_dict)} cookies from {cookies_path}")
+            return YouTubeTranscriptApi(http_client=client)
+        except Exception as e:
+            print(f"[LectureDigest] Cookie load failed ({e}), continuing without cookies.")
+
     return YouTubeTranscriptApi()
 
 
@@ -149,22 +158,10 @@ def _snippets_to_list(fetched) -> list:
 
 
 def get_transcript(video_id: str, language: str = "en") -> list:
-    """Fetch transcript with graceful language fallback.
-    Compatible with youtube-transcript-api v0.x and v1.x.
-    """
+    """Fetch transcript using youtube-transcript-api v1.x."""
     try:
-        # v1.x uses instance; v0.x used class method — try v1.x first
         api = get_yt_api()
         transcript_list = api.list(video_id)
-    except (TypeError, AttributeError):
-        # Fallback: old v0.x class-method style
-        try:
-            transcript_list = YouTubeTranscriptApi.list_transcripts(video_id)  # type: ignore[attr-defined]
-        except Exception as e:
-            raise HTTPException(
-                status_code=404,
-                detail=f"Could not fetch transcript. ({str(e)})",
-            )
     except Exception as e:
         raise HTTPException(
             status_code=404,
