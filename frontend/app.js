@@ -148,6 +148,7 @@ function startLoadingAnimation() {
 // Bypasses cloud IP blocks on Render/Railway/etc.
 // ──────────────────────────────────────
 const CORS_PROXIES = [
+    url => `https://delicate-disk-ef3f.tranductrist.workers.dev/?url=${encodeURIComponent(url)}`, // Cloudflare Worker
     url => `https://corsproxy.io/?url=${encodeURIComponent(url)}`,
     url => `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`,
 ];
