@@ -65,8 +65,19 @@ def _init_cookies() -> str | None:
 def get_yt_api() -> YouTubeTranscriptApi:
     """Return a YouTubeTranscriptApi instance, using cookies if configured."""
     cookies_path = _init_cookies()
+
+    # Also support direct file path via YOUTUBE_COOKIES_PATH env var
+    if not cookies_path:
+        direct_path = os.getenv("YOUTUBE_COOKIES_PATH", "").strip()
+        if direct_path and os.path.isfile(direct_path):
+            cookies_path = direct_path
+
     if cookies_path:
-        return YouTubeTranscriptApi(cookie_path=cookies_path)
+        print(f"[LectureDigest] Using cookies file: {cookies_path}")
+        try:
+            return YouTubeTranscriptApi(cookies=cookies_path)   # v1.x
+        except TypeError:
+            return YouTubeTranscriptApi(cookie_path=cookies_path)  # fallback
     return YouTubeTranscriptApi()
 
 
