@@ -1282,6 +1282,72 @@ body {
 }
 
 
+
+/* ═══════════════════════════════════════════════
+   PERSONAL NOTES
+   ═══════════════════════════════════════════════ */
+
+.notes-card { display: flex; flex-direction: column; gap: 0; padding: 0; overflow: hidden; }
+.notes-card .card-header {
+    padding: 16px 18px 12px;
+    border-bottom: 1px solid rgba(255,255,255,0.06);
+    display: flex; align-items: center; gap: 10px;
+}
+.notes-header-actions {
+    margin-left: auto;
+    display: flex; align-items: center; gap: 8px;
+}
+.notes-word-count {
+    font-size: 11px;
+    color: var(--text-muted);
+    margin-right: 4px;
+}
+.notes-action-btn {
+    width: 28px; height: 28px;
+    border-radius: 7px;
+    border: none;
+    background: rgba(255,255,255,0.06);
+    color: var(--text-secondary);
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    transition: all 0.15s;
+    flex-shrink: 0;
+}
+.notes-action-btn:hover { background: rgba(139,92,246,0.2); color: var(--accent-light); }
+.notes-action-btn svg { width: 14px; height: 14px; }
+
+.notes-textarea {
+    width: 100%;
+    min-height: 180px;
+    background: transparent;
+    border: none;
+    outline: none;
+    resize: vertical;
+    color: var(--text-primary);
+    font-size: 13.5px;
+    font-family: inherit;
+    line-height: 1.75;
+    padding: 14px 18px;
+    box-sizing: border-box;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(139,92,246,0.3) transparent;
+}
+.notes-textarea::-webkit-scrollbar { width: 4px; }
+.notes-textarea::-webkit-scrollbar-thumb { background: rgba(139,92,246,0.3); border-radius: 2px; }
+.notes-textarea::placeholder { color: var(--text-muted); line-height: 1.75; }
+
+.notes-footer {
+    padding: 6px 18px 12px;
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+}
+.notes-save-status {
+    font-size: 11px;
+    color: #4ade80;
+    transition: color 0.3s;
+}
+
 /* ═══════════════════════════════════════════════
    CHAT WITH LECTURE
    ═══════════════════════════════════════════════ */
@@ -1520,7 +1586,11 @@ body {
     line-height: 1.5;
     max-height: 120px;
     transition: border-color 0.2s;
+    overflow-y: auto;
+    scrollbar-width: none;        /* Firefox */
+    -ms-overflow-style: none;     /* IE/Edge */
 }
+.chat-input::-webkit-scrollbar { display: none; }  /* Chrome/Safari */
 .chat-input:focus { border-color: rgba(139,92,246,0.5); }
 .chat-input::placeholder { color: var(--text-muted); }
 .chat-send-btn {

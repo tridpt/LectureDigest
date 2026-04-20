@@ -34,6 +34,92 @@ const chatState = {
 const HISTORY_KEY = 'lectureDigest_history';
 const HISTORY_MAX = 30;
 
+// ──────────────────────────────────────
+// NOTES (localStorage per video)
+// ──────────────────────────────────────
+const NOTES_KEY_PREFIX = 'lectureDigest_note_';
+let notesSaveTimer = null;
+
+function notesKey(videoId) { return NOTES_KEY_PREFIX + videoId; }
+
+function loadNote(videoId) {
+    try { return localStorage.getItem(notesKey(videoId)) || ''; }
+    catch { return ''; }
+}
+
+function saveNote(videoId, text) {
+    try { localStorage.setItem(notesKey(videoId), text); }
+    catch {}
+}
+
+function initNotes(videoId) {
+    const textarea = document.getElementById('notesTextarea');
+    const status   = document.getElementById('notesSaveStatus');
+    const counter  = document.getElementById('notesWordCount');
+    if (!textarea) return;
+
+    // Load saved note
+    textarea.value = loadNote(videoId);
+    updateWordCount(textarea.value, counter);
+
+    // Remove old listener by replacing element clone
+    const fresh = textarea.cloneNode(true);
+    textarea.parentNode.replaceChild(fresh, textarea);
+
+    fresh.addEventListener('input', () => {
+        updateWordCount(fresh.value, counter);
+        if (status) { status.textContent = '...'; status.style.color = 'var(--text-muted)'; }
+        clearTimeout(notesSaveTimer);
+        notesSaveTimer = setTimeout(() => {
+            saveNote(videoId, fresh.value);
+            if (status) { status.textContent = '✓ Đã lưu'; status.style.color = '#4ade80'; }
+        }, 800);
+    });
+}
+
+function updateWordCount(text, el) {
+    if (!el) return;
+    const words = text.trim() ? text.trim().split(/\s+/).length : 0;
+    el.textContent = words + ' từ';
+}
+
+function insertNoteTimestamp() {
+    const textarea = document.getElementById('notesTextarea');
+    if (!textarea || !ytPlayer) return;
+
+    let secs = 0;
+    try { secs = Math.floor(ytPlayer.getCurrentTime() || 0); } catch {}
+    const m = String(Math.floor(secs / 60)).padStart(2, '0');
+    const s = String(secs % 60).padStart(2, '0');
+    const stamp = `[${m}:${s}] `;
+
+    // Insert at cursor position
+    const start = textarea.selectionStart;
+    const end   = textarea.selectionEnd;
+    const before = textarea.value.substring(0, start);
+    const after  = textarea.value.substring(end);
+    textarea.value = before + stamp + after;
+    textarea.selectionStart = textarea.selectionEnd = start + stamp.length;
+    textarea.focus();
+    textarea.dispatchEvent(new Event('input'));
+}
+
+async function copyNotes() {
+    const textarea = document.getElementById('notesTextarea');
+    const btn = document.getElementById('notesCopyBtn');
+    if (!textarea?.value.trim()) { showToast('📝 Chưa có ghi chú để copy'); return; }
+    try {
+        await navigator.clipboard.writeText(textarea.value);
+        if (btn) {
+            btn.style.color = '#4ade80';
+            setTimeout(() => btn.style.color = '', 1500);
+        }
+        showToast('✅ Đã copy ghi chú!');
+    } catch {
+        showToast('❌ Không thể copy');
+    }
+}
+
 function loadHistory() {
     try { return JSON.parse(localStorage.getItem(HISTORY_KEY) || '[]'); }
     catch { return []; }
@@ -80,6 +166,7 @@ function loadFromHistory(videoId) {
     toggleHistoryPanel(false);
     clearChat();             // fresh chat when loading from history
     renderResults(entry.data);
+    initNotes(entry.video_id);           // load notes for this video
     showSection('resultsSection');
 }
 
@@ -378,6 +465,7 @@ async function analyzeVideo() {
         clearChat();            // fresh chat for each new video
         renderResults(analysisData);
         saveToHistory(analysisData);   // includes transcript for quiz regeneration
+        initNotes(analysisData.video_id);    // load/init personal notes
         showSection('resultsSection');
 
 

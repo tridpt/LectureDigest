@@ -62,10 +62,6 @@
                     </div>
                 </div>
 
-                <div class="header-badge">
-                    <span class="badge-dot" aria-hidden="true"></span>
-                    Powered by Gemini AI
-                </div>
             </div>
         </div>
     </header>
@@ -223,6 +219,33 @@
                     <div class="takeaways-section">
                         <h4 class="takeaways-title">Key Takeaways</h4>
                         <ul class="takeaways-list" id="takeawaysList" aria-label="Key takeaways"></ul>
+                    </div>
+                </div>
+
+                <!-- Notes Card -->
+                <div class="card notes-card" id="notesCard">
+                    <div class="card-header">
+                        <span class="card-icon" aria-hidden="true">📝</span>
+                        <h3 class="card-title">Ghi chú</h3>
+                        <div class="notes-header-actions">
+                            <span class="notes-word-count" id="notesWordCount">0 từ</span>
+                            <button class="notes-action-btn" id="notesTimestampBtn" onclick="insertNoteTimestamp()" title="Chèn timestamp hiện tại">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
+                                </svg>
+                            </button>
+                            <button class="notes-action-btn" id="notesCopyBtn" onclick="copyNotes()" title="Copy ghi chú">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/>
+                                </svg>
+                            </button>
+                        </div>
+                    </div>
+                    <textarea class="notes-textarea" id="notesTextarea"
+                              placeholder="Ghi chú của bạn về bài giảng này...&#10;&#10;💡 Tip: Bấm ⏱ để chèn timestamp video đang phát"
+                              aria-label="Ghi chú cá nhân"></textarea>
+                    <div class="notes-footer">
+                        <span class="notes-save-status" id="notesSaveStatus">✓ Đã lưu</span>
                     </div>
                 </div>
             </aside>
