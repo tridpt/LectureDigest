@@ -646,6 +646,76 @@ Answer:"""
         raise HTTPException(status_code=500, detail=f"Chat failed: {str(e)}")
 
 
+# ── /api/translate-transcript ─────────────────────────────────────────────────
+class TranslateRequest(BaseModel):
+    transcript: list           # [{text, start}, ...]
+    target_language: str = "Vietnamese"
+
+
+@app.post("/api/translate-transcript")
+async def translate_transcript(req: TranslateRequest):
+    """
+    Translate transcript segments to the target language using Gemini.
+    Batches all text in a single API call to minimise latency.
+    """
+    if not req.transcript:
+        raise HTTPException(status_code=400, detail="Transcript is empty")
+
+    client = get_genai_client()
+    SEPARATOR = "|||"
+
+    # Join all segments with the separator
+    combined = f"\n{SEPARATOR}\n".join(
+        seg.get("text", "").strip().replace("\n", " ")
+        for seg in req.transcript
+    )
+
+    prompt = (
+        f"You are a professional translator. Translate each of the following transcript "
+        f"segments to **{req.target_language}**.\n\n"
+        f"Rules:\n"
+        f"- Keep the EXACT number of segments — one translation per segment.\n"
+        f"- Separate each translated segment with a line that contains only: {SEPARATOR}\n"
+        f"- Do NOT add any extra commentary, numbering, or headers.\n"
+        f"- Preserve the meaning and tone naturally.\n\n"
+        f"Segments:\n{combined}"
+    )
+
+    last_err = None
+    response = None
+    for attempt in range(4):
+        try:
+            response = client.models.generate_content(
+                model="gemini-2.0-flash",
+                contents=prompt,
+            )
+            break
+        except Exception as e:
+            last_err = e
+            wait = 2 ** attempt
+            if "503" in str(e) or "overloaded" in str(e).lower() or "429" in str(e):
+                time.sleep(wait)
+                continue
+            raise HTTPException(status_code=500, detail=f"Translation failed: {e}")
+
+    if response is None:
+        raise HTTPException(status_code=503, detail=f"Gemini overloaded: {last_err}")
+
+    raw = response.text.strip()
+    translated_parts = [p.strip() for p in raw.split(SEPARATOR)]
+
+    # Align with original — pad or trim if Gemini returns wrong count
+    result = []
+    for i, seg in enumerate(req.transcript):
+        result.append({
+            "start": seg.get("start", 0),
+            "text":  seg.get("text", ""),
+            "translation": translated_parts[i] if i < len(translated_parts) else ""
+        })
+
+    return {"translations": result, "target_language": req.target_language}
+
+
 # ── Serve frontend static files ───────────────────────────────────────────────
 # Mount AFTER all API routes so /api/* routes take priority.
 _FRONTEND_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "frontend"))

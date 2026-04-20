@@ -462,6 +462,24 @@
                         </div>
                     </div>
 
+                    <!-- Translate bar -->
+                    <div class="ts-translate-bar" id="tsTranslateBar">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14" style="flex-shrink:0;color:#888"><path d="M3 5h12M9 3v2m1.048 9.5A18.022 18.022 0 016.412 9m6.088 9h7M11 21l5-10 5 10M12.751 5C11.783 10.77 8.07 15.61 3 18.129" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                        <select class="ts-lang-select" id="tsLangSelect">
+                            <option value="Vietnamese">Tiếng Việt</option>
+                            <option value="English">English</option>
+                            <option value="Japanese">日本語</option>
+                            <option value="Korean">한국어</option>
+                            <option value="Chinese Simplified">中文简体</option>
+                            <option value="French">Français</option>
+                            <option value="Spanish">Español</option>
+                            <option value="German">Deutsch</option>
+                        </select>
+                        <button class="ts-translate-btn" id="tsTranslateBtn" onclick="translateTranscript()">Dịch</button>
+                        <button class="ts-translate-toggle hidden" id="tsTranslateToggle" onclick="toggleTranslation()">Ẩn dịch</button>
+                        <button class="ts-translate-clear hidden" id="tsTranslateClear" onclick="clearTranslation()" title="Xoá bản dịch">✕</button>
+                    </div>
+
                     <!-- Transcript lines -->
                     <div class="transcript-list" id="transcriptList" role="list"></div>
                 </div>

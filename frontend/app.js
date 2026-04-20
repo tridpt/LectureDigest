@@ -2674,3 +2674,84 @@ function syncTranscriptHighlight() {
         }
     }
 }
+
+
+// ══════════════════════════════════════════════════════════
+// TRANSCRIPT TRANSLATION
+// ══════════════════════════════════════════════════════════
+
+let tsTranslations  = [];   // [{start, text, translation}]
+let tsShowTranslation = true;
+
+async function translateTranscript() {
+    if (!transcriptData || !transcriptData.length) {
+        showToast('⚠️ Không có transcript để dịch'); return;
+    }
+    const lang = document.getElementById('tsLangSelect')?.value || 'Vietnamese';
+    const btn  = document.getElementById('tsTranslateBtn');
+
+    // Loading state
+    if (btn) { btn.disabled = true; btn.textContent = 'Đang dịch...'; }
+    showToast('🌐 Đang dịch transcript bằng Gemini...', 0);
+
+    try {
+        const res = await fetch('/api/translate-transcript', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ transcript: transcriptData, target_language: lang })
+        });
+        if (!res.ok) throw new Error(await res.text());
+        const data = await res.json();
+        tsTranslations  = data.translations || [];
+        tsShowTranslation = true;
+        renderTranslations();
+        document.getElementById('tsTranslateToggle')?.classList.remove('hidden');
+        document.getElementById('tsTranslateClear')?.classList.remove('hidden');
+        showToast('✅ Đã dịch xong!', 2000);
+    } catch (e) {
+        showToast('❌ Lỗi dịch: ' + e.message);
+    } finally {
+        if (btn) { btn.disabled = false; btn.textContent = 'Dịch'; }
+    }
+}
+
+function renderTranslations() {
+    const list = document.getElementById('transcriptList');
+    if (!list) return;
+
+    // Remove existing translation spans
+    list.querySelectorAll('.tl-translation').forEach(el => el.remove());
+
+    if (!tsShowTranslation || !tsTranslations.length) return;
+
+    tsTranslations.forEach((seg, i) => {
+        if (!seg.translation) return;
+        const line = document.getElementById('tl-' + i);
+        if (!line) return;
+        // Remove existing
+        line.querySelector('.tl-translation')?.remove();
+        const span = document.createElement('span');
+        span.className = 'tl-translation';
+        span.textContent = seg.translation;
+        line.appendChild(span);
+    });
+}
+
+function toggleTranslation() {
+    tsShowTranslation = !tsShowTranslation;
+    const btn = document.getElementById('tsTranslateToggle');
+    if (btn) btn.textContent = tsShowTranslation ? 'Ẩn dịch' : 'Hiện dịch';
+    renderTranslations();
+}
+
+function clearTranslation() {
+    tsTranslations = [];
+    tsShowTranslation = true;
+    const list = document.getElementById('transcriptList');
+    list?.querySelectorAll('.tl-translation').forEach(el => el.remove());
+    document.getElementById('tsTranslateToggle')?.classList.add('hidden');
+    document.getElementById('tsTranslateClear')?.classList.add('hidden');
+    const btn = document.getElementById('tsTranslateToggle');
+    if (btn) btn.textContent = 'Ẩn dịch';
+    showToast('🗑 Đã xoá bản dịch', 1500);
+}
