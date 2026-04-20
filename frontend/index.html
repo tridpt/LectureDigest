@@ -252,7 +252,14 @@
                         <h3 class="card-title">Knowledge Quiz</h3>
                         <div class="quiz-header-right">
                             <span class="quiz-score-badge hidden" id="scoreBadge" aria-live="polite">0/0</span>
-                            <!-- Flashcard export dropdown -->
+                            <!-- Regenerate quiz button -->
+                            <button class="regen-quiz-btn" id="regenQuizBtn" onclick="regenerateQuiz()" title="Tạo bộ câu hỏi mới" aria-label="Tạo bộ câu hỏi mới">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                                    <path d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" stroke-linecap="round" stroke-linejoin="round"/>
+                                </svg>
+                                Câu hỏi mới
+                            </button>
+
                             <div class="fc-dropdown" id="fcDropdown">
                                 <button class="fc-export-btn" onclick="toggleFcMenu()" aria-haspopup="true" aria-expanded="false" id="fcToggleBtn">
                                     <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">

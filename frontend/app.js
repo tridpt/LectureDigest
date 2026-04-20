@@ -46,6 +46,7 @@ function saveToHistory(data) {
         savedAt:     Date.now(),
         lang:        selectedLang,
         data,
+        transcript:  data.transcript || null,  // store for quiz regeneration
     };
     filtered.unshift(entry);                   // newest first
     filtered.splice(HISTORY_MAX);              // keep max N
@@ -130,12 +131,12 @@ document.addEventListener('click', e => {
     }
 });
 
-// Update badge count on page load
-document.addEventListener('DOMContentLoaded', () => {
+// Update badge count immediately (script runs after DOM is ready)
+(function updateHistoryBadge() {
     const count = loadHistory().length;
     const badge = document.getElementById('historyCount');
     if (badge) badge.textContent = count;
-});
+})();
 
 // ──────────────────────────────────────
 // YOUTUBE IFRAME API
@@ -649,6 +650,58 @@ function statBox(num, label, color) {
 function restartQuiz() {
     if (analysisData) initQuiz(analysisData.quiz || []);
 }
+
+async function regenerateQuiz() {
+    if (!analysisData) return;
+
+    // Get transcript from history
+    const histEntry = loadHistory().find(h => h.video_id === analysisData.video_id);
+    const transcript = histEntry?.data?.transcript || analysisData.transcript;
+
+    if (!transcript || !transcript.length) {
+        alert('Không có transcript để tạo câu hỏi mới. Hãy analyze lại video.');
+        return;
+    }
+
+    const btn = document.getElementById('regenQuizBtn');
+    const origHtml = btn?.innerHTML || '';
+    if (btn) {
+        btn.disabled = true;
+        btn.innerHTML = `<svg class="spin" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" stroke-linecap="round" stroke-linejoin="round"/></svg> Đang tạo...`;
+    }
+
+    try {
+        const res = await fetch(`${API_BASE}/api/quiz`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                title: analysisData.title || '',
+                output_language: selectedLang,
+                transcript,
+            }),
+        });
+        if (!res.ok) {
+            const err = await res.json().catch(() => ({ detail: 'Unknown error' }));
+            throw new Error(err.detail || `Server error ${res.status}`);
+        }
+        const data = await res.json();
+        if (!data.quiz?.length) throw new Error('No quiz questions returned');
+
+        // Update global state and re-render
+        analysisData.quiz = data.quiz;
+        initQuiz(data.quiz);
+        // Scroll to quiz
+        document.getElementById('quizCard')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    } catch (err) {
+        alert(`Tạo câu hỏi mới thất bại: ${err.message}`);
+    } finally {
+        if (btn) {
+            btn.disabled = false;
+            btn.innerHTML = origHtml;
+        }
+    }
+}
+
 
 // ──────────────────────────────────────
 // FLASHCARD EXPORT

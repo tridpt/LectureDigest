@@ -223,6 +223,40 @@ body {
     width: 15px; height: 15px;
     flex-shrink: 0;
 }
+
+/* Regenerate quiz button */
+.regen-quiz-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 12px;
+    border-radius: 8px;
+    border: 1px solid rgba(139,92,246,0.35);
+    background: rgba(139,92,246,0.08);
+    color: var(--accent-light);
+    font-size: 12px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+    font-family: inherit;
+    white-space: nowrap;
+}
+.regen-quiz-btn:hover:not(:disabled) {
+    background: rgba(139,92,246,0.18);
+    border-color: var(--accent);
+}
+.regen-quiz-btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+.regen-quiz-btn svg { width: 14px; height: 14px; flex-shrink: 0; }
+.regen-quiz-btn svg.spin {
+    animation: spinIcon 1s linear infinite;
+}
+@keyframes spinIcon {
+    from { transform: rotate(0deg); }
+    to   { transform: rotate(360deg); }
+}
 .hist-badge {
     display: inline-flex;
     align-items: center;
@@ -244,10 +278,12 @@ body {
     right: 0;
     width: 360px;
     max-height: 480px;
-    background: var(--bg-card);
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-    box-shadow: 0 24px 64px rgba(0,0,0,0.5);
+    background: #0f0f23;
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid rgba(139, 92, 246, 0.2);
+    border-radius: 14px;
+    box-shadow: 0 24px 64px rgba(0,0,0,0.8), 0 0 0 1px rgba(255,255,255,0.04);
     z-index: 200;
     display: flex;
     flex-direction: column;

@@ -115,6 +115,13 @@ class VideoRequest(BaseModel):
     transcript: list | None = None   # pre-fetched by browser — skips server-side YT fetch
 
 
+class QuizRequest(BaseModel):
+    title: str = ''
+    output_language: str = 'English'
+    transcript: list        # [{text, start}, ...]
+
+
+
 def extract_video_id(url: str) -> str:
     """Extract YouTube video ID from various URL formats."""
     patterns = [
@@ -445,6 +452,68 @@ async def health():
         "status": "ok",
         "gemini_configured": bool(os.getenv("GEMINI_API_KEY")),
     }
+
+
+@app.post("/api/quiz")
+async def regenerate_quiz(request: QuizRequest):
+    """Generate a fresh set of quiz questions for a video using stored transcript."""
+    if not os.getenv("GEMINI_API_KEY"):
+        raise HTTPException(status_code=500, detail="GEMINI_API_KEY not configured")
+
+    if not request.transcript:
+        raise HTTPException(status_code=400, detail="transcript is required")
+
+    # Format transcript lines
+    lines = []
+    for entry in request.transcript:
+        time_str = format_seconds(entry["start"])
+        text = entry["text"].strip().replace("\n", " ")
+        lines.append(f"[{time_str}] {text}")
+    full_transcript = "\n".join(lines)
+    if len(full_transcript) > 40000:
+        full_transcript = full_transcript[:40000] + "\n...[truncated]..."
+
+    prompt = f"""You are an expert educational content analyzer creating a NEW quiz set.
+
+VIDEO TITLE: {request.title}
+TRANSCRIPT:
+{full_transcript}
+
+⚠️ Generate ALL text in **{request.output_language}**.
+
+Create a DIFFERENT set of 8-12 multiple choice questions — cover topics not fully tested before,
+use different question styles (conceptual, application, recall, critical thinking).
+
+Return ONLY a valid JSON array with this exact format (no markdown, no extra text):
+[
+  {{
+    "id": 1,
+    "question": "A thoughtful question testing understanding",
+    "options": ["Option A", "Option B", "Option C", "Option D"],
+    "correct_index": 0,
+    "explanation": "Detailed explanation of the correct answer and why others are wrong",
+    "timestamp": <seconds as integer>,
+    "timestamp_str": "MM:SS",
+    "difficulty": "easy or medium or hard"
+  }}
+]
+
+Generate 8-12 questions. correct_index is 0-based."""
+
+    try:
+        client = get_genai_client()
+        response = client.models.generate_content(model="gemini-2.5-flash", contents=prompt)
+        text = response.text.strip()
+        if text.startswith("```"):
+            text = re.sub(r"^```(?:json)?\s*\n?", "", text)
+            text = re.sub(r"\n?\s*```$", "", text)
+        questions = json.loads(text)
+        return {"quiz": questions}
+    except json.JSONDecodeError as e:
+        raise HTTPException(status_code=500, detail=f"Failed to parse AI response: {e}")
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"AI quiz generation failed: {e}")
+
 
 
 # ── Serve frontend static files ──────────────────────────────────────────────
