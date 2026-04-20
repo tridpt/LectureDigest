@@ -2364,3 +2364,20 @@ body {
     100% { box-shadow: 0 0 0 0 rgba(139,92,246,0); }
 }
 .player-seek-flash { animation: playerFlash 0.8s ease; }
+
+/* === TRANSCRIPT KARAOKE SYNC HIGHLIGHT === */
+.transcript-line {
+    transition: background 0.25s ease;
+}
+.tl-sync-active {
+    background: rgba(139,92,246,0.14) !important;
+    border-left: 3px solid #7c3aed !important;
+    padding-left: calc(12px - 3px) !important;
+}
+.tl-sync-active .tl-ts {
+    color: #c4b5fd !important;
+}
+.tl-sync-active .tl-text {
+    color: #f1f1f1 !important;
+    font-weight: 500;
+}

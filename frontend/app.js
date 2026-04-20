@@ -254,6 +254,8 @@ function initYouTubePlayer(videoId) {
 
     if (ytPlayer && typeof ytPlayer.loadVideoById === 'function') {
         ytPlayer.loadVideoById(videoId);
+        stopTranscriptSync();   // reset sync for new video
+        tsSync_lastIndex = -1;
         return;
     }
 
@@ -274,7 +276,21 @@ function createPlayer(videoId) {
         width: '100%',
         videoId,
         playerVars: { playsinline: 1, rel: 0, modestbranding: 1 },
+        events: {
+            onStateChange: onYtStateChange
+        }
     });
+}
+
+function onYtStateChange(event) {
+    // YT.PlayerState: PLAYING=1, PAUSED=2, ENDED=0, BUFFERING=3
+    if (event.data === 1 || event.data === 3) {   // playing or buffering
+        startTranscriptSync();
+    } else {
+        // Keep sync running on pause so highlight stays accurate
+        // but stop only when ended
+        if (event.data === 0) stopTranscriptSync();
+    }
 }
 
 function seekTo(seconds) {
@@ -1733,6 +1749,9 @@ function renderTranscript(transcript) {
              + '<span class="tl-text" id="tlt-' + i + '">' + text + '</span>'
              + '</div>';
     }).join('');
+
+    // Start karaoke sync (will activate once player plays)
+    startTranscriptSync();
 }
 
 function fmtSecs(secs) {
@@ -2564,5 +2583,83 @@ function saveBookmarkLabel(videoId, id, newLabel) {
     if (bm) {
         bm.label = newLabel.trim() || fmtSecs(bm.time);
         saveBookmarks(videoId, bms);
+    }
+}
+
+
+// ══════════════════════════════════════════════════════════
+// TRANSCRIPT AUTO-HIGHLIGHT SYNC  (karaoke-style)
+// ══════════════════════════════════════════════════════════
+
+let tsSync_interval  = null;
+let tsSync_lastIndex = -1;
+let tsSync_userScrolling = false;
+let tsSync_scrollTimer   = null;
+
+function startTranscriptSync() {
+    stopTranscriptSync();
+    tsSync_lastIndex = -1;
+
+    // Detect manual scroll → pause auto-scroll briefly
+    const container = document.getElementById('transcriptList');
+    if (container) {
+        container.addEventListener('scroll', onTsUserScroll, { passive: true });
+    }
+
+    tsSync_interval = setInterval(syncTranscriptHighlight, 500);
+}
+
+function stopTranscriptSync() {
+    if (tsSync_interval) { clearInterval(tsSync_interval); tsSync_interval = null; }
+    const container = document.getElementById('transcriptList');
+    if (container) container.removeEventListener('scroll', onTsUserScroll);
+}
+
+function onTsUserScroll() {
+    tsSync_userScrolling = true;
+    clearTimeout(tsSync_scrollTimer);
+    tsSync_scrollTimer = setTimeout(() => { tsSync_userScrolling = false; }, 3000);
+}
+
+function syncTranscriptHighlight() {
+    if (!ytPlayer || typeof ytPlayer.getCurrentTime !== 'function') return;
+    const container = document.getElementById('transcriptList');
+    if (!container) return;
+
+    let currentSecs;
+    try { currentSecs = ytPlayer.getCurrentTime() || 0; } catch { return; }
+
+    // Get all transcript lines
+    const lines = container.querySelectorAll('.transcript-line');
+    if (!lines.length) return;
+
+    // Binary-search for the active line (last line whose data-secs <= currentSecs)
+    let lo = 0, hi = lines.length - 1, bestIdx = 0;
+    while (lo <= hi) {
+        const mid = (lo + hi) >> 1;
+        if (parseInt(lines[mid].dataset.secs, 10) <= currentSecs) {
+            bestIdx = mid;
+            lo = mid + 1;
+        } else {
+            hi = mid - 1;
+        }
+    }
+
+    if (bestIdx === tsSync_lastIndex) return;   // no change
+    tsSync_lastIndex = bestIdx;
+
+    // Remove old active
+    container.querySelectorAll('.tl-sync-active').forEach(el => el.classList.remove('tl-sync-active'));
+
+    const activeLine = lines[bestIdx];
+    activeLine.classList.add('tl-sync-active');
+
+    // Auto-scroll the transcript container (unless user is scrolling)
+    if (!tsSync_userScrolling) {
+        const lineTop    = activeLine.offsetTop;
+        const lineHeight = activeLine.offsetHeight;
+        const contHeight = container.clientHeight;
+        const target     = lineTop - (contHeight / 2) + (lineHeight / 2);
+        container.scrollTo({ top: Math.max(0, target), behavior: 'smooth' });
     }
 }
