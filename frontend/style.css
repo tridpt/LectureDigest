@@ -179,6 +179,203 @@ body {
     50%       { opacity: 0.4; }
 }
 
+/* ── Header actions wrapper ─────────────────── */
+.header-actions {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+/* ═══════════════════════════════════════════════
+   HISTORY PANEL
+   ═══════════════════════════════════════════════ */
+.history-wrapper {
+    position: relative;
+}
+
+.history-btn {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    padding: 7px 14px;
+    border-radius: 20px;
+    border: 1px solid var(--border);
+    background: var(--bg-card);
+    color: var(--text-secondary);
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    font-family: inherit;
+}
+.history-btn:hover {
+    border-color: var(--accent);
+    color: var(--text-primary);
+    background: rgba(139, 92, 246, 0.1);
+}
+.history-btn svg {
+    width: 15px; height: 15px;
+    flex-shrink: 0;
+}
+.hist-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 18px;
+    height: 18px;
+    padding: 0 5px;
+    border-radius: 9px;
+    background: var(--accent);
+    color: white;
+    font-size: 10px;
+    font-weight: 700;
+}
+
+/* The dropdown panel */
+.history-panel {
+    position: absolute;
+    top: calc(100% + 10px);
+    right: 0;
+    width: 360px;
+    max-height: 480px;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    box-shadow: 0 24px 64px rgba(0,0,0,0.5);
+    z-index: 200;
+    display: flex;
+    flex-direction: column;
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(-8px);
+    transition: opacity 0.2s ease, transform 0.2s ease, visibility 0.2s;
+    pointer-events: none;
+}
+.history-panel.open {
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(0);
+    pointer-events: all;
+}
+
+.hist-panel-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 14px 16px;
+    border-bottom: 1px solid var(--border);
+    flex-shrink: 0;
+}
+.hist-panel-title {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text-primary);
+}
+.hist-clear-btn {
+    font-size: 11px;
+    padding: 4px 10px;
+    border-radius: 8px;
+    border: 1px solid rgba(239,68,68,0.3);
+    background: transparent;
+    color: #f87171;
+    cursor: pointer;
+    transition: all 0.2s;
+    font-family: inherit;
+}
+.hist-clear-btn:hover {
+    background: rgba(239,68,68,0.12);
+}
+
+.hist-panel-body {
+    overflow-y: auto;
+    flex: 1;
+    padding: 8px;
+}
+.hist-empty {
+    text-align: center;
+    padding: 32px 16px;
+    color: var(--text-secondary);
+    font-size: 13px;
+    line-height: 1.7;
+}
+
+/* Each history item */
+.hist-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 8px;
+    border-radius: var(--radius-sm);
+    transition: background 0.15s;
+    cursor: default;
+}
+.hist-item:hover {
+    background: rgba(139, 92, 246, 0.07);
+}
+.hist-thumb {
+    width: 72px;
+    height: 44px;
+    object-fit: cover;
+    border-radius: 6px;
+    flex-shrink: 0;
+    background: var(--bg-section);
+}
+.hist-info {
+    flex: 1;
+    min-width: 0;
+    cursor: pointer;
+}
+.hist-title {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text-primary);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    margin-bottom: 3px;
+}
+.hist-info:hover .hist-title {
+    color: var(--accent-light);
+}
+.hist-meta {
+    font-size: 10px;
+    color: var(--text-secondary);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    margin-bottom: 3px;
+}
+.hist-lang {
+    display: inline-block;
+    font-size: 9px;
+    padding: 1px 6px;
+    border-radius: 4px;
+    background: rgba(139,92,246,0.15);
+    color: var(--accent-light);
+    font-weight: 500;
+}
+.hist-del {
+    flex-shrink: 0;
+    width: 26px; height: 26px;
+    border-radius: 6px;
+    border: none;
+    background: transparent;
+    color: var(--text-secondary);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    transition: all 0.15s;
+}
+.hist-item:hover .hist-del { opacity: 1; }
+.hist-del:hover {
+    background: rgba(239,68,68,0.15);
+    color: #f87171;
+}
+.hist-del svg { width: 13px; height: 13px; }
+
+
 /* ═══════════════════════════════════════════════
    HERO
    ═══════════════════════════════════════════════ */

@@ -31,9 +31,38 @@
                 </div>
                 <span class="logo-text">Lecture<span class="accent">Digest</span></span>
             </div>
-            <div class="header-badge">
-                <span class="badge-dot" aria-hidden="true"></span>
-                Powered by Gemini AI
+            <div class="header-actions">
+                <!-- History button -->
+                <div class="history-wrapper">
+                    <button class="history-btn" id="historyToggle" onclick="toggleHistoryPanel()"
+                            aria-label="Lịch sử phân tích" aria-expanded="false" aria-controls="historyPanel">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                            <path d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                        Lịch sử
+                        <span class="hist-badge" id="historyCount">0</span>
+                    </button>
+
+                    <!-- History dropdown panel -->
+                    <div class="history-panel" id="historyPanel" role="dialog" aria-label="Lịch sử phân tích">
+                        <div class="hist-panel-header">
+                            <span class="hist-panel-title">📋 Lịch sử phân tích</span>
+                            <button class="hist-clear-btn" onclick="clearHistory()" title="Xóa tất cả">Xóa tất cả</button>
+                        </div>
+                        <div class="hist-panel-body">
+                            <div class="hist-empty hidden" id="historyEmpty">
+                                <div style="font-size:2rem">📭</div>
+                                <p>Chưa có video nào được lưu.<br>Phân tích video đầu tiên của bạn!</p>
+                            </div>
+                            <div class="hist-list" id="historyList"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="header-badge">
+                    <span class="badge-dot" aria-hidden="true"></span>
+                    Powered by Gemini AI
+                </div>
             </div>
         </div>
     </header>

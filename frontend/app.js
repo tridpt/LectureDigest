@@ -23,6 +23,115 @@ const quizState = {
 };
 
 // ──────────────────────────────────────
+// HISTORY (localStorage)
+// ──────────────────────────────────────
+const HISTORY_KEY = 'lectureDigest_history';
+const HISTORY_MAX = 30;
+
+function loadHistory() {
+    try { return JSON.parse(localStorage.getItem(HISTORY_KEY) || '[]'); }
+    catch { return []; }
+}
+
+function saveToHistory(data) {
+    const list = loadHistory();
+    // Remove existing entry for same video if present
+    const filtered = list.filter(h => h.video_id !== data.video_id);
+    const entry = {
+        video_id:    data.video_id,
+        url:         document.getElementById('urlInput').value.trim(),
+        title:       data.title,
+        author:      data.author,
+        thumbnail:   data.thumbnail,
+        savedAt:     Date.now(),
+        lang:        selectedLang,
+        data,
+    };
+    filtered.unshift(entry);                   // newest first
+    filtered.splice(HISTORY_MAX);              // keep max N
+    localStorage.setItem(HISTORY_KEY, JSON.stringify(filtered));
+    renderHistoryPanel();
+}
+
+function deleteFromHistory(videoId) {
+    const list = loadHistory().filter(h => h.video_id !== videoId);
+    localStorage.setItem(HISTORY_KEY, JSON.stringify(list));
+    renderHistoryPanel();
+}
+
+function clearHistory() {
+    if (!confirm('Xóa toàn bộ lịch sử?')) return;
+    localStorage.removeItem(HISTORY_KEY);
+    renderHistoryPanel();
+}
+
+function loadFromHistory(videoId) {
+    const entry = loadHistory().find(h => h.video_id === videoId);
+    if (!entry) return;
+    document.getElementById('urlInput').value = entry.url;
+    analysisData = entry.data;
+    toggleHistoryPanel(false);
+    renderResults(entry.data);
+    showSection('resultsSection');
+}
+
+function toggleHistoryPanel(force) {
+    const panel = document.getElementById('historyPanel');
+    const isOpen = panel.classList.contains('open');
+    const shouldOpen = force !== undefined ? force : !isOpen;
+    panel.classList.toggle('open', shouldOpen);
+    document.getElementById('historyToggle').setAttribute('aria-expanded', shouldOpen);
+    if (shouldOpen) renderHistoryPanel();
+}
+
+function renderHistoryPanel() {
+    const list = loadHistory();
+    const container = document.getElementById('historyList');
+    const empty = document.getElementById('historyEmpty');
+    const countEl = document.getElementById('historyCount');
+    if (!container) return;
+    if (countEl) countEl.textContent = list.length;
+    if (list.length === 0) {
+        container.innerHTML = '';
+        empty.classList.remove('hidden');
+        return;
+    }
+    empty.classList.add('hidden');
+    container.innerHTML = list.map(h => {
+        const date = new Date(h.savedAt);
+        const dateStr = date.toLocaleDateString('vi-VN', { day:'2-digit', month:'2-digit', year:'numeric' });
+        const timeStr = date.toLocaleTimeString('vi-VN', { hour:'2-digit', minute:'2-digit' });
+        return `
+        <div class="hist-item" data-id="${h.video_id}">
+            <img class="hist-thumb" src="${h.thumbnail}" alt="${escHtml(h.title)}" loading="lazy"
+                 onerror="this.src='https://img.youtube.com/vi/${h.video_id}/mqdefault.jpg'">
+            <div class="hist-info" onclick="loadFromHistory('${h.video_id}')" role="button" tabindex="0" title="Tải kết quả">
+                <div class="hist-title">${escHtml(h.title || 'Untitled')}</div>
+                <div class="hist-meta">${escHtml(h.author || '')} &bull; ${dateStr} ${timeStr}</div>
+                <div class="hist-lang">${h.lang || 'English'}</div>
+            </div>
+            <button class="hist-del" onclick="deleteFromHistory('${h.video_id}')" title="Xóa" aria-label="Xóa khỏi lịch sử">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6L6 18M6 6l12 12"/></svg>
+            </button>
+        </div>`;
+    }).join('');
+}
+
+function escHtml(s) {
+    return String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+// Close history panel when clicking outside
+document.addEventListener('click', e => {
+    const panel = document.getElementById('historyPanel');
+    const toggle = document.getElementById('historyToggle');
+    if (panel?.classList.contains('open') && !panel.contains(e.target) && !toggle?.contains(e.target)) {
+        toggleHistoryPanel(false);
+    }
+});
+
+
+// ──────────────────────────────────────
 // YOUTUBE IFRAME API
 // ──────────────────────────────────────
 function onYouTubeIframeAPIReady() {
@@ -215,7 +324,9 @@ async function analyzeVideo() {
         if (!analysisData.video_id) throw new Error('Response missing video_id');
 
         renderResults(analysisData);
+        saveToHistory(analysisData);   // ← save to history
         showSection('resultsSection');
+
 
     } catch (err) {
         stopAnimation();
