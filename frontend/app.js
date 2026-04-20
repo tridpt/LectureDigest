@@ -180,11 +180,12 @@ async function fetchTranscriptClientSide(videoId) {
     // Step 1: Get player data — try direct first, then via CORS proxy
     let playerData = null;
 
-    // Direct fetch (YouTube InnerTube allows CORS from browsers)
+    // Direct fetch with text/plain to avoid CORS preflight
+    // (text/plain = "simple request" = no OPTIONS preflight = CORS only checks response)
     try {
         const res = await fetch(innertubeUrl, {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: { 'Content-Type': 'text/plain' }, // intentional: avoids preflight
             body: JSON.stringify(payload),
         });
         if (res.ok) {
@@ -195,13 +196,13 @@ async function fetchTranscriptClientSide(videoId) {
         console.warn('[LectureDigest] InnerTube direct failed:', e.message);
     }
 
-    // CORS proxy fallback for player data
+    // CORS proxy fallback
     if (!playerData) {
         for (const proxyFn of CORS_PROXIES) {
             try {
                 const res = await fetch(proxyFn(innertubeUrl), {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
+                    headers: { 'Content-Type': 'text/plain' },
                     body: JSON.stringify(payload),
                 });
                 if (res.ok) { playerData = await res.json(); break; }
