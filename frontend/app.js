@@ -289,6 +289,22 @@ function seekTo(seconds) {
     }
 }
 
+// ── Seek from bookmark — always scroll player into view ──
+function seekToBookmark(secs) {
+    if (ytPlayer && typeof ytPlayer.seekTo === 'function') {
+        ytPlayer.seekTo(secs, true);
+        ytPlayer.playVideo();
+    }
+    // Always scroll to player
+    const player = document.getElementById('youtubePlayer');
+    if (player) {
+        player.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        // Flash highlight on player
+        player.classList.add('player-seek-flash');
+        setTimeout(() => player.classList.remove('player-seek-flash'), 800);
+    }
+}
+
 // ──────────────────────────────────────
 // SECTION MANAGEMENT
 // ──────────────────────────────────────
