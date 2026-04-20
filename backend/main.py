@@ -64,12 +64,14 @@ def _init_cookies() -> str | None:
 
 def get_yt_api() -> YouTubeTranscriptApi:
     """Return a YouTubeTranscriptApi instance.
-    If YOUTUBE_COOKIES_B64 or YOUTUBE_COOKIES_PATH is set, loads cookies
-    into an httpx.Client to bypass YouTube cloud-IP blocks.
+    Supports YOUTUBE_COOKIES_B64 and YOUTUBE_PROXY_URL env vars to bypass
+    YouTube IP blocks on cloud servers (Render, Railway, etc.).
     """
     import httpx
     from http.cookiejar import MozillaCookieJar
 
+    # ── 1. Load cookies ───────────────────────────────────────────────────────
+    cookie_dict: dict = {}
     cookies_path = _init_cookies()
     if not cookies_path:
         direct = os.getenv("YOUTUBE_COOKIES_PATH", "").strip()
@@ -81,11 +83,27 @@ def get_yt_api() -> YouTubeTranscriptApi:
             jar = MozillaCookieJar(cookies_path)
             jar.load(ignore_discard=True, ignore_expires=True)
             cookie_dict = {c.name: c.value for c in jar}
-            client = httpx.Client(cookies=cookie_dict)
             print(f"[LectureDigest] Loaded {len(cookie_dict)} cookies from {cookies_path}")
+        except Exception as e:
+            print(f"[LectureDigest] Cookie load failed ({e})")
+
+    # ── 2. Load proxy ─────────────────────────────────────────────────────────
+    proxy_url = os.getenv("YOUTUBE_PROXY_URL", "").strip()
+    # Format: http://username:password@host:port
+
+    # ── 3. Build httpx client if any auth configured ──────────────────────────
+    if cookie_dict or proxy_url:
+        client_kwargs: dict = {}
+        if cookie_dict:
+            client_kwargs["cookies"] = cookie_dict
+        if proxy_url:
+            client_kwargs["proxy"] = proxy_url
+            print(f"[LectureDigest] Using proxy: {proxy_url.split('@')[-1]}")  # hide credentials
+        try:
+            client = httpx.Client(**client_kwargs)
             return YouTubeTranscriptApi(http_client=client)
         except Exception as e:
-            print(f"[LectureDigest] Cookie load failed ({e}), continuing without cookies.")
+            print(f"[LectureDigest] Could not create custom http_client ({e}), using default.")
 
     return YouTubeTranscriptApi()
 
