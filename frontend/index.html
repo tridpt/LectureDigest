@@ -8,6 +8,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎓</text></svg>">
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -23,7 +24,9 @@
     <!-- ═══════════════════════════ HEADER ═══════════════════════════ -->
     <header class="header" role="banner">
         <div class="header-inner">
-            <div class="logo">
+            <div class="logo" id="logoBtn" onclick="goHome()" role="button" tabindex="0"
+                 aria-label="Về trang chủ" title="Về trang chủ"
+                 onkeydown="if(event.key==='Enter') goHome()" style="cursor:pointer">
                 <div class="logo-icon" aria-hidden="true">
                     <svg viewBox="0 0 24 24" fill="none">
                         <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
@@ -194,11 +197,11 @@
                         </svg>
                         Export PDF
                     </button>
-                    <button class="new-video-btn" onclick="resetToHero()" aria-label="Analyze a new video">
+                    <button class="new-video-btn" onclick="resetToHero()" aria-label="Phân tích video mới">
                         <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                            <path d="M12 5v14M5 12h14" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                            <path d="M19 12H5M12 19l-7-7 7-7" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
                         </svg>
-                        New Video
+                        Video mới
                     </button>
                 </div>
             </div>
@@ -329,6 +332,64 @@
     <footer class="footer">
         <p>LectureDigest &mdash; AI-powered by Gemini &nbsp;|&nbsp; Built for learners</p>
     </footer>
+
+    <!-- ═══════════════════════════ CHAT PANEL ═══════════════════════════ -->
+    <!-- Floating chat button (only visible when results are showing) -->
+    <button class="chat-fab hidden" id="chatFab" onclick="toggleChat()" aria-label="Chat với bài giảng" title="Chat với bài giảng">
+        <svg class="chat-fab-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+            <path d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+        <span class="chat-fab-label">Chat với bài giảng</span>
+        <span class="chat-unread hidden" id="chatUnread">1</span>
+    </button>
+
+    <!-- Chat panel -->
+    <div class="chat-panel hidden" id="chatPanel" role="dialog" aria-label="Chat với bài giảng">
+        <!-- Panel header -->
+        <div class="chat-panel-header">
+            <div class="chat-header-info">
+                <div class="chat-avatar">🤖</div>
+                <div>
+                    <div class="chat-header-title">AI Tutor</div>
+                    <div class="chat-header-sub">Hỏi bất cứ điều gì về bài giảng</div>
+                </div>
+            </div>
+            <button class="chat-close-btn" onclick="toggleChat()" aria-label="Đóng chat">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M18 6L6 18M6 6l12 12" stroke-linecap="round"/>
+                </svg>
+            </button>
+        </div>
+
+        <!-- Messages area -->
+        <div class="chat-messages" id="chatMessages" role="log" aria-live="polite">
+            <!-- Welcome message -->
+            <div class="chat-msg assistant">
+                <div class="chat-bubble">
+                    👋 Xin chào! Tôi đã đọc toàn bộ nội dung bài giảng này. Bạn có thể hỏi tôi bất cứ điều gì về video — nội dung, khái niệm, ví dụ, hay bất kỳ phần nào bạn chưa hiểu rõ!
+                </div>
+            </div>
+        </div>
+
+        <!-- Suggested questions -->
+        <div class="chat-suggestions" id="chatSuggestions">
+            <button class="chat-suggestion-btn" onclick="sendSuggestion(this)">📌 Tóm tắt nội dung chính</button>
+            <button class="chat-suggestion-btn" onclick="sendSuggestion(this)">🤔 Giải thích khái niệm khó nhất</button>
+            <button class="chat-suggestion-btn" onclick="sendSuggestion(this)">💡 Ví dụ thực tế từ bài giảng</button>
+        </div>
+
+        <!-- Input area -->
+        <div class="chat-input-area">
+            <textarea class="chat-input" id="chatInput" placeholder="Hỏi về bài giảng..." rows="1"
+                      onkeydown="handleChatKey(event)" oninput="autoResizeChatInput(this)"
+                      aria-label="Nhập câu hỏi"></textarea>
+            <button class="chat-send-btn" id="chatSendBtn" onclick="sendChatMessage()" aria-label="Gửi">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+            </button>
+        </div>
+    </div>
 
     <!-- YouTube IFrame API (must come before app.js) -->
     <script src="https://www.youtube.com/iframe_api"></script>

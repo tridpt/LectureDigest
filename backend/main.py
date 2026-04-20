@@ -122,6 +122,17 @@ class QuizRequest(BaseModel):
     existing_questions: list = []   # already-generated questions to avoid repeating
 
 
+class ChatMessage(BaseModel):
+    role: str   # 'user' or 'assistant'
+    content: str
+
+class ChatRequest(BaseModel):
+    message: str
+    title: str = ''
+    transcript: list = []     # [{text, start}, ...]
+    history: list = []        # list of ChatMessage-like dicts
+    output_language: str = 'Vietnamese'
+
 
 def extract_video_id(url: str) -> str:
     """Extract YouTube video ID from various URL formats."""
@@ -544,8 +555,65 @@ correct_index is 0-based (0=A, 1=B, 2=C, 3=D)."""
         raise HTTPException(status_code=500, detail=f"AI quiz generation failed: {e}")
 
 
+@app.post("/api/chat")
+async def chat_with_lecture(request: ChatRequest):
+    """Answer questions about a video lecture using its transcript as context."""
+    if not os.getenv("GEMINI_API_KEY"):
+        raise HTTPException(status_code=500, detail="GEMINI_API_KEY not configured")
+    if not request.message.strip():
+        raise HTTPException(status_code=400, detail="message is required")
 
-# ── Serve frontend static files ──────────────────────────────────────────────
+    # Format transcript (limit to avoid token overflow)
+    transcript_text = ""
+    if request.transcript:
+        lines = []
+        for entry in request.transcript:
+            time_str = format_seconds(entry["start"])
+            text = entry["text"].strip().replace("\n", " ")
+            lines.append(f"[{time_str}] {text}")
+        transcript_text = "\n".join(lines)
+        if len(transcript_text) > 50000:
+            transcript_text = transcript_text[:50000] + "\n...[truncated]..."
+
+    # Build conversation history context
+    history_text = ""
+    if request.history:
+        turns = []
+        for msg in request.history[-10:]:   # keep last 10 turns
+            role = "User" if msg.get("role") == "user" else "Assistant"
+            turns.append(f"{role}: {msg.get('content', '')}")
+        history_text = "\n".join(turns)
+
+    prompt = f"""You are an AI teaching assistant for a YouTube lecture. Answer questions based ONLY on the video content.
+
+VIDEO TITLE: {request.title}
+
+TRANSCRIPT (with timestamps):
+{transcript_text if transcript_text else '(no transcript available)'}
+
+{f'CONVERSATION HISTORY:{chr(10)}{history_text}{chr(10)}' if history_text else ''}
+
+ANSWERING RULES:
+- Answer ONLY based on what is in the transcript above
+- If something isn't covered in the video, say so clearly
+- Reference specific timestamps [MM:SS] when relevant (e.g. "At [02:30], the speaker explains...")
+- Be concise but thorough
+- Use **bold** for key terms
+- Respond in **{request.output_language}**
+
+User question: {request.message}
+
+Answer:"""
+
+    try:
+        client = get_genai_client()
+        response = client.models.generate_content(model="gemini-2.5-flash", contents=prompt)
+        return {"reply": response.text.strip()}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Chat failed: {str(e)}")
+
+
+# ── Serve frontend static files ───────────────────────────────────────────────
 # Mount AFTER all API routes so /api/* routes take priority.
 _FRONTEND_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "frontend"))
 
