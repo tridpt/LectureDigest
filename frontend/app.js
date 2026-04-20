@@ -1889,7 +1889,7 @@ function buildMindMapData(d) {
             type: 'category',
             color: '#4f46e5',
             children: d.chapters.map(c => ({
-                name: truncate(c.title, 40),
+                name: truncate(c.title, 80),
                 type: 'chapter',
                 extra: c.timestamp_str || '',
                 color: '#4f46e5'
@@ -1904,7 +1904,7 @@ function buildMindMapData(d) {
             type: 'category',
             color: '#0891b2',
             children: d.key_takeaways.map(t => ({
-                name: truncate(t, 45),
+                name: truncate(t, 80),
                 type: 'takeaway',
                 color: '#0891b2'
             }))
@@ -1918,7 +1918,7 @@ function buildMindMapData(d) {
             type: 'category',
             color: '#b45309',
             children: d.highlights.map(h => ({
-                name: truncate(h.title, 40),
+                name: truncate(h.title, 80),
                 type: 'highlight',
                 extra: h.timestamp_str || '',
                 color: '#b45309'
@@ -1934,7 +1934,7 @@ function buildMindMapData(d) {
             type: 'category',
             color: '#059669',
             children: terms.slice(0, 12).map(t => ({
-                name: truncate(typeof t === 'string' ? t : (t.term || t.word || ''), 35),
+                name: truncate(typeof t === 'string' ? t : (t.term || t.word || ''), 60),
                 type: 'term',
                 color: '#059669'
             }))
@@ -1971,6 +1971,31 @@ function closeMindMap() {
 
 function mmKeyHandler(e) {
     if (e.key === 'Escape') closeMindMap();
+}
+
+// ── Word-wrap helper for mind map labels ──
+function wrapText(str, limit) {
+    // Split at word boundaries, up to 3 lines max
+    const words = str.split(' ');
+    const lines = [];
+    let cur = '';
+    for (const w of words) {
+        if (cur && (cur + ' ' + w).length > limit) {
+            lines.push(cur);
+            cur = w;
+            if (lines.length === 2) {
+                // 3rd line: collect rest and truncate
+                const rest = words.slice(words.indexOf(w)).join(' ');
+                const last = rest.length > limit ? rest.slice(0, limit - 1) + '\u2026' : rest;
+                lines.push(last);
+                return lines;
+            }
+        } else {
+            cur = cur ? cur + ' ' + w : w;
+        }
+    }
+    if (cur) lines.push(cur);
+    return lines;
 }
 
 function renderMindMap() {
