@@ -1,7 +1,5 @@
 /**
  * LectureDigest — YouTube Transcript Worker
- * Dedicated transcript fetcher (not a generic CORS proxy).
- * Tries InnerTube (Android) → timedtext API fallback.
  * Usage: GET https://your-worker.workers.dev/?videoId=VIDEO_ID
  */
 
@@ -16,36 +14,47 @@ export default {
 
     const { searchParams } = new URL(request.url);
     const videoId = searchParams.get('videoId');
-    if (!videoId) return json({ error: 'Missing ?videoId=' }, 400, cors);
+    if (!videoId || videoId === 'null') return json({ error: 'Missing ?videoId=' }, 400, cors);
 
-    // ── Method 1: InnerTube Android client ─────────────────────────────────
+    const errors = [];
+
+    // ── Method 1: InnerTube Android ────────────────────────────────────────
     try {
       const snippets = await fetchInnerTube(videoId);
-      return json(snippets, 200, cors);
-    } catch (e) {
-      console.log('InnerTube failed:', e.message);
-    }
+      if (snippets.length) return json(snippets, 200, cors);
+      errors.push('InnerTube: empty transcript');
+    } catch (e) { errors.push(`InnerTube: ${e.message}`); }
 
-    // ── Method 2: timedtext GET API ────────────────────────────────────────
+    // ── Method 2: timedtext — list tracks first, then fetch best one ───────
     try {
-      const snippets = await fetchTimedText(videoId);
-      return json(snippets, 200, cors);
-    } catch (e) {
-      console.log('Timedtext failed:', e.message);
-      return json({ error: e.message }, 502, cors);
-    }
+      const snippets = await fetchTimedTextSmart(videoId);
+      if (snippets.length) return json(snippets, 200, cors);
+      errors.push('timedtext: empty transcript');
+    } catch (e) { errors.push(`timedtext: ${e.message}`); }
+
+    return json({ error: errors.join(' | ') }, 502, cors);
   },
 };
 
-// ── Helpers ──────────────────────────────────────────────────────────────────
 function json(data, status, cors) {
   return new Response(JSON.stringify(data), {
     status, headers: { ...cors, 'Content-Type': 'application/json' },
   });
 }
 
-function parseEvents(events = []) {
-  return events.flatMap(e => {
+function parseXmlTranscript(xml) {
+  const snippets = [];
+  const regex = /<text\s+start="([^"]+)"[^>]*dur="([^"]+)"[^>]*>([\s\S]*?)<\/text>/g;
+  let m;
+  while ((m = regex.exec(xml)) !== null) {
+    const text = m[3].replace(/&amp;/g,'&').replace(/&lt;/g,'<').replace(/&gt;/g,'>').replace(/&quot;/g,'"').replace(/&#39;/g,"'").replace(/<[^>]+>/g,'').trim();
+    if (text) snippets.push({ text, start: parseFloat(m[1]) });
+  }
+  return snippets;
+}
+
+function parseJsonTranscript(data) {
+  return (data.events || []).flatMap(e => {
     if (!e.segs) return [];
     const text = e.segs.map(s => s.utf8 || '').join('').trim();
     return text ? [{ text, start: (e.tStartMs || 0) / 1000 }] : [];
@@ -60,37 +69,47 @@ async function fetchInnerTube(videoId) {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         videoId,
-        context: {
-          client: {
-            clientName: 'ANDROID', clientVersion: '17.31.35', androidSdkVersion: 30,
-            userAgent: 'com.google.android.youtube/17.31.35 (Linux; U; Android 11) gzip',
-            hl: 'en', timeZone: 'UTC', utcOffsetMinutes: 0,
-          },
-        },
+        context: { client: { clientName: 'ANDROID', clientVersion: '17.31.35', androidSdkVersion: 30, hl: 'en' } },
       }),
     }
   );
-  if (!resp.ok) throw new Error(`InnerTube HTTP ${resp.status}`);
+  if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
   const data = await resp.json();
   const tracks = data?.captions?.playerCaptionsTracklistRenderer?.captionTracks || [];
   if (!tracks.length) throw new Error('No caption tracks');
   const track = tracks.find(t => t.languageCode?.startsWith('en')) || tracks[0];
   const capResp = await fetch(track.baseUrl + '&fmt=json3');
   if (!capResp.ok) throw new Error(`Caption HTTP ${capResp.status}`);
-  const capData = await capResp.json();
-  const snippets = parseEvents(capData.events);
-  if (!snippets.length) throw new Error('Empty InnerTube transcript');
-  return snippets;
+  return parseJsonTranscript(await capResp.json());
 }
 
-async function fetchTimedText(videoId) {
-  const url = `https://www.youtube.com/api/timedtext?v=${videoId}&lang=en&fmt=json3`;
-  const resp = await fetch(url, {
-    headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36' },
-  });
-  if (!resp.ok) throw new Error(`Timedtext HTTP ${resp.status}`);
-  const data = await resp.json();
-  const snippets = parseEvents(data.events);
-  if (!snippets.length) throw new Error('Empty timedtext transcript');
-  return snippets;
+async function fetchTimedTextSmart(videoId) {
+  // Step 1: get list of available caption tracks
+  const listUrl = `https://www.youtube.com/api/timedtext?type=list&v=${videoId}`;
+  let langs = ['en']; // fallback
+  try {
+    const listResp = await fetch(listUrl);
+    const listXml = await listResp.text();
+    const matches = [...listXml.matchAll(/lang_code="([^"]+)"/g)];
+    if (matches.length) langs = matches.map(m => m[1]);
+  } catch (_) {}
+
+  // Step 2: try each lang in JSON3 then XML format
+  for (const lang of langs) {
+    for (const fmt of ['json3', '']) {
+      try {
+        const url = `https://www.youtube.com/api/timedtext?v=${videoId}&lang=${lang}${fmt ? '&fmt=' + fmt : ''}`;
+        const resp = await fetch(url, { headers: { 'User-Agent': 'Mozilla/5.0' } });
+        if (!resp.ok) continue;
+        if (fmt === 'json3') {
+          const snippets = parseJsonTranscript(await resp.json());
+          if (snippets.length) return snippets;
+        } else {
+          const snippets = parseXmlTranscript(await resp.text());
+          if (snippets.length) return snippets;
+        }
+      } catch (_) {}
+    }
+  }
+  throw new Error('All timedtext attempts failed');
 }

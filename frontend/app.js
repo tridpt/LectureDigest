@@ -151,13 +151,15 @@ const CF_WORKER = 'https://delicate-disk-ef3f.tranductrist.workers.dev';
 
 async function fetchTranscriptClientSide(videoId) {
     // Call our Cloudflare Worker which handles YouTube API internally
-    // (InnerTube → timedtext fallback, all on Cloudflare's IPs)
     const res = await fetch(`${CF_WORKER}/?videoId=${videoId}`);
-    const data = await res.json();
-
-    if (!res.ok) throw new Error(data.error || `Worker HTTP ${res.status}`);
+    let data;
+    try {
+        data = await res.json();
+    } catch (_) {
+        throw new Error(`Worker returned non-JSON response (HTTP ${res.status})`);
+    }
+    if (!res.ok) throw new Error(data?.error || `Worker HTTP ${res.status}`);
     if (!Array.isArray(data) || !data.length) throw new Error('Empty transcript from Worker');
-
     console.log(`[LectureDigest] Worker transcript: ${data.length} segments`);
     return data;
 }
