@@ -130,6 +130,12 @@ document.addEventListener('click', e => {
     }
 });
 
+// Update badge count on page load
+document.addEventListener('DOMContentLoaded', () => {
+    const count = loadHistory().length;
+    const badge = document.getElementById('historyCount');
+    if (badge) badge.textContent = count;
+});
 
 // ──────────────────────────────────────
 // YOUTUBE IFRAME API

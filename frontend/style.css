@@ -60,6 +60,10 @@ body {
     line-height: 1.6;
 }
 
+/* Utility */
+.hidden { display: none !important; }
+
+
 /* ═══════════════════════════════════════════════
    AMBIENT BACKGROUND
    ═══════════════════════════════════════════════ */
@@ -191,7 +195,9 @@ body {
    ═══════════════════════════════════════════════ */
 .history-wrapper {
     position: relative;
+    z-index: 101;
 }
+
 
 .history-btn {
     display: flex;
