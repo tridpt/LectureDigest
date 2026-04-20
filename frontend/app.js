@@ -147,108 +147,21 @@ function startLoadingAnimation() {
 // Fetches from browser (not blocked by YouTube) and sends to backend.
 // Bypasses cloud IP blocks on Render/Railway/etc.
 // ──────────────────────────────────────
-const CORS_PROXIES = [
-    url => `https://delicate-disk-ef3f.tranductrist.workers.dev/?url=${encodeURIComponent(url)}`, // Cloudflare Worker
-    url => `https://corsproxy.io/?url=${encodeURIComponent(url)}`,
-    url => `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`,
-];
-
-async function proxyFetch(url, options = {}) {
-    for (const proxyFn of CORS_PROXIES) {
-        try {
-            const res = await fetch(proxyFn(url), options);
-            if (res.ok) return res;
-        } catch (_) { /* try next proxy */ }
-    }
-    throw new Error('All CORS proxies failed');
-}
+const CF_WORKER = 'https://delicate-disk-ef3f.tranductrist.workers.dev';
 
 async function fetchTranscriptClientSide(videoId) {
-    const innertubeUrl = 'https://www.youtube.com/youtubei/v1/player';
-    const payload = {
-        videoId,
-        context: {
-            client: {
-                clientName: 'ANDROID',
-                clientVersion: '17.31.35',
-                androidSdkVersion: 30,
-                userAgent: 'com.google.android.youtube/17.31.35 (Linux; U; Android 11) gzip',
-                hl: 'en', timeZone: 'UTC', utcOffsetMinutes: 0,
-            }
-        }
-    };
+    // Call our Cloudflare Worker which handles YouTube API internally
+    // (InnerTube → timedtext fallback, all on Cloudflare's IPs)
+    const res = await fetch(`${CF_WORKER}/?videoId=${videoId}`);
+    const data = await res.json();
 
-    // Step 1: Get player data — try direct first, then via CORS proxy
-    let playerData = null;
+    if (!res.ok) throw new Error(data.error || `Worker HTTP ${res.status}`);
+    if (!Array.isArray(data) || !data.length) throw new Error('Empty transcript from Worker');
 
-    // Direct fetch with text/plain to avoid CORS preflight
-    // (text/plain = "simple request" = no OPTIONS preflight = CORS only checks response)
-    try {
-        const res = await fetch(innertubeUrl, {
-            method: 'POST',
-            headers: { 'Content-Type': 'text/plain' }, // intentional: avoids preflight
-            body: JSON.stringify(payload),
-        });
-        if (res.ok) {
-            playerData = await res.json();
-            console.log('[LectureDigest] InnerTube: direct fetch OK');
-        }
-    } catch (e) {
-        console.warn('[LectureDigest] InnerTube direct failed:', e.message);
-    }
-
-    // CORS proxy fallback
-    if (!playerData) {
-        for (const proxyFn of CORS_PROXIES) {
-            try {
-                const res = await fetch(proxyFn(innertubeUrl), {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'text/plain' },
-                    body: JSON.stringify(payload),
-                });
-                if (res.ok) { playerData = await res.json(); break; }
-            } catch (_) {}
-        }
-    }
-
-    if (!playerData) throw new Error('Could not reach YouTube InnerTube API');
-
-    // Step 2: Find caption track
-    const tracks = playerData?.captions?.playerCaptionsTracklistRenderer?.captionTracks || [];
-    if (!tracks.length) throw new Error('No caption tracks found');
-    const track = tracks.find(t => t.languageCode?.startsWith('en')) || tracks[0];
-    const captionUrl = track.baseUrl + '&fmt=json3';
-
-    // Step 3: Fetch caption data — try direct then proxied
-    let capData = null;
-    try {
-        const res = await fetch(captionUrl);
-        if (res.ok) capData = await res.json();
-    } catch (_) {}
-
-    if (!capData) {
-        for (const proxyFn of CORS_PROXIES) {
-            try {
-                const res = await fetch(proxyFn(captionUrl));
-                if (res.ok) { capData = await res.json(); break; }
-            } catch (_) {}
-        }
-    }
-
-    if (!capData) throw new Error('Could not fetch caption data');
-
-    // Step 4: Parse events
-    const snippets = [];
-    for (const event of capData.events || []) {
-        if (!event.segs) continue;
-        const start = (event.tStartMs || 0) / 1000;
-        const text = event.segs.map(s => s.utf8 || '').join('').trim();
-        if (text) snippets.push({ text, start });
-    }
-    if (!snippets.length) throw new Error('Transcript is empty');
-    console.log(`[LectureDigest] Client transcript: ${snippets.length} segments`);
-    return snippets;
+    console.log(`[LectureDigest] Worker transcript: ${data.length} segments`);
+    return data;
 }
+
 
 // ──────────────────────────────────────
 // MAIN ANALYSE FUNCTION
