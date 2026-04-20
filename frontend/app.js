@@ -168,6 +168,7 @@ function loadFromHistory(videoId) {
     renderResults(entry.data);
     initNotes(entry.video_id);           // load notes for this video
     renderTranscript(entry.data?.transcript || entry.transcript || []);  // transcript
+    initProgress(entry.video_id);        // learning progress
     showSection('resultsSection');
 }
 
@@ -468,6 +469,7 @@ async function analyzeVideo() {
         saveToHistory(analysisData);   // includes transcript for quiz regeneration
         initNotes(analysisData.video_id);    // load/init personal notes
         renderTranscript(analysisData.transcript || []);  // transcript search
+        initProgress(analysisData.video_id);              // learning progress
         showSection('resultsSection');
 
 
@@ -774,6 +776,11 @@ function showQuizResults() {
     }
 
     document.getElementById('quizResults')?.classList.remove('hidden');
+
+    // ── Track quiz session ──
+    if (answered > 0 && analysisData?.video_id) {
+        recordQuizSession(analysisData.video_id, score, answered);
+    }
 }
 
 function statBox(num, label, color) {
@@ -2225,4 +2232,138 @@ function mmDownload() {
     };
     img.src = url;
     showToast('⬇ Đang tải xuống PNG...', 2000);
+}
+
+
+// ══════════════════════════════════════════════════════════
+// LEARNING PROGRESS  (video watch % + quiz history)
+// ══════════════════════════════════════════════════════════
+
+const PROG_KEY_PREFIX = 'lectureDigest_progress_';
+let watchInterval   = null;
+
+function progKey(videoId) { return PROG_KEY_PREFIX + videoId; }
+
+function loadProgress(videoId) {
+    try { return JSON.parse(localStorage.getItem(progKey(videoId)) || 'null') || { watchedPct: 0, quizSessions: [] }; }
+    catch { return { watchedPct: 0, quizSessions: [] }; }
+}
+
+function saveProgress(videoId, data) {
+    try { localStorage.setItem(progKey(videoId), JSON.stringify(data)); } catch {}
+}
+
+// ── Init progress tracking for a video ──
+function initProgress(videoId) {
+    stopWatchTracking();
+    renderProgressCard(videoId);
+
+    // Start watching video progress every 5s
+    watchInterval = setInterval(() => trackWatchProgress(videoId), 5000);
+}
+
+function stopWatchTracking() {
+    if (watchInterval) { clearInterval(watchInterval); watchInterval = null; }
+}
+
+function trackWatchProgress(videoId) {
+    if (!ytPlayer || typeof ytPlayer.getCurrentTime !== 'function') return;
+    try {
+        const cur  = ytPlayer.getCurrentTime();
+        const dur  = ytPlayer.getDuration();
+        if (!dur || dur <= 0) return;
+        const pct  = Math.min(100, Math.round((cur / dur) * 100));
+        const prog = loadProgress(videoId);
+        if (pct > prog.watchedPct) {
+            prog.watchedPct = pct;
+            prog.lastWatched = new Date().toISOString();
+            saveProgress(videoId, prog);
+            renderWatchBar(pct);
+        }
+    } catch {}
+}
+
+// ── Record a completed quiz session ──
+function recordQuizSession(videoId, correct, total) {
+    const prog = loadProgress(videoId);
+    prog.quizSessions = prog.quizSessions || [];
+    prog.quizSessions.push({
+        date:    new Date().toISOString(),
+        correct: correct,
+        total:   total,
+        pct:     Math.round((correct / total) * 100)
+    });
+    // Keep last 10 sessions only
+    if (prog.quizSessions.length > 10) prog.quizSessions = prog.quizSessions.slice(-10);
+    saveProgress(videoId, prog);
+    renderProgressCard(videoId);
+}
+
+// ── Render full progress card ──
+function renderProgressCard(videoId) {
+    const prog = loadProgress(videoId);
+
+    // Watch bar
+    renderWatchBar(prog.watchedPct || 0);
+
+    // Last studied
+    const lastEl = document.getElementById('progressLastStudied');
+    if (lastEl && prog.lastWatched) {
+        const d = new Date(prog.lastWatched);
+        lastEl.textContent = 'Lần cuối: ' + d.toLocaleDateString('vi-VN', { day:'2-digit', month:'2-digit' });
+    }
+
+    // Quiz history chart
+    renderQuizChart(prog.quizSessions || []);
+}
+
+function renderWatchBar(pct) {
+    const fill  = document.getElementById('watchFill');
+    const label = document.getElementById('watchPct');
+    const track = document.getElementById('watchTrack');
+    if (fill)  fill.style.width = pct + '%';
+    if (label) label.textContent = pct + '%';
+    if (track) track.setAttribute('aria-valuenow', pct);
+}
+
+function renderQuizChart(sessions) {
+    const chart   = document.getElementById('quizHistoryChart');
+    const labels  = document.getElementById('quizHistoryLabels');
+    const empty   = document.getElementById('quizHistoryEmpty');
+    const avgEl   = document.getElementById('quizAvgPct');
+
+    if (!chart) return;
+
+    if (!sessions.length) {
+        if (empty)  empty.style.display = 'flex';
+        if (labels) labels.innerHTML = '';
+        if (avgEl)  avgEl.textContent = '';
+        return;
+    }
+
+    if (empty) empty.style.display = 'none';
+
+    // Average
+    const avg = Math.round(sessions.reduce((s, x) => s + x.pct, 0) / sessions.length);
+    if (avgEl) avgEl.textContent = 'TB: ' + avg + '%';
+
+    // Bar chart
+    const bars = sessions.map((s, i) => {
+        const color = s.pct >= 75 ? '#4ade80' : s.pct >= 50 ? '#facc15' : '#f87171';
+        const dateStr = new Date(s.date).toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit' });
+        return '<div class="qh-bar-wrap" title="' + dateStr + ': ' + s.correct + '/' + s.total + ' (' + s.pct + '%)">'
+             + '<div class="qh-score-tip">' + s.pct + '%</div>'
+             + '<div class="qh-bar" style="height:' + Math.max(4, s.pct) + '%;background:' + color + '"></div>'
+             + '</div>';
+    }).join('');
+
+    chart.innerHTML = '<div class="qh-bars">' + bars + '</div>';
+
+    // Date labels under bars
+    if (labels) {
+        labels.innerHTML = sessions.map(s => {
+            const d = new Date(s.date);
+            return '<span>' + d.toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit' }) + '</span>';
+        }).join('');
+    }
 }

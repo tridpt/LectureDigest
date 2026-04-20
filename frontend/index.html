@@ -262,6 +262,38 @@
                         <span class="notes-save-status" id="notesSaveStatus">✓ Đã lưu</span>
                     </div>
                 </div>
+
+                <!-- Progress Card -->
+                <div class="card progress-card" id="progressCard">
+                    <div class="card-header">
+                        <span class="card-icon" aria-hidden="true">📊</span>
+                        <h3 class="card-title">Tiến độ học</h3>
+                        <span class="progress-last-studied" id="progressLastStudied"></span>
+                    </div>
+
+                    <!-- Video watch progress -->
+                    <div class="progress-section">
+                        <div class="progress-label-row">
+                            <span class="progress-label">🎬 Đã xem video</span>
+                            <span class="progress-pct" id="watchPct">0%</span>
+                        </div>
+                        <div class="progress-track" role="progressbar" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100" id="watchTrack">
+                            <div class="progress-fill watch-fill" id="watchFill"></div>
+                        </div>
+                    </div>
+
+                    <!-- Quiz history -->
+                    <div class="progress-section" id="quizHistorySection">
+                        <div class="progress-label-row">
+                            <span class="progress-label">🧠 Lịch sử Quiz</span>
+                            <span class="progress-pct" id="quizAvgPct"></span>
+                        </div>
+                        <div class="quiz-history-chart" id="quizHistoryChart">
+                            <div class="quiz-history-empty" id="quizHistoryEmpty">Chưa có lần làm quiz nào</div>
+                        </div>
+                        <div class="quiz-history-labels" id="quizHistoryLabels"></div>
+                    </div>
+                </div>
             </aside>
 
             <!-- ── Right Column: Chapters + Quiz ── -->

@@ -2163,3 +2163,78 @@ body {
     .mm-modal { height: 95vh; }
     .mm-legend-hint { display: none; }
 }
+
+/* === PROGRESS CARD === */
+.progress-card { padding: 0; overflow: hidden; }
+.progress-card .card-header {
+    padding: 15px 18px 10px;
+    border-bottom: 1px solid rgba(255,255,255,0.06);
+    display: flex; align-items: center; gap: 10px;
+}
+.progress-last-studied {
+    margin-left: auto; font-size: 10px; color: #555;
+}
+
+.progress-section { padding: 14px 18px; border-bottom: 1px solid rgba(255,255,255,0.04); }
+.progress-section:last-child { border-bottom: none; }
+
+.progress-label-row {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 8px;
+}
+.progress-label { font-size: 12px; color: #888; }
+.progress-pct   { font-size: 12px; font-weight: 600; color: #c4b5fd; }
+
+.progress-track {
+    height: 8px; border-radius: 999px;
+    background: rgba(255,255,255,0.07);
+    overflow: hidden;
+}
+.progress-fill {
+    height: 100%; border-radius: 999px;
+    transition: width 0.6s ease;
+    width: 0%;
+}
+.watch-fill {
+    background: linear-gradient(90deg, #7c3aed, #a78bfa);
+}
+
+/* Quiz history bar chart */
+.quiz-history-chart {
+    height: 72px; position: relative;
+    display: flex; align-items: flex-end;
+}
+.quiz-history-empty {
+    width: 100%; height: 100%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 11px; color: #444;
+}
+.qh-bars {
+    display: flex; align-items: flex-end;
+    gap: 4px; width: 100%; height: 100%;
+}
+.qh-bar-wrap {
+    flex: 1; display: flex; flex-direction: column;
+    align-items: center; justify-content: flex-end;
+    height: 100%; cursor: default; position: relative;
+}
+.qh-bar-wrap:hover .qh-score-tip { opacity: 1; }
+.qh-score-tip {
+    position: absolute; top: 0;
+    font-size: 9px; color: #aaa;
+    opacity: 0; transition: opacity 0.15s;
+    white-space: nowrap;
+}
+.qh-bar {
+    width: 100%; border-radius: 3px 3px 0 0;
+    transition: height 0.5s ease;
+    min-height: 4px;
+}
+.quiz-history-labels {
+    display: flex; gap: 4px; margin-top: 4px;
+}
+.quiz-history-labels span {
+    flex: 1; text-align: center;
+    font-size: 8.5px; color: #444;
+    white-space: nowrap; overflow: hidden;
+}
