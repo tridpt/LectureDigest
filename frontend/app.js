@@ -1978,113 +1978,153 @@ function renderMindMap() {
     svg.selectAll('*').remove();
 
     const area   = document.getElementById('mmCanvasArea');
-    const W      = area.clientWidth  || 900;
-    const H      = area.clientHeight || 560;
-    const cx     = W / 2;
-    const cy     = H / 2;
-    const radius = Math.min(W, H) * 0.38;
+    const W      = area.clientWidth  || 960;
+    const H      = area.clientHeight || 580;
+
+    // Colour palette per branch type
+    const COLORS = {
+        root:     { node: '#7c3aed', glow: '#7c3aed', text: '#f1f1f1' },
+        category: { node: '#7c3aed', glow: '#7c3aed', text: '#e2e8f0' },
+        chapter:  { node: '#4f46e5', glow: '#6366f1', text: '#c7d2fe' },
+        takeaway: { node: '#0891b2', glow: '#22d3ee', text: '#a5f3fc' },
+        highlight:{ node: '#b45309', glow: '#f59e0b', text: '#fde68a' },
+        term:     { node: '#059669', glow: '#10b981', text: '#a7f3d0' },
+    };
+    const getColor = (d, prop) => {
+        const c = COLORS[d.data.type] || COLORS.chapter;
+        return c[prop] || c.node;
+    };
 
     // Build hierarchy
     const rawData = buildMindMapData(analysisData);
     const root    = d3.hierarchy(rawData);
+    const leafR   = Math.min(W, H) * 0.44;
 
-    // Radial tree layout
+    // Radial tree — more separation
     const treeLayout = d3.tree()
-        .size([2 * Math.PI, radius])
-        .separation((a, b) => (a.parent === b.parent ? 1 : 1.5) / a.depth);
+        .size([2 * Math.PI, leafR])
+        .separation((a, b) => (a.parent === b.parent ? 1.1 : 2) / a.depth);
 
     treeLayout(root);
 
-    // Color map by type
-    const colorOf = (d) => {
-        if (d.data.type === 'root')     return '#7c3aed';
-        if (d.data.type === 'category') return d.data.color || '#4f46e5';
-        return d.data.color || '#6366f1';
-    };
+    // SVG defs — glow filters
+    const defs = svg.append('defs');
+    ['root','chapter','takeaway','highlight','term'].forEach(type => {
+        const col = (COLORS[type] || COLORS.chapter).glow;
+        const f = defs.append('filter').attr('id', 'glow-' + type).attr('x', '-50%').attr('y', '-50%').attr('width', '200%').attr('height', '200%');
+        f.append('feGaussianBlur').attr('stdDeviation', '4').attr('result', 'blur');
+        const feMerge = f.append('feMerge');
+        feMerge.append('feMergeNode').attr('in', 'blur');
+        feMerge.append('feMergeNode').attr('in', 'SourceGraphic');
+    });
 
-    // Zoom group
-    const g = svg.append('g').attr('id', 'mmGroup');
+    // Zoom group centred
+    const g = svg.append('g').attr('id', 'mmGroup')
+        .attr('transform', 'translate(' + (W/2) + ',' + (H/2) + ')');
 
-    // Setup zoom
     mmZoom = d3.zoom()
-        .scaleExtent([0.3, 4])
-        .on('zoom', (event) => g.attr('transform', event.transform));
+        .scaleExtent([0.25, 5])
+        .on('zoom', event => d3.select('#mmGroup').attr('transform', event.transform));
 
     svg.call(mmZoom)
-       .attr('width', W)
-       .attr('height', H);
+       .attr('width', W).attr('height', H)
+       .call(mmZoom.transform, d3.zoomIdentity.translate(W/2, H/2));
 
-    // Center initial transform
-    svg.call(mmZoom.transform, d3.zoomIdentity.translate(cx, cy));
-
-    // ── Links ──
+    // ── Links — gradient-stroke curved paths ──
     g.selectAll('.mm-link')
         .data(root.links())
         .join('path')
         .attr('class', 'mm-link')
-        .attr('d', d3.linkRadial()
-            .angle(d => d.x)
-            .radius(d => d.y))
+        .attr('d', d3.linkRadial().angle(d => d.x).radius(d => d.y))
         .attr('fill', 'none')
-        .attr('stroke', d => colorOf(d.target))
+        .attr('stroke', d => {
+            const t = d.target.data.type;
+            return (COLORS[t] || COLORS.chapter).glow;
+        })
         .attr('stroke-width', d => d.target.depth === 1 ? 2.5 : 1.5)
-        .attr('stroke-opacity', 0.5);
+        .attr('stroke-opacity', d => d.target.depth === 1 ? 0.6 : 0.4)
+        .attr('stroke-linecap', 'round');
 
-    // ── Nodes ──
+    // ── Nodes — use pointRadial for clean absolute positions ──
     const node = g.selectAll('.mm-node')
         .data(root.descendants())
         .join('g')
         .attr('class', 'mm-node')
-        .attr('transform', d =>
-            'rotate(' + (d.x * 180 / Math.PI - 90) + ') translate(' + d.y + ',0)'
-        );
+        .attr('transform', d => {
+            const [x, y] = d3.pointRadial(d.x, d.y);
+            return 'translate(' + x + ',' + y + ')';
+        });
 
-    // Node circles
+    // Glow circle (behind)
+    node.filter(d => d.depth <= 1)
+        .append('circle')
+        .attr('r', d => d.depth === 0 ? 22 : 14)
+        .attr('fill', d => getColor(d, 'node'))
+        .attr('opacity', 0.2)
+        .attr('filter', d => 'url(#glow-' + (d.data.type === 'root' ? 'root' : d.data.type) + ')');
+
+    // Main circle
     node.append('circle')
-        .attr('r', d => d.depth === 0 ? 14 : d.depth === 1 ? 9 : 6)
-        .attr('fill', d => colorOf(d))
-        .attr('stroke', '#1a1a2e')
-        .attr('stroke-width', 2)
-        .style('cursor', 'pointer');
+        .attr('r', d => d.depth === 0 ? 14 : d.depth === 1 ? 9 : 5)
+        .attr('fill', d => getColor(d, 'node'))
+        .attr('stroke', '#0a0a18')
+        .attr('stroke-width', d => d.depth === 0 ? 3 : 2)
+        .attr('filter', d => d.depth <= 1 ? 'url(#glow-' + (d.data.type === 'root' ? 'root' : d.data.type) + ')' : null)
+        .style('cursor', 'default');
 
-    // Labels
+    // ── Labels — absolute position, no group-level rotation ──
     node.append('text')
-        .attr('dy', '0.32em')
+        .attr('dy', '0.35em')
         .attr('x', d => {
             if (d.depth === 0) return 0;
-            return (d.x < Math.PI) === !d.children ? 14 : -14;
+            const [x] = d3.pointRadial(d.x, 0);   // x component determines left/right
+            const [nx] = d3.pointRadial(d.x, d.y);
+            return nx >= 0 ? (d.depth === 1 ? 14 : 10) : (d.depth === 1 ? -14 : -10);
         })
         .attr('text-anchor', d => {
             if (d.depth === 0) return 'middle';
-            return (d.x < Math.PI) === !d.children ? 'start' : 'end';
+            const [nx] = d3.pointRadial(d.x, d.y);
+            return nx >= 0 ? 'start' : 'end';
         })
-        .attr('transform', d => {
-            if (d.depth === 0) return '';
-            return 'rotate(' + (-(d.x * 180 / Math.PI - 90)) + ')';
-        })
-        .attr('font-size', d => d.depth === 0 ? '13px' : d.depth === 1 ? '11.5px' : '10px')
-        .attr('font-weight', d => d.depth <= 1 ? '600' : '400')
-        .attr('fill', d => d.depth === 0 ? '#f1f1f1' : '#d1d5db')
+        .attr('font-size', d => d.depth === 0 ? '13px' : d.depth === 1 ? '12px' : '10.5px')
+        .attr('font-weight', d => d.depth <= 1 ? '700' : '400')
+        .attr('fill', d => getColor(d, 'text'))
+        .attr('font-family', 'Inter, system-ui, sans-serif')
         .text(d => d.data.name)
-        .style('pointer-events', 'none');
+        .style('pointer-events', 'none')
+        .style('paint-order', 'stroke')
+        .style('stroke', '#0a0a18')
+        .style('stroke-width', '3px')
+        .style('stroke-linejoin', 'round');
 
-    // Tooltip on hover
+    // ── Tooltip ──
     const tooltip = document.getElementById('mmTooltip');
     node.on('mouseover', function(event, d) {
-        if (!tooltip) return;
+        if (!tooltip || d.depth === 0) return;
         const txt = d.data.name + (d.data.extra ? '\n⏱ ' + d.data.extra : '');
         tooltip.textContent = txt;
         tooltip.classList.remove('hidden');
-        tooltip.style.left = (event.offsetX + 14) + 'px';
-        tooltip.style.top  = (event.offsetY - 10) + 'px';
+        positionTooltip(event);
     }).on('mousemove', function(event) {
-        if (!tooltip) return;
-        tooltip.style.left = (event.offsetX + 14) + 'px';
-        tooltip.style.top  = (event.offsetY - 10) + 'px';
+        positionTooltip(event);
     }).on('mouseleave', function() {
         tooltip?.classList.add('hidden');
     });
+
+    function positionTooltip(event) {
+        if (!tooltip) return;
+        const rect = area.getBoundingClientRect();
+        const x = event.clientX - rect.left;
+        const y = event.clientY - rect.top;
+        tooltip.style.left = (x + 14) + 'px';
+        tooltip.style.top  = (y - 10) + 'px';
+    }
+
+    // Fade-in animation
+    g.style('opacity', 0).transition().duration(500).style('opacity', 1);
 }
+
+
 
 function mmResetZoom() {
     const area = document.getElementById('mmCanvasArea');

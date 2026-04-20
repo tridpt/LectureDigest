@@ -2124,7 +2124,11 @@ body {
 
 .mm-canvas-area {
     flex: 1; position: relative; overflow: hidden;
-    background: radial-gradient(ellipse at center, #0f0f25 0%, #080812 100%);
+    background: #080812;
+    background-image:
+        radial-gradient(ellipse at center, #0f1035 0%, #080812 60%),
+        radial-gradient(circle, rgba(139,92,246,0.08) 1px, transparent 1px);
+    background-size: 100% 100%, 28px 28px;
 }
 .mm-canvas-area svg { cursor: grab; }
 .mm-canvas-area svg:active { cursor: grabbing; }
