@@ -2989,9 +2989,15 @@ function renderBadgesGrid() {
     const cats = [...new Set(BADGES.map(b => b.cat))];
     grid.innerHTML = cats.map(cat => {
         const catBadges = BADGES.filter(b => b.cat === cat);
-        const items = catBadges.map(b => {
-            const earned = g.earnedBadges.includes(b.id);
-            return '<div class="badge-item' + (earned ? ' badge-earned' : ' badge-locked') + '" title="' + b.desc + '">'
+        const totalInCat = catBadges.length;
+        const items = catBadges.map((b, idx) => {
+            const earned    = g.earnedBadges.includes(b.id);
+            const statusTxt = earned ? '✅ Đã đạt được' : '🔒 Chưa mở khóa';
+            const tooltip   = b.name + '\n' + b.desc + '\n' + statusTxt;
+            // Flip tooltip to left for last items in row (every 4th+ position)
+            const tipDir    = (idx % 4 >= 2) ? ' tip-left' : '';
+            return '<div class="badge-item' + (earned ? ' badge-earned' : ' badge-locked') + tipDir + '"'
+                + ' data-tooltip="' + b.desc + (earned ? ' ✅' : '') + '">'
                 + '<span class="badge-icon">' + b.icon + '</span>'
                 + '<span class="badge-name">' + b.name + '</span>'
                 + '<span class="badge-desc">' + b.desc + '</span>'

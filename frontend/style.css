@@ -2582,3 +2582,59 @@ body {
 .bt-text { display: flex; flex-direction: column; }
 .bt-text strong { font-size: 11px; color: #a78bfa; font-weight: 700; text-transform: uppercase; }
 .bt-text span    { font-size: 13px; color: #f1f1f1; font-weight: 500; }
+/* Badge hover tooltip (inline, to the right) */
+.badge-item {
+    overflow: visible !important;  /* allow tooltip to overflow */
+}
+.badge-item::after {
+    content: attr(data-tooltip);
+    position: absolute;
+    left: calc(100% + 10px);
+    top: 50%;
+    transform: translateY(-50%);
+    background: #1a1a3e;
+    border: 1px solid rgba(139,92,246,0.35);
+    border-radius: 10px;
+    padding: 8px 12px;
+    font-size: 11px;
+    color: #ccc;
+    white-space: nowrap;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.18s ease;
+    z-index: 100;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+    min-width: 140px;
+    max-width: 200px;
+    white-space: normal;
+    line-height: 1.5;
+}
+/* Arrow pointing left */
+.badge-item::before {
+    content: \'\';
+    position: absolute;
+    left: calc(100% + 4px);
+    top: 50%;
+    transform: translateY(-50%);
+    border: 5px solid transparent;
+    border-right-color: rgba(139,92,246,0.35);
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.18s ease;
+    z-index: 101;
+}
+.badge-item:hover::after,
+.badge-item:hover::before {
+    opacity: 1;
+}
+/* For badges in last 2 columns — flip tooltip to the left */
+.badge-item.tip-left::after {
+    left: auto;
+    right: calc(100% + 10px);
+}
+.badge-item.tip-left::before {
+    left: auto;
+    right: calc(100% + 4px);
+    border-right-color: transparent;
+    border-left-color: rgba(139,92,246,0.35);
+}
