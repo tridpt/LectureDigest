@@ -2954,18 +2954,83 @@ function renderStreakCard(g) {
 }
 
 // ── Badges modal ──
+// Singleton floating tooltip
+function ensureBadgeTooltip() {
+    let tip = document.getElementById('badgeTooltip');
+    if (!tip) {
+        tip = document.createElement('div');
+        tip.id = 'badgeTooltip';
+        document.body.appendChild(tip);
+    }
+    return tip;
+}
+
+function showBadgeTooltip(badgeEl, event) {
+    const tip     = ensureBadgeTooltip();
+    const name    = badgeEl.querySelector('.badge-name')?.textContent || '';
+    const desc    = badgeEl.dataset.tooltip || '';
+    const earned  = badgeEl.classList.contains('badge-earned');
+    tip.innerHTML = '<strong>' + name + '</strong>' + desc
+        + (earned ? '<br><span style="color:#10b981;font-size:11px">✅ Đã đạt được</span>'
+                  : '<br><span style="color:#666;font-size:11px">🔒 Chưa mở khóa</span>');
+
+    // Position: right of element, or left if near viewport edge
+    const rect = badgeEl.getBoundingClientRect();
+    tip.classList.add('bt-visible');
+    tip.style.opacity = '0';   // measure first
+    tip.style.display = 'block';
+
+    const tipW = tip.offsetWidth;
+    const tipH = tip.offsetHeight;
+    const GAP  = 10;
+
+    let left = rect.right + GAP;
+    let top  = rect.top + (rect.height / 2) - (tipH / 2);
+
+    // Flip left if too close to right edge
+    if (left + tipW > window.innerWidth - 12) {
+        left = rect.left - tipW - GAP;
+    }
+    // Clamp vertically
+    top = Math.max(8, Math.min(top, window.innerHeight - tipH - 8));
+
+    tip.style.left = left + 'px';
+    tip.style.top  = top  + 'px';
+    tip.style.opacity = '1';
+}
+
+function hideBadgeTooltip() {
+    const tip = document.getElementById('badgeTooltip');
+    if (tip) { tip.style.opacity = '0'; tip.classList.remove('bt-visible'); }
+}
+
 function openBadgesModal() {
     const overlay = document.getElementById('badgesModalOverlay');
     if (!overlay) return;
     renderBadgesGrid();
     overlay.classList.remove('hidden');
     requestAnimationFrame(() => overlay.classList.add('bm-show'));
+
+    // Attach tooltip via event delegation on the grid
+    const grid = document.getElementById('badgesGrid');
+    if (grid && !grid._tooltipBound) {
+        grid._tooltipBound = true;
+        grid.addEventListener('mouseover', e => {
+            const item = e.target.closest('.badge-item');
+            if (item) showBadgeTooltip(item, e);
+        });
+        grid.addEventListener('mouseout', e => {
+            if (!e.target.closest('.badge-item')) return;
+            hideBadgeTooltip();
+        });
+    }
 }
 
 function closeBadgesModal(event) {
     if (event && event.target !== document.getElementById('badgesModalOverlay')) return;
     const overlay = document.getElementById('badgesModalOverlay');
     overlay?.classList.remove('bm-show');
+    hideBadgeTooltip();
     setTimeout(() => overlay?.classList.add('hidden'), 300);
 }
 
