@@ -274,6 +274,25 @@
                     </div>
                 </div>
 
+                <!-- Streak Card -->
+                <div class="card streak-card" id="streakCard">
+                    <div class="streak-main">
+                        <div class="streak-flame-wrap">
+                            <span class="streak-flame" id="streakFlame">🔥</span>
+                            <span class="streak-num" id="streakNum">0</span>
+                            <span class="streak-unit">ngày</span>
+                        </div>
+                        <div class="streak-meta">
+                            <span class="streak-label">Chuỗi học hiện tại</span>
+                            <span class="streak-best" id="streakBest">Kỷ lục: 0</span>
+                        </div>
+                        <button class="badges-open-btn" id="badgesOpenBtn" onclick="openBadgesModal()" title="Xem huy hiệu">
+                            <span id="badgesEarnedCount">0</span>🏆
+                        </button>
+                    </div>
+                    <div class="streak-week" id="streakWeek"></div>
+                </div>
+
                 <!-- Progress Card -->
                 <div class="card progress-card" id="progressCard">
                     <div class="card-header">
@@ -323,6 +342,18 @@
                     </div>
                 </div>
             </aside>
+
+            <!-- ── Badges Modal ── -->
+            <div class="badges-modal-overlay hidden" id="badgesModalOverlay" onclick="closeBadgesModal(event)">
+                <div class="badges-modal" id="badgesModal">
+                    <div class="badges-modal-header">
+                        <h2>🏆 Huy hiệu của bạn</h2>
+                        <div class="badges-stats-row" id="badgesStatsRow"></div>
+                        <button class="badges-close-btn" onclick="closeBadgesModal(null)" aria-label="Đóng">✕</button>
+                    </div>
+                    <div class="badges-grid" id="badgesGrid"></div>
+                </div>
+            </div>
 
             <!-- ── Right Column: Chapters + Quiz ── -->
             <main class="content-column">

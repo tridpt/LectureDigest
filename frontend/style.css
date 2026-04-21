@@ -2432,3 +2432,153 @@ body {
     padding-left: 2px;
     font-style: italic;
 }
+
+/* ═══════════════════════════════════════ STREAK CARD ═══ */
+.streak-card {
+    padding: 14px 16px 10px;
+    background: linear-gradient(135deg, rgba(124,58,237,0.12), rgba(8,8,26,0));
+    border: 1px solid rgba(124,58,237,0.2);
+}
+.streak-main {
+    display: flex; align-items: center; gap: 12px;
+}
+.streak-flame-wrap {
+    display: flex; align-items: baseline; gap: 4px;
+    flex-shrink: 0;
+}
+.streak-flame { font-size: 22px; line-height: 1; }
+.streak-num   {
+    font-size: 32px; font-weight: 800;
+    background: linear-gradient(135deg, #f59e0b, #ef4444);
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    background-clip: text; line-height: 1;
+}
+.streak-unit  { font-size: 12px; color: #888; margin-bottom: 2px; }
+.streak-meta  { flex: 1; display: flex; flex-direction: column; gap: 2px; }
+.streak-label { font-size: 11px; color: #888; }
+.streak-best  { font-size: 11px; color: #a78bfa; font-weight: 500; }
+.badges-open-btn {
+    flex-shrink: 0; padding: 6px 10px; border-radius: 10px;
+    border: 1px solid rgba(139,92,246,0.25);
+    background: rgba(139,92,246,0.08);
+    color: #c4b5fd; font-size: 13px; cursor: pointer;
+    transition: all 0.15s; display: flex; align-items: center; gap: 4px;
+}
+.badges-open-btn:hover { background: rgba(139,92,246,0.2); }
+/* 7-day mini calendar */
+.streak-week {
+    display: flex; gap: 5px; margin-top: 10px;
+    justify-content: space-between;
+}
+.streak-day {
+    flex: 1; display: flex; flex-direction: column;
+    align-items: center; gap: 3px;
+}
+.streak-dot {
+    width: 10px; height: 10px; border-radius: 50%;
+    background: rgba(255,255,255,0.08);
+    border: 1px solid rgba(255,255,255,0.12);
+    transition: all 0.2s;
+}
+.streak-day-active .streak-dot {
+    background: linear-gradient(135deg, #f59e0b, #ef4444);
+    border-color: #f59e0b;
+    box-shadow: 0 0 6px rgba(245,158,11,0.5);
+}
+.streak-dow { font-size: 9px; color: #555; }
+.streak-day-active .streak-dow { color: #f59e0b; }
+
+/* ═══════════════════════════════════ BADGES MODAL ═══ */
+.badges-modal-overlay {
+    position: fixed; inset: 0; z-index: 1000;
+    background: rgba(0,0,0,0.6); backdrop-filter: blur(4px);
+    display: flex; align-items: center; justify-content: center;
+    opacity: 0; transition: opacity 0.3s ease;
+}
+.badges-modal-overlay.bm-show { opacity: 1; }
+.badges-modal {
+    background: #0f0f23; border: 1px solid rgba(139,92,246,0.25);
+    border-radius: 20px; width: 90%; max-width: 640px;
+    max-height: 80vh; overflow-y: auto;
+    box-shadow: 0 24px 80px rgba(0,0,0,0.6);
+    transform: translateY(24px); transition: transform 0.3s ease;
+    scrollbar-width: thin; scrollbar-color: rgba(139,92,246,0.3) transparent;
+}
+.badges-modal-overlay.bm-show .badges-modal { transform: translateY(0); }
+.badges-modal-header {
+    position: sticky; top: 0; z-index: 10;
+    background: #0f0f23; border-bottom: 1px solid rgba(255,255,255,0.06);
+    padding: 18px 20px 12px; display: flex; flex-direction: column; gap: 10px;
+}
+.badges-modal-header h2 { font-size: 18px; font-weight: 700; color: #f1f1f1; margin: 0; }
+.badges-stats-row { display: flex; gap: 8px; flex-wrap: wrap; }
+.badge-stat-chip {
+    font-size: 11px; color: #888; background: rgba(255,255,255,0.05);
+    padding: 3px 10px; border-radius: 20px;
+    border: 1px solid rgba(255,255,255,0.08);
+}
+.badges-close-btn {
+    position: absolute; top: 16px; right: 16px;
+    width: 28px; height: 28px; border-radius: 8px; border: none;
+    background: rgba(255,255,255,0.08); color: #888;
+    cursor: pointer; font-size: 14px;
+    display: flex; align-items: center; justify-content: center;
+    transition: all 0.15s;
+}
+.badges-close-btn:hover { background: rgba(239,68,68,0.2); color: #f87171; }
+/* Badge grid */
+.badges-grid { padding: 16px 20px 20px; display: flex; flex-direction: column; gap: 20px; }
+.badge-category { display: flex; flex-direction: column; gap: 10px; }
+.badge-cat-label {
+    font-size: 11px; font-weight: 700; color: #666; text-transform: uppercase;
+    letter-spacing: 0.08em;
+}
+.badge-cat-grid {
+    display: grid; grid-template-columns: repeat(auto-fill, minmax(130px,1fr));
+    gap: 10px;
+}
+.badge-item {
+    position: relative; border-radius: 14px; padding: 12px 10px;
+    display: flex; flex-direction: column; align-items: center; gap: 6px;
+    text-align: center; transition: transform 0.15s, box-shadow 0.15s;
+    cursor: default;
+}
+.badge-earned {
+    background: rgba(139,92,246,0.12);
+    border: 1px solid rgba(139,92,246,0.3);
+}
+.badge-earned:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(139,92,246,0.2); }
+.badge-locked {
+    background: rgba(255,255,255,0.03);
+    border: 1px solid rgba(255,255,255,0.07);
+    opacity: 0.5;
+    filter: grayscale(0.6);
+}
+.badge-icon  { font-size: 28px; line-height: 1; }
+.badge-name  { font-size: 11px; font-weight: 600; color: #c4b5fd; }
+.badge-desc  { font-size: 10px; color: #555; line-height: 1.4; }
+.badge-earned .badge-desc { color: #888; }
+.badge-check {
+    position: absolute; top: 6px; right: 6px;
+    background: #10b981; color: white;
+    width: 16px; height: 16px; border-radius: 50%;
+    font-size: 9px; display: flex; align-items: center; justify-content: center;
+}
+
+/* Badge unlock toast */
+.badge-toast {
+    position: fixed; bottom: 80px; left: 50%; transform: translateX(-50%) translateY(20px);
+    background: linear-gradient(135deg, #1e1b4b, #312e81);
+    border: 1px solid rgba(139,92,246,0.4);
+    border-radius: 14px; padding: 12px 18px;
+    display: flex; align-items: center; gap: 12px;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+    z-index: 9999; opacity: 0;
+    transition: opacity 0.35s ease, transform 0.35s ease;
+    min-width: 220px;
+}
+.badge-toast.bt-show { opacity: 1; transform: translateX(-50%) translateY(0); }
+.bt-icon { font-size: 28px; }
+.bt-text { display: flex; flex-direction: column; }
+.bt-text strong { font-size: 11px; color: #a78bfa; font-weight: 700; text-transform: uppercase; }
+.bt-text span    { font-size: 13px; color: #f1f1f1; font-weight: 500; }
