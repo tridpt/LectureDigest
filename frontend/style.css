@@ -2657,3 +2657,13 @@ body {
 }
 #badgeTooltip.bt-visible { opacity: 1; }
 #badgeTooltip strong { display: block; color: #c4b5fd; margin-bottom: 2px; font-size: 11px; }
+/* Badge popover refinements */
+#badgeTooltip {
+    cursor: default;
+    display: flex; flex-direction: column; gap: 4px;
+}
+#badgeTooltip strong { font-size: 13px; color: #e2d9f3; font-weight: 700; }
+.bt-desc   { font-size: 11.5px; color: #999; line-height: 1.45; }
+.bt-status { font-size: 11px; margin-top: 2px; }
+.bt-earned { color: #10b981; }
+.bt-locked { color: #666; }

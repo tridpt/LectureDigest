@@ -2966,36 +2966,39 @@ function ensureBadgeTooltip() {
 }
 
 function showBadgeTooltip(badgeEl, event) {
-    const tip     = ensureBadgeTooltip();
-    const name    = badgeEl.querySelector('.badge-name')?.textContent || '';
-    const desc    = badgeEl.dataset.tooltip || '';
-    const earned  = badgeEl.classList.contains('badge-earned');
-    tip.innerHTML = '<strong>' + name + '</strong>' + desc
-        + (earned ? '<br><span style="color:#10b981;font-size:11px">✅ Đã đạt được</span>'
-                  : '<br><span style="color:#666;font-size:11px">🔒 Chưa mở khóa</span>');
+    const tip    = ensureBadgeTooltip();
+    const name   = badgeEl.querySelector('.badge-name')?.textContent || '';
+    const desc   = badgeEl.dataset.tooltip || '';
+    const earned = badgeEl.classList.contains('badge-earned');
 
-    // Position: right of element, or left if near viewport edge
-    const rect = badgeEl.getBoundingClientRect();
-    tip.classList.add('bt-visible');
-    tip.style.opacity = '0';   // measure first
+    tip.innerHTML = '<strong>' + name + '</strong>'
+        + '<span class="bt-desc">' + desc + '</span>'
+        + (earned
+            ? '<span class="bt-status bt-earned">✅ Đã đạt được</span>'
+            : '<span class="bt-status bt-locked">🔒 Chưa mở khóa</span>');
+
+    // Measure
+    tip.style.opacity = '0';
     tip.style.display = 'block';
-
     const tipW = tip.offsetWidth;
     const tipH = tip.offsetHeight;
-    const GAP  = 10;
+    const GAP  = 8;
 
-    let left = rect.right + GAP;
-    let top  = rect.top + (rect.height / 2) - (tipH / 2);
+    const rect = badgeEl.getBoundingClientRect();
 
-    // Flip left if too close to right edge
-    if (left + tipW > window.innerWidth - 12) {
-        left = rect.left - tipW - GAP;
+    // Center horizontally on badge
+    let left = rect.left + (rect.width / 2) - (tipW / 2);
+    // Clamp horizontally
+    left = Math.max(8, Math.min(left, window.innerWidth - tipW - 8));
+
+    // Prefer below; flip above if not enough space
+    let top = rect.bottom + GAP;
+    if (top + tipH > window.innerHeight - 8) {
+        top = rect.top - tipH - GAP;
     }
-    // Clamp vertically
-    top = Math.max(8, Math.min(top, window.innerHeight - tipH - 8));
 
-    tip.style.left = left + 'px';
-    tip.style.top  = top  + 'px';
+    tip.style.left    = left + 'px';
+    tip.style.top     = top  + 'px';
     tip.style.opacity = '1';
 }
 
@@ -3011,18 +3014,29 @@ function openBadgesModal() {
     overlay.classList.remove('hidden');
     requestAnimationFrame(() => overlay.classList.add('bm-show'));
 
-    // Attach tooltip via event delegation on the grid
+    // Click-to-show popover via event delegation
     const grid = document.getElementById('badgesGrid');
     if (grid && !grid._tooltipBound) {
         grid._tooltipBound = true;
-        grid.addEventListener('mouseover', e => {
+        grid.addEventListener('click', e => {
             const item = e.target.closest('.badge-item');
-            if (item) showBadgeTooltip(item, e);
+            const tip  = document.getElementById('badgeTooltip');
+            // Toggle off if same badge clicked again
+            if (tip && tip._anchor === item && tip.style.opacity === '1') {
+                hideBadgeTooltip();
+                return;
+            }
+            if (item) {
+                showBadgeTooltip(item, e);
+                if (tip) tip._anchor = item;
+            }
         });
-        grid.addEventListener('mouseout', e => {
-            if (!e.target.closest('.badge-item')) return;
-            hideBadgeTooltip();
-        });
+        // Close popover when clicking outside any badge
+        document.addEventListener('click', e => {
+            if (!e.target.closest('.badge-item') && !e.target.closest('#badgeTooltip')) {
+                hideBadgeTooltip();
+            }
+        }, { capture: true });
     }
 }
 
