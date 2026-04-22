@@ -3129,3 +3129,34 @@ function dayOffsetISO(offset) {
     const g = loadGamif();
     renderStreakCard(g);
 })();
+
+// ══════════════════════════════════════════════════════════
+// THEME TOGGLE — DARK / LIGHT MODE
+// ══════════════════════════════════════════════════════════
+
+const THEME_KEY = 'lectureDigest_theme';
+
+function applyTheme(theme) {
+    const html = document.documentElement;
+    const icon = document.getElementById('themeIcon');
+    if (theme === 'light') {
+        html.classList.add('light-mode');
+        if (icon) icon.textContent = '☀️';
+    } else {
+        html.classList.remove('light-mode');
+        if (icon) icon.textContent = '🌙';
+    }
+}
+
+function toggleTheme() {
+    const current = localStorage.getItem(THEME_KEY) || 'dark';
+    const next = current === 'dark' ? 'light' : 'dark';
+    localStorage.setItem(THEME_KEY, next);
+    applyTheme(next);
+}
+
+// Apply saved theme on load (before paint)
+(function initTheme() {
+    const saved = localStorage.getItem(THEME_KEY) || 'dark';
+    applyTheme(saved);
+})();

@@ -11,6 +11,13 @@
     <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎓</text></svg>">
     <link rel="stylesheet" href="style.css">
     <script src="https://cdn.jsdelivr.net/npm/d3@7/dist/d3.min.js"></script>
+    <!-- Apply theme before paint to prevent flash -->
+    <script>
+        (function(){
+            var t = localStorage.getItem('lectureDigest_theme');
+            if (t === 'light') document.documentElement.classList.add('light-mode');
+        })();
+    </script>
 </head>
 <body>
 
@@ -36,6 +43,11 @@
                 <span class="logo-text">Lecture<span class="accent">Digest</span></span>
             </div>
             <div class="header-actions">
+                <!-- Theme toggle -->
+                <button class="theme-toggle-btn" id="themeToggleBtn" onclick="toggleTheme()" aria-label="Chuyển theme" title="Chuyển sáng/tối">
+                    <span class="theme-icon" id="themeIcon">🌙</span>
+                </button>
+
                 <!-- History button -->
                 <div class="history-wrapper">
                     <button class="history-btn" id="historyToggle" onclick="toggleHistoryPanel()"

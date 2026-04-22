@@ -2771,3 +2771,215 @@ body {
     border-color: rgba(139,92,246,0.4);
 }
 .bp-item.badge-locked { opacity: 0.45; filter: saturate(0.3); }
+
+/* ════════════════════════════════════ THEME TOGGLE BUTTON ═══ */
+.theme-toggle-btn {
+    width: 36px; height: 36px; border-radius: 10px;
+    border: 1px solid rgba(255,255,255,0.1);
+    background: rgba(255,255,255,0.06);
+    cursor: pointer; font-size: 16px;
+    display: flex; align-items: center; justify-content: center;
+    transition: all 0.2s; flex-shrink: 0;
+}
+.theme-toggle-btn:hover {
+    background: rgba(255,255,255,0.12);
+    transform: rotate(20deg) scale(1.1);
+}
+
+/* ════════════════════════════════════ LIGHT MODE OVERRIDES ═══ */
+html.light-mode {
+    /* Core palette */
+    --bg-primary:   #f0f2ff;
+    --bg-secondary: #ffffff;
+    --bg-card:      #ffffff;
+    --bg-glass:     rgba(255,255,255,0.85);
+    --text-primary: #1a1a2e;
+    --text-muted:   #555;
+    --border:       rgba(0,0,0,0.1);
+}
+
+html.light-mode body {
+    background: linear-gradient(135deg, #e8ecff 0%, #f5f0ff 50%, #e8f4ff 100%);
+    color: #1a1a2e;
+}
+
+/* Header */
+html.light-mode .header {
+    background: rgba(240,242,255,0.9);
+    border-bottom-color: rgba(0,0,0,0.08);
+}
+html.light-mode .logo-text { color: #1a1a2e; }
+html.light-mode .theme-toggle-btn {
+    border-color: rgba(0,0,0,0.12);
+    background: rgba(0,0,0,0.05);
+}
+html.light-mode .theme-toggle-btn:hover { background: rgba(0,0,0,0.1); }
+
+/* History button */
+html.light-mode .history-btn {
+    background: rgba(0,0,0,0.06);
+    border-color: rgba(0,0,0,0.1);
+    color: #444;
+}
+html.light-mode .history-btn:hover { background: rgba(0,0,0,0.1); }
+html.light-mode .history-panel {
+    background: #fff;
+    border-color: rgba(0,0,0,0.1);
+    box-shadow: 0 8px 32px rgba(0,0,0,0.15);
+}
+html.light-mode .hist-entry { border-bottom-color: rgba(0,0,0,0.06); }
+html.light-mode .hist-entry:hover { background: rgba(0,0,0,0.03); }
+html.light-mode .hist-title { color: #1a1a2e; }
+html.light-mode .hist-meta  { color: #888; }
+
+/* Cards */
+html.light-mode .card {
+    background: rgba(255,255,255,0.9);
+    border-color: rgba(0,0,0,0.08);
+    box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+}
+html.light-mode .card-title      { color: #1a1a2e; }
+html.light-mode .card-icon       { filter: none; }
+
+/* Hero section */
+html.light-mode .hero-section { background: transparent; }
+html.light-mode .hero-title   { color: #1a1a2e; }
+html.light-mode .hero-subtitle { color: #555; }
+html.light-mode .hero-badge {
+    background: rgba(124,58,237,0.1);
+    border-color: rgba(124,58,237,0.2);
+    color: #7c3aed;
+}
+
+/* URL input */
+html.light-mode .url-form-card {
+    background: rgba(255,255,255,0.95);
+    border-color: rgba(124,58,237,0.2);
+    box-shadow: 0 8px 40px rgba(124,58,237,0.1);
+}
+html.light-mode .url-input {
+    background: transparent;
+    color: #1a1a2e;
+}
+html.light-mode .url-input::placeholder { color: #aaa; }
+html.light-mode .url-input-wrapper {
+    border-color: rgba(0,0,0,0.1);
+}
+html.light-mode .language-grid-btn {
+    background: rgba(0,0,0,0.05);
+    border-color: rgba(0,0,0,0.1);
+    color: #444;
+}
+html.light-mode .language-grid-btn:hover,
+html.light-mode .language-grid-btn.active {
+    background: rgba(124,58,237,0.1);
+    border-color: rgba(124,58,237,0.3);
+    color: #7c3aed;
+}
+
+/* Results / content area */
+html.light-mode .results-section { background: transparent; }
+html.light-mode .video-header {
+    background: rgba(255,255,255,0.9);
+    border-bottom-color: rgba(0,0,0,0.08);
+}
+html.light-mode .video-title { color: #1a1a2e; }
+html.light-mode .video-meta-info span { color: #666; }
+
+/* Text colors */
+html.light-mode .overview-text  { color: #333; }
+html.light-mode .takeaways-title { color: #555; }
+html.light-mode .takeaway-item { color: #444; }
+html.light-mode p, html.light-mode li { color: #444; }
+
+/* Chapters */
+html.light-mode .chapter-item { border-left-color: rgba(0,0,0,0.1); }
+html.light-mode .chapter-item:hover { background: rgba(0,0,0,0.03); }
+html.light-mode .chapter-title { color: #1a1a2e; }
+html.light-mode .chapter-desc  { color: #666; }
+html.light-mode .chapter-time  { color: #888; }
+
+/* Quiz */
+html.light-mode .quiz-option {
+    background: rgba(0,0,0,0.04);
+    border-color: rgba(0,0,0,0.1);
+    color: #333;
+}
+html.light-mode .quiz-option:hover { background: rgba(124,58,237,0.08); }
+html.light-mode .quiz-question-text { color: #1a1a2e; }
+
+/* Transcript */
+html.light-mode .transcript-line { color: #555; }
+html.light-mode .transcript-line.active { color: #1a1a2e; background: rgba(124,58,237,0.08); }
+html.light-mode .transcript-search-input {
+    background: rgba(0,0,0,0.05);
+    border-color: rgba(0,0,0,0.1);
+    color: #1a1a2e;
+}
+
+/* Notes */
+html.light-mode .notes-textarea {
+    background: rgba(0,0,0,0.02);
+    color: #1a1a2e;
+    border-color: rgba(0,0,0,0.08);
+}
+
+/* Streak card */
+html.light-mode .streak-card {
+    background: rgba(124,58,237,0.06);
+    border-color: rgba(124,58,237,0.15);
+}
+html.light-mode .streak-label { color: #888; }
+html.light-mode .streak-best  { color: #7c3aed; }
+html.light-mode .streak-unit  { color: #aaa; }
+html.light-mode .badges-open-btn {
+    background: rgba(124,58,237,0.06);
+    border-color: rgba(124,58,237,0.15);
+    color: #7c3aed;
+}
+
+/* Bookmarks */
+html.light-mode .bookmark-item { border-color: rgba(0,0,0,0.08); }
+html.light-mode .bookmark-item:hover { background: rgba(0,0,0,0.03); }
+html.light-mode .bookmark-label { color: #333; }
+html.light-mode .bookmark-time  { color: #7c3aed; }
+
+/* Progress bars */
+html.light-mode .progress-track { background: rgba(0,0,0,0.08); }
+html.light-mode .progress-label { color: #555; }
+
+/* Badges page */
+html.light-mode .badges-page { background: #f0f2ff; }
+html.light-mode .badges-page-header { border-bottom-color: rgba(0,0,0,0.08); }
+html.light-mode .bp-title    { color: #1a1a2e; }
+html.light-mode .bp-subtitle { color: #777; }
+html.light-mode .bp-back-btn { background: rgba(0,0,0,0.05); border-color: rgba(0,0,0,0.1); color: #555; }
+html.light-mode .badge-stat-chip { background: rgba(0,0,0,0.06); border-color: rgba(0,0,0,0.08); color: #666; }
+html.light-mode .bp-sb-label { color: #999; }
+html.light-mode .bp-streak-bar { background: rgba(0,0,0,0.08); }
+html.light-mode .badge-cat-label { color: #999; }
+html.light-mode .bc-progress { background: rgba(0,0,0,0.06); color: #888; }
+html.light-mode .bp-item.badge-earned  { background: rgba(124,58,237,0.08); border-color: rgba(124,58,237,0.2); }
+html.light-mode .bp-item.badge-locked  { background: rgba(0,0,0,0.04); border-color: rgba(0,0,0,0.08); }
+html.light-mode .badge-name { color: #7c3aed; }
+html.light-mode .badge-desc { color: #888; }
+
+/* Scrollbars in light mode */
+html.light-mode ::-webkit-scrollbar-track { background: rgba(0,0,0,0.05); }
+html.light-mode ::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.2); border-radius: 4px; }
+
+/* Toast notifications */
+html.light-mode .badge-toast {
+    background: linear-gradient(135deg, #f0eeff, #e8e0ff);
+    border-color: rgba(124,58,237,0.3);
+}
+html.light-mode .bt-text strong { color: #7c3aed; }
+html.light-mode .bt-text span   { color: #1a1a2e; }
+
+/* Features section (hero) */
+html.light-mode .feature-card {
+    background: rgba(255,255,255,0.8);
+    border-color: rgba(0,0,0,0.08);
+}
+html.light-mode .feature-title { color: #1a1a2e; }
+html.light-mode .feature-desc  { color: #666; }
