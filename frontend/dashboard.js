@@ -190,8 +190,9 @@ function renderDbVideos(history) {
             ? new Date(h.analyzedAt).toLocaleDateString('vi-VN')
             : '';
         const thumb = 'https://img.youtube.com/vi/' + (h.video_id || '') + '/mqdefault.jpg';
+        const vid   = h.video_id || '';
 
-        return '<div class="db-video-item" onclick="loadFromHistory(\'' + h.id + '\')">' +
+        return '<div class="db-video-item" onclick="loadVideoFromDashboard(\'' + vid + '\')" role="button" tabindex="0">' +
             '<img class="db-vid-thumb" src="' + thumb + '" onerror="this.style.display=\'none\'" alt="" loading="lazy">' +
             '<div class="db-vid-meta">' +
             '<div class="db-vid-title">' + (h.title || 'Video chưa đặt tên') + '</div>' +
@@ -203,6 +204,17 @@ function renderDbVideos(history) {
             '<div class="db-vid-arrow">›</div>' +
             '</div>';
     }).join('');
+}
+
+// Wrapper: close dashboard first, then load the video results
+function loadVideoFromDashboard(videoId) {
+    // Hide dashboard overlay immediately
+    const ds = document.getElementById('dashboardSection');
+    if (ds) ds.classList.add('hidden');
+    // Load the video results (handles showSection internally)
+    if (typeof loadFromHistory === 'function') {
+        loadFromHistory(videoId);
+    }
 }
 
 // ── Badge category progress bars ───────────────────────
