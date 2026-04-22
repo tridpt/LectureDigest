@@ -3007,86 +3007,104 @@ function hideBadgeTooltip() {
     if (tip) { tip.style.opacity = '0'; tip.classList.remove('bt-visible'); }
 }
 
-function openBadgesModal() {
-    const overlay = document.getElementById('badgesModalOverlay');
-    if (!overlay) return;
-    renderBadgesGrid();
-    overlay.classList.remove('hidden');
-    requestAnimationFrame(() => overlay.classList.add('bm-show'));
+// Track which section to return to
+let _badgesPrevSection = 'resultsSection';
 
-    // Click-to-show popover via event delegation
-    const grid = document.getElementById('badgesGrid');
-    if (grid && !grid._tooltipBound) {
-        grid._tooltipBound = true;
-        grid.addEventListener('click', e => {
-            const item = e.target.closest('.badge-item');
-            const tip  = document.getElementById('badgeTooltip');
-            // Toggle off if same badge clicked again
-            if (tip && tip._anchor === item && tip.style.opacity === '1') {
-                hideBadgeTooltip();
-                return;
-            }
-            if (item) {
-                showBadgeTooltip(item, e);
-                if (tip) tip._anchor = item;
-            }
-        });
-        // Close popover when clicking outside any badge
-        document.addEventListener('click', e => {
-            if (!e.target.closest('.badge-item') && !e.target.closest('#badgeTooltip')) {
-                hideBadgeTooltip();
-            }
-        }, { capture: true });
-    }
+function openBadgesPage() {
+    // Remember current visible section
+    _badgesPrevSection = SECTION_IDS.find(id => {
+        const el = document.getElementById(id);
+        return el && !el.classList.contains('hidden');
+    }) || 'resultsSection';
+
+    renderBadgesPage();
+    showSection('badgesSection');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
-function closeBadgesModal(event) {
-    if (event && event.target !== document.getElementById('badgesModalOverlay')) return;
-    const overlay = document.getElementById('badgesModalOverlay');
-    overlay?.classList.remove('bm-show');
+function closeBadgesPage() {
     hideBadgeTooltip();
-    setTimeout(() => overlay?.classList.add('hidden'), 300);
+    showSection(_badgesPrevSection);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
-function renderBadgesGrid() {
-    const g     = loadGamif();
-    const grid  = document.getElementById('badgesGrid');
-    const stats = document.getElementById('badgesStatsRow');
-    if (!grid) return;
+// Keep backward-compat alias used by streak card button
+function openBadgesModal() { openBadgesPage(); }
+function closeBadgesModal() { closeBadgesPage(); }
 
-    // Stats row
+
+function badgeItemHTML(b, g, idx) {
+    const earned = g.earnedBadges.includes(b.id);
+    return '<div class="badge-item bp-item' + (earned ? ' badge-earned' : ' badge-locked') + '"'
+        + ' data-tooltip="' + b.desc + (earned ? ' ✅' : '') + '">'
+        + '<span class="badge-icon">' + b.icon + '</span>'
+        + '<span class="badge-name">' + b.name + '</span>'
+        + '<span class="badge-desc">' + b.desc + '</span>'
+        + (earned ? '<span class="badge-check">✓</span>' : '')
+        + '</div>';
+}
+
+function renderBadgesPage() {
+    const g       = loadGamif();
+    const wrap    = document.getElementById('bpGridWrap');
+    const stats   = document.getElementById('bpStatsRow');
+    const streakEl= document.getElementById('bpStreakSummary');
+    if (!wrap) return;
+
+    // Stats chips
     if (stats) {
+        const pct = BADGES.length ? Math.round(g.earnedBadges.length / BADGES.length * 100) : 0;
         stats.innerHTML = [
             statChip('📅', g.totalStudyDays + ' ngày học'),
             statChip('🎬', g.totalVideos + ' videos'),
             statChip('🧠', g.totalQuizzes + ' quizzes'),
-            statChip('🏆', g.earnedBadges.length + '/' + BADGES.length + ' huy hiệu'),
+            statChip('🔥', g.currentStreak + ' ngày streak'),
+            statChip('🏆', g.earnedBadges.length + '/' + BADGES.length + ' huy hiệu (' + pct + '%)'),
         ].join('');
     }
 
-    // Group by category
+    // Streak summary bar
+    if (streakEl) {
+        const pct = BADGES.length ? Math.round(g.earnedBadges.length / BADGES.length * 100) : 0;
+        streakEl.innerHTML =
+            '<div class="bp-streak-bar">'
+            + '<div class="bp-sb-fill" style="width:' + pct + '%"></div>'
+            + '</div>'
+            + '<span class="bp-sb-label">' + pct + '% huy hiệu đã mở khoá</span>';
+    }
+
+    // Badge categories
     const cats = [...new Set(BADGES.map(b => b.cat))];
-    grid.innerHTML = cats.map(cat => {
+    wrap.innerHTML = cats.map(cat => {
         const catBadges = BADGES.filter(b => b.cat === cat);
-        const totalInCat = catBadges.length;
-        const items = catBadges.map((b, idx) => {
-            const earned    = g.earnedBadges.includes(b.id);
-            const statusTxt = earned ? '✅ Đã đạt được' : '🔒 Chưa mở khóa';
-            const tooltip   = b.name + '\n' + b.desc + '\n' + statusTxt;
-            // Flip tooltip to left for last items in row (every 4th+ position)
-            const tipDir    = (idx % 4 >= 2) ? ' tip-left' : '';
-            return '<div class="badge-item' + (earned ? ' badge-earned' : ' badge-locked') + tipDir + '"'
-                + ' data-tooltip="' + b.desc + (earned ? ' ✅' : '') + '">'
-                + '<span class="badge-icon">' + b.icon + '</span>'
-                + '<span class="badge-name">' + b.name + '</span>'
-                + '<span class="badge-desc">' + b.desc + '</span>'
-                + (earned ? '<span class="badge-check">✓</span>' : '')
-                + '</div>';
-        }).join('');
-        return '<div class="badge-category"><h4 class="badge-cat-label">' + (CAT_LABELS[cat] || cat) + '</h4>'
-             + '<div class="badge-cat-grid">' + items + '</div></div>';
+        const earnedCount = catBadges.filter(b => g.earnedBadges.includes(b.id)).length;
+        return '<div class="badge-category">'
+            + '<h4 class="badge-cat-label">' + (CAT_LABELS[cat] || cat)
+            + '<span class="bc-progress">' + earnedCount + '/' + catBadges.length + '</span></h4>'
+            + '<div class="badge-cat-grid">' + catBadges.map((b, i) => badgeItemHTML(b, g, i)).join('') + '</div>'
+            + '</div>';
     }).join('');
+
+    // Wire up click-to-popover
+    if (!wrap._tooltipBound) {
+        wrap._tooltipBound = true;
+        wrap.addEventListener('click', e => {
+            const item = e.target.closest('.badge-item');
+            const tip  = document.getElementById('badgeTooltip');
+            if (tip && tip._anchor === item && tip.style.opacity === '1') {
+                hideBadgeTooltip(); return;
+            }
+            if (item) { showBadgeTooltip(item, e); if (tip) tip._anchor = item; }
+        });
+        document.addEventListener('click', e => {
+            if (!e.target.closest('.badge-item') && !e.target.closest('#badgeTooltip'))
+                hideBadgeTooltip();
+        }, { capture: true });
+    }
 }
+
+// Legacy alias — no-op since we removed modal
+function renderBadgesGrid() { renderBadgesPage(); }
 
 function statChip(icon, text) {
     return '<span class="badge-stat-chip">' + icon + ' ' + text + '</span>';
