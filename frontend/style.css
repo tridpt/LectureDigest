@@ -3332,10 +3332,40 @@ html.light-mode .db-badges-shortcut    { background: rgba(109,40,217,0.07); bord
 }
 .ce-ask-btn:hover { background: rgba(139,92,246,0.18); border-color: rgba(139,92,246,0.4); }
 
-/* Explainable zone cursor hint */
-.transcript-line:hover, .overview-text:hover, .takeaway-item:hover,
-.chapter-desc:hover, .chapter-title:hover {
+/* Explainable zones: text cursor */
+.transcript-line, .overview-text, .takeaway-item,
+.chapter-desc, .chapter-title, .summary-text {
     cursor: text;
+    user-select: text;
+    -webkit-user-select: text;
+}
+
+/* Floating explain trigger button */
+#ceExplainBtn, .ce-trigger-btn {
+    position: absolute;
+    z-index: 9999;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    padding: 6px 13px;
+    border-radius: 99px;
+    border: 1px solid rgba(139,92,246,0.5);
+    background: linear-gradient(135deg, #4c1d95, #6d28d9);
+    color: #fff;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    box-shadow: 0 4px 16px rgba(109,40,217,0.5);
+    opacity: 0;
+    transition: opacity 0.15s ease, transform 0.15s ease;
+    transform: translateY(2px);
+    white-space: nowrap;
+    pointer-events: auto;
+}
+#ceExplainBtn:hover, .ce-trigger-btn:hover {
+    background: linear-gradient(135deg, #5b21b6, #7c3aed);
+    box-shadow: 0 6px 20px rgba(109,40,217,0.65);
+    transform: translateY(-1px) scale(1.03);
 }
 
 /* Hint pill */
