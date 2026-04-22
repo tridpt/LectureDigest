@@ -715,9 +715,22 @@ async def translate_transcript(req: TranslateRequest):
     return {"translations": result, "target_language": req.target_language}
 
 
-# ── Serve frontend static files ───────────────────────────────────────────────
-# Mount AFTER all API routes so /api/* routes take priority.
+# ── Serve frontend ──────────────────────────────────────────────────────────
 _FRONTEND_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "frontend"))
 
 if os.path.isdir(_FRONTEND_DIR):
-    app.mount("/", StaticFiles(directory=_FRONTEND_DIR, html=True), name="frontend")
+    @app.get("/{full_path:path}", include_in_schema=False)
+    async def spa_catch_all(full_path: str):
+        """
+        SPA routing: serve the real file if it exists (css/js/images),
+        otherwise fall back to index.html so client-side routing works.
+        """
+        # Try to serve the actual file
+        target = os.path.join(_FRONTEND_DIR, full_path)
+        if os.path.isfile(target):
+            return FileResponse(target)
+        # Fallback: serve index.html for all SPA routes
+        index = os.path.join(_FRONTEND_DIR, "index.html")
+        if os.path.isfile(index):
+            return FileResponse(index)
+        raise HTTPException(status_code=404, detail="Not found")

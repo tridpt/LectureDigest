@@ -534,6 +534,7 @@ async function analyzeVideo() {
         initProgress(analysisData.video_id);              // learning progress
         initBookmarks(analysisData.video_id);             // bookmarks
         recordStudySession();                             // streak + badges
+        window._spaVideoId = analysisData.video_id;      // for SPA routing
         showSection('resultsSection');
 
 
@@ -3159,4 +3160,89 @@ function toggleTheme() {
 (function initTheme() {
     const saved = localStorage.getItem(THEME_KEY) || 'dark';
     applyTheme(saved);
+})();
+
+// ══════════════════════════════════════════════════════════
+// SPA ROUTING — URL changes per page
+// ══════════════════════════════════════════════════════════
+
+const SPA_ROUTES = {
+    hero:           '/',
+    loadingSection: null,   // no URL change while loading
+    errorSection:   null,   // no URL change on error
+    resultsSection: null,   // set dynamically with video id
+    badgesSection:  '/badges',
+};
+
+// Called from showSection() to update URL
+function pushSpaRoute(sectionId) {
+    const route = SPA_ROUTES[sectionId];
+    if (route === null) return;              // don't push for transient states
+
+    let url = route;
+    // Results page: include video ID in URL
+    if (sectionId === 'resultsSection') {
+        const vid = window._spaVideoId || (window.analysisData && window.analysisData.video_id);
+        url = vid ? '/results/' + vid : '/results';
+    }
+
+    // Only push if URL actually changed
+    if (location.pathname !== url) {
+        history.pushState({ section: sectionId }, document.title, url);
+    }
+    updatePageTitle(sectionId);
+}
+
+function updatePageTitle(sectionId) {
+    const titles = {
+        hero:           'LectureDigest — AI-Powered YouTube Learning',
+        resultsSection: 'Kết quả phân tích — LectureDigest',
+        badgesSection:  'Huy hiệu — LectureDigest',
+        loadingSection: 'Đang phân tích... — LectureDigest',
+        errorSection:   'Lỗi — LectureDigest',
+    };
+    document.title = titles[sectionId] || titles.hero;
+}
+
+// Handle browser back / forward
+window.addEventListener('popstate', function(e) {
+    const path = location.pathname;
+    if (path === '/' || path === '') {
+        showSection('hero');
+    } else if (path === '/badges') {
+        openBadgesPage();
+    } else if (path.startsWith('/results/')) {
+        // Try to restore from history data stored in app
+        const videoId = path.replace('/results/', '');
+        const histEntry = (window._analysisHistory || []).find(h => h.video_id === videoId);
+        if (histEntry) {
+            showSection('resultsSection');
+        } else {
+            showSection('hero');
+        }
+    } else {
+        showSection('hero');
+    }
+});
+
+// Patch showSection to also push SPA route
+(function patchShowSectionForRouting() {
+    const _orig = window.showSection;
+    window.showSection = function(id) {
+        _orig(id);
+        pushSpaRoute(id);
+    };
+})();
+
+// On initial page load: parse current URL
+(function initSpaRouteOnLoad() {
+    const path = location.pathname;
+    if (path === '/badges') {
+        // Will be handled after DOM is ready — openBadgesPage needs gamif data
+        window.addEventListener('DOMContentLoaded', function() {
+            openBadgesPage();
+        }, { once: true });
+    }
+    // /results/:id — don't attempt to restore since we need locally-stored data
+    // Just show hero so user can paste a URL or use history panel
 })();
