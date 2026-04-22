@@ -715,6 +715,45 @@ async def translate_transcript(req: TranslateRequest):
     return {"translations": result, "target_language": req.target_language}
 
 
+# ── Concept Explainer ─────────────────────────────────────────────────────────
+class ExplainRequest(BaseModel):
+    term:          str
+    context:       str = ""
+    video_title:   str = ""
+    language:      str = "vi"
+
+@app.post("/api/explain-concept")
+async def explain_concept(req: ExplainRequest):
+    term    = req.term.strip()[:120]
+    ctx     = req.context.strip()[:400]
+    title   = req.video_title.strip()[:120]
+    lang    = req.language or "vi"
+
+    lang_name = {"vi": "Tiếng Việt", "en": "English", "fr": "Français",
+                 "de": "Deutsch",   "ja": "日本語",    "ko": "한국어", "zh": "中文"}.get(lang, lang)
+
+    ctx_block = f'\n\nBối cảnh ngữ cảnh: "{ctx}"' if ctx else ""
+    vid_block = f"\nVideo đang học: {title}" if title else ""
+
+    prompt = f"""Bạn là một giáo viên giải thích khái niệm ngắn gọn và dễ hiểu.{vid_block}
+
+Hãy giải thích khái niệm / thuật ngữ: "{term}"{ctx_block}
+
+Yêu cầu:
+- Trả lời bằng {lang_name}
+- Ngắn gọn: 2-3 câu tối đa
+- Đầu tiên 1 câu định nghĩa rõ ràng
+- Nếu có thể, kết nối với chủ đề video
+- Không dùng markdown, không in đậm, chỉ văn xuôi thuần túy
+- Kết thúc bằng 1 emoji liên quan"""
+
+    try:
+        explanation = await call_gemini(prompt, temperature=0.3, max_tokens=256)
+        return {"term": term, "explanation": explanation.strip()}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
 # ── Serve frontend ──────────────────────────────────────────────────────────
 _FRONTEND_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "frontend"))
 
