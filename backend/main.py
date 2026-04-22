@@ -723,7 +723,7 @@ class ExplainRequest(BaseModel):
     language:      str = "vi"
 
 @app.post("/api/explain-concept")
-async def explain_concept(req: ExplainRequest):
+def explain_concept(req: ExplainRequest):
     term    = req.term.strip()[:120]
     ctx     = req.context.strip()[:400]
     title   = req.video_title.strip()[:120]
@@ -748,7 +748,7 @@ Yêu cầu:
 - Kết thúc bằng 1 emoji liên quan"""
 
     try:
-        explanation = await call_gemini(prompt, temperature=0.3, max_tokens=256)
+        explanation = call_gemini(prompt)
         return {"term": term, "explanation": explanation.strip()}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
