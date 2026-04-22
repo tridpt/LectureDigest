@@ -519,6 +519,27 @@
         </div>
     </section>
 
+    <!-- ═══════════════════════════ BADGES PAGE ═══════════════════════════ -->
+    <section class="badges-page hidden" id="badgesSection" aria-label="Huy hiệu học tập">
+        <div class="badges-page-inner">
+            <div class="badges-page-header">
+                <button class="bp-back-btn" onclick="closeBadgesPage()" aria-label="Quay lại">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="18" height="18">
+                        <path d="M19 12H5M12 5l-7 7 7 7" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                    Quay lại
+                </button>
+                <div class="bp-title-wrap">
+                    <h1 class="bp-title">🏆 Huy hiệu của bạn</h1>
+                    <p class="bp-subtitle">Khám phá và mở khoá các thành tích học tập</p>
+                </div>
+            </div>
+            <div class="bp-stats-row" id="bpStatsRow"></div>
+            <div class="bp-streak-summary" id="bpStreakSummary"></div>
+            <div class="bp-grid-wrap" id="bpGridWrap"></div>
+        </div>
+    </section>
+
     <!-- ═══════════════════════════════ FLASHCARD STUDY MODAL ══════════════════════════════ -->
     <div class="fc-modal-overlay hidden" id="fcModalOverlay" onclick="closeFcModal(event)" role="dialog" aria-modal="true" aria-label="Học Flashcard">
         <div class="fc-modal" id="fcModal">
