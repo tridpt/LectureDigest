@@ -2670,9 +2670,17 @@ body {
 
 /* ═══════════════════════════════════════ BADGES PAGE ═══ */
 .badges-page {
-    min-height: 100vh;
-    background: var(--bg, #08081a);
+    position: fixed;
+    inset: 0;
+    z-index: 500;
+    background: #08081a;
+    overflow-y: auto;
     padding: 0 0 60px;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(139,92,246,0.3) transparent;
+}
+.badges-page.hidden {
+    display: none !important;
 }
 .badges-page-inner {
     max-width: 860px;

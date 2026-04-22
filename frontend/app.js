@@ -3024,8 +3024,11 @@ function openBadgesPage() {
 
 function closeBadgesPage() {
     hideBadgeTooltip();
+    // Explicitly hide the overlay section first (belt-and-suspenders)
+    const bp = document.getElementById('badgesSection');
+    if (bp) bp.classList.add('hidden');
     showSection(_badgesPrevSection);
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+    window.scrollTo({ top: 0, behavior: 'instant' });
 }
 
 // Keep backward-compat alias used by streak card button
