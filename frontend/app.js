@@ -173,6 +173,7 @@ function loadFromHistory(videoId) {
     initProgress(entry.video_id);        // learning progress
     initBookmarks(entry.video_id);       // bookmarks
     recordStudySession();               // streak (counts as study)
+    window._spaVideoId = entry.video_id; // update URL via SPA routing
     showSection('resultsSection');
 }
 
