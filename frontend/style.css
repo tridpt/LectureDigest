@@ -3398,3 +3398,82 @@ html.light-mode .ce-explanation { color: #374151; }
 html.light-mode .ce-ask-btn { background: rgba(109,40,217,0.06); border-color: rgba(109,40,217,0.18); color: #7c3aed; }
 html.light-mode .ce-ask-btn:hover { background: rgba(109,40,217,0.12); }
 html.light-mode .ce-hint-pill { background: rgba(109,40,217,0.88); }
+
+/* ── Light mode: Chat panel ── */
+html.light-mode .chat-panel {
+    background: #ffffff;
+    border-color: rgba(109,40,217,0.18);
+    box-shadow: 0 16px 56px rgba(0,0,0,0.12);
+}
+html.light-mode .chat-panel-header {
+    background: linear-gradient(135deg, rgba(109,40,217,0.07), rgba(79,70,229,0.05));
+    border-bottom-color: rgba(109,40,217,0.1);
+}
+html.light-mode .chat-header-title { color: #1e1b4b; }
+html.light-mode .chat-header-sub   { color: #9ca3af; }
+html.light-mode .chat-close-btn {
+    background: rgba(0,0,0,0.05);
+    color: #6b7280;
+}
+html.light-mode .chat-close-btn:hover {
+    background: rgba(0,0,0,0.1);
+    color: #1e1b4b;
+}
+html.light-mode .chat-clear-btn {
+    background: rgba(239,68,68,0.06);
+    color: #ef4444;
+}
+html.light-mode .chat-messages {
+    background: #f8f9ff;
+}
+html.light-mode .chat-messages::-webkit-scrollbar-thumb {
+    background: rgba(109,40,217,0.2);
+}
+html.light-mode .chat-msg.assistant .chat-bubble {
+    background: #ffffff;
+    color: #374151;
+    border-color: rgba(0,0,0,0.08);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+}
+html.light-mode .chat-msg.user .chat-bubble {
+    background: linear-gradient(135deg, #6d28d9, #7c3aed);
+    color: #fff;
+}
+html.light-mode .chat-ts-link {
+    color: #7c3aed;
+    background: rgba(109,40,217,0.08);
+}
+html.light-mode .chat-ts-link:hover {
+    background: rgba(109,40,217,0.16);
+}
+html.light-mode .chat-suggestions {
+    border-top-color: rgba(0,0,0,0.06);
+    background: #fff;
+}
+html.light-mode .chat-suggestion-btn {
+    background: rgba(109,40,217,0.06);
+    border-color: rgba(109,40,217,0.2);
+    color: #7c3aed;
+}
+html.light-mode .chat-suggestion-btn:hover {
+    background: rgba(109,40,217,0.14);
+    border-color: rgba(109,40,217,0.35);
+}
+html.light-mode .chat-input-area {
+    border-top-color: rgba(0,0,0,0.06);
+    background: #fff;
+}
+html.light-mode .chat-input {
+    background: #f3f4f6;
+    border-color: rgba(0,0,0,0.08);
+    color: #1e1b4b;
+}
+html.light-mode .chat-input:focus {
+    border-color: rgba(109,40,217,0.4);
+    background: #fff;
+}
+html.light-mode .chat-input::placeholder { color: #9ca3af; }
+html.light-mode .chat-send-btn {
+    background: linear-gradient(135deg, #6d28d9, #7c3aed);
+}
+html.light-mode .typing-indicator span { background: #a78bfa; }
