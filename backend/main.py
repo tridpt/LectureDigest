@@ -245,74 +245,99 @@ def _snippets_to_list(fetched) -> list:
 
 
 def fetch_transcript_innertube(video_id: str) -> list:
-    """Fetch transcript via YouTube InnerTube API using Android client headers.
-    This bypasses IP blocks that affect regular web requests from cloud servers.
+    """Fetch transcript via YouTube InnerTube API.
+    Tries multiple clients in order of reliability.
     """
-    # ── Step 1: Get player data ───────────────────────────────────────────────
     innertube_url = "https://www.youtube.com/youtubei/v1/player"
-    payload = json.dumps({
-        "videoId": video_id,
-        "context": {
-            "client": {
-                "clientName": "ANDROID",
-                "clientVersion": "17.31.35",
-                "androidSdkVersion": 30,
-                "userAgent": "com.google.android.youtube/17.31.35 (Linux; U; Android 11) gzip",
-                "hl": "en",
-                "timeZone": "UTC",
-                "utcOffsetMinutes": 0,
-            }
+
+    # Try multiple InnerTube clients — TVHTML5 and WEB are most stable
+    clients = [
+        {
+            "name": "TVHTML5",
+            "payload": {
+                "videoId": video_id,
+                "context": {"client": {
+                    "clientName": "TVHTML5",
+                    "clientVersion": "7.20230405.08.01",
+                    "hl": "en", "gl": "US",
+                }},
+            },
+            "headers": {
+                "Content-Type": "application/json",
+                "User-Agent": "Mozilla/5.0 (SMART-TV; LINUX; Tizen 5.0) AppleWebKit/537.36",
+                "X-YouTube-Client-Name": "7",
+                "X-YouTube-Client-Version": "7.20230405.08.01",
+            },
         },
-    }).encode()
+        {
+            "name": "WEB",
+            "payload": {
+                "videoId": video_id,
+                "context": {"client": {
+                    "clientName": "WEB",
+                    "clientVersion": "2.20240101.00.00",
+                    "hl": "en", "gl": "US",
+                }},
+            },
+            "headers": {
+                "Content-Type": "application/json",
+                "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36",
+                "X-YouTube-Client-Name": "1",
+                "X-YouTube-Client-Version": "2.20240101.00.00",
+            },
+        },
+    ]
 
-    headers = {
-        "Content-Type": "application/json",
-        "User-Agent": "com.google.android.youtube/17.31.35 (Linux; U; Android 11) gzip",
-        "X-YouTube-Client-Name": "3",
-        "X-YouTube-Client-Version": "17.31.35",
-        "Origin": "https://www.youtube.com",
-    }
+    last_err = None
+    for client in clients:
+        try:
+            payload = json.dumps(client["payload"]).encode()
+            req = urllib.request.Request(innertube_url, data=payload, headers=client["headers"], method="POST")
+            with urllib.request.urlopen(req, timeout=15) as resp:
+                player_data = json.loads(resp.read())
 
-    req = urllib.request.Request(innertube_url, data=payload, headers=headers, method="POST")
-    with urllib.request.urlopen(req, timeout=15) as resp:
-        player_data = json.loads(resp.read())
+            tracks = (
+                player_data
+                .get("captions", {})
+                .get("playerCaptionsTracklistRenderer", {})
+                .get("captionTracks", [])
+            )
+            if not tracks:
+                raise ValueError(f"No caption tracks ({client['name']})")
 
-    # ── Step 2: Find a caption track ──────────────────────────────────────────
-    tracks = (
-        player_data
-        .get("captions", {})
-        .get("playerCaptionsTracklistRenderer", {})
-        .get("captionTracks", [])
-    )
-    if not tracks:
-        raise ValueError("No caption tracks found (video may have no captions)")
+            # Prefer non-auto, then any track
+            manual = [t for t in tracks if not t.get("kind")]
+            track = manual[0] if manual else tracks[0]
+            base_url = track.get("baseUrl", "")
+            if not base_url:
+                raise ValueError("Caption track has no baseUrl")
 
-    track = next((t for t in tracks if t.get("languageCode", "").startswith("en")), tracks[0])
-    base_url = track.get("baseUrl", "")
-    if not base_url:
-        raise ValueError("Caption track has no baseUrl")
+            caption_url = base_url + "&fmt=json3"
+            req2 = urllib.request.Request(caption_url, headers={"User-Agent": "Mozilla/5.0"})
+            with urllib.request.urlopen(req2, timeout=15) as resp2:
+                cap_data = json.loads(resp2.read())
 
-    # ── Step 3: Fetch caption JSON ────────────────────────────────────────────
-    caption_url = base_url + "&fmt=json3"
-    req2 = urllib.request.Request(caption_url, headers={"User-Agent": "Mozilla/5.0"})
-    with urllib.request.urlopen(req2, timeout=15) as resp2:
-        cap_data = json.loads(resp2.read())
+            snippets = []
+            for event in cap_data.get("events", []):
+                if "segs" not in event:
+                    continue
+                start_sec = event.get("tStartMs", 0) / 1000.0
+                text = "".join(seg.get("utf8", "") for seg in event["segs"]).strip()
+                if text:
+                    snippets.append({"text": text, "start": start_sec})
 
-    # ── Step 4: Parse events ──────────────────────────────────────────────────
-    snippets = []
-    for event in cap_data.get("events", []):
-        if "segs" not in event:
+            if not snippets:
+                raise ValueError("Transcript is empty")
+
+            print(f"[LectureDigest] InnerTube ({client['name']}): fetched {len(snippets)} segments")
+            return snippets
+
+        except Exception as e:
+            print(f"[LectureDigest] InnerTube {client['name']} failed: {e}")
+            last_err = e
             continue
-        start_sec = event.get("tStartMs", 0) / 1000.0
-        text = "".join(seg.get("utf8", "") for seg in event["segs"]).strip()
-        if text:
-            snippets.append({"text": text, "start": start_sec})
 
-    if not snippets:
-        raise ValueError("Transcript is empty")
-
-    print(f"[LectureDigest] InnerTube: fetched {len(snippets)} segments")
-    return snippets
+    raise ValueError(f"All InnerTube clients failed. Last: {last_err}")
 
 
 def get_transcript(video_id: str, language: str = "en") -> list:
@@ -334,32 +359,36 @@ def get_transcript(video_id: str, language: str = "en") -> list:
             detail=f"Could not fetch transcript. This video may not have captions enabled. ({str(e)})",
         )
 
-    attempts = []
-    if language != "en":
-        attempts += [
-            lambda: transcript_list.find_manually_created_transcript([language]),
-            lambda: transcript_list.find_generated_transcript([language]),
-        ]
-    attempts += [
-        lambda: transcript_list.find_manually_created_transcript(["en"]),
-        lambda: transcript_list.find_generated_transcript(["en"]),
-    ]
+    # Build priority list: requested lang > English > any available
+    lang_priority = []
+    if language and language != "en":
+        lang_priority.append(language)
+    lang_priority.append("en")
 
-    for attempt in attempts:
+    # Try manually created then auto-generated for each language
+    for lang in lang_priority:
+        for finder in [
+            lambda l=lang: transcript_list.find_manually_created_transcript([l]),
+            lambda l=lang: transcript_list.find_generated_transcript([l]),
+        ]:
+            try:
+                return _snippets_to_list(finder().fetch())
+            except Exception:
+                continue
+
+    # Last resort: grab whichever track is available
+    for transcript in transcript_list:
         try:
-            return _snippets_to_list(attempt().fetch())
+            result = _snippets_to_list(transcript.fetch())
+            if result:
+                print(f"[LectureDigest] Using fallback track: {transcript.language_code}")
+                return result
         except Exception:
             continue
 
-    try:
-        for transcript in transcript_list:
-            return _snippets_to_list(transcript.fetch())
-    except Exception:
-        pass
-
     raise HTTPException(
         status_code=404,
-        detail="No transcripts found for this video. Please try a video with captions enabled.",
+        detail="No transcript found. This video may not have captions — try another video.",
     )
 
 
