@@ -186,29 +186,47 @@ function toggleHistoryPanel(force) {
     if (shouldOpen) renderHistoryPanel();
 }
 
-function renderHistoryPanel() {
-    const list = loadHistory();
+function renderHistoryPanel(filter = '') {
+    let list = loadHistory();
     const container = document.getElementById('historyList');
     const empty = document.getElementById('historyEmpty');
     const countEl = document.getElementById('historyCount');
     if (!container) return;
     if (countEl) countEl.textContent = list.length;
+
+    // Apply search filter
+    const q = filter.trim().toLowerCase();
+    const filtered = q
+        ? list.filter(h => (h.title || '').toLowerCase().includes(q) || (h.author || '').toLowerCase().includes(q))
+        : list;
+
     if (list.length === 0) {
         container.innerHTML = '';
         empty.classList.remove('hidden');
         return;
     }
     empty.classList.add('hidden');
-    container.innerHTML = list.map(h => {
+
+    if (filtered.length === 0) {
+        container.innerHTML = `<div style="text-align:center;padding:24px 12px;opacity:.5;font-size:13px">🔍 Không tìm thấy video nào</div>`;
+        return;
+    }
+
+    container.innerHTML = filtered.map(h => {
         const date = new Date(h.savedAt);
         const dateStr = date.toLocaleDateString('vi-VN', { day:'2-digit', month:'2-digit', year:'numeric' });
         const timeStr = date.toLocaleTimeString('vi-VN', { hour:'2-digit', minute:'2-digit' });
+        // Highlight matching text
+        const titleHtml = q ? escHtml(h.title || 'Untitled').replace(
+            new RegExp(`(${q.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')})`, 'gi'),
+            '<mark style="background:rgba(139,92,246,.35);color:inherit;border-radius:2px">$1</mark>'
+        ) : escHtml(h.title || 'Untitled');
         return `
         <div class="hist-item" data-id="${h.video_id}">
             <img class="hist-thumb" src="${h.thumbnail}" alt="${escHtml(h.title)}" loading="lazy"
                  onerror="this.src='https://img.youtube.com/vi/${h.video_id}/mqdefault.jpg'">
             <div class="hist-info" onclick="loadFromHistory('${h.video_id}')" role="button" tabindex="0" title="Tải kết quả">
-                <div class="hist-title">${escHtml(h.title || 'Untitled')}</div>
+                <div class="hist-title">${titleHtml}</div>
                 <div class="hist-meta">${escHtml(h.author || '')} &bull; ${dateStr} ${timeStr}</div>
                 <div class="hist-lang">${h.lang || 'English'}</div>
             </div>
@@ -217,6 +235,10 @@ function renderHistoryPanel() {
             </button>
         </div>`;
     }).join('');
+}
+
+function filterHistory(value) {
+    renderHistoryPanel(value);
 }
 
 function escHtml(s) {
@@ -542,9 +564,32 @@ async function analyzeVideo() {
     } catch (err) {
         stopAnimation();
         const msgEl = document.getElementById('errorMessage');
-        if (msgEl) msgEl.textContent = err.message || 'Failed to analyze video. Please try again.';
-        showSection('errorSection');
-        document.getElementById('analyzeBtn').disabled = false;
+        const errText = err.message || 'Failed to analyze video. Please try again.';
+
+        // ── Rate-limit countdown ──────────────────────────────────────────────
+        const retryMatch = errText.match(/(\d+)s/);
+        const is429 = errText.includes('429') || errText.includes('quota') || errText.includes('RESOURCE_EXHAUSTED');
+        if (is429 && retryMatch) {
+            let secs = parseInt(retryMatch[1], 10);
+            if (msgEl) msgEl.innerHTML =
+                `⚠️ Gemini đang quá tải. Tự thử lại sau <strong id="cdTimer">${secs}</strong>s...`;
+            showSection('errorSection');
+            const cdInterval = setInterval(() => {
+                secs--;
+                const timerEl = document.getElementById('cdTimer');
+                if (timerEl) timerEl.textContent = secs;
+                if (secs <= 0) {
+                    clearInterval(cdInterval);
+                    // Auto-retry
+                    document.getElementById('analyzeBtn').disabled = false;
+                    analyzeVideo();
+                }
+            }, 1000);
+        } else {
+            if (msgEl) msgEl.textContent = errText;
+            showSection('errorSection');
+            document.getElementById('analyzeBtn').disabled = false;
+        }
     }
 }
 
@@ -3246,4 +3291,85 @@ window.addEventListener('popstate', function(e) {
     }
     // /results/:id — don't attempt to restore since we need locally-stored data
     // Just show hero so user can paste a URL or use history panel
+})();
+
+// ----------------------------------------------------------
+//  KEYBOARD SHORTCUTS
+//  Ctrl+Enter         ? Analyze video (hero screen)
+//  Escape             ? Close panels / modals
+//  1/2/3/4            ? Select quiz answer A/B/C/D
+//  ArrowRight         ? Next quiz question (after answering)
+//  Space / Enter      ? Flip flashcard
+//  ArrowLeft/Right    ? Navigate flashcard prev/next
+//  1 / 2 / 3          ? Rate flashcard hard/ok/easy
+// ----------------------------------------------------------
+document.addEventListener('keydown', function(e) {
+    const tag = document.activeElement?.tagName;
+    const isTyping = ['INPUT', 'TEXTAREA', 'SELECT'].includes(tag);
+
+    // Ctrl+Enter ? Analyze
+    if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+        const heroVisible = !document.getElementById('hero')?.classList.contains('hidden');
+        if (heroVisible) { e.preventDefault(); analyzeVideo(); }
+        return;
+    }
+
+    // Escape ? close panels / modals
+    if (e.key === 'Escape') {
+        const fcModal = document.getElementById('fcModalOverlay');
+        if (fcModal && !fcModal.classList.contains('hidden')) { if(typeof closeFcModalBtn!=='undefined') closeFcModalBtn(); return; }
+        const shareModal = document.getElementById('shareModalOverlay');
+        if (shareModal && !shareModal.classList.contains('hidden')) { if(typeof closeShareModalBtn!=='undefined') closeShareModalBtn(); return; }
+        const mmModal = document.getElementById('mmModalOverlay');
+        if (mmModal && !mmModal.classList.contains('hidden')) { if(typeof closeMindMap!=='undefined') closeMindMap(); return; }
+        const histPanel = document.getElementById('historyPanel');
+        if (histPanel?.classList.contains('open')) {
+            toggleHistoryPanel(false);
+            const inp = document.getElementById('histSearchInput');
+            if (inp) { inp.value = ''; renderHistoryPanel(''); }
+            return;
+        }
+        if (chatState?.isOpen && typeof toggleChat !== 'undefined') { toggleChat(); return; }
+        return;
+    }
+
+    if (isTyping) return;
+
+    // Flashcard shortcuts (checked first � modal is top layer)
+    const fcOpen = !document.getElementById('fcModalOverlay')?.classList.contains('hidden');
+    if (fcOpen) {
+        if (e.key === ' ' || e.key === 'Enter') { e.preventDefault(); if(typeof flipCard!=='undefined') flipCard(); return; }
+        if (e.key === 'ArrowLeft')  { e.preventDefault(); if(typeof fcNavigate!=='undefined') fcNavigate(-1); return; }
+        if (e.key === 'ArrowRight') { e.preventDefault(); if(typeof fcNavigate!=='undefined') fcNavigate(1);  return; }
+        if (e.key === '1') { if(typeof rateCard!=='undefined') rateCard('hard'); return; }
+        if (e.key === '2') { if(typeof rateCard!=='undefined') rateCard('ok');   return; }
+        if (e.key === '3') { if(typeof rateCard!=='undefined') rateCard('easy'); return; }
+        return;
+    }
+
+    // Quiz shortcuts
+    const quizContainer = document.getElementById('quizContainer');
+    if (quizContainer && !quizContainer.classList.contains('hidden')) {
+        if (e.key === '1') { document.getElementById('opt-0')?.click(); return; }
+        if (e.key === '2') { document.getElementById('opt-1')?.click(); return; }
+        if (e.key === '3') { document.getElementById('opt-2')?.click(); return; }
+        if (e.key === '4') { document.getElementById('opt-3')?.click(); return; }
+        if (e.key === 'ArrowRight') {
+            const nextBtn = document.getElementById('nextBtn');
+            if (nextBtn && !nextBtn.classList.contains('hidden')) { e.preventDefault(); if(typeof nextQuestion!=='undefined') nextQuestion(); return; }
+        }
+    }
+}, false);
+
+// Clear history search when panel closes
+(function() {
+    const _orig = window.toggleHistoryPanel;
+    window.toggleHistoryPanel = function(force) {
+        _orig(force);
+        const panel = document.getElementById('historyPanel');
+        if (!panel?.classList.contains('open')) {
+            const inp = document.getElementById('histSearchInput');
+            if (inp) { inp.value = ''; renderHistoryPanel(''); }
+        }
+    };
 })();

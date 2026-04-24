@@ -30,15 +30,19 @@ api_key = os.getenv("GEMINI_API_KEY")
 _genai_client: genai.Client | None = None
 
 def get_genai_client() -> genai.Client:
+    """Always read API key fresh from env so .env changes take effect without restart."""
     global _genai_client
-    if _genai_client is None:
-        _genai_client = genai.Client(api_key=os.getenv("GEMINI_API_KEY"))
+    current_key = os.getenv("GEMINI_API_KEY")
+    if _genai_client is None or getattr(_genai_client, "_api_key_cached", None) != current_key:
+        _genai_client = genai.Client(api_key=current_key)
+        _genai_client._api_key_cached = current_key
     return _genai_client
 
 
-# Primary model + fallback for free-tier quota (2.5-flash: 20 RPD, 2.0-flash: 200 RPD)
+# Primary model + fallback for free-tier quota
+# gemini-1.5-flash deprecated; gemini-2.0-flash-lite is the lightest available fallback
 _PRIMARY_MODEL  = "gemini-2.5-flash"
-_FALLBACK_MODEL = "gemini-2.0-flash"
+_FALLBACK_MODEL = "gemini-2.5-flash-lite"
 
 def call_gemini(prompt: str, retries: int = 4) -> str:
     """

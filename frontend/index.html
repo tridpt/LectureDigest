@@ -74,6 +74,13 @@
                             <span class="hist-panel-title">📋 Lịch sử phân tích</span>
                             <button class="hist-clear-btn" onclick="clearHistory()" title="Xóa tất cả">Xóa tất cả</button>
                         </div>
+                        <div class="hist-search-wrap">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="13" height="13" style="flex-shrink:0;opacity:.5"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35" stroke-linecap="round"/></svg>
+                            <input type="text" id="histSearchInput" class="hist-search-input"
+                                   placeholder="Tìm video..."
+                                   oninput="filterHistory(this.value)"
+                                   aria-label="Tìm kiếm lịch sử">
+                        </div>
                         <div class="hist-panel-body">
                             <div class="hist-empty hidden" id="historyEmpty">
                                 <div style="font-size:2rem">📭</div>
