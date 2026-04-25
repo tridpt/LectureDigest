@@ -1,7 +1,7 @@
 
-// ââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
+// ══════════════════════════════════════════════════════════
 // DASHBOARD
-// ââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
+// ══════════════════════════════════════════════════════════
 
 // Add dashboardSection to SECTION_IDS (patched after definition)
 if (typeof SECTION_IDS !== 'undefined' && !SECTION_IDS.includes('dashboardSection')) {
@@ -55,7 +55,7 @@ function renderDashboard() {
     renderDbBadgeCats(g);
 }
 
-// ââ Stat cards ââââââââââââââââââââââââââââââââââââââââââ
+// ── Stat cards ──────────────────────────────────────────
 function renderDbStats(g, history) {
     const grid = document.getElementById('dbStatGrid');
     if (!grid) return;
@@ -68,12 +68,12 @@ function renderDbStats(g, history) {
     const earnedCount = (g.earnedBadges || []).length;
 
     const cards = [
-        { icon: 'ð¬', label: 'Video ÄÃ£ há»c',    value: g.totalVideos   || 0,  sub: 'láº§n phÃ¢n tÃ­ch',   color: '#8b5cf6' },
-        { icon: 'ð¥', label: 'Streak hiá»n táº¡i', value: g.currentStreak || 0,  sub: 'ngÃ y liÃªn tiáº¿p',  color: '#f59e0b' },
-        { icon: 'ð§ ', label: 'Quiz ÄÃ£ lÃ m',     value: g.totalQuizzes  || 0,  sub: 'bÃ i kiá»m tra',    color: '#10b981' },
-        { icon: 'â­', label: 'Äiá»m quiz TB',    value: avgScore != null ? avgScore + '%' : 'N/A', sub: 'trung bÃ¬nh', color: '#60a5fa' },
-        { icon: 'ð', label: 'Huy hiá»u',        value: earnedCount + '/' + (typeof BADGES !== 'undefined' ? BADGES.length : 0), sub: 'ÄÃ£ má» khoÃ¡', color: '#f472b6' },
-        { icon: 'ð', label: 'NgÃ y há»c',        value: g.totalStudyDays || 0, sub: 'tá»ng cá»ng',       color: '#34d399' },
+        { icon: '🎬', label: 'Video đã học',    value: g.totalVideos   || 0,  sub: 'lần phân tích',   color: '#8b5cf6' },
+        { icon: '🔥', label: 'Streak hiện tại', value: g.currentStreak || 0,  sub: 'ngày liên tiếp',  color: '#f59e0b' },
+        { icon: '🧠', label: 'Quiz đã làm',     value: g.totalQuizzes  || 0,  sub: 'bài kiểm tra',    color: '#10b981' },
+        { icon: '⭐', label: 'Điểm quiz TB',    value: avgScore != null ? avgScore + '%' : 'N/A', sub: 'trung bình', color: '#60a5fa' },
+        { icon: '🏆', label: 'Huy hiệu',        value: earnedCount + '/' + (typeof BADGES !== 'undefined' ? BADGES.length : 0), sub: 'đã mở khoá', color: '#f472b6' },
+        { icon: '📅', label: 'Ngày học',        value: g.totalStudyDays || 0, sub: 'tổng cộng',       color: '#34d399' },
     ];
 
     grid.innerHTML = cards.map(c =>
@@ -87,7 +87,7 @@ function renderDbStats(g, history) {
     ).join('');
 }
 
-// ââ Streak / Activity Calendar (last 28 days) ââââââââââ
+// ── Streak / Activity Calendar (last 28 days) ──────────
 function renderDbStreak(g) {
     const numsEl = document.getElementById('dbStreakNums');
     const calEl  = document.getElementById('dbCalendar');
@@ -97,15 +97,15 @@ function renderDbStreak(g) {
         numsEl.innerHTML =
             '<div class="db-sn-item">' +
             '<span class="db-sn-val" style="color:#f59e0b">' + (g.currentStreak || 0) + '</span>' +
-            '<span class="db-sn-lbl">ð¥ Hiá»n táº¡i</span></div>' +
+            '<span class="db-sn-lbl">🔥 Hiện tại</span></div>' +
             '<div class="db-sn-sep"></div>' +
             '<div class="db-sn-item">' +
             '<span class="db-sn-val" style="color:#8b5cf6">' + (g.longestStreak || 0) + '</span>' +
-            '<span class="db-sn-lbl">ð Ká»· lá»¥c</span></div>' +
+            '<span class="db-sn-lbl">🏆 Kỷ lục</span></div>' +
             '<div class="db-sn-sep"></div>' +
             '<div class="db-sn-item">' +
             '<span class="db-sn-val" style="color:#34d399">' + (g.totalStudyDays || 0) + '</span>' +
-            '<span class="db-sn-lbl">ð Tá»ng</span></div>';
+            '<span class="db-sn-lbl">📅 Tổng</span></div>';
     }
 
     const days = 28;
@@ -132,7 +132,7 @@ function renderDbStreak(g) {
     calEl.innerHTML = html;
 }
 
-// ââ Quiz performance bar chart âââââââââââââââââââââââââ
+// ── Quiz performance bar chart ─────────────────────────
 function renderDbQuizChart(history) {
     const chartEl = document.getElementById('dbQuizChart');
     const avgEl   = document.getElementById('dbQuizAvg');
@@ -147,7 +147,7 @@ function renderDbQuizChart(history) {
     });
 
     if (!sessions.length) {
-        chartEl.innerHTML = '<p class="db-empty">ChÆ°a cÃ³ dá»¯ liá»u quiz. HÃ£y lÃ m quiz sau khi phÃ¢n tÃ­ch video!</p>';
+        chartEl.innerHTML = '<p class="db-empty">Chưa có dữ liệu quiz. Hãy làm quiz sau khi phân tích video!</p>';
         if (avgEl) avgEl.textContent = '';
         return;
     }
@@ -166,18 +166,18 @@ function renderDbQuizChart(history) {
     if (avgEl) {
         const avg = Math.round(sessions.reduce((a, s) => a + s.score, 0) / sessions.length);
         const color = avg >= 80 ? '#10b981' : avg >= 60 ? '#f59e0b' : '#ef4444';
-        avgEl.innerHTML = 'Trung bÃ¬nh: <strong style="color:' + color + '">' + avg + '%</strong> trÃªn ' + sessions.length + ' láº§n lÃ m';
+        avgEl.innerHTML = 'Trung bình: <strong style="color:' + color + '">' + avg + '%</strong> trên ' + sessions.length + ' lần làm';
     }
 }
 
-// ââ Recent videos ââââââââââââââââââââââââââââââââââââââ
+// ── Recent videos ──────────────────────────────────────
 function renderDbVideos(history) {
     const listEl = document.getElementById('dbVideoList');
     if (!listEl) return;
 
     const recent = history.slice(0, 8);
     if (!recent.length) {
-        listEl.innerHTML = '<p class="db-empty">ChÆ°a cÃ³ video nÃ o ÄÆ°á»£c phÃ¢n tÃ­ch. HÃ£y dÃ¡n link YouTube Äá» báº¯t Äáº§u!</p>';
+        listEl.innerHTML = '<p class="db-empty">Chưa có video nào được phân tích. Hãy dán link YouTube để bắt đầu!</p>';
         return;
     }
 
@@ -195,13 +195,13 @@ function renderDbVideos(history) {
         return '<div class="db-video-item" onclick="loadVideoFromDashboard(\'' + vid + '\')" role="button" tabindex="0">' +
             '<img class="db-vid-thumb" src="' + thumb + '" onerror="this.style.display=\'none\'" alt="" loading="lazy">' +
             '<div class="db-vid-meta">' +
-            '<div class="db-vid-title">' + (h.title || 'Video chÆ°a Äáº·t tÃªn') + '</div>' +
+            '<div class="db-vid-title">' + (h.title || 'Video chưa đặt tên') + '</div>' +
             '<div class="db-vid-info">' +
-            (dateStr ? '<span>ð ' + dateStr + '</span>' : '') +
-            (h.language ? '<span>ð ' + h.language + '</span>' : '') +
-            (avgScore != null ? '<span class="db-quiz-tag">ð§  ' + avgScore + '%</span>' : '') +
+            (dateStr ? '<span>📅 ' + dateStr + '</span>' : '') +
+            (h.language ? '<span>🌐 ' + h.language + '</span>' : '') +
+            (avgScore != null ? '<span class="db-quiz-tag">🧠 ' + avgScore + '%</span>' : '') +
             '</div></div>' +
-            '<div class="db-vid-arrow">âº</div>' +
+            '<div class="db-vid-arrow">›</div>' +
             '</div>';
     }).join('');
 }
@@ -217,7 +217,7 @@ function loadVideoFromDashboard(videoId) {
     }
 }
 
-// ââ Badge category progress bars âââââââââââââââââââââââ
+// ── Badge category progress bars ───────────────────────
 function renderDbBadgeCats(g) {
     const el = document.getElementById('dbBadgeCats');
     if (!el || typeof BADGES === 'undefined') return;
