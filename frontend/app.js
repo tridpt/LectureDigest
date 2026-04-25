@@ -186,20 +186,28 @@ function clearHistory() {
     renderHistoryPanel();
 }
 
-function loadFromHistory(videoId) {
-    const entry = loadHistory().find(h => h.video_id === videoId);
+function loadFromHistory(entryIdOrVideoId) {
+    // Find by entry_id first (unique per analysis), fallback to video_id (legacy)
+    var entry = loadHistory().find(function(h) {
+        return h.entry_id === entryIdOrVideoId;
+    });
+    if (!entry) {
+        entry = loadHistory().find(function(h) {
+            return h.video_id === entryIdOrVideoId;
+        });
+    }
     if (!entry) return;
     document.getElementById('urlInput').value = entry.url;
     analysisData = entry.data;
     toggleHistoryPanel(false);
-    clearChat();             // fresh chat when loading from history
+    clearChat();
     renderResults(entry.data);
-    initNotes(entry.video_id);           // load notes for this video
-    renderTranscript(entry.data?.transcript || entry.transcript || []);  // transcript
-    initProgress(entry.video_id);        // learning progress
-    initBookmarks(entry.video_id);       // bookmarks
-    recordStudySession();               // streak (counts as study)
-    window._spaVideoId = entry.video_id; // update URL via SPA routing
+    initNotes(entry.video_id);
+    renderTranscript(entry.data && entry.data.transcript ? entry.data.transcript : (entry.transcript || []));
+    initProgress(entry.video_id);
+    initBookmarks(entry.video_id);
+    recordStudySession();
+    window._spaVideoId = entry.video_id;
     showSection('resultsSection');
 }
 
@@ -249,7 +257,7 @@ function renderHistoryPanel(filter) {
         return '<div class="hist-item" data-id="' + h.video_id + '">' +
             '<img class="hist-thumb" src="' + h.thumbnail + '" alt="' + escHtml(h.title) + '" loading="lazy"' +
             " onerror=\"this.src='https://img.youtube.com/vi/" + h.video_id + "/mqdefault.jpg'\">" +
-            '<div class="hist-info" onclick="loadFromHistory(\'' + h.video_id + '\')" role="button" tabindex="0">' +
+            '<div class="hist-info" onclick="loadFromHistory(\'' + (h.entry_id || h.video_id) + '\')" role="button" tabindex="0">' +
             '<div class="hist-title">' + titleText + '</div>' +
             '<div class="hist-meta">' + escHtml(h.author || '') + ' &bull; ' + dateStr + ' ' + timeStr + '</div>' +
             '<div class="hist-lang">' + (h.lang || 'English') + '</div>' +
