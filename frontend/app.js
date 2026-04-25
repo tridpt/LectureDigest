@@ -172,19 +172,45 @@ function saveToHistory(data) {
 }
 
 function deleteFromHistory(idOrEntryId) {
-    // Delete specific entry by entry_id, or all entries for a video_id
-    const list = loadHistory().filter(h =>
-        h.entry_id ? h.entry_id !== idOrEntryId : h.video_id !== idOrEntryId
-    );
-    localStorage.setItem(HISTORY_KEY, JSON.stringify(list));
-    renderHistoryPanel();
+    showConfirmModal('Xoa video nay khoi lich su?', function() {
+        var list = loadHistory().filter(function(h) {
+            return h.entry_id ? h.entry_id !== idOrEntryId : h.video_id !== idOrEntryId;
+        });
+        localStorage.setItem(HISTORY_KEY, JSON.stringify(list));
+        renderHistoryPanel();
+    });
 }
 
 function clearHistory() {
-    if (!confirm('Xóa toàn bộ lịch sử?')) return;
-    localStorage.removeItem(HISTORY_KEY);
-    renderHistoryPanel();
+    showConfirmModal('Xoa toan bo lich su? Hanh dong nay khong the hoan tac.', function() {
+        localStorage.removeItem(HISTORY_KEY);
+        renderHistoryPanel();
+        showToast('Da xoa toan bo lich su');
+    });
 }
+
+// ── Confirm Modal ──────────────────────────────────────
+var _confirmCallback = null;
+
+function showConfirmModal(message, onConfirm) {
+    _confirmCallback = onConfirm;
+    var msgEl = document.getElementById('confirmMsg');
+    if (msgEl) msgEl.textContent = message;
+    var overlay = document.getElementById('confirmOverlay');
+    if (overlay) overlay.classList.remove('hidden');
+}
+
+function closeConfirmModal() {
+    var overlay = document.getElementById('confirmOverlay');
+    if (overlay) overlay.classList.add('hidden');
+    _confirmCallback = null;
+}
+
+function doConfirmAction() {
+    if (typeof _confirmCallback === 'function') _confirmCallback();
+    closeConfirmModal();
+}
+
 
 function loadFromHistory(entryIdOrVideoId) {
     // Find by entry_id first (unique per analysis), fallback to video_id (legacy)

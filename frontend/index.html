@@ -845,5 +845,17 @@
             </div>
         </div>
     </div>
+
+    <!-- CONFIRM DELETE MODAL -->
+    <div class="confirm-overlay hidden" id="confirmOverlay" role="dialog" aria-modal="true">
+        <div class="confirm-modal">
+            <div class="confirm-icon">⚠️</div>
+            <p class="confirm-msg" id="confirmMsg"></p>
+            <div class="confirm-actions">
+                <button class="confirm-btn confirm-cancel" onclick="closeConfirmModal()">Hủy</button>
+                <button class="confirm-btn confirm-delete" onclick="doConfirmAction()">Xóa</button>
+            </div>
+        </div>
+    </div>
 </body>
 </html>
