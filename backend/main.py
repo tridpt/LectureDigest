@@ -6,9 +6,16 @@ import base64
 import tempfile
 import atexit
 import urllib.request
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
+
+# Database sync
+from database import (
+    init_db, db_get_history, db_save_history, db_delete_history, db_clear_history,
+    db_get_notes, db_save_notes, db_get_bookmarks, db_sync_bookmarks, db_delete_bookmark,
+    db_get_gamification, db_save_gamification
+)
 from fastapi.responses import FileResponse
 from pydantic import BaseModel
 from youtube_transcript_api import YouTubeTranscriptApi
@@ -18,6 +25,9 @@ from dotenv import load_dotenv
 load_dotenv()
 
 app = FastAPI(title="LectureDigest API", version="1.0.0")
+
+# Initialize SQLite database
+init_db()
 
 app.add_middleware(
     CORSMiddleware,
@@ -788,6 +798,134 @@ Yêu cầu:
 
 
 # ── Serve frontend ──────────────────────────────────────────────────────────
+
+
+# ══════════════════════════════════════════════════════
+# DATABASE SYNC API
+# ══════════════════════════════════════════════════════
+
+@app.get("/api/db/history")
+async def api_get_history():
+    """Get all analysis history from database."""
+    return db_get_history(limit=100)
+
+@app.post("/api/db/history")
+async def api_save_history(request: Request):
+    """Save an analysis entry to database."""
+    entry = await request.json()
+    entry_id = db_save_history(entry)
+    return {"ok": True, "entry_id": entry_id}
+
+@app.post("/api/db/history/bulk")
+async def api_bulk_save_history(request: Request):
+    """Bulk import history entries (for initial sync from localStorage)."""
+    entries = await request.json()
+    saved = 0
+    for entry in entries:
+        try:
+            db_save_history(entry)
+            saved += 1
+        except Exception as e:
+            print(f"[DB] Skip entry: {e}")
+    return {"ok": True, "saved": saved, "total": len(entries)}
+
+@app.delete("/api/db/history/{entry_id}")
+async def api_delete_history(entry_id: str):
+    """Delete a single history entry."""
+    db_delete_history(entry_id)
+    return {"ok": True}
+
+@app.delete("/api/db/history")
+async def api_clear_history():
+    """Clear all history."""
+    db_clear_history()
+    return {"ok": True}
+
+@app.get("/api/db/notes/{video_id}")
+async def api_get_notes(video_id: str):
+    """Get notes for a video."""
+    return {"video_id": video_id, "content": db_get_notes(video_id)}
+
+@app.put("/api/db/notes/{video_id}")
+async def api_save_notes(video_id: str, request: Request):
+    """Save/update notes for a video."""
+    body = await request.json()
+    db_save_notes(video_id, body.get("content", ""))
+    return {"ok": True}
+
+@app.get("/api/db/bookmarks/{video_id}")
+async def api_get_bookmarks(video_id: str):
+    """Get bookmarks for a video."""
+    return db_get_bookmarks(video_id)
+
+@app.put("/api/db/bookmarks/{video_id}")
+async def api_sync_bookmarks(video_id: str, request: Request):
+    """Sync all bookmarks for a video (replace)."""
+    bookmarks = await request.json()
+    db_sync_bookmarks(video_id, bookmarks)
+    return {"ok": True}
+
+@app.get("/api/db/gamification")
+async def api_get_gamification():
+    """Get gamification data."""
+    return db_get_gamification()
+
+@app.put("/api/db/gamification")
+async def api_save_gamification(request: Request):
+    """Save gamification data."""
+    data = await request.json()
+    db_save_gamification(data)
+    return {"ok": True}
+
+@app.post("/api/db/sync")
+async def api_full_sync(request: Request):
+    """Full sync: receive all localStorage data, merge into DB, return merged result."""
+    payload = await request.json()
+
+    # Sync history
+    local_history = payload.get("history", [])
+    for entry in local_history:
+        try:
+            db_save_history(entry)
+        except:
+            pass
+
+    # Sync notes
+    local_notes = payload.get("notes", {})
+    for video_id, content in local_notes.items():
+        if content:
+            db_save_notes(video_id, content)
+
+    # Sync bookmarks
+    local_bookmarks = payload.get("bookmarks", {})
+    for video_id, bms in local_bookmarks.items():
+        if bms:
+            db_sync_bookmarks(video_id, bms)
+
+    # Sync gamification
+    local_gamif = payload.get("gamification", {})
+    if local_gamif:
+        existing = db_get_gamification()
+        # Merge: keep higher values
+        merged = {}
+        for key in set(list(existing.keys()) + list(local_gamif.keys())):
+            ev = existing.get(key)
+            lv = local_gamif.get(key)
+            if isinstance(ev, (int, float)) and isinstance(lv, (int, float)):
+                merged[key] = max(ev, lv)
+            elif isinstance(ev, list) and isinstance(lv, list):
+                merged[key] = list(set(ev + lv))
+            else:
+                merged[key] = lv if lv is not None else ev
+        db_save_gamification(merged)
+
+    return {
+        "ok": True,
+        "history": db_get_history(limit=100),
+        "gamification": db_get_gamification()
+    }
+
+
 _FRONTEND_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "frontend"))
 
 if os.path.isdir(_FRONTEND_DIR):
