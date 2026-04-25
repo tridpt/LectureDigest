@@ -3332,11 +3332,25 @@ window.addEventListener('popstate', function(e) {
         showSection('hero');
     } else if (path === '/badges') {
         openBadgesPage();
-    } else if (path.startsWith('/results/')) {
-        // Try to restore from history data stored in app
-        const videoId = path.replace('/results/', '');
-        const histEntry = (window._analysisHistory || []).find(h => h.video_id === videoId);
-        if (histEntry) {
+    } else if (path.indexOf('/results/') === 0) {
+        var videoId = path.replace('/results/', '');
+        var hist = [];
+        try { hist = JSON.parse(localStorage.getItem('lectureDigest_history') || '[]'); } catch(e) {}
+        var entry = null;
+        for (var i = 0; i < hist.length; i++) {
+            if (hist[i].video_id === videoId) { entry = hist[i]; break; }
+        }
+        if (entry && entry.data) {
+            var urlInput = document.getElementById('urlInput');
+            if (urlInput) urlInput.value = entry.url || ('https://youtube.com/watch?v=' + videoId);
+            analysisData = entry.data;
+            clearChat();
+            renderResults(entry.data);
+            initNotes(entry.video_id);
+            renderTranscript(entry.data.transcript || entry.transcript || []);
+            initProgress(entry.video_id);
+            initBookmarks(entry.video_id);
+            window._spaVideoId = entry.video_id;
             showSection('resultsSection');
         } else {
             showSection('hero');
@@ -3357,15 +3371,44 @@ window.addEventListener('popstate', function(e) {
 
 // On initial page load: parse current URL
 (function initSpaRouteOnLoad() {
-    const path = location.pathname;
+    var path = location.pathname;
     if (path === '/badges') {
-        // Will be handled after DOM is ready — openBadgesPage needs gamif data
         window.addEventListener('DOMContentLoaded', function() {
             openBadgesPage();
         }, { once: true });
+    } else if (path.indexOf('/results/') === 0) {
+        // Direct URL access: /results/VIDEO_ID — try to load from localStorage history
+        var videoId = path.replace('/results/', '');
+        window.addEventListener('DOMContentLoaded', function() {
+            var hist = [];
+            try { hist = JSON.parse(localStorage.getItem('lectureDigest_history') || '[]'); } catch(e) {}
+            var entry = null;
+            // Find most recent entry for this video_id
+            for (var i = 0; i < hist.length; i++) {
+                if (hist[i].video_id === videoId) { entry = hist[i]; break; }
+            }
+            if (entry && entry.data) {
+                // Load from history
+                var urlInput = document.getElementById('urlInput');
+                if (urlInput) urlInput.value = entry.url || ('https://youtube.com/watch?v=' + videoId);
+                analysisData = entry.data;
+                clearChat();
+                renderResults(entry.data);
+                initNotes(entry.video_id);
+                renderTranscript(entry.data.transcript || entry.transcript || []);
+                initProgress(entry.video_id);
+                initBookmarks(entry.video_id);
+                window._spaVideoId = entry.video_id;
+                showSection('resultsSection');
+            } else {
+                // Not in history — pre-fill URL and let user click analyze
+                var urlInput2 = document.getElementById('urlInput');
+                if (urlInput2) urlInput2.value = 'https://youtube.com/watch?v=' + videoId;
+                showSection('hero');
+                showToast('Video chua co trong lich su. Bam Analyze de phan tich.');
+            }
+        }, { once: true });
     }
-    // /results/:id — don't attempt to restore since we need locally-stored data
-    // Just show hero so user can paste a URL or use history panel
 })();
 
 // ════════════════════════════════════════════════════════
