@@ -396,6 +396,20 @@ body {
     color: var(--accent-light);
     font-weight: 500;
 }
+.hist-playlist-badge {
+    display: inline-block;
+    font-size: 9px;
+    padding: 2px 7px;
+    border-radius: 4px;
+    background: rgba(16,185,129,0.15);
+    color: #34d399;
+    font-weight: 600;
+    margin-top: 2px;
+    max-width: 180px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
 .hist-del {
     flex-shrink: 0;
     width: 26px; height: 26px;

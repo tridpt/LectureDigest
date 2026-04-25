@@ -165,6 +165,11 @@ function saveToHistory(data) {
         data,
         transcript:  data.transcript || null,  // store for quiz regeneration
     };
+    // Tag with playlist info if analyzing from playlist mode
+    if (playlistState && playlistState.data) {
+        entry.playlist_id = playlistState.data.playlist_id;
+        entry.playlist_title = playlistState.data.title;
+    }
     list.unshift(entry);                       // newest first
     list.splice(HISTORY_MAX);                  // keep max N
     localStorage.setItem(HISTORY_KEY, JSON.stringify(list));
@@ -293,6 +298,7 @@ function renderHistoryPanel(filter) {
             " onerror=\"this.src='https://img.youtube.com/vi/" + h.video_id + "/mqdefault.jpg'\">" +
             '<div class="hist-info" onclick="loadFromHistory(\'' + (h.entry_id || h.video_id) + '\')" role="button" tabindex="0">' +
             '<div class="hist-title">' + titleText + '</div>' +
+            (h.playlist_title ? '<div class="hist-playlist-badge">📋 ' + escHtml(h.playlist_title) + '</div>' : '') +
             '<div class="hist-meta">' + escHtml(h.author || '') + ' &bull; ' + dateStr + ' ' + timeStr + '</div>' +
             '<div class="hist-lang">' + (h.lang || 'English') + '</div>' +
             '<div class="hist-tags">' + renderTagBadges(h.video_id) + '</div>' +
