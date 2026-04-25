@@ -4952,3 +4952,287 @@ html.light-mode .kg-page {
     .kg-controls { gap: 4px; }
     .kg-ctrl-btn { padding: 5px 10px; font-size: 11px; }
 }
+
+/* ══════════════════════════════════════════════════════
+   MOBILE UX ENHANCEMENTS
+   ══════════════════════════════════════════════════════ */
+
+/* ── Bottom Navigation Bar (mobile results view) ── */
+.mobile-bottom-nav {
+    display: none;
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    z-index: 150;
+    background: rgba(7,7,18,0.95);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border-top: 1px solid rgba(139,92,246,0.15);
+    padding: 6px 8px calc(6px + env(safe-area-inset-bottom, 0px));
+    box-shadow: 0 -4px 30px rgba(0,0,0,0.4);
+}
+html.light-mode .mobile-bottom-nav {
+    background: rgba(255,255,255,0.95);
+    border-top-color: rgba(0,0,0,0.08);
+    box-shadow: 0 -4px 20px rgba(0,0,0,0.08);
+}
+.mob-nav-inner {
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+    max-width: 500px;
+    margin: 0 auto;
+}
+.mob-nav-btn {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+    padding: 6px 12px;
+    border-radius: 12px;
+    border: none;
+    background: none;
+    color: var(--text-secondary);
+    font-family: var(--font);
+    font-size: 10px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+    -webkit-tap-highlight-color: transparent;
+    min-width: 56px;
+}
+.mob-nav-btn svg { width: 20px; height: 20px; }
+.mob-nav-btn.active,
+.mob-nav-btn:active {
+    color: var(--accent);
+    background: rgba(139,92,246,0.12);
+}
+
+@media (max-width: 640px) {
+    /* Show bottom nav only on mobile */
+    .mobile-bottom-nav { display: block; }
+
+    /* ── Header: compact, icons only ── */
+    .header { padding: 0 12px; }
+    .header-inner { height: 52px; }
+    .logo-text { font-size: 16px; }
+    .logo-icon { width: 28px; height: 28px; }
+    .dashboard-nav-btn span,
+    .dashboard-nav-btn:not(svg) {
+        font-size: 0; /* hide text */
+    }
+    .dashboard-nav-btn {
+        padding: 8px;
+        gap: 0;
+        font-size: 0;
+    }
+    .dashboard-nav-btn svg { width: 18px; height: 18px; }
+    .history-btn .history-label { display: none; }
+    .history-btn { padding: 8px 10px; gap: 4px; }
+    .theme-toggle-btn { width: 36px; height: 36px; }
+    .header-actions { gap: 4px; }
+
+    /* ── Hero: tighter mobile layout ── */
+    .hero {
+        padding: 40px 16px 30px;
+        min-height: auto;
+    }
+    .hero-title {
+        font-size: 28px;
+        letter-spacing: -1px;
+        line-height: 1.15;
+    }
+    .hero-subtitle {
+        font-size: 14px;
+        padding: 0 8px;
+    }
+    .search-box {
+        padding: 6px;
+        border-radius: 16px;
+    }
+    .search-input {
+        font-size: 14px;
+        padding: 10px 14px;
+    }
+    .search-btn {
+        padding: 12px 20px;
+        font-size: 14px;
+        border-radius: 12px;
+    }
+    .search-hint { font-size: 11px; }
+    .lang-row { gap: 6px; padding: 0 4px; }
+    .lang-btn { padding: 6px 12px; font-size: 12px; }
+
+    /* ── Features grid: single column ── */
+    .features { grid-template-columns: 1fr; gap: 12px; }
+    .feature-card { padding: 16px; }
+
+    /* ── Results view ── */
+    .results-section { padding-bottom: 70px; } /* space for bottom nav */
+    .video-header { padding: 12px 14px; }
+    .video-header-inner {
+        flex-direction: column;
+        gap: 8px;
+        align-items: flex-start;
+    }
+    .video-title { font-size: 16px; line-height: 1.3; }
+    .video-header-actions { width: 100%; overflow-x: auto; -webkit-overflow-scrolling: touch; }
+    .video-header-actions { display: flex; gap: 6px; padding-bottom: 4px; }
+    .tab-nav {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+        scrollbar-width: none;
+        padding: 0 12px;
+        gap: 2px;
+    }
+    .tab-nav::-webkit-scrollbar { display: none; }
+    .tab-btn {
+        padding: 10px 14px;
+        font-size: 12px;
+        white-space: nowrap;
+        flex-shrink: 0;
+        min-height: 44px; /* touch target */
+    }
+
+    /* Video player column */
+    .video-column {
+        position: static;
+        height: auto;
+    }
+    .video-player-wrap { border-radius: 0; }
+
+    /* Content cards */
+    .analysis-column { padding: 12px; gap: 12px; }
+    .content-card { border-radius: 14px; }
+    .card-header { padding: 12px 14px; }
+    .card-body { padding: 14px; }
+
+    /* ── Quiz: larger touch targets ── */
+    .quiz-option {
+        padding: 14px 16px;
+        font-size: 14px;
+        min-height: 48px;
+        border-radius: 12px;
+    }
+    .quiz-nav {
+        flex-wrap: wrap;
+        gap: 8px;
+    }
+    .quiz-nav-btn {
+        flex: 1;
+        min-width: 100px;
+        min-height: 44px;
+        font-size: 13px;
+    }
+    .quiz-progress { font-size: 12px; }
+    .quiz-question { font-size: 15px; line-height: 1.5; }
+
+    /* ── Flashcard modal: bottom sheet on mobile ── */
+    .fc-modal-overlay {
+        align-items: flex-end;
+        padding: 0;
+    }
+    .fc-modal {
+        border-radius: 20px 20px 0 0;
+        max-height: 92vh;
+        width: 100%;
+        max-width: 100%;
+        animation: slideUpSheet 0.3s ease;
+    }
+    @keyframes slideUpSheet {
+        from { transform: translateY(100%); }
+        to   { transform: translateY(0); }
+    }
+    .fc-card {
+        height: 220px;
+        border-radius: 16px;
+    }
+    .fc-front, .fc-back { padding: 20px 16px; font-size: 15px; }
+    .fc-rate-row { flex-wrap: wrap; gap: 6px; }
+    .fc-rate-btn {
+        flex: 1;
+        min-width: 60px;
+        min-height: 44px;
+        font-size: 12px;
+    }
+
+    /* ── Topics/timeline ── */
+    .topic-item {
+        padding: 14px;
+    }
+    .topic-summary { font-size: 13px; }
+
+    /* ── Highlights ── */
+    .highlight-card { padding: 12px; }
+
+    /* ── Chat FAB ── */
+    .chat-fab {
+        bottom: 80px; /* above bottom nav */
+        right: 14px;
+    }
+    .chat-panel {
+        width: calc(100vw - 16px);
+        right: 8px;
+        bottom: 140px;
+        max-height: 60vh;
+        border-radius: 18px;
+    }
+
+    /* ── Notes textarea ── */
+    .notes-textarea { min-height: 120px; }
+
+    /* ── Key takeaways ── */
+    .takeaway-item { padding: 8px 12px; font-size: 13px; }
+
+    /* ── History panel ── */
+    .history-panel {
+        width: 100vw;
+        right: 0;
+        top: 52px;
+        border-radius: 0 0 16px 16px;
+        max-height: 70vh;
+    }
+
+    /* ── Export PDF button ── */
+    .export-pdf-btn {
+        padding: 8px 12px;
+        font-size: 11px;
+    }
+    .new-video-btn {
+        padding: 8px 14px;
+        font-size: 12px;
+    }
+
+    /* ── Bookmark button ── */
+    .bookmark-btn { min-height: 40px; }
+
+    /* ── Mind map modal ── */
+    .mm-overlay { padding: 8px; }
+    .mm-modal { border-radius: 16px; }
+
+    /* ── General touch improvements ── */
+    button, [role="button"] {
+        -webkit-tap-highlight-color: transparent;
+    }
+    * { -webkit-text-size-adjust: 100%; }
+}
+
+/* Extra small screens (< 380px) */
+@media (max-width: 380px) {
+    .hero-title { font-size: 24px; }
+    .search-btn { padding: 10px 16px; }
+    .mob-nav-btn { padding: 4px 8px; font-size: 9px; min-width: 48px; }
+    .tab-btn { padding: 8px 10px; font-size: 11px; }
+    .video-title { font-size: 14px; }
+}
+
+/* ── Safe area for notch devices ── */
+@supports(padding: max(0px)) {
+    .mobile-bottom-nav {
+        padding-bottom: max(6px, env(safe-area-inset-bottom));
+    }
+    .header {
+        padding-top: env(safe-area-inset-top, 0px);
+    }
+}
