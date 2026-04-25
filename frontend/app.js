@@ -3297,7 +3297,8 @@ const SPA_ROUTES = {
 // Called from showSection() to update URL
 function pushSpaRoute(sectionId) {
     const route = SPA_ROUTES[sectionId];
-    if (route === null) return;              // don't push for transient states
+    // Skip transient states (loading, error) but NOT resultsSection
+    if (route === null && sectionId !== 'resultsSection') return;
 
     let url = route;
     // Results page: include video ID in URL
