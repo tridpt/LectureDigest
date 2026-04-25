@@ -151,10 +151,11 @@ function loadHistory() {
 
 function saveToHistory(data) {
     const list = loadHistory();
-    // Remove existing entry for same video if present
-    const filtered = list.filter(h => h.video_id !== data.video_id);
+    // Keep old entries — allow multiple analyses of the same video
+    // Each entry gets a unique key: video_id + timestamp
     const entry = {
         video_id:    data.video_id,
+        entry_id:    data.video_id + '_' + Date.now(),   // unique per analysis
         url:         document.getElementById('urlInput').value.trim(),
         title:       data.title,
         author:      data.author,
@@ -164,14 +165,17 @@ function saveToHistory(data) {
         data,
         transcript:  data.transcript || null,  // store for quiz regeneration
     };
-    filtered.unshift(entry);                   // newest first
-    filtered.splice(HISTORY_MAX);              // keep max N
-    localStorage.setItem(HISTORY_KEY, JSON.stringify(filtered));
+    list.unshift(entry);                       // newest first
+    list.splice(HISTORY_MAX);                  // keep max N
+    localStorage.setItem(HISTORY_KEY, JSON.stringify(list));
     renderHistoryPanel();
 }
 
-function deleteFromHistory(videoId) {
-    const list = loadHistory().filter(h => h.video_id !== videoId);
+function deleteFromHistory(idOrEntryId) {
+    // Delete specific entry by entry_id, or all entries for a video_id
+    const list = loadHistory().filter(h =>
+        h.entry_id ? h.entry_id !== idOrEntryId : h.video_id !== idOrEntryId
+    );
     localStorage.setItem(HISTORY_KEY, JSON.stringify(list));
     renderHistoryPanel();
 }
@@ -250,7 +254,7 @@ function renderHistoryPanel(filter) {
             '<div class="hist-meta">' + escHtml(h.author || '') + ' &bull; ' + dateStr + ' ' + timeStr + '</div>' +
             '<div class="hist-lang">' + (h.lang || 'English') + '</div>' +
             '</div>' +
-            '<button class="hist-del" onclick="deleteFromHistory(\'' + h.video_id + '\')" title="Xoa">' +
+            '<button class="hist-del" onclick="deleteFromHistory(\'' + (h.entry_id || h.video_id) + '\')" title="Xoa">' +
             '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6L6 18M6 6l12 12"/></svg>' +
             '</button></div>';
     }).join('');
