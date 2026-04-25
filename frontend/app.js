@@ -5065,3 +5065,356 @@ function mobScrollTo(elementId) {
     setVh();
     window.addEventListener('resize', setVh);
 })();
+
+
+// ══════════════════════════════════════════════════════
+// MULTI-VIDEO EXAM
+// ══════════════════════════════════════════════════════
+
+var _mexam = {
+    selectedVideos: [],
+    examData: null,
+    currentQ: 0,
+    answers: {},        // { questionId: selectedIndex }
+    submitted: false,
+    timerInterval: null,
+    startTime: 0,
+    elapsed: 0
+};
+
+function openMexam() {
+    document.getElementById('mexamSection').classList.remove('hidden');
+    _mexam.selectedVideos = [];
+    _mexam.examData = null;
+    _mexam.currentQ = 0;
+    _mexam.answers = {};
+    _mexam.submitted = false;
+    _mexamStopTimer();
+    _mexamShowStep(1);
+    _mexamRenderVideoList();
+}
+
+function closeMexam() {
+    document.getElementById('mexamSection').classList.add('hidden');
+    _mexamStopTimer();
+}
+
+function _mexamShowStep(n) {
+    for (var i = 1; i <= 4; i++) {
+        var el = document.getElementById('mexamStep' + i);
+        if (el) el.classList.toggle('hidden', i !== n);
+    }
+}
+
+function _mexamRenderVideoList() {
+    var history = [];
+    try { history = JSON.parse(localStorage.getItem('lectureDigest_history') || '[]'); } catch(e) {}
+
+    // Deduplicate by video_id, keep newest
+    var seen = {};
+    var unique = [];
+    history.forEach(function(h) {
+        if (!seen[h.video_id]) {
+            seen[h.video_id] = true;
+            unique.push(h);
+        }
+    });
+
+    var container = document.getElementById('mexamVideoList');
+    if (unique.length < 2) {
+        container.innerHTML = '<div style="text-align:center;padding:40px;color:var(--text-secondary)">Cần ít nhất 2 video trong lịch sử để tạo đề thi.<br>Hãy phân tích thêm video trước.</div>';
+        return;
+    }
+
+    container.innerHTML = unique.map(function(h, i) {
+        var topicCount = (h.data && h.data.topics) ? h.data.topics.length : 0;
+        var topicNames = topicCount > 0 ? h.data.topics.slice(0, 3).map(function(t) { return t.title || ''; }).join(', ') : '';
+        return '<div class="mexam-video-item" data-idx="' + i + '" onclick="_mexamToggleVideo(' + i + ')">' +
+            '<div class="mexam-video-check">' +
+                '<svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3" width="14" height="14"><path d="M5 13l4 4L19 7" stroke-linecap="round" stroke-linejoin="round"/></svg>' +
+            '</div>' +
+            '<img class="mexam-video-thumb" src="' + (h.thumbnail || '') + '" alt="" loading="lazy">' +
+            '<div class="mexam-video-info">' +
+                '<div class="mexam-video-name">' + escHtml(h.title || 'Untitled') + '</div>' +
+                '<div class="mexam-video-meta">' + escHtml(h.author || '') + ' · ' + topicCount + ' chủ đề</div>' +
+                (topicNames ? '<div class="mexam-video-topics">' + escHtml(topicNames) + '</div>' : '') +
+            '</div>' +
+        '</div>';
+    }).join('');
+
+    // Store reference to unique list
+    _mexam._uniqueHistory = unique;
+    _mexamUpdateCount();
+}
+
+function _mexamToggleVideo(idx) {
+    var pos = _mexam.selectedVideos.indexOf(idx);
+    if (pos >= 0) {
+        _mexam.selectedVideos.splice(pos, 1);
+    } else {
+        _mexam.selectedVideos.push(idx);
+    }
+    // Update UI
+    var items = document.querySelectorAll('.mexam-video-item');
+    items.forEach(function(el) {
+        var i = parseInt(el.getAttribute('data-idx'));
+        el.classList.toggle('selected', _mexam.selectedVideos.indexOf(i) >= 0);
+    });
+    _mexamUpdateCount();
+}
+
+function _mexamUpdateCount() {
+    var count = _mexam.selectedVideos.length;
+    var el = document.getElementById('mexamCount');
+    if (el) el.textContent = count + ' đã chọn';
+    var btn = document.getElementById('mexamGenerateBtn');
+    if (btn) btn.disabled = count < 2;
+    var sub = document.getElementById('mexamSubtitle');
+    if (sub) sub.textContent = count < 2 ? 'Chọn ít nhất 2 video' : count + ' video đã chọn';
+}
+
+async function generateMexam() {
+    if (_mexam.selectedVideos.length < 2) return;
+
+    var videos = _mexam.selectedVideos.map(function(idx) {
+        var h = _mexam._uniqueHistory[idx];
+        var d = h.data || {};
+        return {
+            title: h.title || d.title || 'Untitled',
+            overview: d.overview || '',
+            topics: (d.topics || []).map(function(t) {
+                return { title: t.title || '', summary: t.summary || '' };
+            }),
+            key_takeaways: d.key_takeaways || []
+        };
+    });
+
+    var numQ = parseInt(document.getElementById('mexamNumQ').value) || 20;
+    var lang = selectedLang || 'Vietnamese';
+
+    _mexamShowStep(2);
+
+    try {
+        var res = await fetch('/api/multi-exam', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                videos: videos,
+                num_questions: numQ,
+                output_language: lang
+            })
+        });
+
+        if (!res.ok) {
+            var err = await res.json().catch(function() { return { detail: 'Server error' }; });
+            throw new Error(err.detail || 'Lỗi server');
+        }
+
+        _mexam.examData = await res.json();
+        _mexam.currentQ = 0;
+        _mexam.answers = {};
+        _mexam.submitted = false;
+        _mexamStartTimer();
+        _mexamShowStep(3);
+        _mexamRenderQuestion();
+
+        var titleEl = document.getElementById('mexamExamTitle');
+        if (titleEl) titleEl.textContent = _mexam.examData.exam_title || 'Đề thi tổng hợp';
+        document.getElementById('mexamSubtitle').textContent =
+            _mexam.examData.questions.length + ' câu hỏi · ' + _mexam.examData.video_count + ' video';
+
+    } catch(err) {
+        _mexamShowStep(1);
+        showToast('Lỗi: ' + err.message, 'error');
+    }
+}
+
+function _mexamRenderQuestion() {
+    var questions = _mexam.examData.questions;
+    var q = questions[_mexam.currentQ];
+    if (!q) return;
+
+    var total = questions.length;
+    var idx = _mexam.currentQ;
+
+    // Update progress
+    document.getElementById('mexamQProgress').textContent = (idx + 1) + ' / ' + total;
+    document.getElementById('mexamProgressFill').style.width = ((idx + 1) / total * 100) + '%';
+
+    // Badges
+    var badges = '';
+    var diff = (q.difficulty || 'medium').toLowerCase();
+    badges += '<span class="mexam-badge mexam-badge-' + diff + '">' + diff + '</span>';
+    if (q.is_cross_video) {
+        badges += '<span class="mexam-badge mexam-badge-cross">⚡ Cross-Video</span>';
+    }
+    if (q.source && q.source.length) {
+        q.source.forEach(function(s) {
+            var short = s.length > 25 ? s.substring(0, 25) + '…' : s;
+            badges += '<span class="mexam-badge mexam-badge-source" title="' + escHtml(s) + '">' + escHtml(short) + '</span>';
+        });
+    }
+
+    var selectedAnswer = _mexam.answers[q.id];
+    var isAnswered = selectedAnswer !== undefined;
+
+    // Options
+    var letters = ['A', 'B', 'C', 'D'];
+    var optsHtml = (q.options || []).map(function(opt, oi) {
+        var cls = 'mexam-opt';
+        if (_mexam.submitted) {
+            if (oi === q.correct_index) cls += ' correct';
+            else if (oi === selectedAnswer && oi !== q.correct_index) cls += ' wrong';
+        } else if (oi === selectedAnswer) {
+            cls += ' selected';
+        }
+        var disabled = _mexam.submitted ? ' disabled' : '';
+        return '<button class="' + cls + '"' + disabled + ' onclick="_mexamSelectAnswer(' + q.id + ',' + oi + ')">' +
+            '<span class="mexam-opt-letter">' + letters[oi] + '</span>' +
+            '<span>' + escHtml(opt) + '</span>' +
+        '</button>';
+    }).join('');
+
+    // Explanation (show after submit)
+    var explHtml = '';
+    if (_mexam.submitted && q.explanation) {
+        var icon = selectedAnswer === q.correct_index ? '✅' : '❌';
+        explHtml = '<div class="mexam-explanation">' + icon + ' ' + escHtml(q.explanation) + '</div>';
+    }
+
+    document.getElementById('mexamQuestionArea').innerHTML =
+        '<div class="mexam-q-card">' +
+            '<div class="mexam-q-badges">' + badges + '</div>' +
+            '<div class="mexam-q-text"><span class="mexam-q-num">Q' + (idx + 1) + '.</span>' + escHtml(q.question) + '</div>' +
+            '<div class="mexam-options">' + optsHtml + '</div>' +
+            explHtml +
+        '</div>';
+
+    // Nav buttons
+    document.getElementById('mexamPrevBtn').disabled = idx === 0;
+    var nextBtn = document.getElementById('mexamNextBtn');
+    var submitBtn = document.getElementById('mexamSubmitBtn');
+
+    if (_mexam.submitted) {
+        nextBtn.classList.toggle('hidden', idx >= total - 1);
+        submitBtn.classList.add('hidden');
+    } else {
+        if (idx >= total - 1) {
+            nextBtn.classList.add('hidden');
+            submitBtn.classList.remove('hidden');
+        } else {
+            nextBtn.classList.remove('hidden');
+            submitBtn.classList.add('hidden');
+        }
+    }
+}
+
+function _mexamSelectAnswer(qId, optIndex) {
+    if (_mexam.submitted) return;
+    _mexam.answers[qId] = optIndex;
+    _mexamRenderQuestion();
+}
+
+function mexamNav(dir) {
+    var total = _mexam.examData.questions.length;
+    _mexam.currentQ = Math.max(0, Math.min(total - 1, _mexam.currentQ + dir));
+    _mexamRenderQuestion();
+}
+
+function mexamSubmit() {
+    _mexam.submitted = true;
+    _mexamStopTimer();
+    _mexamShowStep(4);
+    _mexamRenderResults();
+}
+
+function _mexamStartTimer() {
+    _mexam.startTime = Date.now();
+    _mexam.elapsed = 0;
+    _mexamStopTimer();
+    _mexam.timerInterval = setInterval(function() {
+        _mexam.elapsed = Math.floor((Date.now() - _mexam.startTime) / 1000);
+        var m = String(Math.floor(_mexam.elapsed / 60)).padStart(2, '0');
+        var s = String(_mexam.elapsed % 60).padStart(2, '0');
+        var el = document.getElementById('mexamTimer');
+        if (el) el.textContent = m + ':' + s;
+    }, 1000);
+}
+
+function _mexamStopTimer() {
+    if (_mexam.timerInterval) { clearInterval(_mexam.timerInterval); _mexam.timerInterval = null; }
+}
+
+function _mexamRenderResults() {
+    var questions = _mexam.examData.questions;
+    var total = questions.length;
+    var correct = 0;
+    var byDiff = { easy: { total: 0, correct: 0 }, medium: { total: 0, correct: 0 }, hard: { total: 0, correct: 0 } };
+    var crossCorrect = 0, crossTotal = 0;
+
+    questions.forEach(function(q) {
+        var userAns = _mexam.answers[q.id];
+        var isCorrect = userAns === q.correct_index;
+        if (isCorrect) correct++;
+
+        var diff = (q.difficulty || 'medium').toLowerCase();
+        if (!byDiff[diff]) byDiff[diff] = { total: 0, correct: 0 };
+        byDiff[diff].total++;
+        if (isCorrect) byDiff[diff].correct++;
+
+        if (q.is_cross_video) {
+            crossTotal++;
+            if (isCorrect) crossCorrect++;
+        }
+    });
+
+    var pct = Math.round((correct / total) * 100);
+    var grade = pct >= 90 ? 'A+' : pct >= 80 ? 'A' : pct >= 70 ? 'B' : pct >= 60 ? 'C' : pct >= 50 ? 'D' : 'F';
+    var emoji = pct >= 80 ? '🎉' : pct >= 60 ? '👍' : pct >= 40 ? '📖' : '💪';
+    var message = pct >= 80 ? 'Xuất sắc!' : pct >= 60 ? 'Tốt lắm!' : pct >= 40 ? 'Cần ôn thêm' : 'Hãy xem lại bài giảng';
+
+    var minutes = Math.floor(_mexam.elapsed / 60);
+    var seconds = _mexam.elapsed % 60;
+    var timeStr = minutes + ' phút ' + seconds + ' giây';
+
+    // Build review list
+    var reviewHtml = questions.map(function(q, i) {
+        var userAns = _mexam.answers[q.id];
+        var isCorrect = userAns === q.correct_index;
+        var letters = ['A', 'B', 'C', 'D'];
+        var yourAnswer = userAns !== undefined ? letters[userAns] + '. ' + (q.options[userAns] || '') : 'Chưa trả lời';
+        var correctAnswer = letters[q.correct_index] + '. ' + (q.options[q.correct_index] || '');
+
+        return '<div class="mexam-review-item ' + (isCorrect ? 'correct' : 'wrong') + '">' +
+            '<div class="mexam-review-q">' + (isCorrect ? '✅' : '❌') + ' Q' + (i + 1) + '. ' + escHtml(q.question) + '</div>' +
+            '<div class="mexam-review-answer">' +
+                'Bạn chọn: <strong>' + escHtml(yourAnswer) + '</strong>' +
+                (!isCorrect ? ' · Đáp án: <strong style="color:#10b981">' + escHtml(correctAnswer) + '</strong>' : '') +
+            '</div>' +
+            (q.explanation ? '<div class="mexam-review-answer" style="margin-top:4px;opacity:.7">' + escHtml(q.explanation) + '</div>' : '') +
+        '</div>';
+    }).join('');
+
+    document.getElementById('mexamResults').innerHTML =
+        '<div class="mexam-score-circle">' +
+            '<div class="mexam-score-num">' + pct + '%</div>' +
+            '<div class="mexam-score-label">Grade: ' + grade + '</div>' +
+        '</div>' +
+        '<div class="mexam-result-title">' + emoji + ' ' + message + '</div>' +
+        '<div class="mexam-result-subtitle">' + correct + '/' + total + ' câu đúng · Thời gian: ' + timeStr + '</div>' +
+
+        '<div class="mexam-result-stats">' +
+            '<div class="mexam-stat"><div class="mexam-stat-num" style="color:#34d399">' + byDiff.easy.correct + '/' + byDiff.easy.total + '</div><div class="mexam-stat-label">Easy</div></div>' +
+            '<div class="mexam-stat"><div class="mexam-stat-num" style="color:#fbbf24">' + byDiff.medium.correct + '/' + byDiff.medium.total + '</div><div class="mexam-stat-label">Medium</div></div>' +
+            '<div class="mexam-stat"><div class="mexam-stat-num" style="color:#f87171">' + byDiff.hard.correct + '/' + byDiff.hard.total + '</div><div class="mexam-stat-label">Hard</div></div>' +
+            (crossTotal > 0 ? '<div class="mexam-stat"><div class="mexam-stat-num" style="color:#60a5fa">' + crossCorrect + '/' + crossTotal + '</div><div class="mexam-stat-label">Cross-Video</div></div>' : '') +
+        '</div>' +
+
+        '<div class="mexam-result-actions">' +
+            '<button class="mexam-result-btn" onclick="_mexamShowStep(3);_mexam.currentQ=0;_mexamRenderQuestion()">📋 Xem lại đề</button>' +
+            '<button class="mexam-result-btn primary" onclick="openMexam()">🔄 Thi lại</button>' +
+            '<button class="mexam-result-btn" onclick="closeMexam()">✕ Đóng</button>' +
+        '</div>' +
+
+        '<div class="mexam-review-list">' + reviewHtml + '</div>';
+}

@@ -72,6 +72,14 @@
                     Knowledge Graph
                 </button>
 
+                <!-- Multi-Video Exam button -->
+                <button class="dashboard-nav-btn" onclick="openMexam()" title="Multi-Video Exam" aria-label="Multi-Video Exam">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16">
+                        <path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                    Exam
+                </button>
+
                 <!-- History button -->
                 <div class="history-wrapper">
                     <button class="history-btn" id="historyToggle" onclick="toggleHistoryPanel()"
@@ -718,6 +726,81 @@
             <div class="bp-stats-row" id="bpStatsRow"></div>
             <div class="bp-streak-summary" id="bpStreakSummary"></div>
             <div class="bp-grid-wrap" id="bpGridWrap"></div>
+        </div>
+    </section>
+
+    <!-- ═══════════════════════════════ MULTI-VIDEO EXAM ══════════════════════════════ -->
+    <section class="mexam-page hidden" id="mexamSection" aria-label="Multi-Video Exam">
+        <div class="mexam-inner">
+            <div class="mexam-header">
+                <button class="bp-back-btn" onclick="closeMexam()" aria-label="Quay lại">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="18" height="18">
+                        <path d="M19 12H5M12 5l-7 7 7 7" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                    Quay lại
+                </button>
+                <div>
+                    <div class="mexam-title">📝 Multi-Video Exam</div>
+                    <div class="mexam-subtitle" id="mexamSubtitle">Chọn video để tạo đề thi tổng hợp</div>
+                </div>
+                <div style="width:110px"></div>
+            </div>
+
+            <!-- Step 1: Video Selection -->
+            <div class="mexam-step" id="mexamStep1">
+                <div class="mexam-select-header">
+                    <h3>📚 Chọn video từ lịch sử</h3>
+                    <span class="mexam-selected-count" id="mexamCount">0 đã chọn</span>
+                </div>
+                <div class="mexam-video-list" id="mexamVideoList"></div>
+                <div class="mexam-options-row">
+                    <div class="mexam-slider-group">
+                        <label>Số câu hỏi:</label>
+                        <input type="range" id="mexamNumQ" min="10" max="40" value="20" oninput="document.getElementById('mexamNumQVal').textContent=this.value">
+                        <span id="mexamNumQVal" class="mexam-slider-val">20</span>
+                    </div>
+                    <button class="mexam-generate-btn" id="mexamGenerateBtn" onclick="generateMexam()" disabled>
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18">
+                            <path d="M13 10V3L4 14h7v7l9-11h-7z" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                        Tạo đề thi
+                    </button>
+                </div>
+            </div>
+
+            <!-- Step 2: Loading -->
+            <div class="mexam-step hidden" id="mexamStep2">
+                <div class="mexam-loading">
+                    <div class="mexam-spinner"></div>
+                    <p>Đang tạo đề thi tổng hợp...</p>
+                    <p class="mexam-loading-hint">AI đang phân tích nội dung từ nhiều video</p>
+                </div>
+            </div>
+
+            <!-- Step 3: Exam -->
+            <div class="mexam-step hidden" id="mexamStep3">
+                <div class="mexam-exam-header">
+                    <h3 id="mexamExamTitle">Đề thi tổng hợp</h3>
+                    <div class="mexam-exam-meta">
+                        <span id="mexamQProgress">0 / 20</span>
+                        <span class="mexam-timer" id="mexamTimer">00:00</span>
+                    </div>
+                </div>
+                <div class="mexam-progress-bar">
+                    <div class="mexam-progress-fill" id="mexamProgressFill" style="width:0%"></div>
+                </div>
+                <div class="mexam-question-area" id="mexamQuestionArea"></div>
+                <div class="mexam-nav">
+                    <button class="mexam-nav-btn" id="mexamPrevBtn" onclick="mexamNav(-1)" disabled>← Trước</button>
+                    <button class="mexam-nav-btn mexam-primary" id="mexamNextBtn" onclick="mexamNav(1)">Tiếp →</button>
+                    <button class="mexam-nav-btn mexam-submit hidden" id="mexamSubmitBtn" onclick="mexamSubmit()">📊 Nộp bài</button>
+                </div>
+            </div>
+
+            <!-- Step 4: Results -->
+            <div class="mexam-step hidden" id="mexamStep4">
+                <div class="mexam-results" id="mexamResults"></div>
+            </div>
         </div>
     </section>
 

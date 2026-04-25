@@ -928,6 +928,107 @@ async def api_full_sync(request: Request):
 
 
 # ═══════════════════════════════════════════════════════
+# MULTI-VIDEO EXAM
+# ═══════════════════════════════════════════════════════
+
+class MultiExamVideo(BaseModel):
+    title: str
+    overview: str = ''
+    topics: list = []     # [{title, summary, ...}, ...]
+    key_takeaways: list = []
+
+class MultiExamRequest(BaseModel):
+    videos: list[MultiExamVideo]
+    num_questions: int = 20
+    output_language: str = 'Vietnamese'
+
+
+@app.post("/api/multi-exam")
+async def generate_multi_exam(request: MultiExamRequest):
+    """Generate a comprehensive exam combining content from multiple analyzed videos."""
+    if not os.getenv("GEMINI_API_KEY"):
+        raise HTTPException(status_code=500, detail="GEMINI_API_KEY not configured")
+
+    if len(request.videos) < 2:
+        raise HTTPException(status_code=400, detail="At least 2 videos are required")
+
+    # Build combined content block
+    content_blocks = []
+    for i, v in enumerate(request.videos, 1):
+        block = f"--- VIDEO {i}: {v.title} ---\n"
+        if v.overview:
+            block += f"Overview: {v.overview}\n"
+        if v.topics:
+            topics_text = "\n".join(
+                f"  - {t.get('title', '')}: {t.get('summary', '')}"
+                for t in v.topics[:8]
+            )
+            block += f"Topics:\n{topics_text}\n"
+        if v.key_takeaways:
+            kt_text = "\n".join(f"  - {kt}" for kt in v.key_takeaways[:5])
+            block += f"Key Takeaways:\n{kt_text}\n"
+        content_blocks.append(block)
+
+    combined_content = "\n\n".join(content_blocks)
+    if len(combined_content) > 30000:
+        combined_content = combined_content[:30000] + "\n...[truncated]..."
+
+    num_q = min(max(request.num_questions, 5), 40)
+    video_titles = [v.title for v in request.videos]
+
+    prompt = f"""You are an expert educational exam creator. Create a comprehensive exam that tests knowledge across multiple video lectures.
+
+CONTENT FROM {len(request.videos)} VIDEOS:
+{combined_content}
+
+⚠️ Generate ALL text in **{request.output_language}**.
+
+Create exactly {num_q} multiple choice questions that:
+- Cover ALL videos proportionally (spread questions across videos)
+- Include CROSS-VIDEO questions that connect concepts between different videos (at least 3-4)
+- Use varied difficulty: ~30% easy, ~50% medium, ~20% hard
+- Use varied styles: recall, conceptual, application, comparison, critical thinking
+- For cross-video questions, mention which videos the question relates to
+
+For each question, include a "source" field indicating which video(s) it relates to. Use the exact video titles.
+
+Return ONLY a valid JSON object (no markdown fences, no extra text):
+{{
+  "exam_title": "A descriptive exam title",
+  "questions": [
+    {{
+      "id": 1,
+      "question": "Question text",
+      "options": ["Option A", "Option B", "Option C", "Option D"],
+      "correct_index": 0,
+      "explanation": "Detailed explanation of why the correct answer is right",
+      "difficulty": "easy|medium|hard",
+      "source": ["Video title 1"],
+      "is_cross_video": false
+    }}
+  ]
+}}
+
+correct_index is 0-based (0=A, 1=B, 2=C, 3=D).
+For cross-video questions, set is_cross_video to true and list multiple video titles in source."""
+
+    try:
+        text = call_gemini(prompt)
+        text = text.strip()
+        if text.startswith('```'):
+            text = re.sub(r'^```(?:json)?\s*\n?', '', text)
+            text = re.sub(r'\n?\s*```$', '', text)
+        result = json.loads(text)
+        result["video_count"] = len(request.videos)
+        result["video_titles"] = video_titles
+        return result
+    except json.JSONDecodeError as e:
+        raise HTTPException(status_code=500, detail=f"Failed to parse AI response: {e}")
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Multi-exam generation failed: {e}")
+
+
+# ═══════════════════════════════════════════════════════
 # PLAYLIST / COURSE MODE
 # ═══════════════════════════════════════════════════════
 

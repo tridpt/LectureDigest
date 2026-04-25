@@ -4966,6 +4966,419 @@ html.light-mode .kg-page {
     .kg-controls { gap: 4px; }
     .kg-ctrl-btn { padding: 5px 10px; font-size: 11px; }
 }
+/* ══════════════════════════════════════════════════════
+   MULTI-VIDEO EXAM
+   ══════════════════════════════════════════════════════ */
+.mexam-page {
+    position: fixed; inset: 0; z-index: 9700;
+    background: #070712;
+    display: flex; flex-direction: column;
+    overflow: hidden;
+}
+html.light-mode .mexam-page { background: #eef0ff; }
+.mexam-inner {
+    display: flex; flex-direction: column;
+    height: 100%; max-width: 900px;
+    margin: 0 auto; width: 100%;
+    padding: 0 20px;
+    overflow-y: auto;
+}
+.mexam-header {
+    display: flex; align-items: center;
+    justify-content: space-between;
+    padding: 16px 0; flex-shrink: 0;
+}
+.mexam-title {
+    font-size: 22px; font-weight: 800;
+    color: var(--text-primary);
+}
+.mexam-subtitle {
+    font-size: 12px; color: var(--text-secondary);
+    text-align: center;
+}
+
+/* Step container */
+.mexam-step { padding: 10px 0 40px; }
+.mexam-step.hidden { display: none; }
+
+/* ── Step 1: Video Selector ── */
+.mexam-select-header {
+    display: flex; align-items: center;
+    justify-content: space-between;
+    margin-bottom: 16px;
+}
+.mexam-select-header h3 {
+    font-size: 16px; font-weight: 700;
+    color: var(--text-primary);
+}
+.mexam-selected-count {
+    font-size: 13px; font-weight: 600;
+    color: var(--accent); background: rgba(139,92,246,0.12);
+    padding: 4px 12px; border-radius: 20px;
+}
+.mexam-video-list {
+    display: flex; flex-direction: column;
+    gap: 8px; max-height: 50vh;
+    overflow-y: auto; padding-right: 4px;
+}
+.mexam-video-item {
+    display: flex; align-items: center;
+    gap: 12px; padding: 12px 14px;
+    border-radius: 12px;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    cursor: pointer; transition: all 0.2s;
+}
+.mexam-video-item:hover {
+    border-color: var(--accent);
+    background: var(--bg-card-hover);
+}
+.mexam-video-item.selected {
+    border-color: var(--accent);
+    background: rgba(139,92,246,0.08);
+    box-shadow: 0 0 0 1px var(--accent);
+}
+.mexam-video-check {
+    width: 22px; height: 22px; border-radius: 6px;
+    border: 2px solid var(--border);
+    display: flex; align-items: center;
+    justify-content: center; flex-shrink: 0;
+    transition: all 0.2s;
+}
+.mexam-video-item.selected .mexam-video-check {
+    background: var(--accent);
+    border-color: var(--accent);
+}
+.mexam-video-check svg { display: none; }
+.mexam-video-item.selected .mexam-video-check svg { display: block; }
+.mexam-video-thumb {
+    width: 64px; height: 36px; border-radius: 6px;
+    object-fit: cover; flex-shrink: 0;
+}
+.mexam-video-info { flex: 1; min-width: 0; }
+.mexam-video-name {
+    font-size: 13px; font-weight: 600;
+    color: var(--text-primary);
+    white-space: nowrap; overflow: hidden;
+    text-overflow: ellipsis;
+}
+.mexam-video-meta {
+    font-size: 11px; color: var(--text-secondary);
+}
+.mexam-video-topics {
+    font-size: 10px; color: var(--text-muted);
+    margin-top: 2px;
+}
+
+/* Options row */
+.mexam-options-row {
+    display: flex; align-items: center;
+    justify-content: space-between;
+    gap: 16px; margin-top: 20px;
+    padding-top: 16px;
+    border-top: 1px solid var(--border);
+}
+.mexam-slider-group {
+    display: flex; align-items: center;
+    gap: 10px; font-size: 13px;
+    color: var(--text-secondary);
+}
+.mexam-slider-group input[type="range"] {
+    width: 120px; accent-color: var(--accent);
+}
+.mexam-slider-val {
+    font-weight: 700; color: var(--accent);
+    min-width: 24px; text-align: center;
+}
+.mexam-generate-btn {
+    display: flex; align-items: center;
+    gap: 8px; padding: 12px 24px;
+    border-radius: 12px; border: none;
+    background: linear-gradient(135deg, var(--accent), var(--accent-dark));
+    color: #fff; font-weight: 700;
+    font-size: 14px; cursor: pointer;
+    transition: all 0.25s;
+    font-family: var(--font);
+}
+.mexam-generate-btn:hover:not(:disabled) {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 20px rgba(139,92,246,0.4);
+}
+.mexam-generate-btn:disabled {
+    opacity: 0.4; cursor: not-allowed;
+}
+
+/* ── Step 2: Loading ── */
+.mexam-loading {
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    padding: 80px 20px; gap: 16px;
+}
+.mexam-spinner {
+    width: 48px; height: 48px;
+    border: 3px solid var(--border);
+    border-top-color: var(--accent);
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+.mexam-loading p {
+    font-size: 16px; font-weight: 600;
+    color: var(--text-primary);
+}
+.mexam-loading-hint {
+    font-size: 12px !important; font-weight: 400 !important;
+    color: var(--text-secondary) !important;
+}
+
+/* ── Step 3: Exam Questions ── */
+.mexam-exam-header {
+    display: flex; align-items: center;
+    justify-content: space-between;
+    margin-bottom: 12px;
+}
+.mexam-exam-header h3 {
+    font-size: 18px; font-weight: 800;
+    color: var(--text-primary);
+}
+.mexam-exam-meta {
+    display: flex; gap: 16px; align-items: center;
+}
+.mexam-exam-meta span {
+    font-size: 13px; font-weight: 600;
+    color: var(--text-secondary);
+}
+.mexam-timer {
+    background: rgba(139,92,246,0.12);
+    padding: 4px 10px; border-radius: 8px;
+    color: var(--accent) !important;
+    font-variant-numeric: tabular-nums;
+}
+.mexam-progress-bar {
+    height: 4px; background: var(--border);
+    border-radius: 4px; margin-bottom: 20px;
+    overflow: hidden;
+}
+.mexam-progress-fill {
+    height: 100%; background: linear-gradient(90deg, var(--accent), var(--accent-light));
+    border-radius: 4px; transition: width 0.3s;
+}
+.mexam-question-area {
+    min-height: 300px;
+}
+.mexam-q-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 16px; padding: 24px;
+    animation: fadeUp 0.3s ease;
+}
+@keyframes fadeUp {
+    from { opacity: 0; transform: translateY(12px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+.mexam-q-badges {
+    display: flex; gap: 8px; flex-wrap: wrap;
+    margin-bottom: 14px;
+}
+.mexam-badge {
+    font-size: 10px; font-weight: 700;
+    padding: 3px 8px; border-radius: 6px;
+    text-transform: uppercase; letter-spacing: 0.5px;
+}
+.mexam-badge-easy { background: rgba(16,185,129,0.15); color: #34d399; }
+.mexam-badge-medium { background: rgba(251,191,36,0.15); color: #fbbf24; }
+.mexam-badge-hard { background: rgba(239,68,68,0.15); color: #f87171; }
+.mexam-badge-cross {
+    background: rgba(96,165,250,0.15); color: #60a5fa;
+}
+.mexam-badge-source {
+    background: rgba(255,255,255,0.06); color: var(--text-secondary);
+    font-weight: 500; text-transform: none;
+    max-width: 200px; overflow: hidden;
+    text-overflow: ellipsis; white-space: nowrap;
+}
+.mexam-q-text {
+    font-size: 16px; font-weight: 600;
+    color: var(--text-primary);
+    line-height: 1.5; margin-bottom: 18px;
+}
+.mexam-q-num {
+    color: var(--accent); margin-right: 8px;
+}
+.mexam-options {
+    display: flex; flex-direction: column; gap: 8px;
+}
+.mexam-opt {
+    display: flex; align-items: flex-start;
+    gap: 10px; padding: 14px 16px;
+    border-radius: 12px; border: 1px solid var(--border);
+    background: transparent; cursor: pointer;
+    transition: all 0.2s; font-size: 14px;
+    color: var(--text-primary); text-align: left;
+    font-family: var(--font); width: 100%;
+}
+.mexam-opt:hover {
+    border-color: var(--accent);
+    background: rgba(139,92,246,0.06);
+}
+.mexam-opt.selected {
+    border-color: var(--accent);
+    background: rgba(139,92,246,0.1);
+}
+.mexam-opt.correct {
+    border-color: #10b981;
+    background: rgba(16,185,129,0.1);
+}
+.mexam-opt.wrong {
+    border-color: #ef4444;
+    background: rgba(239,68,68,0.08);
+}
+.mexam-opt-letter {
+    width: 26px; height: 26px; border-radius: 8px;
+    display: flex; align-items: center;
+    justify-content: center; flex-shrink: 0;
+    font-weight: 700; font-size: 12px;
+    background: rgba(255,255,255,0.06);
+    color: var(--text-secondary);
+}
+.mexam-opt.selected .mexam-opt-letter {
+    background: var(--accent); color: #fff;
+}
+.mexam-opt.correct .mexam-opt-letter {
+    background: #10b981; color: #fff;
+}
+.mexam-opt.wrong .mexam-opt-letter {
+    background: #ef4444; color: #fff;
+}
+.mexam-explanation {
+    margin-top: 14px; padding: 14px;
+    border-radius: 10px;
+    background: rgba(139,92,246,0.06);
+    border-left: 3px solid var(--accent);
+    font-size: 13px; color: var(--text-secondary);
+    line-height: 1.5;
+    animation: fadeUp 0.3s ease;
+}
+
+/* Nav */
+.mexam-nav {
+    display: flex; justify-content: center;
+    gap: 10px; margin-top: 24px; padding-bottom: 20px;
+}
+.mexam-nav-btn {
+    padding: 10px 24px; border-radius: 10px;
+    border: 1px solid var(--border);
+    background: var(--bg-card);
+    color: var(--text-primary);
+    font-weight: 600; font-size: 14px;
+    cursor: pointer; transition: all 0.2s;
+    font-family: var(--font);
+}
+.mexam-nav-btn:hover:not(:disabled) {
+    border-color: var(--accent);
+}
+.mexam-nav-btn:disabled { opacity: 0.3; cursor: not-allowed; }
+.mexam-nav-btn.mexam-primary {
+    background: var(--accent); color: #fff;
+    border-color: var(--accent);
+}
+.mexam-nav-btn.mexam-submit {
+    background: linear-gradient(135deg, #10b981, #059669);
+    color: #fff; border: none;
+}
+
+/* ── Step 4: Results ── */
+.mexam-results {
+    text-align: center; padding: 30px 0;
+}
+.mexam-score-circle {
+    width: 160px; height: 160px;
+    border-radius: 50%; margin: 0 auto 24px;
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    border: 6px solid var(--accent);
+    background: rgba(139,92,246,0.06);
+}
+.mexam-score-num {
+    font-size: 42px; font-weight: 900;
+    color: var(--accent);
+}
+.mexam-score-label {
+    font-size: 12px; color: var(--text-secondary);
+}
+.mexam-result-title {
+    font-size: 24px; font-weight: 800;
+    color: var(--text-primary); margin-bottom: 8px;
+}
+.mexam-result-subtitle {
+    font-size: 14px; color: var(--text-secondary);
+    margin-bottom: 24px;
+}
+.mexam-result-stats {
+    display: flex; justify-content: center;
+    gap: 20px; flex-wrap: wrap;
+    margin-bottom: 30px;
+}
+.mexam-stat {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 12px; padding: 14px 20px;
+    min-width: 100px;
+}
+.mexam-stat-num {
+    font-size: 22px; font-weight: 800;
+    color: var(--text-primary);
+}
+.mexam-stat-label {
+    font-size: 11px; color: var(--text-secondary);
+}
+.mexam-result-actions {
+    display: flex; justify-content: center;
+    gap: 12px; flex-wrap: wrap;
+}
+.mexam-result-btn {
+    padding: 10px 24px; border-radius: 10px;
+    border: 1px solid var(--border);
+    background: var(--bg-card);
+    color: var(--text-primary);
+    font-weight: 600; font-size: 14px;
+    cursor: pointer; transition: all 0.2s;
+    font-family: var(--font);
+}
+.mexam-result-btn:hover { border-color: var(--accent); }
+.mexam-result-btn.primary {
+    background: var(--accent); color: #fff;
+    border-color: var(--accent);
+}
+.mexam-review-list {
+    text-align: left; margin-top: 30px;
+    display: flex; flex-direction: column; gap: 12px;
+}
+.mexam-review-item {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 12px; padding: 16px;
+}
+.mexam-review-item.correct { border-left: 3px solid #10b981; }
+.mexam-review-item.wrong { border-left: 3px solid #ef4444; }
+.mexam-review-q {
+    font-size: 14px; font-weight: 600;
+    color: var(--text-primary); margin-bottom: 6px;
+}
+.mexam-review-answer {
+    font-size: 12px; color: var(--text-secondary);
+}
+
+@media (max-width: 640px) {
+    .mexam-inner { padding: 0 12px; }
+    .mexam-title { font-size: 17px; }
+    .mexam-q-card { padding: 16px; }
+    .mexam-q-text { font-size: 14px; }
+    .mexam-opt { padding: 12px; font-size: 13px; }
+    .mexam-options-row { flex-direction: column; gap: 12px; }
+    .mexam-generate-btn { width: 100%; justify-content: center; }
+    .mexam-video-thumb { width: 48px; height: 27px; }
+}
 
 /* ══════════════════════════════════════════════════════
    MOBILE UX ENHANCEMENTS
