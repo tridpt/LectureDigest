@@ -1,14 +1,14 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>LectureDigest — AI-Powered YouTube Learning</title>
+    <title>LectureDigest â€” AI-Powered YouTube Learning</title>
     <meta name="description" content="Transform any YouTube lecture into a comprehensive study guide with AI-powered summaries, chapter breakdowns, and interactive quizzes.">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
-    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎓</text></svg>">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>ðŸŽ“</text></svg>">
     <link rel="stylesheet" href="style.css">
     <script src="https://cdn.jsdelivr.net/npm/d3@7/dist/d3.min.js"></script>
     <!-- Apply theme before paint to prevent flash -->
@@ -29,11 +29,11 @@
         <div class="orb orb-3"></div>
     </div>
 
-    <!-- ═══════════════════════════ HEADER ═══════════════════════════ -->
+    <!-- â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• HEADER â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• -->
     <header class="header" role="banner">
         <div class="header-inner">
             <div class="logo" id="logoBtn" onclick="goHome()" role="button" tabindex="0"
-                 aria-label="Về trang chủ" title="Về trang chủ"
+                 aria-label="Vá» trang chá»§" title="Vá» trang chá»§"
                  onkeydown="if(event.key==='Enter') goHome()" style="cursor:pointer">
                 <div class="logo-icon" aria-hidden="true">
                     <svg viewBox="0 0 24 24" fill="none">
@@ -44,12 +44,12 @@
             </div>
             <div class="header-actions">
                 <!-- Theme toggle -->
-                <button class="theme-toggle-btn" id="themeToggleBtn" onclick="toggleTheme()" aria-label="Chuyển theme" title="Chuyển sáng/tối">
-                    <span class="theme-icon" id="themeIcon">🌙</span>
+                <button class="theme-toggle-btn" id="themeToggleBtn" onclick="toggleTheme()" aria-label="Chuyá»ƒn theme" title="Chuyá»ƒn sÃ¡ng/tá»‘i">
+                    <span class="theme-icon" id="themeIcon">ðŸŒ™</span>
                 </button>
 
                 <!-- Dashboard button -->
-                <button class="dashboard-nav-btn" onclick="openDashboard()" title="Dashboard học tập" aria-label="Mở dashboard">
+                <button class="dashboard-nav-btn" onclick="openDashboard()" title="Dashboard há»c táº­p" aria-label="Má»Ÿ dashboard">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16">
                         <rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/>
                         <rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/>
@@ -60,31 +60,31 @@
                 <!-- History button -->
                 <div class="history-wrapper">
                     <button class="history-btn" id="historyToggle" onclick="toggleHistoryPanel()"
-                            aria-label="Lịch sử phân tích" aria-expanded="false" aria-controls="historyPanel">
+                            aria-label="Lá»‹ch sá»­ phÃ¢n tÃ­ch" aria-expanded="false" aria-controls="historyPanel">
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
                             <path d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" stroke-linecap="round" stroke-linejoin="round"/>
                         </svg>
-                        Lịch sử
+                        Lá»‹ch sá»­
                         <span class="hist-badge" id="historyCount">0</span>
                     </button>
 
                     <!-- History dropdown panel -->
-                    <div class="history-panel" id="historyPanel" role="dialog" aria-label="Lịch sử phân tích">
+                    <div class="history-panel" id="historyPanel" role="dialog" aria-label="Lá»‹ch sá»­ phÃ¢n tÃ­ch">
                         <div class="hist-panel-header">
-                            <span class="hist-panel-title">📋 Lịch sử phân tích</span>
-                            <button class="hist-clear-btn" onclick="clearHistory()" title="Xóa tất cả">Xóa tất cả</button>
+                            <span class="hist-panel-title">ðŸ“‹ Lá»‹ch sá»­ phÃ¢n tÃ­ch</span>
+                            <button class="hist-clear-btn" onclick="clearHistory()" title="XÃ³a táº¥t cáº£">XÃ³a táº¥t cáº£</button>
                         </div>
                         <div class="hist-search-wrap">
                             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="13" height="13" style="flex-shrink:0;opacity:.5"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35" stroke-linecap="round"/></svg>
                             <input type="text" id="histSearchInput" class="hist-search-input"
-                                   placeholder="Tìm video..."
+                                   placeholder="TÃ¬m video..."
                                    oninput="filterHistory(this.value)"
-                                   aria-label="Tìm kiếm lịch sử">
+                                   aria-label="TÃ¬m kiáº¿m lá»‹ch sá»­">
                         </div>
                         <div class="hist-panel-body">
                             <div class="hist-empty hidden" id="historyEmpty">
-                                <div style="font-size:2rem">📭</div>
-                                <p>Chưa có video nào được lưu.<br>Phân tích video đầu tiên của bạn!</p>
+                                <div style="font-size:2rem">ðŸ“­</div>
+                                <p>ChÆ°a cÃ³ video nÃ o Ä‘Æ°á»£c lÆ°u.<br>PhÃ¢n tÃ­ch video Ä‘áº§u tiÃªn cá»§a báº¡n!</p>
                             </div>
                             <div class="hist-list" id="historyList"></div>
                         </div>
@@ -95,17 +95,17 @@
         </div>
     </header>
 
-    <!-- ═══════════════════════════ HERO ═══════════════════════════ -->
+    <!-- â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• HERO â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• -->
     <section class="hero" id="hero" aria-label="Search section">
         <div class="hero-content">
-            <div class="hero-tag">✨ AI-Powered Learning Tool</div>
+            <div class="hero-tag">âœ¨ AI-Powered Learning Tool</div>
             <h1 class="hero-title">
                 Transform YouTube Lectures<br>
                 <span class="gradient-text">into Smart Study Guides</span>
             </h1>
             <p class="hero-subtitle">
                 Paste any YouTube lecture URL and get instant AI summaries, interactive chapter timelines,
-                and quiz questions — all linked to exact timestamps.
+                and quiz questions â€” all linked to exact timestamps.
             </p>
 
             <div class="search-box" id="searchBox" role="search">
@@ -134,15 +134,15 @@
                 </div>
                 <!-- Language selector -->
                 <div class="lang-row" role="group" aria-label="Output language">
-                    <span class="lang-label">📝 Output in:</span>
+                    <span class="lang-label">ðŸ“ Output in:</span>
                     <div class="lang-options" id="langOptions">
-                        <button class="lang-btn" data-lang="English" onclick="setLang(this)">🇺🇸 English</button>
-                        <button class="lang-btn active" data-lang="Vietnamese" onclick="setLang(this)">🇻🇳 Tiếng Việt</button>
-                        <button class="lang-btn" data-lang="French" onclick="setLang(this)">🇫🇷 Français</button>
-                        <button class="lang-btn" data-lang="German" onclick="setLang(this)">🇩🇪 Deutsch</button>
-                        <button class="lang-btn" data-lang="Japanese" onclick="setLang(this)">🇯🇵 日本語</button>
-                        <button class="lang-btn" data-lang="Korean" onclick="setLang(this)">🇰🇷 한국어</button>
-                        <button class="lang-btn" data-lang="Chinese" onclick="setLang(this)">🇨🇳 中文</button>
+                        <button class="lang-btn" data-lang="English" onclick="setLang(this)">ðŸ‡ºðŸ‡¸ English</button>
+                        <button class="lang-btn active" data-lang="Vietnamese" onclick="setLang(this)">ðŸ‡»ðŸ‡³ Tiáº¿ng Viá»‡t</button>
+                        <button class="lang-btn" data-lang="French" onclick="setLang(this)">ðŸ‡«ðŸ‡· FranÃ§ais</button>
+                        <button class="lang-btn" data-lang="German" onclick="setLang(this)">ðŸ‡©ðŸ‡ª Deutsch</button>
+                        <button class="lang-btn" data-lang="Japanese" onclick="setLang(this)">ðŸ‡¯ðŸ‡µ æ—¥æœ¬èªž</button>
+                        <button class="lang-btn" data-lang="Korean" onclick="setLang(this)">ðŸ‡°ðŸ‡· í•œêµ­ì–´</button>
+                        <button class="lang-btn" data-lang="Chinese" onclick="setLang(this)">ðŸ‡¨ðŸ‡³ ä¸­æ–‡</button>
                     </div>
                 </div>
         </div>
@@ -150,31 +150,31 @@
         <!-- Feature cards -->
         <div class="features" role="list">
             <div class="feature-card" role="listitem">
-                <div class="feature-icon" aria-hidden="true">📖</div>
+                <div class="feature-icon" aria-hidden="true">ðŸ“–</div>
                 <div class="feature-title">Smart Summary</div>
                 <div class="feature-desc">AI extracts key concepts and generates a comprehensive overview of the entire lecture</div>
             </div>
             <div class="feature-card" role="listitem">
-                <div class="feature-icon" aria-hidden="true">🗺️</div>
+                <div class="feature-icon" aria-hidden="true">ðŸ—ºï¸</div>
                 <div class="feature-title">Chapter Timeline</div>
                 <div class="feature-desc">Navigate any section of the lecture instantly with clickable AI-generated timestamps</div>
             </div>
             <div class="feature-card" role="listitem">
-                <div class="feature-icon" aria-hidden="true">🧠</div>
+                <div class="feature-icon" aria-hidden="true">ðŸ§ </div>
                 <div class="feature-title">Interactive Quiz</div>
                 <div class="feature-desc">Test your knowledge with AI-generated questions linked to specific video moments</div>
             </div>
         </div>
     </section>
 
-    <!-- ═══════════════════════════ LOADING ═══════════════════════════ -->
+    <!-- â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• LOADING â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• -->
     <section class="loading-section hidden" id="loadingSection" aria-live="polite" aria-label="Loading">
         <div class="loading-content">
             <div class="loading-animation" aria-hidden="true">
                 <div class="loading-ring"></div>
                 <div class="loading-ring loading-ring-2"></div>
                 <div class="loading-ring loading-ring-3"></div>
-                <div class="loading-brain">🤖</div>
+                <div class="loading-brain">ðŸ¤–</div>
             </div>
             <h2 class="loading-title">Analyzing Your Lecture</h2>
             <p class="loading-subtitle" id="loadingStatus">Fetching video transcript...</p>
@@ -195,17 +195,17 @@
         </div>
     </section>
 
-    <!-- ═══════════════════════════ ERROR ═══════════════════════════ -->
+    <!-- â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• ERROR â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• -->
     <section class="error-section hidden" id="errorSection" role="alert" aria-label="Error">
         <div class="error-content">
-            <div class="error-icon" aria-hidden="true">⚠️</div>
+            <div class="error-icon" aria-hidden="true">âš ï¸</div>
             <h2 class="error-title">Analysis Failed</h2>
             <p class="error-message" id="errorMessage">Something went wrong. Please try again.</p>
             <button class="action-btn" onclick="resetToHero()">Try Another Video</button>
         </div>
     </section>
 
-    <!-- ═══════════════════════════ RESULTS ═══════════════════════════ -->
+    <!-- â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• RESULTS â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• -->
     <section class="results-section hidden" id="resultsSection" aria-label="Analysis results">
         <!-- Video Header Bar -->
         <div class="video-header">
@@ -222,38 +222,38 @@
                         </svg>
                         Export PDF
                     </button>
-                    <button class="mindmap-btn" onclick="openMindMap()" id="mindmapBtn" aria-label="Xem sơ đồ tư duy">
+                    <button class="mindmap-btn" onclick="openMindMap()" id="mindmapBtn" aria-label="Xem sÆ¡ Ä‘á»“ tÆ° duy">
                         <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
                             <circle cx="12" cy="12" r="3" stroke="currentColor" stroke-width="2"/>
                             <path d="M12 9V4M12 15v5M9 12H4M15 12h5M10.17 10.17L6.34 6.34M13.83 13.83l3.83 3.83M13.83 10.17l3.83-3.83M10.17 13.83l-3.83 3.83" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
                         </svg>
                         Mind Map
                     </button>
-                    <button class="share-btn" onclick="openShareModal()" id="shareBtn" aria-label="Chia sẻ kết quả">
+                    <button class="share-btn" onclick="openShareModal()" id="shareBtn" aria-label="Chia sáº» káº¿t quáº£">
                         <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
                             <path d="M4 12v8a2 2 0 002 2h12a2 2 0 002-2v-8M16 6l-4-4-4 4M12 2v13" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
                         </svg>
-                        Chia sẻ
+                        Chia sáº»
                     </button>
-                    <button class="new-video-btn" onclick="resetToHero()" aria-label="Phân tích video mới">
+                    <button class="new-video-btn" onclick="resetToHero()" aria-label="PhÃ¢n tÃ­ch video má»›i">
                         <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
                             <path d="M19 12H5M12 19l-7-7 7-7" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
                         </svg>
-                        Video mới
+                        Video má»›i
                     </button>
                 </div>
             </div>
         </div>
 
         <div class="results-grid">
-            <!-- ── Left Column: Video + Overview ── -->
+            <!-- â”€â”€ Left Column: Video + Overview â”€â”€ -->
             <aside class="video-column">
                 <!-- YouTube Embed -->
                 <div class="video-player-wrapper" id="youtubePlayer" aria-label="YouTube video player"></div>
 
                 <!-- Bookmark bar under player -->
                 <div class="bookmark-bar" id="bookmarkBar">
-                    <button class="add-bookmark-btn" onclick="addBookmark()" id="addBookmarkBtn" title="Đánh dấu timestamp hiện tại">
+                    <button class="add-bookmark-btn" onclick="addBookmark()" id="addBookmarkBtn" title="ÄÃ¡nh dáº¥u timestamp hiá»‡n táº¡i">
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                             <path d="M19 21l-7-5-7 5V5a2 2 0 012-2h10a2 2 0 012 2z" stroke-linecap="round" stroke-linejoin="round"/>
                         </svg>
@@ -265,7 +265,7 @@
                 <!-- Overview Card -->
                 <div class="card overview-card">
                     <div class="card-header">
-                        <span class="card-icon" aria-hidden="true">📋</span>
+                        <span class="card-icon" aria-hidden="true">ðŸ“‹</span>
                         <h3 class="card-title">Overview</h3>
                     </div>
                     <p class="overview-text" id="overviewText"></p>
@@ -278,16 +278,16 @@
                 <!-- Notes Card -->
                 <div class="card notes-card" id="notesCard">
                     <div class="card-header">
-                        <span class="card-icon" aria-hidden="true">📝</span>
-                        <h3 class="card-title">Ghi chú</h3>
+                        <span class="card-icon" aria-hidden="true">ðŸ“</span>
+                        <h3 class="card-title">Ghi chÃº</h3>
                         <div class="notes-header-actions">
-                            <span class="notes-word-count" id="notesWordCount">0 từ</span>
-                            <button class="notes-action-btn" id="notesTimestampBtn" onclick="insertNoteTimestamp()" title="Chèn timestamp hiện tại">
+                            <span class="notes-word-count" id="notesWordCount">0 tá»«</span>
+                            <button class="notes-action-btn" id="notesTimestampBtn" onclick="insertNoteTimestamp()" title="ChÃ¨n timestamp hiá»‡n táº¡i">
                                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                                     <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
                                 </svg>
                             </button>
-                            <button class="notes-action-btn" id="notesCopyBtn" onclick="copyNotes()" title="Copy ghi chú">
+                            <button class="notes-action-btn" id="notesCopyBtn" onclick="copyNotes()" title="Copy ghi chÃº">
                                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                                     <rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/>
                                 </svg>
@@ -295,10 +295,10 @@
                         </div>
                     </div>
                     <textarea class="notes-textarea" id="notesTextarea"
-                              placeholder="Ghi chú của bạn về bài giảng này...&#10;&#10;💡 Tip: Bấm ⏱ để chèn timestamp video đang phát"
-                              aria-label="Ghi chú cá nhân"></textarea>
+                              placeholder="Ghi chÃº cá»§a báº¡n vá» bÃ i giáº£ng nÃ y...&#10;&#10;ðŸ’¡ Tip: Báº¥m â± Ä‘á»ƒ chÃ¨n timestamp video Ä‘ang phÃ¡t"
+                              aria-label="Ghi chÃº cÃ¡ nhÃ¢n"></textarea>
                     <div class="notes-footer">
-                        <span class="notes-save-status" id="notesSaveStatus">✓ Đã lưu</span>
+                        <span class="notes-save-status" id="notesSaveStatus">âœ“ ÄÃ£ lÆ°u</span>
                     </div>
                 </div>
 
@@ -306,16 +306,16 @@
                 <div class="card streak-card" id="streakCard">
                     <div class="streak-main">
                         <div class="streak-flame-wrap">
-                            <span class="streak-flame" id="streakFlame">🔥</span>
+                            <span class="streak-flame" id="streakFlame">ðŸ”¥</span>
                             <span class="streak-num" id="streakNum">0</span>
-                            <span class="streak-unit">ngày</span>
+                            <span class="streak-unit">ngÃ y</span>
                         </div>
                         <div class="streak-meta">
-                            <span class="streak-label">Chuỗi học hiện tại</span>
-                            <span class="streak-best" id="streakBest">Kỷ lục: 0</span>
+                            <span class="streak-label">Chuá»—i há»c hiá»‡n táº¡i</span>
+                            <span class="streak-best" id="streakBest">Ká»· lá»¥c: 0</span>
                         </div>
-                        <button class="badges-open-btn" id="badgesOpenBtn" onclick="openBadgesModal()" title="Xem huy hiệu">
-                            <span id="badgesEarnedCount">0</span>🏆
+                        <button class="badges-open-btn" id="badgesOpenBtn" onclick="openBadgesModal()" title="Xem huy hiá»‡u">
+                            <span id="badgesEarnedCount">0</span>ðŸ†
                         </button>
                     </div>
                     <div class="streak-week" id="streakWeek"></div>
@@ -324,15 +324,15 @@
                 <!-- Progress Card -->
                 <div class="card progress-card" id="progressCard">
                     <div class="card-header">
-                        <span class="card-icon" aria-hidden="true">📊</span>
-                        <h3 class="card-title">Tiến độ học</h3>
+                        <span class="card-icon" aria-hidden="true">ðŸ“Š</span>
+                        <h3 class="card-title">Tiáº¿n Ä‘á»™ há»c</h3>
                         <span class="progress-last-studied" id="progressLastStudied"></span>
                     </div>
 
                     <!-- Video watch progress -->
                     <div class="progress-section">
                         <div class="progress-label-row">
-                            <span class="progress-label">🎬 Đã xem video</span>
+                            <span class="progress-label">ðŸŽ¬ ÄÃ£ xem video</span>
                             <span class="progress-pct" id="watchPct">0%</span>
                         </div>
                         <div class="progress-track" role="progressbar" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100" id="watchTrack">
@@ -343,11 +343,11 @@
                     <!-- Quiz history -->
                     <div class="progress-section" id="quizHistorySection">
                         <div class="progress-label-row">
-                            <span class="progress-label">🧠 Lịch sử Quiz</span>
+                            <span class="progress-label">ðŸ§  Lá»‹ch sá»­ Quiz</span>
                             <span class="progress-pct" id="quizAvgPct"></span>
                         </div>
                         <div class="quiz-history-chart" id="quizHistoryChart">
-                            <div class="quiz-history-empty" id="quizHistoryEmpty">Chưa có lần làm quiz nào</div>
+                            <div class="quiz-history-empty" id="quizHistoryEmpty">ChÆ°a cÃ³ láº§n lÃ m quiz nÃ o</div>
                         </div>
                         <div class="quiz-history-labels" id="quizHistoryLabels"></div>
                     </div>
@@ -356,7 +356,7 @@
                 <!-- Bookmarks Card -->
                 <div class="card bookmarks-card" id="bookmarksCard">
                     <div class="card-header">
-                        <span class="card-icon" aria-hidden="true">🔖</span>
+                        <span class="card-icon" aria-hidden="true">ðŸ”–</span>
                         <h3 class="card-title">Bookmarks</h3>
                         <span class="bookmarks-count" id="bookmarksCount"></span>
                     </div>
@@ -365,18 +365,18 @@
                             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" width="28" height="28" opacity="0.3">
                                 <path d="M19 21l-7-5-7 5V5a2 2 0 012-2h10a2 2 0 012 2z" stroke-linecap="round"/>
                             </svg>
-                            <span>Chưa có bookmark nào<br>Nhấn Bookmark khi video đang chạy</span>
+                            <span>ChÆ°a cÃ³ bookmark nÃ o<br>Nháº¥n Bookmark khi video Ä‘ang cháº¡y</span>
                         </div>
                     </div>
                 </div>
             </aside>
 
-            <!-- ── Right Column: Chapters + Quiz ── -->
+            <!-- â”€â”€ Right Column: Chapters + Quiz â”€â”€ -->
             <main class="content-column">
                 <!-- Chapter Timeline -->
                 <div class="card topics-card">
                     <div class="card-header">
-                        <span class="card-icon" aria-hidden="true">🗺️</span>
+                        <span class="card-icon" aria-hidden="true">ðŸ—ºï¸</span>
                         <h3 class="card-title">Chapter Timeline</h3>
                         <span class="chapter-count" id="chapterCount" aria-live="polite">0 chapters</span>
                     </div>
@@ -385,7 +385,7 @@
                 <!-- Key Moments / Highlights -->
                 <div class="card highlights-card" id="highlightsCard">
                     <div class="card-header">
-                        <span class="card-icon" aria-hidden="true">🔥</span>
+                        <span class="card-icon" aria-hidden="true">ðŸ”¥</span>
                         <h3 class="card-title">Key Moments</h3>
                         <span class="chapter-count" id="highlightsCount">0 moments</span>
                     </div>
@@ -395,16 +395,16 @@
                 <!-- Quiz Card -->
                 <div class="card quiz-card" id="quizCard">
                     <div class="card-header">
-                        <span class="card-icon" aria-hidden="true">🧠</span>
+                        <span class="card-icon" aria-hidden="true">ðŸ§ </span>
                         <h3 class="card-title">Knowledge Quiz</h3>
                         <div class="quiz-header-right">
                             <span class="quiz-score-badge hidden" id="scoreBadge" aria-live="polite">0/0</span>
                             <!-- Regenerate quiz button -->
-                            <button class="regen-quiz-btn" id="regenQuizBtn" onclick="regenerateQuiz()" title="Thêm câu hỏi mới vào bộ hiện tại" aria-label="Thêm câu hỏi">
+                            <button class="regen-quiz-btn" id="regenQuizBtn" onclick="regenerateQuiz()" title="ThÃªm cÃ¢u há»i má»›i vÃ o bá»™ hiá»‡n táº¡i" aria-label="ThÃªm cÃ¢u há»i">
                                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
                                     <path d="M12 4v16m8-8H4" stroke-linecap="round" stroke-linejoin="round"/>
                                 </svg>
-                                Thêm câu hỏi
+                                ThÃªm cÃ¢u há»i
                             </button>
 
                             <div class="fc-dropdown" id="fcDropdown">
@@ -422,20 +422,20 @@
                                     <button class="fc-menu-item fc-study-item" onclick="openFlashcardStudy()" role="menuitem">
                                         <span class="fc-menu-icon">&#127956;</span>
                                         <div>
-                                            <div class="fc-menu-title">Học ngay</div>
-                                            <div class="fc-menu-sub">Ôn tập trực tiếp trong app</div>
+                                            <div class="fc-menu-title">Há»c ngay</div>
+                                            <div class="fc-menu-sub">Ã”n táº­p trá»±c tiáº¿p trong app</div>
                                         </div>
                                     </button>
                                     <div class="fc-menu-divider"></div>
                                     <button class="fc-menu-item" onclick="exportFlashcards('anki')" role="menuitem">
-                                        <span class="fc-menu-icon">📦</span>
+                                        <span class="fc-menu-icon">ðŸ“¦</span>
                                         <div>
                                             <div class="fc-menu-title">Anki (TSV)</div>
                                             <div class="fc-menu-sub">Import into Anki directly</div>
                                         </div>
                                     </button>
                                     <button class="fc-menu-item" onclick="exportFlashcards('csv')" role="menuitem">
-                                        <span class="fc-menu-icon">📋</span>
+                                        <span class="fc-menu-icon">ðŸ“‹</span>
                                         <div>
                                             <div class="fc-menu-title">CSV</div>
                                             <div class="fc-menu-sub">Quizlet, Brainscape & others</div>
@@ -468,19 +468,19 @@
 
                     <!-- Results screen -->
                     <div class="quiz-results hidden" id="quizResults" aria-live="assertive">
-                        <div class="results-emoji" id="resultsEmoji" aria-hidden="true">🎯</div>
+                        <div class="results-emoji" id="resultsEmoji" aria-hidden="true">ðŸŽ¯</div>
                         <h3 class="results-title" id="resultsTitle">Quiz Complete!</h3>
                         <div class="results-score" id="resultsScore">0/0</div>
                         <p class="results-message" id="resultsMessage"></p>
                         <div class="results-breakdown" id="resultsBreakdown"></div>
-                        <button class="action-btn retry-quiz-btn" onclick="restartQuiz()">↺ Retry Quiz</button>
+                        <button class="action-btn retry-quiz-btn" onclick="restartQuiz()">â†º Retry Quiz</button>
                     </div>
                 </div>
 
                 <!-- Transcript Search Card -->
                 <div class="card transcript-card" id="transcriptCard">
                     <div class="card-header">
-                        <span class="card-icon" aria-hidden="true">📜</span>
+                        <span class="card-icon" aria-hidden="true">ðŸ“œ</span>
                         <h3 class="card-title">Transcript</h3>
                         <span class="transcript-count" id="transcriptCount"></span>
                     </div>
@@ -492,20 +492,20 @@
                                 <circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35" stroke-linecap="round"/>
                             </svg>
                             <input type="text" class="transcript-search-input" id="transcriptSearchInput"
-                                   placeholder="Tìm trong transcript..."
+                                   placeholder="TÃ¬m trong transcript..."
                                    oninput="searchTranscript(this.value)"
-                                   aria-label="Tìm kiếm transcript">
+                                   aria-label="TÃ¬m kiáº¿m transcript">
                             <button class="transcript-search-clear hidden" id="transcriptClearBtn"
-                                    onclick="clearTranscriptSearch()" aria-label="Xóa tìm kiếm">
+                                    onclick="clearTranscriptSearch()" aria-label="XÃ³a tÃ¬m kiáº¿m">
                                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                                     <path d="M18 6L6 18M6 6l12 12" stroke-linecap="round"/>
                                 </svg>
                             </button>
                         </div>
                         <div class="transcript-match-info hidden" id="transcriptMatchInfo">
-                            <button class="ts-nav-btn" onclick="navigateMatch(-1)" aria-label="Kết quả trước">‹</button>
+                            <button class="ts-nav-btn" onclick="navigateMatch(-1)" aria-label="Káº¿t quáº£ trÆ°á»›c">â€¹</button>
                             <span id="transcriptMatchText">0/0</span>
-                            <button class="ts-nav-btn" onclick="navigateMatch(1)" aria-label="Kết quả tiếp">›</button>
+                            <button class="ts-nav-btn" onclick="navigateMatch(1)" aria-label="Káº¿t quáº£ tiáº¿p">â€º</button>
                         </div>
                     </div>
 
@@ -513,18 +513,18 @@
                     <div class="ts-translate-bar" id="tsTranslateBar">
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14" style="flex-shrink:0;color:#888"><path d="M3 5h12M9 3v2m1.048 9.5A18.022 18.022 0 016.412 9m6.088 9h7M11 21l5-10 5 10M12.751 5C11.783 10.77 8.07 15.61 3 18.129" stroke-linecap="round" stroke-linejoin="round"/></svg>
                         <select class="ts-lang-select" id="tsLangSelect">
-                            <option value="Vietnamese">Tiếng Việt</option>
+                            <option value="Vietnamese">Tiáº¿ng Viá»‡t</option>
                             <option value="English">English</option>
-                            <option value="Japanese">日本語</option>
-                            <option value="Korean">한국어</option>
-                            <option value="Chinese Simplified">中文简体</option>
-                            <option value="French">Français</option>
-                            <option value="Spanish">Español</option>
+                            <option value="Japanese">æ—¥æœ¬èªž</option>
+                            <option value="Korean">í•œêµ­ì–´</option>
+                            <option value="Chinese Simplified">ä¸­æ–‡ç®€ä½“</option>
+                            <option value="French">FranÃ§ais</option>
+                            <option value="Spanish">EspaÃ±ol</option>
                             <option value="German">Deutsch</option>
                         </select>
-                        <button class="ts-translate-btn" id="tsTranslateBtn" onclick="translateTranscript()">Dịch</button>
-                        <button class="ts-translate-toggle hidden" id="tsTranslateToggle" onclick="toggleTranslation()">Ẩn dịch</button>
-                        <button class="ts-translate-clear hidden" id="tsTranslateClear" onclick="clearTranslation()" title="Xoá bản dịch">✕</button>
+                        <button class="ts-translate-btn" id="tsTranslateBtn" onclick="translateTranscript()">Dá»‹ch</button>
+                        <button class="ts-translate-toggle hidden" id="tsTranslateToggle" onclick="toggleTranslation()">áº¨n dá»‹ch</button>
+                        <button class="ts-translate-clear hidden" id="tsTranslateClear" onclick="clearTranslation()" title="XoÃ¡ báº£n dá»‹ch">âœ•</button>
                     </div>
 
                     <!-- Transcript lines -->
@@ -535,25 +535,25 @@
         </div>
     </section>
 
-    <!-- ═══════════════════════════ DASHBOARD PAGE ════════════════════════════ -->
-    <section class="db-page hidden" id="dashboardSection" aria-label="Dashboard học tập">
+    <!-- â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• DASHBOARD PAGE â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• -->
+    <section class="db-page hidden" id="dashboardSection" aria-label="Dashboard há»c táº­p">
         <div class="db-inner">
 
             <!-- Header -->
             <div class="db-header">
-                <button class="bp-back-btn" onclick="closeDashboard()" aria-label="Quay lại">
+                <button class="bp-back-btn" onclick="closeDashboard()" aria-label="Quay láº¡i">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="18" height="18">
                         <path d="M19 12H5M12 5l-7 7 7 7" stroke-linecap="round" stroke-linejoin="round"/>
                     </svg>
-                    Quay lại
+                    Quay láº¡i
                 </button>
                 <div class="db-header-center">
-                    <h1 class="db-title">📊 Dashboard học tập</h1>
+                    <h1 class="db-title">ðŸ“Š Dashboard há»c táº­p</h1>
                     <p class="db-date" id="dbDate"></p>
                 </div>
                 <div class="db-header-right">
                     <button class="db-badges-shortcut" onclick="closeDashboard(); openBadgesPage();">
-                        🏆 Huy hiệu
+                        ðŸ† Huy hiá»‡u
                     </button>
                 </div>
             </div>
@@ -564,13 +564,13 @@
             <!-- Middle row: Streak calendar + Quiz performance -->
             <div class="db-mid-row">
                 <div class="db-card db-streak-panel">
-                    <h3 class="db-card-title">🔥 Streak học tập</h3>
+                    <h3 class="db-card-title">ðŸ”¥ Streak há»c táº­p</h3>
                     <div class="db-streak-nums" id="dbStreakNums"></div>
                     <div class="db-cal-label-row" id="dbCalLabels"></div>
                     <div class="db-calendar" id="dbCalendar"></div>
                 </div>
                 <div class="db-card db-quiz-panel">
-                    <h3 class="db-card-title">🧠 Kết quả quiz gần đây</h3>
+                    <h3 class="db-card-title">ðŸ§  Káº¿t quáº£ quiz gáº§n Ä‘Ã¢y</h3>
                     <div class="db-quiz-chart" id="dbQuizChart"></div>
                     <p class="db-quiz-avg" id="dbQuizAvg"></p>
                 </div>
@@ -578,32 +578,32 @@
 
             <!-- Recent videos -->
             <div class="db-card db-recent-panel">
-                <h3 class="db-card-title">🎬 Video đã phân tích gần đây</h3>
+                <h3 class="db-card-title">ðŸŽ¬ Video Ä‘Ã£ phÃ¢n tÃ­ch gáº§n Ä‘Ã¢y</h3>
                 <div class="db-video-list" id="dbVideoList"></div>
             </div>
 
             <!-- Badge progress -->
             <div class="db-card db-badge-panel">
-                <h3 class="db-card-title">🏆 Tiến độ huy hiệu</h3>
+                <h3 class="db-card-title">ðŸ† Tiáº¿n Ä‘á»™ huy hiá»‡u</h3>
                 <div class="db-badge-cats" id="dbBadgeCats"></div>
             </div>
 
         </div>
     </section>
 
-    <!-- ═══════════════════════════ BADGES PAGE ════════════════════════════ -->
-    <section class="badges-page hidden" id="badgesSection" aria-label="Huy hiệu học tập">
+    <!-- â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• BADGES PAGE â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• -->
+    <section class="badges-page hidden" id="badgesSection" aria-label="Huy hiá»‡u há»c táº­p">
         <div class="badges-page-inner">
             <div class="badges-page-header">
-                <button class="bp-back-btn" onclick="closeBadgesPage()" aria-label="Quay lại">
+                <button class="bp-back-btn" onclick="closeBadgesPage()" aria-label="Quay láº¡i">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="18" height="18">
                         <path d="M19 12H5M12 5l-7 7 7 7" stroke-linecap="round" stroke-linejoin="round"/>
                     </svg>
-                    Quay lại
+                    Quay láº¡i
                 </button>
                 <div class="bp-title-wrap">
-                    <h1 class="bp-title">🏆 Huy hiệu của bạn</h1>
-                    <p class="bp-subtitle">Khám phá và mở khoá các thành tích học tập</p>
+                    <h1 class="bp-title">ðŸ† Huy hiá»‡u cá»§a báº¡n</h1>
+                    <p class="bp-subtitle">KhÃ¡m phÃ¡ vÃ  má»Ÿ khoÃ¡ cÃ¡c thÃ nh tÃ­ch há»c táº­p</p>
                 </div>
             </div>
             <div class="bp-stats-row" id="bpStatsRow"></div>
@@ -612,21 +612,21 @@
         </div>
     </section>
 
-    <!-- ═══════════════════════════════ FLASHCARD STUDY MODAL ══════════════════════════════ -->
-    <div class="fc-modal-overlay hidden" id="fcModalOverlay" onclick="closeFcModal(event)" role="dialog" aria-modal="true" aria-label="Học Flashcard">
+    <!-- â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• FLASHCARD STUDY MODAL â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• -->
+    <div class="fc-modal-overlay hidden" id="fcModalOverlay" onclick="closeFcModal(event)" role="dialog" aria-modal="true" aria-label="Há»c Flashcard">
         <div class="fc-modal" id="fcModal">
 
             <!-- Modal header -->
             <div class="fc-modal-header">
                 <div class="fc-modal-title">
-                    <span>🎴</span>
+                    <span>ðŸŽ´</span>
                     <span id="fcModalTitle">Flashcards</span>
                 </div>
                 <div class="fc-modal-meta">
-                    <span class="fc-modal-badge" id="fcModeBadge">Tất cả</span>
+                    <span class="fc-modal-badge" id="fcModeBadge">Táº¥t cáº£</span>
                     <span class="fc-card-counter" id="fcCardCounter">1 / 10</span>
                 </div>
-                <button class="fc-modal-close" onclick="closeFcModalBtn()" aria-label="Đóng">✕</button>
+                <button class="fc-modal-close" onclick="closeFcModalBtn()" aria-label="ÄÃ³ng">âœ•</button>
             </div>
 
             <!-- Progress bar -->
@@ -638,15 +638,15 @@
             <div class="fc-card-area">
                 <div class="fc-card" id="fcCard" onclick="flipCard()" tabindex="0"
                      onkeydown="if(event.key===' '||event.key==='Enter') flipCard()"
-                     role="button" aria-label="Click để lật thẻ">
+                     role="button" aria-label="Click Ä‘á»ƒ láº­t tháº»">
                     <div class="fc-card-inner" id="fcCardInner">
                         <div class="fc-card-front">
-                            <div class="fc-side-label">Câu hỏi</div>
+                            <div class="fc-side-label">CÃ¢u há»i</div>
                             <div class="fc-card-text" id="fcFrontText">Loading...</div>
-                            <div class="fc-flip-hint">👆 Click để xem đáp án</div>
+                            <div class="fc-flip-hint">ðŸ‘† Click Ä‘á»ƒ xem Ä‘Ã¡p Ã¡n</div>
                         </div>
                         <div class="fc-card-back">
-                            <div class="fc-side-label">Đáp án</div>
+                            <div class="fc-side-label">ÄÃ¡p Ã¡n</div>
                             <div class="fc-card-text" id="fcBackText"></div>
                         </div>
                     </div>
@@ -655,27 +655,27 @@
 
             <!-- Controls -->
             <div class="fc-controls">
-                <button class="fc-ctrl-btn" id="fcPrevBtn" onclick="fcNavigate(-1)" aria-label="Thẻ trước">
+                <button class="fc-ctrl-btn" id="fcPrevBtn" onclick="fcNavigate(-1)" aria-label="Tháº» trÆ°á»›c">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 18l-6-6 6-6" stroke-linecap="round"/></svg>
                 </button>
 
                 <div class="fc-rate-btns" id="fcRateBtns">
-                    <button class="fc-rate-btn fc-rate-hard" onclick="rateCard('hard')" title="Khó — Ôn lại sau">😰 Khó</button>
-                    <button class="fc-rate-btn fc-rate-ok"   onclick="rateCard('ok')"   title="Ổn">🙂 Ổn</button>
-                    <button class="fc-rate-btn fc-rate-easy" onclick="rateCard('easy')"  title="Dễ — Đã thuộc">😊 Dễ</button>
+                    <button class="fc-rate-btn fc-rate-hard" onclick="rateCard('hard')" title="KhÃ³ â€” Ã”n láº¡i sau">ðŸ˜° KhÃ³</button>
+                    <button class="fc-rate-btn fc-rate-ok"   onclick="rateCard('ok')"   title="á»”n">ðŸ™‚ á»”n</button>
+                    <button class="fc-rate-btn fc-rate-easy" onclick="rateCard('easy')"  title="Dá»… â€” ÄÃ£ thuá»™c">ðŸ˜Š Dá»…</button>
                 </div>
 
-                <button class="fc-ctrl-btn" id="fcNextBtn" onclick="fcNavigate(1)" aria-label="Thẻ tiếp">
+                <button class="fc-ctrl-btn" id="fcNextBtn" onclick="fcNavigate(1)" aria-label="Tháº» tiáº¿p">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6" stroke-linecap="round"/></svg>
                 </button>
             </div>
 
             <!-- Footer: shuffle + filter -->
             <div class="fc-modal-footer">
-                <button class="fc-footer-btn" onclick="shuffleFcCards()" title="Trộn thẻ">🔀 Trộn</button>
-                <button class="fc-footer-btn" onclick="fcFilterMode('all')"  id="fcFilterAll"  class="active">Tất cả</button>
-                <button class="fc-footer-btn" onclick="fcFilterMode('hard')" id="fcFilterHard">😰 Khó</button>
-                <button class="fc-footer-btn" onclick="fcRestart()">↺ Bắt đầu lại</button>
+                <button class="fc-footer-btn" onclick="shuffleFcCards()" title="Trá»™n tháº»">ðŸ”€ Trá»™n</button>
+                <button class="fc-footer-btn" onclick="fcFilterMode('all')"  id="fcFilterAll"  class="active">Táº¥t cáº£</button>
+                <button class="fc-footer-btn" onclick="fcFilterMode('hard')" id="fcFilterHard">ðŸ˜° KhÃ³</button>
+                <button class="fc-footer-btn" onclick="fcRestart()">â†º Báº¯t Ä‘áº§u láº¡i</button>
             </div>
         </div>
     </div>
@@ -685,34 +685,34 @@
         <p>LectureDigest &mdash; AI-powered by Gemini &nbsp;|&nbsp; Built for learners</p>
     </footer>
 
-    <!-- ═══════════════════════════ CHAT PANEL ═══════════════════════════ -->
+    <!-- â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• CHAT PANEL â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• -->
     <!-- Floating chat button (only visible when results are showing) -->
-    <button class="chat-fab hidden" id="chatFab" onclick="toggleChat()" aria-label="Chat với bài giảng" title="Chat với bài giảng">
+    <button class="chat-fab hidden" id="chatFab" onclick="toggleChat()" aria-label="Chat vá»›i bÃ i giáº£ng" title="Chat vá»›i bÃ i giáº£ng">
         <svg class="chat-fab-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
             <path d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" stroke-linecap="round" stroke-linejoin="round"/>
         </svg>
-        <span class="chat-fab-label">Chat với bài giảng</span>
+        <span class="chat-fab-label">Chat vá»›i bÃ i giáº£ng</span>
         <span class="chat-unread hidden" id="chatUnread">1</span>
     </button>
 
     <!-- Chat panel -->
-    <div class="chat-panel hidden" id="chatPanel" role="dialog" aria-label="Chat với bài giảng">
+    <div class="chat-panel hidden" id="chatPanel" role="dialog" aria-label="Chat vá»›i bÃ i giáº£ng">
         <!-- Panel header -->
         <div class="chat-panel-header">
             <div class="chat-header-info">
-                <div class="chat-avatar">🤖</div>
+                <div class="chat-avatar">ðŸ¤–</div>
                 <div>
                     <div class="chat-header-title">AI Tutor</div>
-                    <div class="chat-header-sub">Hỏi bất cứ điều gì về bài giảng</div>
+                    <div class="chat-header-sub">Há»i báº¥t cá»© Ä‘iá»u gÃ¬ vá» bÃ i giáº£ng</div>
                 </div>
             </div>
             <div class="chat-header-actions">
-                <button class="chat-clear-btn" onclick="clearChat()" aria-label="Xóa lịch sử chat" title="Xóa lịch sử chat">
+                <button class="chat-clear-btn" onclick="clearChat()" aria-label="XÃ³a lá»‹ch sá»­ chat" title="XÃ³a lá»‹ch sá»­ chat">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" stroke-linecap="round" stroke-linejoin="round"/>
                     </svg>
                 </button>
-                <button class="chat-close-btn" onclick="toggleChat()" aria-label="Đóng chat">
+                <button class="chat-close-btn" onclick="toggleChat()" aria-label="ÄÃ³ng chat">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <path d="M18 6L6 18M6 6l12 12" stroke-linecap="round"/>
                     </svg>
@@ -725,24 +725,24 @@
             <!-- Welcome message -->
             <div class="chat-msg assistant">
                 <div class="chat-bubble">
-                    👋 Xin chào! Tôi đã đọc toàn bộ nội dung bài giảng này. Bạn có thể hỏi tôi bất cứ điều gì về video — nội dung, khái niệm, ví dụ, hay bất kỳ phần nào bạn chưa hiểu rõ!
+                    ðŸ‘‹ Xin chÃ o! TÃ´i Ä‘Ã£ Ä‘á»c toÃ n bá»™ ná»™i dung bÃ i giáº£ng nÃ y. Báº¡n cÃ³ thá»ƒ há»i tÃ´i báº¥t cá»© Ä‘iá»u gÃ¬ vá» video â€” ná»™i dung, khÃ¡i niá»‡m, vÃ­ dá»¥, hay báº¥t ká»³ pháº§n nÃ o báº¡n chÆ°a hiá»ƒu rÃµ!
                 </div>
             </div>
         </div>
 
         <!-- Suggested questions -->
         <div class="chat-suggestions" id="chatSuggestions">
-            <button class="chat-suggestion-btn" onclick="sendSuggestion(this)">📌 Tóm tắt nội dung chính</button>
-            <button class="chat-suggestion-btn" onclick="sendSuggestion(this)">🤔 Giải thích khái niệm khó nhất</button>
-            <button class="chat-suggestion-btn" onclick="sendSuggestion(this)">💡 Ví dụ thực tế từ bài giảng</button>
+            <button class="chat-suggestion-btn" onclick="sendSuggestion(this)">ðŸ“Œ TÃ³m táº¯t ná»™i dung chÃ­nh</button>
+            <button class="chat-suggestion-btn" onclick="sendSuggestion(this)">ðŸ¤” Giáº£i thÃ­ch khÃ¡i niá»‡m khÃ³ nháº¥t</button>
+            <button class="chat-suggestion-btn" onclick="sendSuggestion(this)">ðŸ’¡ VÃ­ dá»¥ thá»±c táº¿ tá»« bÃ i giáº£ng</button>
         </div>
 
         <!-- Input area -->
         <div class="chat-input-area">
-            <textarea class="chat-input" id="chatInput" placeholder="Hỏi về bài giảng..." rows="1"
+            <textarea class="chat-input" id="chatInput" placeholder="Há»i vá» bÃ i giáº£ng..." rows="1"
                       onkeydown="handleChatKey(event)" oninput="autoResizeChatInput(this)"
-                      aria-label="Nhập câu hỏi"></textarea>
-            <button class="chat-send-btn" id="chatSendBtn" onclick="sendChatMessage()" aria-label="Gửi">
+                      aria-label="Nháº­p cÃ¢u há»i"></textarea>
+            <button class="chat-send-btn" id="chatSendBtn" onclick="sendChatMessage()" aria-label="Gá»­i">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                     <path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z" stroke-linecap="round" stroke-linejoin="round"/>
                 </svg>
@@ -756,20 +756,20 @@
     <script src="dashboard.js"></script>
     <script src="concept-explainer.js"></script>
 
-    <!-- ══════════════════════════════ SHARE MODAL ══════════════════════════════ -->
-    <div class="share-modal-overlay hidden" id="shareModalOverlay" onclick="closeShareModal(event)" role="dialog" aria-modal="true" aria-label="Chia sẻ kết quả">
+    <!-- â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• SHARE MODAL â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• -->
+    <div class="share-modal-overlay hidden" id="shareModalOverlay" onclick="closeShareModal(event)" role="dialog" aria-modal="true" aria-label="Chia sáº» káº¿t quáº£">
         <div class="share-modal" id="shareModal">
             <div class="share-modal-header">
                 <div class="share-modal-title">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18"><path d="M4 12v8a2 2 0 002 2h12a2 2 0 002-2v-8M16 6l-4-4-4 4M12 2v13" stroke-linecap="round" stroke-linejoin="round"/></svg>
-                    Chia sẻ kết quả
+                    Chia sáº» káº¿t quáº£
                 </div>
-                <button class="share-modal-close" onclick="closeShareModalBtn()" aria-label="Đóng">✕</button>
+                <button class="share-modal-close" onclick="closeShareModalBtn()" aria-label="ÄÃ³ng">âœ•</button>
             </div>
 
             <!-- Preview card -->
             <div class="share-preview-card" id="sharePreviewCard">
-                <div class="share-preview-badge">📚 LectureDigest</div>
+                <div class="share-preview-badge">ðŸ“š LectureDigest</div>
                 <div class="share-preview-title" id="sharePreviewTitle"></div>
                 <div class="share-preview-author" id="sharePreviewAuthor"></div>
                 <div class="share-preview-summary" id="sharePreviewSummary"></div>
@@ -784,11 +784,11 @@
             <div class="share-actions">
                 <button class="share-action-btn share-action-native" id="shareNativeBtn" onclick="shareNative()">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 12v8a2 2 0 002 2h12a2 2 0 002-2v-8M16 6l-4-4-4 4M12 2v13" stroke-linecap="round" stroke-linejoin="round"/></svg>
-                    Chia sẻ
+                    Chia sáº»
                 </button>
                 <button class="share-action-btn share-action-copy" onclick="copyShareText()">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>
-                    Copy nội dung
+                    Copy ná»™i dung
                 </button>
                 <button class="share-action-btn share-action-link" onclick="copyYouTubeLink()">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10 13a5 5 0 007.54.54l3-3a5 5 0 00-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 00-7.54-.54l-3 3a5 5 0 007.07 7.07l1.71-1.71"/></svg>
@@ -799,20 +799,20 @@
     </div>
 
 
-    <!-- ══════════════════════════════ MIND MAP MODAL ══════════════════════════════ -->
-    <div class="mm-modal-overlay hidden" id="mmModalOverlay" role="dialog" aria-modal="true" aria-label="Sơ đồ tư duy">
+    <!-- â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• MIND MAP MODAL â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• -->
+    <div class="mm-modal-overlay hidden" id="mmModalOverlay" role="dialog" aria-modal="true" aria-label="SÆ¡ Ä‘á»“ tÆ° duy">
         <div class="mm-modal">
             <div class="mm-modal-header">
                 <div class="mm-modal-title">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18">
                         <circle cx="12" cy="12" r="3"/><path d="M12 9V4M12 15v5M9 12H4M15 12h5M10.17 10.17L6.34 6.34M13.83 13.83l3.83 3.83M13.83 10.17l3.83-3.83M10.17 13.83l-3.83 3.83" stroke-linecap="round"/>
                     </svg>
-                    <span id="mmTitle">Sơ đồ tư duy</span>
+                    <span id="mmTitle">SÆ¡ Ä‘á»“ tÆ° duy</span>
                 </div>
                 <div class="mm-header-actions">
-                    <button class="mm-ctrl-btn" onclick="mmResetZoom()" title="Reset view">⊡ Reset</button>
-                    <button class="mm-ctrl-btn mm-download-btn" onclick="mmDownload()" title="Tải xuống PNG">⬇ PNG</button>
-                    <button class="mm-modal-close" onclick="closeMindMap()" aria-label="Đóng">✕</button>
+                    <button class="mm-ctrl-btn" onclick="mmResetZoom()" title="Reset view">âŠ¡ Reset</button>
+                    <button class="mm-ctrl-btn mm-download-btn" onclick="mmDownload()" title="Táº£i xuá»‘ng PNG">â¬‡ PNG</button>
+                    <button class="mm-modal-close" onclick="closeMindMap()" aria-label="ÄÃ³ng">âœ•</button>
                 </div>
             </div>
             <div class="mm-canvas-area" id="mmCanvasArea">
@@ -820,14 +820,28 @@
                 <div class="mm-tooltip hidden" id="mmTooltip"></div>
             </div>
             <div class="mm-legend">
-                <span class="mm-legend-item"><span class="mm-dot" style="background:#7c3aed"></span>Chủ đề</span>
+                <span class="mm-legend-item"><span class="mm-dot" style="background:#7c3aed"></span>Chá»§ Ä‘á»</span>
                 <span class="mm-legend-item"><span class="mm-dot" style="background:#4f46e5"></span>Chapters</span>
                 <span class="mm-legend-item"><span class="mm-dot" style="background:#0891b2"></span>Takeaways</span>
                 <span class="mm-legend-item"><span class="mm-dot" style="background:#b45309"></span>Highlights</span>
-                <span class="mm-legend-hint">🖱 Scroll để zoom · Kéo để di chuyển</span>
+                <span class="mm-legend-hint">ðŸ–± Scroll Ä‘á»ƒ zoom Â· KÃ©o Ä‘á»ƒ di chuyá»ƒn</span>
             </div>
         </div>
     </div>
 
+    <!-- VIDEO LENGTH WARNING MODAL -->
+    <div class="vlen-overlay hidden" id="vlenOverlay" role="dialog" aria-modal="true" aria-label="Video dai canh bao">
+        <div class="vlen-modal" id="vlenModal">
+            <div class="vlen-icon">⏱️</div>
+            <h3 class="vlen-title">Video dài — Có thể mất nhiều thời gian</h3>
+            <p class="vlen-body" id="vlenBody"></p>
+            <div class="vlen-actions">
+                <button class="vlen-btn vlen-cancel" onclick="closeVlenModal()">Huỷ</button>
+                <button class="vlen-btn vlen-confirm" id="vlenConfirmBtn" onclick="confirmAnalyze()">Vẫn phân tích</button>
+            </div>
+        </div>
+    </div>
 </body>
 </html>
+
+

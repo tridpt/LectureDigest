@@ -3497,3 +3497,69 @@ html.light-mode .typing-indicator span { background: #a78bfa; }
     color: var(--text-primary);
 }
 .hist-search-input::placeholder { color: var(--text-muted); }
+
+/* -- Video Length Warning Modal ------------------------ */
+.vlen-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.75);
+    backdrop-filter: blur(6px);
+    z-index: 9000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+    animation: fadeIn 0.2s ease;
+}
+.vlen-modal {
+    background: #0f0f23;
+    border: 1px solid rgba(139,92,246,0.3);
+    border-radius: 20px;
+    padding: 36px 32px;
+    max-width: 420px;
+    width: 100%;
+    text-align: center;
+    box-shadow: 0 32px 80px rgba(0,0,0,0.8);
+    animation: slideUp 0.25s ease;
+}
+.vlen-icon { font-size: 48px; margin-bottom: 16px; }
+.vlen-title {
+    font-size: 18px;
+    font-weight: 800;
+    color: var(--text-primary);
+    margin-bottom: 14px;
+    letter-spacing: -0.3px;
+}
+.vlen-body {
+    font-size: 14px;
+    color: var(--text-secondary);
+    line-height: 1.7;
+    margin-bottom: 28px;
+}
+.vlen-actions {
+    display: flex;
+    gap: 12px;
+    justify-content: center;
+}
+.vlen-btn {
+    padding: 10px 24px;
+    border-radius: 12px;
+    font-family: var(--font);
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+    border: 1px solid var(--border);
+}
+.vlen-cancel {
+    background: var(--bg-card);
+    color: var(--text-secondary);
+}
+.vlen-cancel:hover { border-color: var(--accent); color: var(--text-primary); }
+.vlen-confirm {
+    background: linear-gradient(135deg, var(--accent), var(--accent-dark));
+    color: white;
+    border-color: transparent;
+    box-shadow: 0 4px 16px rgba(109,40,217,0.4);
+}
+.vlen-confirm:hover { transform: translateY(-1px); box-shadow: 0 8px 24px rgba(109,40,217,0.5); }

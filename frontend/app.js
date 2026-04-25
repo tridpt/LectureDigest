@@ -3373,3 +3373,227 @@ document.addEventListener('keydown', function(e) {
         }
     };
 })();
+
+// ==========================================================
+//  FEATURE 1: VIDEO LENGTH WARNING
+//  If video > 1h, show a confirmation modal with ETA estimate
+// ==========================================================
+let _pendingAnalyzeUrl = null;
+
+function showVlenModal(durationSecs, url) {
+    _pendingAnalyzeUrl = url;
+    const h = Math.floor(durationSecs / 3600);
+    const m = Math.floor((durationSecs % 3600) / 60);
+    const durStr = h > 0 ? `${h} gi? ${m} phút` : `${m} phút`;
+
+    // Rough ETA: ~30s per 10 mins of video
+    const etaMins = Math.ceil((durationSecs / 60) * 0.05);
+    const etaStr = etaMins >= 2 ? `~${etaMins} phút` : '~1 phút';
+
+    const body = document.getElementById('vlenBody');
+    if (body) body.innerHTML =
+        `Video này dài <strong>${durStr}</strong>.<br>` +
+        `U?c tính th?i gian x? lý: <strong>${etaStr}</strong>.<br><br>` +
+        `Luu ý: Video r?t dài có th? b? tóm t?t không d?y d? do gi?i h?n token c?a Gemini.`;
+
+    document.getElementById('vlenOverlay')?.classList.remove('hidden');
+}
+
+function closeVlenModal() {
+    document.getElementById('vlenOverlay')?.classList.add('hidden');
+    _pendingAnalyzeUrl = null;
+    document.getElementById('analyzeBtn').disabled = false;
+}
+
+function confirmAnalyze() {
+    document.getElementById('vlenOverlay')?.classList.add('hidden');
+    _doAnalyze();
+}
+
+// Check video duration from transcript before full analyze
+async function analyzeVideo() {
+    const urlInput = document.getElementById('urlInput');
+    const searchBox = document.getElementById('searchBox');
+    const url = urlInput.value.trim();
+
+    if (!url) {
+        urlInput.focus();
+        searchBox.style.borderColor = 'rgba(239, 68, 68, 0.55)';
+        setTimeout(() => { searchBox.style.borderColor = ''; }, 2200);
+        return;
+    }
+
+    _pendingAnalyzeUrl = url;
+
+    // Quick duration check via client-side transcript (if available)
+    document.getElementById('analyzeBtn').disabled = true;
+    let quickTranscript = null;
+    try {
+        const videoId = url.match(/(?:v=|youtu\.be\/)([a-zA-Z0-9_-]{11})/)?.[1];
+        if (videoId) {
+            quickTranscript = await fetchTranscriptClientSide(videoId);
+            if (quickTranscript?.length) {
+                const lastSeg = quickTranscript[quickTranscript.length - 1];
+                const duration = (lastSeg?.start || 0) + (lastSeg?.duration || 0);
+                if (duration > 3600) {
+                    showVlenModal(duration, url);
+                    // Store transcript so _doAnalyze can reuse it
+                    window._cachedTranscript = quickTranscript;
+                    return;
+                }
+                window._cachedTranscript = quickTranscript;
+            }
+        }
+    } catch(e) {
+        console.warn('[LectureDigest] Quick duration check failed:', e.message);
+        window._cachedTranscript = null;
+    }
+
+    _doAnalyze();
+}
+
+async function _doAnalyze() {
+    const urlInput = document.getElementById('urlInput');
+    const url = _pendingAnalyzeUrl || urlInput.value.trim();
+    if (!url) return;
+
+    document.getElementById('analyzeBtn').disabled = true;
+    showSection('loadingSection');
+    const stopAnimation = startLoadingAnimation();
+
+    try {
+        let clientTranscript = window._cachedTranscript || null;
+        window._cachedTranscript = null;
+
+        if (!clientTranscript) {
+            try {
+                const videoId = url.match(/(?:v=|youtu\.be\/)([a-zA-Z0-9_-]{11})/)?.[1];
+                if (videoId) clientTranscript = await fetchTranscriptClientSide(videoId);
+            } catch (e) {
+                console.warn('[LectureDigest] Client transcript failed, server will try:', e.message);
+            }
+        }
+
+        const reqBody = { url, language: 'en', output_language: selectedLang };
+        if (clientTranscript?.length) reqBody.transcript = clientTranscript;
+
+        const res = await fetch(`${API_BASE}/api/analyze`, {
+            method:  'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body:    JSON.stringify(reqBody),
+        });
+
+        stopAnimation();
+
+        if (!res.ok) {
+            const err = await res.json().catch(() => ({ detail: 'Unknown server error' }));
+            throw new Error(err.detail || `Server error ${res.status}`);
+        }
+
+        analysisData = await res.json();
+        if (!analysisData.video_id) throw new Error('Response missing video_id');
+
+        if (!analysisData.transcript?.length && clientTranscript?.length) {
+            analysisData.transcript = clientTranscript;
+        }
+
+        clearChat();
+        renderResults(analysisData);
+        saveToHistory(analysisData);
+        initNotes(analysisData.video_id);
+        renderTranscript(analysisData.transcript || []);
+        initProgress(analysisData.video_id);
+        initBookmarks(analysisData.video_id);
+        recordStudySession();
+        window._spaVideoId = analysisData.video_id;
+        showSection('resultsSection');
+
+    } catch (err) {
+        stopAnimation();
+        const msgEl = document.getElementById('errorMessage');
+        const errText = err.message || 'Failed to analyze video. Please try again.';
+
+        const retryMatch = errText.match(/(\d+)s/);
+        const is429 = errText.includes('429') || errText.includes('quota') || errText.includes('RESOURCE_EXHAUSTED');
+        if (is429 && retryMatch) {
+            let secs = parseInt(retryMatch[1], 10);
+            if (msgEl) msgEl.innerHTML =
+                `Gemini dang qua tai. Tu thu lai sau <strong id="cdTimer">${secs}</strong>s...`;
+            showSection('errorSection');
+            const cdInterval = setInterval(() => {
+                secs--;
+                const timerEl = document.getElementById('cdTimer');
+                if (timerEl) timerEl.textContent = secs;
+                if (secs <= 0) {
+                    clearInterval(cdInterval);
+                    document.getElementById('analyzeBtn').disabled = false;
+                    _doAnalyze();
+                }
+            }, 1000);
+        } else {
+            if (msgEl) msgEl.textContent = errText;
+            showSection('errorSection');
+            document.getElementById('analyzeBtn').disabled = false;
+        }
+    }
+}
+
+// ==========================================================
+//  FEATURE 2: EXPORT NOTES AS MARKDOWN
+// ==========================================================
+function exportNotesMarkdown() {
+    const textarea = document.getElementById('notesTextarea');
+    if (!textarea?.value.trim()) { showToast('Chua co ghi chu de xuat'); return; }
+
+    const title = analysisData?.title || document.getElementById('videoTitle')?.textContent || 'Video';
+    const author = analysisData?.author || '';
+    const videoUrl = document.getElementById('urlInput')?.value?.trim() || '';
+    const now = new Date().toLocaleDateString('vi-VN');
+
+    let md = `# Ghi chu: ${title}\n\n`;
+    if (author) md += `**Tac gia:** ${author}  \n`;
+    if (videoUrl) md += `**Link:** ${videoUrl}  \n`;
+    md += `**Ngay:** ${now}  \n\n---\n\n`;
+    md += textarea.value;
+
+    const blob = new Blob([md], { type: 'text/markdown;charset=utf-8' });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = `notes-${(title || 'lecture').replace(/[^a-z0-9]/gi, '-').toLowerCase().slice(0, 40)}.md`;
+    a.click();
+    URL.revokeObjectURL(a.href);
+    showToast('Da tai xuong file .md!');
+}
+
+// ==========================================================
+//  FEATURE 3: SYNC THEME WITH OS (prefers-color-scheme)
+// ==========================================================
+(function initOsThemeSync() {
+    // Only auto-apply OS theme if user has NOT manually set a preference
+    const saved = localStorage.getItem('lectureDigest_theme');
+    if (!saved) {
+        // No manual preference — follow OS
+        const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+        applyTheme(prefersDark ? 'dark' : 'light');
+    }
+
+    // Listen for OS theme changes (e.g. Windows switches from day to night mode)
+    const mq = window.matchMedia('(prefers-color-scheme: dark)');
+    mq.addEventListener('change', (e) => {
+        // Only auto-switch if user hasn't overridden manually
+        const manualPref = localStorage.getItem('lectureDigest_theme');
+        if (!manualPref) {
+            applyTheme(e.matches ? 'dark' : 'light');
+        }
+    });
+})();
+
+// When user manually toggles theme, persist preference so OS sync stops overriding
+const _origToggleTheme = window.toggleTheme;
+window.toggleTheme = function() {
+    const current = localStorage.getItem('lectureDigest_theme')
+        || (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+    const next = current === 'dark' ? 'light' : 'dark';
+    localStorage.setItem('lectureDigest_theme', next);   // lock to manual
+    applyTheme(next);
+};
