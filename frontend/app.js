@@ -758,6 +758,10 @@ function renderResults(data) {
                         <span class="topic-timestamp">${esc(topic.timestamp_str)}</span>
                     </div>
                     <p class="topic-summary">${esc(topic.summary)}</p>
+                    <button class="deep-dive-btn" onclick="event.stopPropagation();deepDiveChapter(${topics.indexOf(topic)})" title="Hoi AI ve chapter nay">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>
+                        Hoi AI
+                    </button>
                 </div>
             `;
             topicsList.appendChild(el);
@@ -4286,4 +4290,39 @@ function copyResultLink() {
         document.body.removeChild(ta);
         showToast('Da copy link ket qua!');
     });
+}
+
+
+// ══════════════════════════════════════════════════════
+// CHAPTER DEEP DIVE
+// ══════════════════════════════════════════════════════
+function deepDiveChapter(topicIndex) {
+    if (!analysisData || !analysisData.topics) return;
+    var topic = analysisData.topics[topicIndex];
+    if (!topic) return;
+
+    // Open chat panel if not open
+    var panel = document.getElementById('chatPanel');
+    if (!panel || panel.classList.contains('hidden')) {
+        if (typeof toggleChatPanel === 'function') toggleChatPanel();
+    }
+
+    // Build a focused question
+    var question = 'Giai thich chi tiet ve chapter "' + (topic.title || '') + '"'
+        + (topic.timestamp_str ? ' (tai ' + topic.timestamp_str + ')' : '')
+        + '. Noi dung: ' + (topic.summary || '')
+        + '. Hay giai thich sau hon, cho vi du cu the, va neu nhung diem quan trong nhat cua phan nay.';
+
+    // Set chat input and send
+    var input = document.getElementById('chatInput');
+    if (input) {
+        input.value = question;
+        // Auto-send after a brief delay
+        setTimeout(function() {
+            if (typeof sendChatMessage === 'function') sendChatMessage();
+        }, 200);
+    }
+
+    // Show toast
+    showToast('Dang hoi AI ve: ' + (topic.title || 'chapter'), 2000);
 }

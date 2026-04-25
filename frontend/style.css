@@ -4033,3 +4033,29 @@ html.light-mode .typing-indicator span { background: #a78bfa; }
     border-color: rgba(16,185,129,0.5);
     transform: translateY(-1px);
 }
+
+/* ── Chapter Deep Dive Button ──────────── */
+.deep-dive-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    margin-top: 8px;
+    padding: 4px 12px;
+    border-radius: 8px;
+    border: 1px solid rgba(139,92,246,0.25);
+    background: rgba(139,92,246,0.08);
+    color: #a78bfa;
+    font-size: 11px;
+    font-weight: 600;
+    font-family: var(--font);
+    cursor: pointer;
+    transition: all 0.2s;
+    opacity: 0;
+}
+.topic-item:hover .deep-dive-btn { opacity: 1; }
+.deep-dive-btn:hover {
+    background: rgba(139,92,246,0.18);
+    border-color: rgba(139,92,246,0.5);
+    color: #c4b5fd;
+    transform: translateY(-1px);
+}
