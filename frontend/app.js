@@ -1436,6 +1436,31 @@ function exportPDF() {
 
     const videoUrl = d.video_id ? `youtube.com/watch?v=${d.video_id}` : '';
 
+    // Personal notes
+    let notesText = '';
+    try {
+        const notesKey = 'lectureDigest_notes_' + d.video_id;
+        notesText = localStorage.getItem(notesKey) || '';
+    } catch(e) {}
+    const notesHtml = notesText.trim()
+        ? '<pre style="white-space:pre-wrap;font-family:Inter,sans-serif;font-size:10.5pt;color:#374151;line-height:1.7;background:#fafafa;padding:14px 16px;border-radius:8px;border:1px solid #f3f4f6">' + notesText.replace(/</g,'&lt;').replace(/>/g,'&gt;') + '</pre>'
+        : '<p style="color:#9ca3af;font-style:italic">Chua co ghi chu</p>';
+
+    // Bookmarks
+    let bookmarksList = [];
+    try {
+        const bmKey = 'lectureDigest_bookmarks_' + d.video_id;
+        bookmarksList = JSON.parse(localStorage.getItem(bmKey) || '[]');
+    } catch(e) {}
+    const bookmarksHtml = bookmarksList.length
+        ? bookmarksList.map(function(bm) {
+            return '<div style="display:flex;gap:10px;padding:6px 0;border-bottom:1px solid #f3f4f6;font-size:10.5pt">'
+                + '<span style="background:#ede9fe;color:#5b21b6;padding:2px 8px;border-radius:4px;font-size:9.5pt;font-weight:700;white-space:nowrap;font-family:Courier New,monospace">'
+                + (bm.timestamp_str || '') + '</span>'
+                + '<span style="color:#374151">' + (bm.note || bm.title || '') + '</span></div>';
+          }).join('')
+        : '<p style="color:#9ca3af;font-style:italic">Chua co bookmark</p>';
+
     const html = `<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -1630,6 +1655,16 @@ function exportPDF() {
   <div class="section">
     <div class="section-title">🧠 Knowledge Quiz</div>
     ${quizHtml}
+  </div>
+
+  <div class="section">
+    <div class="section-title">\u270f\ufe0f Ghi chu ca nhan</div>
+    ${notesHtml}
+  </div>
+
+  <div class="section">
+    <div class="section-title">\ud83d\udd16 Bookmarks</div>
+    ${bookmarksHtml}
   </div>
 
   <div class="footer">
