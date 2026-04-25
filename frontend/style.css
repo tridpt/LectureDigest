@@ -4187,3 +4187,195 @@ html.light-mode .typing-indicator span { background: #a78bfa; }
     border-radius: 4px;
 }
 .custom-fc-item-del:hover { color: #ef4444; background: rgba(239,68,68,0.1); }
+
+/* ── Study Statistics ──────────────────── */
+.db-study-stats {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+}
+.stats-card {
+    background: var(--bg-main);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 18px;
+}
+.stats-card-wide { grid-column: 1 / -1; }
+.stats-card-title {
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin-bottom: 14px;
+}
+.stats-empty {
+    text-align: center;
+    color: var(--text-secondary);
+    font-size: 12px;
+    padding: 20px 0;
+    font-style: italic;
+}
+/* Weekly Bar Chart */
+.stats-bar-header {
+    display: flex;
+    justify-content: space-between;
+    font-size: 11px;
+    color: var(--text-secondary);
+    margin-bottom: 10px;
+    font-weight: 600;
+}
+.stats-bar-chart {
+    display: flex;
+    gap: 6px;
+    align-items: flex-end;
+    height: 80px;
+}
+.stats-bar-col {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+}
+.stats-bar-track {
+    width: 100%;
+    height: 60px;
+    background: rgba(139,92,246,0.06);
+    border-radius: 6px;
+    display: flex;
+    align-items: flex-end;
+    overflow: hidden;
+}
+.stats-bar-fill {
+    width: 100%;
+    background: rgba(139,92,246,0.15);
+    border-radius: 6px;
+    transition: height 0.4s ease;
+    min-height: 4px;
+}
+.stats-bar-fill.active {
+    background: linear-gradient(to top, #8b5cf6, #a78bfa);
+}
+.stats-bar-label {
+    font-size: 9px;
+    color: var(--text-secondary);
+    font-weight: 600;
+}
+.stats-bar-label.today { color: var(--accent); }
+.stats-bar-day {
+    font-size: 8px;
+    color: var(--text-secondary);
+    opacity: 0.6;
+}
+/* Category Distribution */
+.stats-cat-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 6px 0;
+}
+.stats-cat-info {
+    min-width: 90px;
+    font-size: 12px;
+    color: var(--text-primary);
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+.stats-cat-icon { font-size: 14px; }
+.stats-cat-bar-wrap {
+    flex: 1;
+    height: 8px;
+    background: rgba(255,255,255,0.05);
+    border-radius: 4px;
+    overflow: hidden;
+}
+.stats-cat-bar {
+    height: 100%;
+    border-radius: 4px;
+    transition: width 0.5s ease;
+}
+.stats-cat-pct {
+    font-size: 11px;
+    color: var(--text-secondary);
+    min-width: 55px;
+    text-align: right;
+}
+/* SM-2 Stats */
+.stats-sm2-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+}
+.stats-sm2-item {
+    text-align: center;
+    padding: 12px 8px;
+    background: rgba(139,92,246,0.04);
+    border-radius: 10px;
+    border: 1px solid rgba(139,92,246,0.08);
+}
+.stats-sm2-num {
+    font-size: 24px;
+    font-weight: 800;
+}
+.stats-sm2-lbl {
+    font-size: 10px;
+    color: var(--text-secondary);
+    margin-top: 2px;
+    font-weight: 500;
+}
+/* Learning Timeline */
+.stats-tl-chart {
+    display: flex;
+    gap: 4px;
+    align-items: flex-end;
+    height: 90px;
+    padding-bottom: 4px;
+}
+.stats-tl-col {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 3px;
+}
+.stats-tl-count {
+    font-size: 9px;
+    color: var(--accent);
+    font-weight: 700;
+}
+.stats-tl-track {
+    width: 100%;
+    height: 60px;
+    background: rgba(16,185,129,0.06);
+    border-radius: 5px;
+    display: flex;
+    align-items: flex-end;
+    overflow: hidden;
+}
+.stats-tl-fill {
+    width: 100%;
+    background: linear-gradient(to top, #10b981, #34d399);
+    border-radius: 5px;
+    transition: height 0.5s ease;
+}
+.stats-tl-date {
+    font-size: 8px;
+    color: var(--text-secondary);
+    white-space: nowrap;
+}
+.stats-tl-summary {
+    display: flex;
+    justify-content: space-around;
+    margin-top: 12px;
+    padding-top: 10px;
+    border-top: 1px solid var(--border);
+}
+.stats-tl-summary span {
+    font-size: 11px;
+    color: var(--text-secondary);
+    font-weight: 500;
+}
+@media (max-width: 700px) {
+    .db-study-stats { grid-template-columns: 1fr; }
+    .stats-sm2-grid { grid-template-columns: repeat(2, 1fr); }
+}

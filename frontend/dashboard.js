@@ -51,6 +51,7 @@ function renderDashboard() {
     renderDbStats(g, history);
     renderDbStreak(g);
     renderDbQuizChart(history);
+    renderStudyStats(g, history);
     renderDbVideos(history);
     renderDbBadgeCats(g);
 }
@@ -240,4 +241,106 @@ function renderDbBadgeCats(g) {
             '<div class="db-bcat-track"><div class="db-bcat-fill" style="width:' + pct + '%"></div></div>' +
             '</div>';
     }).join('');
+}
+
+
+// ═══════════════════════════════════════════════════════
+// STUDY STATISTICS
+// ═══════════════════════════════════════════════════════
+
+function renderStudyStats(g, history) {
+    var container = document.getElementById('dbStudyStats');
+    if (!container) return;
+    var html = '';
+    html += '<div class="stats-card"><div class="stats-card-title">\ud83d\udcca Hoat dong 7 ngay qua</div><div class="stats-week-chart">' + buildWeekChart(g) + '</div></div>';
+    html += '<div class="stats-card"><div class="stats-card-title">\ud83c\udff7\ufe0f Phan loai video</div><div class="stats-categories">' + buildCategoryChart(history) + '</div></div>';
+    html += '<div class="stats-card"><div class="stats-card-title">\ud83e\udde0 Spaced Repetition</div><div class="stats-sm2">' + buildSm2Stats() + '</div></div>';
+    html += '<div class="stats-card stats-card-wide"><div class="stats-card-title">\ud83d\udcc8 Tien do hoc tap</div><div class="stats-timeline">' + buildLearningTimeline(history) + '</div></div>';
+    container.innerHTML = html;
+}
+
+function buildWeekChart(g) {
+    var DOW = ['CN','T2','T3','T4','T5','T6','T7'];
+    var today = new Date(); today.setHours(0,0,0,0);
+    var studySet = {};
+    (g.studyDates || []).forEach(function(d){ studySet[d]=1; });
+    var bars = '';
+    var activeDays = 0;
+    for (var i = 6; i >= 0; i--) {
+        var d = new Date(today); d.setDate(today.getDate()-i);
+        var key = d.toISOString().slice(0,10);
+        var active = studySet[key] ? 1 : 0;
+        if (active) activeDays++;
+        bars += '<div class="stats-bar-col"><div class="stats-bar-track"><div class="stats-bar-fill'+(active?' active':'')+'" style="height:'+(active?'100':'15')+'%"></div></div><div class="stats-bar-label'+(i===0?' today':'')+'">'+DOW[d.getDay()]+'</div><div class="stats-bar-day">'+d.getDate()+'</div></div>';
+    }
+    return '<div class="stats-bar-header"><span>'+activeDays+'/7 ngay</span><span>'+Math.round(activeDays/7*100)+'% tuan nay</span></div><div class="stats-bar-chart">'+bars+'</div>';
+}
+
+function buildCategoryChart(history) {
+    var tagCounts = {}, total = 0;
+    if (typeof loadAllTags === 'function') {
+        var allTags = loadAllTags();
+        for (var vid in allTags) {
+            (allTags[vid]||[]).forEach(function(tagId){ tagCounts[tagId]=(tagCounts[tagId]||0)+1; total++; });
+        }
+    }
+    if (total === 0) return '<div class="stats-empty">Chua gan tag cho video nao</div>';
+    var TAGS = (typeof PREDEFINED_TAGS !== 'undefined') ? PREDEFINED_TAGS : [];
+    var sorted = Object.keys(tagCounts).sort(function(a,b){return tagCounts[b]-tagCounts[a];});
+    var html = '';
+    sorted.forEach(function(tagId){
+        var count = tagCounts[tagId];
+        var pct = Math.round(count/total*100);
+        var tag = {label:tagId,color:'#6b7280',icon:''};
+        for(var i=0;i<TAGS.length;i++){if(TAGS[i].id===tagId){tag=TAGS[i];break;}}
+        html += '<div class="stats-cat-row"><div class="stats-cat-info"><span class="stats-cat-icon">'+tag.icon+'</span><span>'+tag.label+'</span></div><div class="stats-cat-bar-wrap"><div class="stats-cat-bar" style="width:'+pct+'%;background:'+tag.color+'"></div></div><span class="stats-cat-pct">'+count+' ('+pct+'%)</span></div>';
+    });
+    return html;
+}
+
+function buildSm2Stats() {
+    var totalCards=0,totalDue=0,totalReviewed=0,efSum=0,efCount=0;
+    var today = new Date().toISOString().split('T')[0];
+    for(var i=0;i<localStorage.length;i++){
+        var key = localStorage.key(i);
+        if(key && key.indexOf('lectureDigest_sm2_')===0){
+            try{
+                var data = JSON.parse(localStorage.getItem(key));
+                for(var ck in data){
+                    totalCards++;
+                    if(data[ck].nextReview && data[ck].nextReview<=today) totalDue++;
+                    if(data[ck].repetitions>0) totalReviewed++;
+                    if(data[ck].ef){efSum+=data[ck].ef;efCount++;}
+                }
+            }catch(e){}
+        }
+    }
+    var avgEf = efCount?(efSum/efCount).toFixed(2):'N/A';
+    return '<div class="stats-sm2-grid">'
+        +'<div class="stats-sm2-item"><div class="stats-sm2-num" style="color:#8b5cf6">'+totalCards+'</div><div class="stats-sm2-lbl">Tong card</div></div>'
+        +'<div class="stats-sm2-item"><div class="stats-sm2-num" style="color:#f59e0b">'+totalDue+'</div><div class="stats-sm2-lbl">Can on hom nay</div></div>'
+        +'<div class="stats-sm2-item"><div class="stats-sm2-num" style="color:#10b981">'+totalReviewed+'</div><div class="stats-sm2-lbl">Da on</div></div>'
+        +'<div class="stats-sm2-item"><div class="stats-sm2-num" style="color:#60a5fa">'+avgEf+'</div><div class="stats-sm2-lbl">EF trung binh</div></div>'
+        +'</div>';
+}
+
+function buildLearningTimeline(history) {
+    if(!history.length) return '<div class="stats-empty">Chua co du lieu hoc tap</div>';
+    var byDate = {};
+    history.forEach(function(h){var date=new Date(h.savedAt).toISOString().slice(0,10);byDate[date]=(byDate[date]||0)+1;});
+    var dates = Object.keys(byDate).sort();
+    var last14 = dates.slice(-14);
+    var maxVal = 1;
+    last14.forEach(function(d){if(byDate[d]>maxVal)maxVal=byDate[d];});
+    var html = '<div class="stats-tl-chart">';
+    last14.forEach(function(date){
+        var count = byDate[date];
+        var pct = Math.round(count/maxVal*100);
+        html += '<div class="stats-tl-col"><div class="stats-tl-count">'+count+'</div><div class="stats-tl-track"><div class="stats-tl-fill" style="height:'+Math.max(8,pct)+'%"></div></div><div class="stats-tl-date">'+date.slice(5)+'</div></div>';
+    });
+    html += '</div>';
+    var totalVideos = history.length;
+    var uniqueDays = dates.length;
+    html += '<div class="stats-tl-summary"><span>'+totalVideos+' video</span><span>'+uniqueDays+' ngay hoc</span><span>TB '+(totalVideos/Math.max(uniqueDays,1)).toFixed(1)+' video/ngay</span></div>';
+    return html;
 }
