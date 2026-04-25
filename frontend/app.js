@@ -122,6 +122,28 @@ async function copyNotes() {
     }
 }
 
+function exportNotesMarkdown() {
+    var textarea = document.getElementById('notesTextarea');
+    if (!textarea || !textarea.value.trim()) { showToast('Chua co ghi chu de xuat'); return; }
+    var title    = (analysisData && analysisData.title)  || (document.getElementById('videoTitle') && document.getElementById('videoTitle').textContent) || 'Video';
+    var author   = (analysisData && analysisData.author) || '';
+    var videoUrl = (document.getElementById('urlInput') && document.getElementById('urlInput').value.trim()) || '';
+    var now = new Date().toLocaleDateString('vi-VN');
+    var md = '# Ghi chu: ' + title + '\n\n';
+    if (author)   md += '**Tac gia:** ' + author + '  \n';
+    if (videoUrl) md += '**Link:** ' + videoUrl + '  \n';
+    md += '**Ngay:** ' + now + '  \n\n---\n\n' + textarea.value;
+    var blob = new Blob([md], { type: 'text/markdown;charset=utf-8' });
+    var a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = 'notes-' + (title || 'lecture').replace(/[^a-z0-9]/gi, '-').toLowerCase().slice(0, 40) + '.md';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(a.href);
+    showToast('Da tai xuong file .md!');
+}
+
 function loadHistory() {
     try { return JSON.parse(localStorage.getItem(HISTORY_KEY) || '[]'); }
     catch { return []; }
@@ -186,19 +208,19 @@ function toggleHistoryPanel(force) {
     if (shouldOpen) renderHistoryPanel();
 }
 
-function renderHistoryPanel(filter = '') {
-    let list = loadHistory();
+function renderHistoryPanel(filter) {
+    filter = filter || '';
+    const list = loadHistory();
     const container = document.getElementById('historyList');
     const empty = document.getElementById('historyEmpty');
     const countEl = document.getElementById('historyCount');
     if (!container) return;
     if (countEl) countEl.textContent = list.length;
 
-    // Apply search filter
     const q = filter.trim().toLowerCase();
-    const filtered = q
-        ? list.filter(h => (h.title || '').toLowerCase().includes(q) || (h.author || '').toLowerCase().includes(q))
-        : list;
+    const filtered = q ? list.filter(h =>
+        (h.title || '').toLowerCase().includes(q) || (h.author || '').toLowerCase().includes(q)
+    ) : list;
 
     if (list.length === 0) {
         container.innerHTML = '';
@@ -206,40 +228,34 @@ function renderHistoryPanel(filter = '') {
         return;
     }
     empty.classList.add('hidden');
-
     if (filtered.length === 0) {
-        container.innerHTML = `<div style="text-align:center;padding:24px 12px;opacity:.5;font-size:13px">🔍 Không tìm thấy video nào</div>`;
+        container.innerHTML = '<div style="text-align:center;padding:24px 12px;opacity:.5;font-size:13px">Khong tim thay video nao</div>';
         return;
     }
-
     container.innerHTML = filtered.map(h => {
         const date = new Date(h.savedAt);
         const dateStr = date.toLocaleDateString('vi-VN', { day:'2-digit', month:'2-digit', year:'numeric' });
         const timeStr = date.toLocaleTimeString('vi-VN', { hour:'2-digit', minute:'2-digit' });
-        // Highlight matching text
+        const safeQ = q ? q.replace(/[.*+?^${}()|[\]\]/g, '\$&') : '';
         const titleHtml = q ? escHtml(h.title || 'Untitled').replace(
-            new RegExp(`(${q.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')})`, 'gi'),
+            new RegExp('(' + safeQ + ')', 'gi'),
             '<mark style="background:rgba(139,92,246,.35);color:inherit;border-radius:2px">$1</mark>'
         ) : escHtml(h.title || 'Untitled');
-        return `
-        <div class="hist-item" data-id="${h.video_id}">
-            <img class="hist-thumb" src="${h.thumbnail}" alt="${escHtml(h.title)}" loading="lazy"
-                 onerror="this.src='https://img.youtube.com/vi/${h.video_id}/mqdefault.jpg'">
-            <div class="hist-info" onclick="loadFromHistory('${h.video_id}')" role="button" tabindex="0" title="Tải kết quả">
-                <div class="hist-title">${titleHtml}</div>
-                <div class="hist-meta">${escHtml(h.author || '')} &bull; ${dateStr} ${timeStr}</div>
-                <div class="hist-lang">${h.lang || 'English'}</div>
-            </div>
-            <button class="hist-del" onclick="deleteFromHistory('${h.video_id}')" title="Xóa" aria-label="Xóa khỏi lịch sử">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6L6 18M6 6l12 12"/></svg>
-            </button>
-        </div>`;
+        return '<div class="hist-item" data-id="' + h.video_id + '">' +
+            '<img class="hist-thumb" src="' + h.thumbnail + '" alt="' + escHtml(h.title) + '" loading="lazy"' +
+            ' onerror="this.src='https://img.youtube.com/vi/' + h.video_id + '/mqdefault.jpg'">' +
+            '<div class="hist-info" onclick="loadFromHistory('' + h.video_id + '')" role="button" tabindex="0" title="Tai ket qua">' +
+            '<div class="hist-title">' + titleHtml + '</div>' +
+            '<div class="hist-meta">' + escHtml(h.author || '') + ' &bull; ' + dateStr + ' ' + timeStr + '</div>' +
+            '<div class="hist-lang">' + (h.lang || 'English') + '</div>' +
+            '</div>' +
+            '<button class="hist-del" onclick="deleteFromHistory('' + h.video_id + '')" title="Xoa" aria-label="Xoa khoi lich su">' +
+            '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6L6 18M6 6l12 12"/></svg>' +
+            '</button></div>';
     }).join('');
 }
 
-function filterHistory(value) {
-    renderHistoryPanel(value);
-}
+function filterHistory(value) { renderHistoryPanel(value); }
 
 function escHtml(s) {
     return String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
@@ -497,92 +513,128 @@ async function fetchTranscriptClientSide(videoId) {
 // ──────────────────────────────────────
 // MAIN ANALYSE FUNCTION
 // ──────────────────────────────────────
-async function analyzeVideo() {
-    const urlInput = document.getElementById('urlInput');
-    const searchBox = document.getElementById('searchBox');
-    const url = urlInput.value.trim();
+// -- Video Length Warning --
+var _pendingAnalyzeUrl = null;
 
+function showVlenModal(durationSecs, url) {
+    _pendingAnalyzeUrl = url;
+    var h = Math.floor(durationSecs / 3600);
+    var m = Math.floor((durationSecs % 3600) / 60);
+    var durStr = h > 0 ? (h + ' gio ' + m + ' phut') : (m + ' phut');
+    var etaMins = Math.ceil((durationSecs / 60) * 0.05);
+    var etaStr = etaMins >= 2 ? ('~' + etaMins + ' phut') : '~1 phut';
+    var body = document.getElementById('vlenBody');
+    if (body) body.innerHTML = 'Video nay dai <strong>' + durStr + '</strong>.<br>Uoc tinh xu ly: <strong>' + etaStr + '</strong>.<br><br>Video rat dai co the bi tom tat khong day du do gioi han token Gemini.';
+    var ov = document.getElementById('vlenOverlay');
+    if (ov) ov.classList.remove('hidden');
+}
+
+function closeVlenModal() {
+    var ov = document.getElementById('vlenOverlay');
+    if (ov) ov.classList.add('hidden');
+    _pendingAnalyzeUrl = null;
+    document.getElementById('analyzeBtn').disabled = false;
+}
+
+function confirmAnalyze() {
+    var ov = document.getElementById('vlenOverlay');
+    if (ov) ov.classList.add('hidden');
+    _doAnalyze();
+}
+
+async function analyzeVideo() {
+    var urlInput = document.getElementById('urlInput');
+    var searchBox = document.getElementById('searchBox');
+    var url = urlInput.value.trim();
     if (!url) {
         urlInput.focus();
         searchBox.style.borderColor = 'rgba(239, 68, 68, 0.55)';
-        setTimeout(() => { searchBox.style.borderColor = ''; }, 2200);
+        setTimeout(function() { searchBox.style.borderColor = ''; }, 2200);
         return;
     }
+    _pendingAnalyzeUrl = url;
+    window._cachedTranscript = null;
+    document.getElementById('analyzeBtn').disabled = true;
+    try {
+        var videoId = (url.match(/(?:v=|youtu\.be\/)([a-zA-Z0-9_-]{11})/) || [])[1];
+        if (videoId) {
+            var qt = await fetchTranscriptClientSide(videoId);
+            if (qt && qt.length) {
+                window._cachedTranscript = qt;
+                var lastSeg = qt[qt.length - 1];
+                var duration = (lastSeg.start || 0) + (lastSeg.duration || 0);
+                if (duration > 3600) { showVlenModal(duration, url); return; }
+            }
+        }
+    } catch(e) {
+        console.warn('[LectureDigest] Quick duration check failed:', e.message);
+    }
+    _doAnalyze();
+}
 
+async function _doAnalyze() {
+    var urlInput = document.getElementById('urlInput');
+    var url = _pendingAnalyzeUrl || urlInput.value.trim();
+    if (!url) return;
     document.getElementById('analyzeBtn').disabled = true;
     showSection('loadingSection');
-    const stopAnimation = startLoadingAnimation();
-
+    var stopAnimation = startLoadingAnimation();
     try {
-        // ── Try fetching transcript client-side first (works even on cloud deployments)
-        let clientTranscript = null;
-        try {
-            const videoId = url.match(/(?:v=|youtu\.be\/)([a-zA-Z0-9_-]{11})/)?.[1];
-            if (videoId) clientTranscript = await fetchTranscriptClientSide(videoId);
-        } catch (e) {
-            console.warn('[LectureDigest] Client transcript failed, server will try:', e.message);
+        var clientTranscript = window._cachedTranscript || null;
+        window._cachedTranscript = null;
+        if (!clientTranscript) {
+            try {
+                var videoId2 = (url.match(/(?:v=|youtu\.be\/)([a-zA-Z0-9_-]{11})/) || [])[1];
+                if (videoId2) clientTranscript = await fetchTranscriptClientSide(videoId2);
+            } catch(e) {
+                console.warn('[LectureDigest] Client transcript failed, server will try:', e.message);
+            }
         }
-
-        const reqBody = { url, language: 'en', output_language: selectedLang };
-        if (clientTranscript?.length) reqBody.transcript = clientTranscript;
-
-        const res = await fetch(`${API_BASE}/api/analyze`, {
-            method:  'POST',
+        var reqBody = { url: url, language: 'en', output_language: selectedLang };
+        if (clientTranscript && clientTranscript.length) reqBody.transcript = clientTranscript;
+        var res = await fetch(API_BASE + '/api/analyze', {
+            method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body:    JSON.stringify(reqBody),
+            body: JSON.stringify(reqBody),
         });
-
         stopAnimation();
-
         if (!res.ok) {
-            const err = await res.json().catch(() => ({ detail: 'Unknown server error' }));
-            throw new Error(err.detail || `Server error ${res.status}`);
+            var err = await res.json().catch(function() { return { detail: 'Unknown server error' }; });
+            throw new Error(err.detail || ('Server error ' + res.status));
         }
-
         analysisData = await res.json();
-
         if (!analysisData.video_id) throw new Error('Response missing video_id');
-
-        // transcript is now included in server response (analysisData.transcript)
-        // override with clientTranscript only if server didn't return one
-        if (!analysisData.transcript?.length && clientTranscript?.length) {
+        if ((!analysisData.transcript || !analysisData.transcript.length) && clientTranscript && clientTranscript.length) {
             analysisData.transcript = clientTranscript;
         }
-
-        clearChat();            // fresh chat for each new video
+        clearChat();
         renderResults(analysisData);
-        saveToHistory(analysisData);   // includes transcript for quiz regeneration
-        initNotes(analysisData.video_id);    // load/init personal notes
-        renderTranscript(analysisData.transcript || []);  // transcript search
-        initProgress(analysisData.video_id);              // learning progress
-        initBookmarks(analysisData.video_id);             // bookmarks
-        recordStudySession();                             // streak + badges
-        window._spaVideoId = analysisData.video_id;      // for SPA routing
+        saveToHistory(analysisData);
+        initNotes(analysisData.video_id);
+        renderTranscript(analysisData.transcript || []);
+        initProgress(analysisData.video_id);
+        initBookmarks(analysisData.video_id);
+        recordStudySession();
+        window._spaVideoId = analysisData.video_id;
         showSection('resultsSection');
-
-
-    } catch (err) {
+    } catch(err) {
         stopAnimation();
-        const msgEl = document.getElementById('errorMessage');
-        const errText = err.message || 'Failed to analyze video. Please try again.';
-
-        // ── Rate-limit countdown ──────────────────────────────────────────────
-        const retryMatch = errText.match(/(\d+)s/);
-        const is429 = errText.includes('429') || errText.includes('quota') || errText.includes('RESOURCE_EXHAUSTED');
+        var msgEl = document.getElementById('errorMessage');
+        var errText = err.message || 'Failed to analyze video. Please try again.';
+        var retryMatch = errText.match(/(\d+)s/);
+        var is429 = errText.indexOf('429') >= 0 || errText.indexOf('quota') >= 0 || errText.indexOf('RESOURCE_EXHAUSTED') >= 0;
         if (is429 && retryMatch) {
-            let secs = parseInt(retryMatch[1], 10);
-            if (msgEl) msgEl.innerHTML =
-                `⚠️ Gemini đang quá tải. Tự thử lại sau <strong id="cdTimer">${secs}</strong>s...`;
+            var secs = parseInt(retryMatch[1], 10);
+            if (msgEl) msgEl.innerHTML = 'Gemini dang qua tai. Tu thu lai sau <strong id="cdTimer">' + secs + '</strong>s...';
             showSection('errorSection');
-            const cdInterval = setInterval(() => {
+            var cdInterval = setInterval(function() {
                 secs--;
-                const timerEl = document.getElementById('cdTimer');
+                var timerEl = document.getElementById('cdTimer');
                 if (timerEl) timerEl.textContent = secs;
                 if (secs <= 0) {
                     clearInterval(cdInterval);
-                    // Auto-retry
                     document.getElementById('analyzeBtn').disabled = false;
-                    analyzeVideo();
+                    _doAnalyze();
                 }
             }, 1000);
         } else {
@@ -2875,13 +2927,19 @@ function defaultGamif() {
         usedNotes:      false,
         usedFlashcards: false,
         earnedBadges:   [],
-        studyDatesLast7:[]    // ISO date strings for last 7 days visual
+        studyDates:[]         // ISO date strings for last 28 days (calendar)
     };
 }
 
 function loadGamif() {
-    try { return Object.assign(defaultGamif(), JSON.parse(localStorage.getItem(GAMIF_KEY) || '{}')); }
-    catch { return defaultGamif(); }
+    try {
+        const raw = JSON.parse(localStorage.getItem(GAMIF_KEY) || '{}');
+        if (raw.studyDatesLast7 && !raw.studyDates) {
+            raw.studyDates = raw.studyDatesLast7;
+            delete raw.studyDatesLast7;
+        }
+        return Object.assign(defaultGamif(), raw);
+    } catch { return defaultGamif(); }
 }
 function saveGamif(g) {
     try { localStorage.setItem(GAMIF_KEY, JSON.stringify(g)); } catch {}
@@ -2910,10 +2968,11 @@ function recordStudySession() {
     g.totalStudyDays += 1;
     g.totalVideos   += 1;
 
-    // Update last-7-days list
-    if (!g.studyDatesLast7.includes(today)) g.studyDatesLast7.push(today);
-    const cutoff = dayOffsetISO(-6);
-    g.studyDatesLast7 = g.studyDatesLast7.filter(d => d >= cutoff);
+    // Update last-28-days list
+    if (!g.studyDates) g.studyDates = [];
+    if (!g.studyDates.includes(today)) g.studyDates.push(today);
+    const cutoff = dayOffsetISO(-27);
+    g.studyDates = g.studyDates.filter(d => d >= cutoff);
 
     saveGamif(g);
     checkAndAwardBadges(g);
@@ -3293,307 +3352,95 @@ window.addEventListener('popstate', function(e) {
     // Just show hero so user can paste a URL or use history panel
 })();
 
-// ----------------------------------------------------------
-//  KEYBOARD SHORTCUTS
-//  Ctrl+Enter         ? Analyze video (hero screen)
-//  Escape             ? Close panels / modals
-//  1/2/3/4            ? Select quiz answer A/B/C/D
-//  ArrowRight         ? Next quiz question (after answering)
-//  Space / Enter      ? Flip flashcard
-//  ArrowLeft/Right    ? Navigate flashcard prev/next
-//  1 / 2 / 3          ? Rate flashcard hard/ok/easy
-// ----------------------------------------------------------
+// ════════════════════════════════════════════════════════
+// KEYBOARD SHORTCUTS
+// Ctrl+Enter = analyze, Escape = close panels,
+// 1-4 = quiz answers, Space/Enter = flip flashcard
+// ════════════════════════════════════════════════════════
 document.addEventListener('keydown', function(e) {
-    const tag = document.activeElement?.tagName;
-    const isTyping = ['INPUT', 'TEXTAREA', 'SELECT'].includes(tag);
+    var tag = document.activeElement ? document.activeElement.tagName : '';
+    var isTyping = ['INPUT', 'TEXTAREA', 'SELECT'].indexOf(tag) >= 0;
 
-    // Ctrl+Enter ? Analyze
     if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
-        const heroVisible = !document.getElementById('hero')?.classList.contains('hidden');
-        if (heroVisible) { e.preventDefault(); analyzeVideo(); }
+        var heroEl = document.getElementById('hero');
+        if (heroEl && !heroEl.classList.contains('hidden')) { e.preventDefault(); analyzeVideo(); }
         return;
     }
 
-    // Escape ? close panels / modals
     if (e.key === 'Escape') {
-        const fcModal = document.getElementById('fcModalOverlay');
-        if (fcModal && !fcModal.classList.contains('hidden')) { if(typeof closeFcModalBtn!=='undefined') closeFcModalBtn(); return; }
-        const shareModal = document.getElementById('shareModalOverlay');
-        if (shareModal && !shareModal.classList.contains('hidden')) { if(typeof closeShareModalBtn!=='undefined') closeShareModalBtn(); return; }
-        const mmModal = document.getElementById('mmModalOverlay');
-        if (mmModal && !mmModal.classList.contains('hidden')) { if(typeof closeMindMap!=='undefined') closeMindMap(); return; }
-        const histPanel = document.getElementById('historyPanel');
-        if (histPanel?.classList.contains('open')) {
+        var fcModal = document.getElementById('fcModalOverlay');
+        if (fcModal && !fcModal.classList.contains('hidden')) { if(typeof closeFcModal==='function') closeFcModal(e); return; }
+        var shareModal = document.getElementById('shareModalOverlay');
+        if (shareModal && !shareModal.classList.contains('hidden')) { if(typeof closeShareModal==='function') closeShareModal(e); return; }
+        var mmModal = document.getElementById('mmModalOverlay');
+        if (mmModal && !mmModal.classList.contains('hidden')) { if(typeof closeMindMap==='function') closeMindMap(); return; }
+        var histPanel = document.getElementById('historyPanel');
+        if (histPanel && histPanel.classList.contains('open')) {
             toggleHistoryPanel(false);
-            const inp = document.getElementById('histSearchInput');
+            var inp = document.getElementById('histSearchInput');
             if (inp) { inp.value = ''; renderHistoryPanel(''); }
             return;
         }
-        if (chatState?.isOpen && typeof toggleChat !== 'undefined') { toggleChat(); return; }
+        if (typeof chatState !== 'undefined' && chatState && chatState.isOpen && typeof toggleChat === 'function') { toggleChat(); return; }
+        var vlen = document.getElementById('vlenOverlay');
+        if (vlen && !vlen.classList.contains('hidden')) { closeVlenModal(); return; }
         return;
     }
 
     if (isTyping) return;
 
-    // Flashcard shortcuts (checked first � modal is top layer)
-    const fcOpen = !document.getElementById('fcModalOverlay')?.classList.contains('hidden');
+    var fcOpen = document.getElementById('fcModalOverlay') && !document.getElementById('fcModalOverlay').classList.contains('hidden');
     if (fcOpen) {
-        if (e.key === ' ' || e.key === 'Enter') { e.preventDefault(); if(typeof flipCard!=='undefined') flipCard(); return; }
-        if (e.key === 'ArrowLeft')  { e.preventDefault(); if(typeof fcNavigate!=='undefined') fcNavigate(-1); return; }
-        if (e.key === 'ArrowRight') { e.preventDefault(); if(typeof fcNavigate!=='undefined') fcNavigate(1);  return; }
-        if (e.key === '1') { if(typeof rateCard!=='undefined') rateCard('hard'); return; }
-        if (e.key === '2') { if(typeof rateCard!=='undefined') rateCard('ok');   return; }
-        if (e.key === '3') { if(typeof rateCard!=='undefined') rateCard('easy'); return; }
+        if (e.key === ' ' || e.key === 'Enter') { e.preventDefault(); if(typeof flipCard==='function') flipCard(); return; }
+        if (e.key === 'ArrowLeft')  { e.preventDefault(); if(typeof fcNavigate==='function') fcNavigate(-1); return; }
+        if (e.key === 'ArrowRight') { e.preventDefault(); if(typeof fcNavigate==='function') fcNavigate(1);  return; }
+        if (e.key === '1') { if(typeof rateCard==='function') rateCard('hard'); return; }
+        if (e.key === '2') { if(typeof rateCard==='function') rateCard('ok');   return; }
+        if (e.key === '3') { if(typeof rateCard==='function') rateCard('easy'); return; }
         return;
     }
 
-    // Quiz shortcuts
-    const quizContainer = document.getElementById('quizContainer');
+    var quizContainer = document.getElementById('quizContainer');
     if (quizContainer && !quizContainer.classList.contains('hidden')) {
-        if (e.key === '1') { document.getElementById('opt-0')?.click(); return; }
-        if (e.key === '2') { document.getElementById('opt-1')?.click(); return; }
-        if (e.key === '3') { document.getElementById('opt-2')?.click(); return; }
-        if (e.key === '4') { document.getElementById('opt-3')?.click(); return; }
+        if (e.key === '1') { var o0=document.getElementById('opt-0'); if(o0) o0.click(); return; }
+        if (e.key === '2') { var o1=document.getElementById('opt-1'); if(o1) o1.click(); return; }
+        if (e.key === '3') { var o2=document.getElementById('opt-2'); if(o2) o2.click(); return; }
+        if (e.key === '4') { var o3=document.getElementById('opt-3'); if(o3) o3.click(); return; }
         if (e.key === 'ArrowRight') {
-            const nextBtn = document.getElementById('nextBtn');
-            if (nextBtn && !nextBtn.classList.contains('hidden')) { e.preventDefault(); if(typeof nextQuestion!=='undefined') nextQuestion(); return; }
+            var nextBtn = document.getElementById('nextBtn');
+            if (nextBtn && !nextBtn.classList.contains('hidden')) { e.preventDefault(); if(typeof nextQuestion==='function') nextQuestion(); return; }
         }
     }
 }, false);
 
 // Clear history search when panel closes
 (function() {
-    const _orig = window.toggleHistoryPanel;
+    var _orig = window.toggleHistoryPanel;
+    if (typeof _orig !== 'function') return;
     window.toggleHistoryPanel = function(force) {
         _orig(force);
-        const panel = document.getElementById('historyPanel');
-        if (!panel?.classList.contains('open')) {
-            const inp = document.getElementById('histSearchInput');
+        var panel = document.getElementById('historyPanel');
+        if (panel && !panel.classList.contains('open')) {
+            var inp = document.getElementById('histSearchInput');
             if (inp) { inp.value = ''; renderHistoryPanel(''); }
         }
     };
 })();
 
-// ==========================================================
-//  FEATURE 1: VIDEO LENGTH WARNING
-//  If video > 1h, show a confirmation modal with ETA estimate
-// ==========================================================
-let _pendingAnalyzeUrl = null;
-
-function showVlenModal(durationSecs, url) {
-    _pendingAnalyzeUrl = url;
-    const h = Math.floor(durationSecs / 3600);
-    const m = Math.floor((durationSecs % 3600) / 60);
-    const durStr = h > 0 ? `${h} gi? ${m} ph�t` : `${m} ph�t`;
-
-    // Rough ETA: ~30s per 10 mins of video
-    const etaMins = Math.ceil((durationSecs / 60) * 0.05);
-    const etaStr = etaMins >= 2 ? `~${etaMins} ph�t` : '~1 ph�t';
-
-    const body = document.getElementById('vlenBody');
-    if (body) body.innerHTML =
-        `Video n�y d�i <strong>${durStr}</strong>.<br>` +
-        `U?c t�nh th?i gian x? l�: <strong>${etaStr}</strong>.<br><br>` +
-        `Luu �: Video r?t d�i c� th? b? t�m t?t kh�ng d?y d? do gi?i h?n token c?a Gemini.`;
-
-    document.getElementById('vlenOverlay')?.classList.remove('hidden');
-}
-
-function closeVlenModal() {
-    document.getElementById('vlenOverlay')?.classList.add('hidden');
-    _pendingAnalyzeUrl = null;
-    document.getElementById('analyzeBtn').disabled = false;
-}
-
-function confirmAnalyze() {
-    document.getElementById('vlenOverlay')?.classList.add('hidden');
-    _doAnalyze();
-}
-
-// Check video duration from transcript before full analyze
-async function analyzeVideo() {
-    const urlInput = document.getElementById('urlInput');
-    const searchBox = document.getElementById('searchBox');
-    const url = urlInput.value.trim();
-
-    if (!url) {
-        urlInput.focus();
-        searchBox.style.borderColor = 'rgba(239, 68, 68, 0.55)';
-        setTimeout(() => { searchBox.style.borderColor = ''; }, 2200);
-        return;
-    }
-
-    _pendingAnalyzeUrl = url;
-
-    // Quick duration check via client-side transcript (if available)
-    document.getElementById('analyzeBtn').disabled = true;
-    let quickTranscript = null;
-    try {
-        const videoId = url.match(/(?:v=|youtu\.be\/)([a-zA-Z0-9_-]{11})/)?.[1];
-        if (videoId) {
-            quickTranscript = await fetchTranscriptClientSide(videoId);
-            if (quickTranscript?.length) {
-                const lastSeg = quickTranscript[quickTranscript.length - 1];
-                const duration = (lastSeg?.start || 0) + (lastSeg?.duration || 0);
-                if (duration > 3600) {
-                    showVlenModal(duration, url);
-                    // Store transcript so _doAnalyze can reuse it
-                    window._cachedTranscript = quickTranscript;
-                    return;
-                }
-                window._cachedTranscript = quickTranscript;
-            }
-        }
-    } catch(e) {
-        console.warn('[LectureDigest] Quick duration check failed:', e.message);
-        window._cachedTranscript = null;
-    }
-
-    _doAnalyze();
-}
-
-async function _doAnalyze() {
-    const urlInput = document.getElementById('urlInput');
-    const url = _pendingAnalyzeUrl || urlInput.value.trim();
-    if (!url) return;
-
-    document.getElementById('analyzeBtn').disabled = true;
-    showSection('loadingSection');
-    const stopAnimation = startLoadingAnimation();
-
-    try {
-        let clientTranscript = window._cachedTranscript || null;
-        window._cachedTranscript = null;
-
-        if (!clientTranscript) {
-            try {
-                const videoId = url.match(/(?:v=|youtu\.be\/)([a-zA-Z0-9_-]{11})/)?.[1];
-                if (videoId) clientTranscript = await fetchTranscriptClientSide(videoId);
-            } catch (e) {
-                console.warn('[LectureDigest] Client transcript failed, server will try:', e.message);
-            }
-        }
-
-        const reqBody = { url, language: 'en', output_language: selectedLang };
-        if (clientTranscript?.length) reqBody.transcript = clientTranscript;
-
-        const res = await fetch(`${API_BASE}/api/analyze`, {
-            method:  'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body:    JSON.stringify(reqBody),
-        });
-
-        stopAnimation();
-
-        if (!res.ok) {
-            const err = await res.json().catch(() => ({ detail: 'Unknown server error' }));
-            throw new Error(err.detail || `Server error ${res.status}`);
-        }
-
-        analysisData = await res.json();
-        if (!analysisData.video_id) throw new Error('Response missing video_id');
-
-        if (!analysisData.transcript?.length && clientTranscript?.length) {
-            analysisData.transcript = clientTranscript;
-        }
-
-        clearChat();
-        renderResults(analysisData);
-        saveToHistory(analysisData);
-        initNotes(analysisData.video_id);
-        renderTranscript(analysisData.transcript || []);
-        initProgress(analysisData.video_id);
-        initBookmarks(analysisData.video_id);
-        recordStudySession();
-        window._spaVideoId = analysisData.video_id;
-        showSection('resultsSection');
-
-    } catch (err) {
-        stopAnimation();
-        const msgEl = document.getElementById('errorMessage');
-        const errText = err.message || 'Failed to analyze video. Please try again.';
-
-        const retryMatch = errText.match(/(\d+)s/);
-        const is429 = errText.includes('429') || errText.includes('quota') || errText.includes('RESOURCE_EXHAUSTED');
-        if (is429 && retryMatch) {
-            let secs = parseInt(retryMatch[1], 10);
-            if (msgEl) msgEl.innerHTML =
-                `Gemini dang qua tai. Tu thu lai sau <strong id="cdTimer">${secs}</strong>s...`;
-            showSection('errorSection');
-            const cdInterval = setInterval(() => {
-                secs--;
-                const timerEl = document.getElementById('cdTimer');
-                if (timerEl) timerEl.textContent = secs;
-                if (secs <= 0) {
-                    clearInterval(cdInterval);
-                    document.getElementById('analyzeBtn').disabled = false;
-                    _doAnalyze();
-                }
-            }, 1000);
-        } else {
-            if (msgEl) msgEl.textContent = errText;
-            showSection('errorSection');
-            document.getElementById('analyzeBtn').disabled = false;
-        }
-    }
-}
-
-// ==========================================================
-//  FEATURE 2: EXPORT NOTES AS MARKDOWN
-// ==========================================================
-function exportNotesMarkdown() {
-    const textarea = document.getElementById('notesTextarea');
-    if (!textarea?.value.trim()) { showToast('Chua co ghi chu de xuat'); return; }
-
-    const title = analysisData?.title || document.getElementById('videoTitle')?.textContent || 'Video';
-    const author = analysisData?.author || '';
-    const videoUrl = document.getElementById('urlInput')?.value?.trim() || '';
-    const now = new Date().toLocaleDateString('vi-VN');
-
-    let md = `# Ghi chu: ${title}\n\n`;
-    if (author) md += `**Tac gia:** ${author}  \n`;
-    if (videoUrl) md += `**Link:** ${videoUrl}  \n`;
-    md += `**Ngay:** ${now}  \n\n---\n\n`;
-    md += textarea.value;
-
-    const blob = new Blob([md], { type: 'text/markdown;charset=utf-8' });
-    const a = document.createElement('a');
-    a.href = URL.createObjectURL(blob);
-    a.download = `notes-${(title || 'lecture').replace(/[^a-z0-9]/gi, '-').toLowerCase().slice(0, 40)}.md`;
-    a.click();
-    URL.revokeObjectURL(a.href);
-    showToast('Da tai xuong file .md!');
-}
-
-// ==========================================================
-//  FEATURE 3: SYNC THEME WITH OS (prefers-color-scheme)
-// ==========================================================
 (function initOsThemeSync() {
-    // Only auto-apply OS theme if user has NOT manually set a preference
-    const saved = localStorage.getItem('lectureDigest_theme');
+    var saved = localStorage.getItem('lectureDigest_theme');
     if (!saved) {
-        // No manual preference � follow OS
-        const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-        applyTheme(prefersDark ? 'dark' : 'light');
+        applyTheme(window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
     }
-
-    // Listen for OS theme changes (e.g. Windows switches from day to night mode)
-    const mq = window.matchMedia('(prefers-color-scheme: dark)');
-    mq.addEventListener('change', (e) => {
-        // Only auto-switch if user hasn't overridden manually
-        const manualPref = localStorage.getItem('lectureDigest_theme');
-        if (!manualPref) {
-            applyTheme(e.matches ? 'dark' : 'light');
-        }
+    window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', function(e) {
+        if (!localStorage.getItem('lectureDigest_theme')) applyTheme(e.matches ? 'dark' : 'light');
     });
+    var _origTT = window.toggleTheme;
+    window.toggleTheme = function() {
+        var cur = localStorage.getItem('lectureDigest_theme') ||
+            (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+        var next = cur === 'dark' ? 'light' : 'dark';
+        localStorage.setItem('lectureDigest_theme', next);
+        applyTheme(next);
+    };
 })();
-
-// When user manually toggles theme, persist preference so OS sync stops overriding
-const _origToggleTheme = window.toggleTheme;
-window.toggleTheme = function() {
-    const current = localStorage.getItem('lectureDigest_theme')
-        || (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
-    const next = current === 'dark' ? 'light' : 'dark';
-    localStorage.setItem('lectureDigest_theme', next);   // lock to manual
-    applyTheme(next);
-};
