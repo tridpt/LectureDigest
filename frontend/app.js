@@ -1439,7 +1439,7 @@ function exportPDF() {
     // Personal notes
     let notesText = '';
     try {
-        const notesKey = 'lectureDigest_notes_' + d.video_id;
+        const notesKey = 'lectureDigest_note_' + d.video_id;
         notesText = localStorage.getItem(notesKey) || '';
     } catch(e) {}
     const notesHtml = notesText.trim()
