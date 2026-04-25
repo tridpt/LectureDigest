@@ -4059,3 +4059,131 @@ html.light-mode .typing-indicator span { background: #a78bfa; }
     color: #c4b5fd;
     transform: translateY(-1px);
 }
+
+/* ── Custom Flashcard Modal ──────────── */
+.custom-fc-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.7);
+    backdrop-filter: blur(6px);
+    z-index: 9500;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+    animation: fadeIn 0.15s ease;
+}
+.custom-fc-modal {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 18px;
+    width: 90vw;
+    max-width: 480px;
+    max-height: 80vh;
+    display: flex;
+    flex-direction: column;
+    box-shadow: 0 24px 64px rgba(0,0,0,0.6);
+    animation: slideUp 0.2s ease;
+}
+.custom-fc-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 18px 22px;
+    border-bottom: 1px solid var(--border);
+}
+.custom-fc-header h3 { font-size: 16px; font-weight: 700; color: var(--text-primary); margin: 0; }
+.custom-fc-close {
+    background: none; border: none; color: var(--text-secondary);
+    font-size: 24px; cursor: pointer; line-height: 1;
+}
+.custom-fc-close:hover { color: var(--accent); }
+.custom-fc-body {
+    padding: 20px 22px;
+    overflow-y: auto;
+    flex: 1;
+}
+.custom-fc-label {
+    display: block;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text-secondary);
+    margin-bottom: 6px;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+}
+.custom-fc-input {
+    width: 100%;
+    padding: 10px 14px;
+    border-radius: 10px;
+    border: 1px solid var(--border);
+    background: var(--bg-main);
+    color: var(--text-primary);
+    font-family: var(--font);
+    font-size: 14px;
+    resize: vertical;
+    margin-bottom: 14px;
+    transition: border-color 0.2s;
+}
+.custom-fc-input:focus { outline: none; border-color: var(--accent); }
+.custom-fc-actions {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 18px;
+}
+.custom-fc-save {
+    padding: 9px 22px;
+    border-radius: 10px;
+    border: none;
+    background: linear-gradient(135deg, var(--accent), #7c3aed);
+    color: white;
+    font-family: var(--font);
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+.custom-fc-save:hover { transform: translateY(-1px); box-shadow: 0 6px 20px rgba(139,92,246,0.4); }
+.custom-fc-count {
+    font-size: 12px;
+    color: var(--text-secondary);
+}
+.custom-fc-list {
+    border-top: 1px solid var(--border);
+    padding-top: 12px;
+}
+.custom-fc-empty {
+    text-align: center;
+    color: var(--text-secondary);
+    font-size: 13px;
+    padding: 16px 0;
+    font-style: italic;
+}
+.custom-fc-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 0;
+    border-bottom: 1px solid rgba(255,255,255,0.05);
+    font-size: 12px;
+}
+.custom-fc-item-front {
+    flex: 1;
+    color: var(--text-primary);
+    font-weight: 500;
+}
+.custom-fc-item-back {
+    flex: 1;
+    color: var(--text-secondary);
+}
+.custom-fc-item-del {
+    background: none;
+    border: none;
+    color: var(--text-secondary);
+    cursor: pointer;
+    font-size: 16px;
+    padding: 2px 6px;
+    border-radius: 4px;
+}
+.custom-fc-item-del:hover { color: #ef4444; background: rgba(239,68,68,0.1); }

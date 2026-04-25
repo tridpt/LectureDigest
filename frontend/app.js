@@ -1131,6 +1131,20 @@ function buildFlashcards() {
         });
     });
 
+    // Include custom flashcards
+    var videoId = window._spaVideoId || (d.video_id);
+    if (videoId && typeof loadCustomCards === 'function') {
+        var customs = loadCustomCards(videoId);
+        customs.forEach(function(c) {
+            cards.push({
+                front: c.front,
+                back: c.back,
+                tag: 'custom',
+                rating: null
+            });
+        });
+    }
+
     return cards;
 }
 
@@ -4329,4 +4343,130 @@ function deepDiveChapter(topicIndex) {
 
     // Show toast
     showToast('Dang hoi AI ve: ' + (topic.title || 'chapter'), 2000);
+}
+
+
+// ══════════════════════════════════════════════════════
+// CUSTOM FLASHCARDS
+// ══════════════════════════════════════════════════════
+var CUSTOM_FC_KEY = 'lectureDigest_customfc_';
+
+function customFcKey(videoId) { return CUSTOM_FC_KEY + videoId; }
+
+function loadCustomCards(videoId) {
+    try { return JSON.parse(localStorage.getItem(customFcKey(videoId)) || '[]'); }
+    catch(e) { return []; }
+}
+
+function saveCustomCards(videoId, cards) {
+    try { localStorage.setItem(customFcKey(videoId), JSON.stringify(cards)); } catch(e) {}
+}
+
+function openAddCardForm() {
+    var videoId = window._spaVideoId || (window.analysisData && window.analysisData.video_id);
+    if (!videoId) { showToast('Hay analyze video truoc!'); return; }
+
+    // Remove existing form
+    var existing = document.getElementById('customFcOverlay');
+    if (existing) { existing.remove(); return; }
+
+    var overlay = document.createElement('div');
+    overlay.id = 'customFcOverlay';
+    overlay.className = 'custom-fc-overlay';
+    overlay.onclick = function(e) { if (e.target === overlay) overlay.remove(); };
+
+    overlay.innerHTML = '<div class="custom-fc-modal">'
+        + '<div class="custom-fc-header">'
+        + '<h3>\u2795 Tao Flashcard moi</h3>'
+        + '<button class="custom-fc-close" onclick="document.getElementById(\'customFcOverlay\').remove()">&times;</button>'
+        + '</div>'
+        + '<div class="custom-fc-body">'
+        + '<label class="custom-fc-label">Mat truoc (cau hoi)</label>'
+        + '<textarea id="customFcFront" class="custom-fc-input" rows="3" placeholder="Nhap cau hoi hoac khai niem..."></textarea>'
+        + '<label class="custom-fc-label">Mat sau (dap an)</label>'
+        + '<textarea id="customFcBack" class="custom-fc-input" rows="3" placeholder="Nhap cau tra loi hoac giai thich..."></textarea>'
+        + '<div class="custom-fc-actions">'
+        + '<button class="custom-fc-save" onclick="saveNewCustomCard()">Luu Flashcard</button>'
+        + '<span class="custom-fc-count" id="customFcCount"></span>'
+        + '</div>'
+        + '<div class="custom-fc-list" id="customFcList"></div>'
+        + '</div></div>';
+
+    document.body.appendChild(overlay);
+
+    // Show existing custom cards
+    renderCustomCardList(videoId);
+
+    // Focus
+    setTimeout(function() {
+        var front = document.getElementById('customFcFront');
+        if (front) front.focus();
+    }, 100);
+
+    // Keyboard: Ctrl+Enter to save
+    overlay.addEventListener('keydown', function(e) {
+        if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+            e.preventDefault();
+            saveNewCustomCard();
+        }
+        if (e.key === 'Escape') overlay.remove();
+    });
+}
+
+function saveNewCustomCard() {
+    var front = document.getElementById('customFcFront');
+    var back = document.getElementById('customFcBack');
+    if (!front || !back) return;
+    var frontText = front.value.trim();
+    var backText = back.value.trim();
+    if (!frontText || !backText) { showToast('Nhap ca mat truoc va mat sau!'); return; }
+
+    var videoId = window._spaVideoId || (window.analysisData && window.analysisData.video_id);
+    if (!videoId) return;
+
+    var cards = loadCustomCards(videoId);
+    cards.push({
+        id: Date.now(),
+        front: frontText,
+        back: backText,
+        createdAt: new Date().toISOString()
+    });
+    saveCustomCards(videoId, cards);
+
+    // Clear inputs
+    front.value = '';
+    back.value = '';
+    front.focus();
+
+    renderCustomCardList(videoId);
+    showToast('Da them flashcard!');
+}
+
+function deleteCustomCard(cardId) {
+    var videoId = window._spaVideoId || (window.analysisData && window.analysisData.video_id);
+    if (!videoId) return;
+    var cards = loadCustomCards(videoId).filter(function(c) { return c.id !== cardId; });
+    saveCustomCards(videoId, cards);
+    renderCustomCardList(videoId);
+}
+
+function renderCustomCardList(videoId) {
+    var list = document.getElementById('customFcList');
+    var count = document.getElementById('customFcCount');
+    if (!list) return;
+    var cards = loadCustomCards(videoId);
+    if (count) count.textContent = cards.length + ' flashcard tu tao';
+
+    if (!cards.length) {
+        list.innerHTML = '<div class="custom-fc-empty">Chua co flashcard tu tao</div>';
+        return;
+    }
+
+    list.innerHTML = cards.map(function(c) {
+        return '<div class="custom-fc-item">'
+            + '<div class="custom-fc-item-front">' + c.front.substring(0, 60) + (c.front.length > 60 ? '...' : '') + '</div>'
+            + '<div class="custom-fc-item-back">' + c.back.substring(0, 60) + (c.back.length > 60 ? '...' : '') + '</div>'
+            + '<button class="custom-fc-item-del" onclick="deleteCustomCard(' + c.id + ')" title="Xoa">&times;</button>'
+            + '</div>';
+    }).join('');
 }
