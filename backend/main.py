@@ -6,7 +6,7 @@ import base64
 import tempfile
 import atexit
 import urllib.request
-from fastapi import FastAPI, HTTPException, Request, UploadFile, File, Form
+from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 
@@ -927,98 +927,6 @@ async def api_full_sync(request: Request):
 
 
 
-# ═══════════════════════════════════════════════════════
-# UPLOAD AUDIO/VIDEO ANALYSIS
-# ═══════════════════════════════════════════════════════
-import uuid as _uuid
-
-_UPLOAD_DIR = os.path.join(os.path.dirname(__file__), "uploads")
-os.makedirs(_UPLOAD_DIR, exist_ok=True)
-
-_ALLOWED_EXT = {".mp3",".wav",".m4a",".ogg",".flac",".mp4",".webm",".mkv",".avi",".mov"}
-
-@app.post("/api/upload-analyze")
-async def upload_and_analyze(
-    file: UploadFile = File(...),
-    language: str = Form("en"),
-    output_language: str = Form("en")
-):
-    if not os.getenv("GEMINI_API_KEY"):
-        raise HTTPException(status_code=500, detail="GEMINI_API_KEY not configured")
-
-    ext = os.path.splitext(file.filename or "")[1].lower()
-    if ext not in _ALLOWED_EXT:
-        raise HTTPException(status_code=400, detail=f"Unsupported: {ext}")
-
-    tmp = os.path.join(_UPLOAD_DIR, f"{_uuid.uuid4().hex}{ext}")
-    try:
-        data = await file.read()
-        if len(data) > 100*1024*1024:
-            raise HTTPException(status_code=400, detail="File too large (max 100MB)")
-        with open(tmp, "wb") as fo:
-            fo.write(data)
-        print(f"[Upload] {file.filename} ({len(data)/1048576:.1f}MB)")
-
-        client = get_genai_client()
-        gf = client.files.upload(file=tmp)
-        import time as _t
-        while gf.state.name == "PROCESSING":
-            _t.sleep(2)
-            gf = client.files.get(name=gf.name)
-        if gf.state.name == "FAILED":
-            raise HTTPException(status_code=500, detail="Gemini processing failed")
-
-        lmap = {"vi":"Vietnamese","ja":"Japanese","ko":"Korean","zh":"Chinese",
-                "fr":"French","de":"German","es":"Spanish","en":"English"}
-        ln = lmap.get(output_language, output_language)
-
-        prompt = f"""You are an expert educational content analyzer.
-Listen to this audio/video file carefully. Transcribe and analyze it.
-IMPORTANT: Generate ALL text in {ln}.
-
-Return a JSON object with this EXACT structure:
-{{
-  "title": "Title",
-  "author": "Speaker or Unknown",
-  "overview": "3-4 sentence summary",
-  "total_duration": "estimated",
-  "difficulty": "Beginner/Intermediate/Advanced",
-  "topics": [{{"id":1,"title":"Topic","timestamp":0,"timestamp_str":"00:00","summary":"2-3 sentences","emoji":"📌"}}],
-  "key_takeaways": ["takeaway1","takeaway2","takeaway3","takeaway4","takeaway5"],
-  "quiz": [{{"id":1,"question":"Q","options":["A","B","C","D"],"correct_index":0,"explanation":"why","difficulty":"medium"}}],
-  "highlights": [{{"timestamp":0,"timestamp_str":"00:00","title":"moment","description":"why important","type":"key_insight"}}],
-  "transcript": [{{"start":0,"text":"segment"}}]
-}}
-Generate 4-8 topics, 5+ key_takeaways, 8-12 quiz, 4-6 highlights, transcript segments ~30s each.
-Return ONLY JSON — no markdown fences."""
-
-        model_name = os.getenv("GEMINI_MODEL", "gemini-2.0-flash")
-        from google.genai import types
-        resp = client.models.generate_content(
-            model=model_name,
-            contents=[gf, prompt],
-            config=types.GenerateContentConfig(temperature=0.3, max_output_tokens=8000)
-        )
-        raw = resp.text.strip()
-        if raw.startswith("```"):
-            raw = re.sub(r"^```(?:json)?\s*\n?", "", raw)
-            raw = re.sub(r"\n?\s*```$", "", raw)
-        result = json.loads(raw)
-        result["video_id"] = f"upload_{_uuid.uuid4().hex[:8]}"
-        result["source"] = "upload"
-        result["filename"] = file.filename
-        result.setdefault("author", "Uploaded File")
-        try: client.files.delete(name=gf.name)
-        except: pass
-        return result
-    except HTTPException: raise
-    except json.JSONDecodeError as e:
-        raise HTTPException(status_code=500, detail=f"AI parse error: {e}")
-    except Exception as e:
-        print(f"[Upload] Error: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
-    finally:
-        if os.path.exists(tmp): os.remove(tmp)
 
 _FRONTEND_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "frontend"))
 
