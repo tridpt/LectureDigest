@@ -415,6 +415,8 @@ function showSection(id) {
     const target = document.getElementById(id);
     if (target) target.classList.remove('hidden');
     updateChatFabVisibility();
+    // Update browser URL to match the displayed section
+    if (typeof pushSpaRoute === 'function') pushSpaRoute(id);
 }
 
 function showToast(message, duration = 3000) {
