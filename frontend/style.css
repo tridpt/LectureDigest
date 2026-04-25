@@ -4021,3 +4021,15 @@ html.light-mode .typing-indicator span { background: #a78bfa; }
 }
 .fc-study-item { }
 .fc-study-item:hover { background: rgba(139,92,246,0.15); }
+
+/* ── Copy Result Link Button ──────────── */
+.share-action-result {
+    background: linear-gradient(135deg, rgba(16,185,129,0.12), rgba(16,185,129,0.06));
+    border-color: rgba(16,185,129,0.3);
+    color: #34d399;
+}
+.share-action-result:hover {
+    background: linear-gradient(135deg, rgba(16,185,129,0.2), rgba(16,185,129,0.1));
+    border-color: rgba(16,185,129,0.5);
+    transform: translateY(-1px);
+}

@@ -4267,3 +4267,23 @@ function filterHistoryByTag(tagId) {
         btn.classList.toggle('active', btn.getAttribute('data-tag') === _historyTagFilter);
     });
 }
+
+
+// ── Copy Result Link ──────────────────────
+function copyResultLink() {
+    var vid = window._spaVideoId || (window.analysisData && window.analysisData.video_id);
+    if (!vid) { showToast('Chua co video nao'); return; }
+    var url = window.location.origin + '/results/' + vid;
+    navigator.clipboard.writeText(url).then(function() {
+        showToast('Da copy link ket qua!');
+    }).catch(function() {
+        // Fallback
+        var ta = document.createElement('textarea');
+        ta.value = url;
+        document.body.appendChild(ta);
+        ta.select();
+        document.execCommand('copy');
+        document.body.removeChild(ta);
+        showToast('Da copy link ket qua!');
+    });
+}
