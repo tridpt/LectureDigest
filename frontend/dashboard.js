@@ -61,7 +61,16 @@ function renderDbStats(g, history) {
     const grid = document.getElementById('dbStatGrid');
     if (!grid) return;
 
-    const scores = history.flatMap(h => h.quizScores || []).filter(s => s != null);
+    const scores = [];
+    const seenV = new Set();
+    history.forEach(h => {
+        if (seenV.has(h.video_id)) return;
+        seenV.add(h.video_id);
+        if (typeof loadProgress === 'function') {
+            const prog = loadProgress(h.video_id);
+            (prog.quizSessions || []).forEach(qs => { if (qs.pct != null) scores.push(qs.pct); });
+        }
+    });
     const avgScore = scores.length
         ? Math.round(scores.reduce((a, b) => a + b, 0) / scores.length)
         : null;
@@ -139,12 +148,18 @@ function renderDbQuizChart(history) {
     const avgEl   = document.getElementById('dbQuizAvg');
     if (!chartEl) return;
 
-    // Collect quiz sessions (score per attempt)
+    // Collect quiz sessions from progress storage (per-video)
     const sessions = [];
-    history.slice().reverse().slice(0, 8).forEach(h => {
-        (h.quizScores || []).forEach(score => {
-            sessions.push({ title: h.title || 'Video', score });
-        });
+    const seenVids = new Set();
+    history.slice().reverse().forEach(h => {
+        if (seenVids.has(h.video_id)) return;
+        seenVids.add(h.video_id);
+        if (typeof loadProgress === 'function') {
+            const prog = loadProgress(h.video_id);
+            (prog.quizSessions || []).forEach(qs => {
+                sessions.push({ title: h.title || 'Video', score: qs.pct || 0 });
+            });
+        }
     });
 
     if (!sessions.length) {
@@ -183,7 +198,11 @@ function renderDbVideos(history) {
     }
 
     listEl.innerHTML = recent.map(h => {
-        const scores   = (h.quizScores || []);
+        let scores = [];
+        if (typeof loadProgress === 'function') {
+            const vProg = loadProgress(h.video_id);
+            scores = (vProg.quizSessions || []).map(qs => qs.pct || 0);
+        }
         const avgScore = scores.length
             ? Math.round(scores.reduce((a, b) => a + b, 0) / scores.length)
             : null;
