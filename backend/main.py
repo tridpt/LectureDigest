@@ -927,6 +927,125 @@ async def api_full_sync(request: Request):
 
 
 
+# ═══════════════════════════════════════════════════════
+# PLAYLIST / COURSE MODE
+# ═══════════════════════════════════════════════════════
+
+class PlaylistRequest(BaseModel):
+    url: str
+
+
+def extract_playlist_id(url: str) -> str:
+    """Extract playlist ID from a YouTube URL containing list= parameter."""
+    match = re.search(r'[?&]list=([a-zA-Z0-9_-]+)', url)
+    if match:
+        return match.group(1)
+    raise ValueError("Invalid YouTube playlist URL")
+
+
+def fetch_playlist_videos(playlist_id: str) -> dict:
+    """Fetch playlist metadata and video list by parsing YouTube playlist page."""
+    page_url = f"https://www.youtube.com/playlist?list={playlist_id}"
+    req = urllib.request.Request(page_url, headers={
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
+                      "(KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36",
+        "Accept-Language": "en-US,en;q=0.9",
+    })
+
+    with urllib.request.urlopen(req, timeout=20) as resp:
+        html = resp.read().decode("utf-8", errors="replace")
+
+    # Extract ytInitialData JSON blob embedded in the page
+    match = re.search(r'var\s+ytInitialData\s*=\s*(\{.+?\});\s*</', html, re.DOTALL)
+    if not match:
+        raise ValueError("Could not parse playlist page")
+
+    data = json.loads(match.group(1))
+
+    # ── Playlist title ────────────────────────────────────────────────
+    title = ""
+    try:
+        title = data["metadata"]["playlistMetadataRenderer"]["title"]
+    except (KeyError, TypeError):
+        pass
+
+    # ── Channel / author ──────────────────────────────────────────────
+    author = ""
+    try:
+        sidebar = data["sidebar"]["playlistSidebarRenderer"]["items"]
+        author = (sidebar[1]["playlistSidebarSecondaryInfoRenderer"]
+                  ["videoOwner"]["videoOwnerRenderer"]["title"]["runs"][0]["text"])
+    except Exception:
+        pass
+
+    # ── Video list ────────────────────────────────────────────────────
+    videos = []
+    try:
+        tabs = data["contents"]["twoColumnBrowseResultsRenderer"]["tabs"]
+        section = tabs[0]["tabRenderer"]["content"]["sectionListRenderer"]["contents"][0]
+        items = (section["itemSectionRenderer"]["contents"][0]
+                 ["playlistVideoListRenderer"]["contents"])
+
+        for item in items:
+            renderer = item.get("playlistVideoRenderer")
+            if not renderer:
+                continue
+            vid = renderer.get("videoId", "")
+            if not vid:
+                continue
+
+            vtitle = ""
+            try:
+                vtitle = renderer["title"]["runs"][0]["text"]
+            except Exception:
+                vtitle = renderer.get("title", {}).get("simpleText", "")
+
+            duration = ""
+            try:
+                duration = renderer["lengthText"]["simpleText"]
+            except Exception:
+                pass
+
+            videos.append({
+                "video_id": vid,
+                "title": vtitle,
+                "duration": duration,
+                "thumbnail": f"https://img.youtube.com/vi/{vid}/mqdefault.jpg",
+                "index": len(videos) + 1,
+            })
+    except (KeyError, TypeError, IndexError) as e:
+        raise ValueError(f"Could not extract videos: {e}")
+
+    if not videos:
+        raise ValueError("Playlist is empty or private")
+
+    return {
+        "playlist_id": playlist_id,
+        "title": title or f"Playlist {playlist_id}",
+        "author": author,
+        "video_count": len(videos),
+        "videos": videos,
+    }
+
+
+@app.post("/api/playlist")
+async def get_playlist_info(request: PlaylistRequest):
+    """Fetch video list from a YouTube playlist URL."""
+    try:
+        playlist_id = extract_playlist_id(request.url)
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+    try:
+        result = fetch_playlist_videos(playlist_id)
+        print(f"[LectureDigest] Playlist: {result['title']} ({result['video_count']} videos)")
+        return result
+    except ValueError as e:
+        raise HTTPException(status_code=404, detail=str(e))
+    except Exception as e:
+        print(f"[LectureDigest] Playlist error: {e}")
+        raise HTTPException(status_code=500, detail=f"Failed to load playlist: {e}")
+
 
 _FRONTEND_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "frontend"))
 
