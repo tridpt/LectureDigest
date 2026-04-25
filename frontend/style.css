@@ -3963,3 +3963,61 @@ html.light-mode .typing-indicator span { background: #a78bfa; }
     font-weight: 700;
     font-size: 14px;
 }
+
+/* ── Flashcard Dropdown Menu ──────────── */
+.fc-dropdown {
+    position: relative;
+    display: inline-block;
+}
+.fc-menu {
+    position: absolute;
+    top: calc(100% + 6px);
+    right: 0;
+    background: #1a1a2e;
+    border: 1px solid rgba(139,92,246,0.3);
+    border-radius: 14px;
+    padding: 8px;
+    min-width: 240px;
+    z-index: 100;
+    box-shadow: 0 16px 48px rgba(0,0,0,0.7), 0 0 0 1px rgba(0,0,0,0.3);
+    animation: slideUp 0.15s ease;
+}
+[data-theme="light"] .fc-menu {
+    background: #ffffff;
+    border-color: #e5e7eb;
+    box-shadow: 0 12px 40px rgba(0,0,0,0.15);
+}
+.fc-menu-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 12px;
+    border-radius: 10px;
+    border: none;
+    background: none;
+    color: var(--text-primary);
+    cursor: pointer;
+    width: 100%;
+    text-align: left;
+    font-family: var(--font);
+    transition: background 0.15s;
+}
+.fc-menu-item:hover { background: rgba(139,92,246,0.12); }
+.fc-menu-icon { font-size: 22px; flex-shrink: 0; }
+.fc-menu-title {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text-primary);
+}
+.fc-menu-sub {
+    font-size: 11px;
+    color: var(--text-secondary);
+    margin-top: 1px;
+}
+.fc-menu-divider {
+    height: 1px;
+    background: var(--border);
+    margin: 4px 8px;
+}
+.fc-study-item { }
+.fc-study-item:hover { background: rgba(139,92,246,0.15); }
