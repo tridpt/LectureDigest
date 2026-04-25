@@ -81,6 +81,17 @@
                                    oninput="filterHistory(this.value)"
                                    aria-label="Tìm kiếm lịch sử">
                         </div>
+                            <div class="tag-filter-bar" id="tagFilterBar">
+                                <button class="tag-filter-btn" data-tag="programming" onclick="filterHistoryByTag('programming')">💻 Lap trinh</button>
+                                <button class="tag-filter-btn" data-tag="math" onclick="filterHistoryByTag('math')">📊 Toan</button>
+                                <button class="tag-filter-btn" data-tag="science" onclick="filterHistoryByTag('science')">🔬 Khoa hoc</button>
+                                <button class="tag-filter-btn" data-tag="language" onclick="filterHistoryByTag('language')">🌍 Ngon ngu</button>
+                                <button class="tag-filter-btn" data-tag="business" onclick="filterHistoryByTag('business')">💰 Kinh doanh</button>
+                                <button class="tag-filter-btn" data-tag="design" onclick="filterHistoryByTag('design')">🎨 Thiet ke</button>
+                                <button class="tag-filter-btn" data-tag="music" onclick="filterHistoryByTag('music')">🎵 Am nhac</button>
+                                <button class="tag-filter-btn" data-tag="health" onclick="filterHistoryByTag('health')">🏃 Suc khoe</button>
+                                <button class="tag-filter-btn" data-tag="other" onclick="filterHistoryByTag('other')">📌 Khac</button>
+                            </div>
                         <div class="hist-panel-body">
                             <div class="hist-empty hidden" id="historyEmpty">
                                 <div style="font-size:2rem">📭</div>

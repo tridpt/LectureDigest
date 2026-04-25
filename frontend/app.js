@@ -261,6 +261,14 @@ function renderHistoryPanel(filter) {
                (h.author || '').toLowerCase().indexOf(q) >= 0;
     }) : list;
 
+    // Filter by tag
+    if (typeof _historyTagFilter !== 'undefined' && _historyTagFilter) {
+        filtered = filtered.filter(function(h) {
+            var tags = getVideoTags(h.video_id);
+            return tags.indexOf(_historyTagFilter) >= 0;
+        });
+    }
+
     if (list.length === 0) {
         container.innerHTML = '';
         empty.classList.remove('hidden');
@@ -287,6 +295,7 @@ function renderHistoryPanel(filter) {
             '<div class="hist-title">' + titleText + '</div>' +
             '<div class="hist-meta">' + escHtml(h.author || '') + ' &bull; ' + dateStr + ' ' + timeStr + '</div>' +
             '<div class="hist-lang">' + (h.lang || 'English') + '</div>' +
+            '<div class="hist-tags">' + renderTagBadges(h.video_id) + '</div>' +
             '</div>' +
             (function(){
                 var dupeCount = filtered.filter(function(x){ return x.video_id === h.video_id; }).length;
@@ -294,6 +303,9 @@ function renderHistoryPanel(filter) {
                     ? '<button class="hist-compare" onclick="event.stopPropagation();openCompareForVideo(\'' + h.video_id + '\')" title="So sanh"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><path d="M16 3h5v5M8 3H3v5M21 3l-7 7M3 3l7 7M16 21h5v-5M8 21H3v-5M21 21l-7-7M3 21l7-7"/></svg></button>'
                     : '';
             })() +
+            '<button class="hist-tag-btn" onclick="event.stopPropagation();showTagPicker(\'' + h.video_id + '\', this)" title="Tag">' +
+            '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><path d="M20.59 13.41l-7.17 7.17a2 2 0 01-2.83 0L2 12V2h10l8.59 8.59a2 2 0 010 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7"/></svg>' +
+            '</button>' +
             '<button class="hist-del" onclick="deleteFromHistory(\'' + (h.entry_id || h.video_id) + '\')" title="Xoa">' +
             '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6L6 18M6 6l12 12"/></svg>' +
             '</button></div>';
@@ -4112,3 +4124,146 @@ function updateRateLabels(cardSm2) {
         };
     }
 })();
+
+
+// ══════════════════════════════════════════════════════
+// VIDEO TAGS / CATEGORIZATION
+// ══════════════════════════════════════════════════════
+
+var TAG_KEY = 'lectureDigest_tags';
+var PREDEFINED_TAGS = [
+    { id: 'programming', label: 'Lap trinh',  color: '#3b82f6', icon: '\ud83d\udcbb' },
+    { id: 'math',        label: 'Toan',       color: '#8b5cf6', icon: '\ud83d\udcca' },
+    { id: 'science',     label: 'Khoa hoc',   color: '#10b981', icon: '\ud83d\udd2c' },
+    { id: 'language',    label: 'Ngon ngu',    color: '#f59e0b', icon: '\ud83c\udf0d' },
+    { id: 'business',    label: 'Kinh doanh',  color: '#ef4444', icon: '\ud83d\udcb0' },
+    { id: 'design',      label: 'Thiet ke',    color: '#ec4899', icon: '\ud83c\udfa8' },
+    { id: 'music',       label: 'Am nhac',     color: '#06b6d4', icon: '\ud83c\udfb5' },
+    { id: 'history',     label: 'Lich su',     color: '#78716c', icon: '\ud83d\udcdc' },
+    { id: 'health',      label: 'Suc khoe',    color: '#22c55e', icon: '\ud83c\udfc3' },
+    { id: 'other',       label: 'Khac',        color: '#6b7280', icon: '\ud83d\udccc' }
+];
+
+function loadAllTags() {
+    try { return JSON.parse(localStorage.getItem(TAG_KEY) || '{}'); }
+    catch(e) { return {}; }
+}
+
+function saveAllTags(data) {
+    try { localStorage.setItem(TAG_KEY, JSON.stringify(data)); } catch(e) {}
+}
+
+function getVideoTags(videoId) {
+    var all = loadAllTags();
+    return all[videoId] || [];
+}
+
+function setVideoTags(videoId, tags) {
+    var all = loadAllTags();
+    all[videoId] = tags;
+    saveAllTags(all);
+}
+
+function addTagToVideo(videoId, tagId) {
+    var tags = getVideoTags(videoId);
+    if (tags.indexOf(tagId) < 0) {
+        tags.push(tagId);
+        setVideoTags(videoId, tags);
+    }
+    renderHistoryPanel();
+}
+
+function removeTagFromVideo(videoId, tagId) {
+    var tags = getVideoTags(videoId).filter(function(t) { return t !== tagId; });
+    setVideoTags(videoId, tags);
+    renderHistoryPanel();
+}
+
+function getTagInfo(tagId) {
+    for (var i = 0; i < PREDEFINED_TAGS.length; i++) {
+        if (PREDEFINED_TAGS[i].id === tagId) return PREDEFINED_TAGS[i];
+    }
+    return { id: tagId, label: tagId, color: '#6b7280', icon: '\ud83c\udff7\ufe0f' };
+}
+
+function renderTagBadges(videoId) {
+    var tags = getVideoTags(videoId);
+    if (!tags.length) return '';
+    return tags.map(function(tagId) {
+        var tag = getTagInfo(tagId);
+        return '<span class="hist-tag" style="background:' + tag.color + '22;color:' + tag.color + ';border:1px solid ' + tag.color + '44" title="' + tag.label + '">'
+            + tag.icon + ' ' + tag.label
+            + '<span class="hist-tag-x" onclick="event.stopPropagation();removeTagFromVideo(\'' + videoId + '\',\'' + tagId + '\')">&times;</span>'
+            + '</span>';
+    }).join('');
+}
+
+// Tag picker dropdown
+function showTagPicker(videoId, btnEl) {
+    // Remove existing
+    var existing = document.getElementById('tagPickerDrop');
+    if (existing) { existing.remove(); return; }
+
+    var currentTags = getVideoTags(videoId);
+    var drop = document.createElement('div');
+    drop.id = 'tagPickerDrop';
+    drop.className = 'tag-picker-drop';
+
+    var html = '<div class="tag-picker-title">Gan tag</div>';
+    PREDEFINED_TAGS.forEach(function(tag) {
+        var isActive = currentTags.indexOf(tag.id) >= 0;
+        html += '<div class="tag-picker-item' + (isActive ? ' active' : '') + '" '
+            + 'onclick="event.stopPropagation();toggleVideoTag(\'' + videoId + '\',\'' + tag.id + '\')">'
+            + '<span class="tag-picker-icon">' + tag.icon + '</span>'
+            + '<span class="tag-picker-label">' + tag.label + '</span>'
+            + (isActive ? '<span class="tag-picker-check">\u2713</span>' : '')
+            + '</div>';
+    });
+    drop.innerHTML = html;
+
+    // Position near the button
+    if (btnEl) {
+        btnEl.style.position = 'relative';
+        btnEl.appendChild(drop);
+    } else {
+        document.body.appendChild(drop);
+    }
+
+    // Close on outside click
+    setTimeout(function() {
+        document.addEventListener('click', function closeTagPicker(e) {
+            if (!drop.contains(e.target)) {
+                drop.remove();
+                document.removeEventListener('click', closeTagPicker);
+            }
+        });
+    }, 50);
+}
+
+function toggleVideoTag(videoId, tagId) {
+    var tags = getVideoTags(videoId);
+    var idx = tags.indexOf(tagId);
+    if (idx >= 0) {
+        tags.splice(idx, 1);
+    } else {
+        tags.push(tagId);
+    }
+    setVideoTags(videoId, tags);
+    // Close picker and re-render
+    var picker = document.getElementById('tagPickerDrop');
+    if (picker) picker.remove();
+    renderHistoryPanel();
+}
+
+// Active tag filter for history
+var _historyTagFilter = '';
+
+function filterHistoryByTag(tagId) {
+    _historyTagFilter = (_historyTagFilter === tagId) ? '' : tagId;
+    renderHistoryPanel();
+    // Update filter button states
+    var btns = document.querySelectorAll('.tag-filter-btn');
+    btns.forEach(function(btn) {
+        btn.classList.toggle('active', btn.getAttribute('data-tag') === _historyTagFilter);
+    });
+}

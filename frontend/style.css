@@ -3798,3 +3798,119 @@ html.light-mode .typing-indicator span { background: #a78bfa; }
     color: var(--accent);
     background: rgba(139,92,246,0.1);
 }
+
+/* ── Video Tags ──────────────────────── */
+.hist-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+    margin-top: 4px;
+}
+.hist-tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+    padding: 1px 8px;
+    border-radius: 6px;
+    font-size: 10px;
+    font-weight: 600;
+    white-space: nowrap;
+    transition: all 0.2s;
+}
+.hist-tag-x {
+    cursor: pointer;
+    margin-left: 2px;
+    opacity: 0;
+    font-size: 12px;
+    transition: opacity 0.2s;
+}
+.hist-tag:hover .hist-tag-x { opacity: 1; }
+.hist-tag-btn {
+    background: none;
+    border: none;
+    color: var(--text-secondary);
+    cursor: pointer;
+    padding: 6px;
+    border-radius: 8px;
+    transition: all 0.2s;
+    flex-shrink: 0;
+    opacity: 0;
+    position: relative;
+}
+.hist-item:hover .hist-tag-btn { opacity: 1; }
+.hist-tag-btn:hover {
+    color: var(--accent);
+    background: rgba(139,92,246,0.1);
+}
+
+/* Tag Picker Dropdown */
+.tag-picker-drop {
+    position: absolute;
+    right: 0;
+    top: 100%;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 8px 0;
+    min-width: 160px;
+    z-index: 999;
+    box-shadow: 0 12px 40px rgba(0,0,0,0.5);
+    animation: slideUp 0.15s ease;
+}
+.tag-picker-title {
+    padding: 6px 14px;
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+.tag-picker-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 7px 14px;
+    cursor: pointer;
+    font-size: 13px;
+    color: var(--text-primary);
+    transition: background 0.15s;
+}
+.tag-picker-item:hover { background: rgba(139,92,246,0.1); }
+.tag-picker-item.active { background: rgba(139,92,246,0.08); }
+.tag-picker-icon { font-size: 14px; }
+.tag-picker-label { flex: 1; }
+.tag-picker-check {
+    color: var(--accent);
+    font-weight: 700;
+    font-size: 14px;
+}
+
+/* Tag Filter Buttons (in history header) */
+.tag-filter-bar {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 5px;
+    padding: 8px 16px;
+    border-bottom: 1px solid var(--border);
+}
+.tag-filter-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+    padding: 3px 10px;
+    border-radius: 8px;
+    font-size: 11px;
+    font-weight: 600;
+    cursor: pointer;
+    border: 1px solid var(--border);
+    background: transparent;
+    color: var(--text-secondary);
+    transition: all 0.2s;
+    font-family: var(--font);
+}
+.tag-filter-btn:hover { border-color: var(--accent); color: var(--text-primary); }
+.tag-filter-btn.active {
+    background: var(--accent);
+    color: white;
+    border-color: var(--accent);
+}
