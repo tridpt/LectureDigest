@@ -4301,10 +4301,14 @@ function deepDiveChapter(topicIndex) {
     var topic = analysisData.topics[topicIndex];
     if (!topic) return;
 
-    // Open chat panel if not open
+    // Force open chat panel
     var panel = document.getElementById('chatPanel');
-    if (!panel || panel.classList.contains('hidden')) {
-        if (typeof toggleChatPanel === 'function') toggleChatPanel();
+    if (!panel) return;
+    if (panel.classList.contains('hidden')) {
+        chatState.isOpen = true;
+        panel.classList.remove('hidden');
+        var unread = document.getElementById('chatUnread');
+        if (unread) unread.classList.add('hidden');
     }
 
     // Build a focused question
