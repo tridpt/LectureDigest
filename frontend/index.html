@@ -746,6 +746,12 @@
                 <div style="width:110px"></div>
             </div>
 
+            <!-- Tab bar -->
+            <div class="mexam-tabs" id="mexamTabs">
+                <button class="mexam-tab active" onclick="_mexamSwitchTab('new')" id="mexamTabNew">⚡ Tạo mới</button>
+                <button class="mexam-tab" onclick="_mexamSwitchTab('history')" id="mexamTabHistory">📜 Lịch sử thi <span class="mexam-hist-count" id="mexamHistCount">0</span></button>
+            </div>
+
             <!-- Step 1: Video Selection -->
             <div class="mexam-step" id="mexamStep1">
                 <div class="mexam-select-header">
@@ -766,6 +772,11 @@
                         Tạo đề thi
                     </button>
                 </div>
+            </div>
+
+            <!-- Step 5: Exam History -->
+            <div class="mexam-step hidden" id="mexamStep5">
+                <div class="mexam-history-list" id="mexamHistoryList"></div>
             </div>
 
             <!-- Step 2: Loading -->
@@ -801,6 +812,9 @@
             <div class="mexam-step hidden" id="mexamStep4">
                 <div class="mexam-results" id="mexamResults"></div>
             </div>
+
+            <!-- Download hidden helper -->
+            <a id="mexamDownloadLink" style="display:none"></a>
         </div>
     </section>
 

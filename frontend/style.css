@@ -5369,6 +5369,115 @@ html.light-mode .mexam-page { background: #eef0ff; }
     font-size: 12px; color: var(--text-secondary);
 }
 
+/* ── Tabs ── */
+.mexam-tabs {
+    display: flex; gap: 4px;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 12px; padding: 4px;
+    margin-bottom: 16px;
+}
+.mexam-tab {
+    flex: 1; padding: 10px 16px;
+    border-radius: 10px; border: none;
+    background: transparent;
+    color: var(--text-secondary);
+    font-weight: 600; font-size: 13px;
+    cursor: pointer; transition: all 0.2s;
+    display: flex; align-items: center;
+    justify-content: center; gap: 6px;
+    font-family: var(--font);
+}
+.mexam-tab:hover { color: var(--text-primary); }
+.mexam-tab.active {
+    background: var(--accent);
+    color: #fff;
+}
+.mexam-hist-count {
+    background: rgba(255,255,255,0.2);
+    padding: 1px 7px; border-radius: 10px;
+    font-size: 11px;
+}
+.mexam-tab.active .mexam-hist-count {
+    background: rgba(255,255,255,0.25);
+}
+
+/* ── Exam History Cards ── */
+.mexam-history-list {
+    display: flex; flex-direction: column;
+    gap: 10px; padding-bottom: 40px;
+}
+.mexam-hist-empty {
+    text-align: center; padding: 60px 20px;
+    color: var(--text-secondary); font-size: 14px;
+}
+.mexam-hist-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 14px; padding: 16px;
+    display: flex; align-items: center;
+    gap: 14px; cursor: pointer;
+    transition: all 0.2s;
+    position: relative;
+}
+.mexam-hist-card:hover {
+    border-color: var(--accent);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+}
+.mexam-hist-score {
+    width: 56px; height: 56px;
+    border-radius: 50%; flex-shrink: 0;
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    font-weight: 900; font-size: 18px;
+    border: 3px solid;
+}
+.mexam-hist-score.grade-a { border-color: #10b981; color: #10b981; background: rgba(16,185,129,0.08); }
+.mexam-hist-score.grade-b { border-color: #60a5fa; color: #60a5fa; background: rgba(96,165,250,0.08); }
+.mexam-hist-score.grade-c { border-color: #fbbf24; color: #fbbf24; background: rgba(251,191,36,0.08); }
+.mexam-hist-score.grade-f { border-color: #f87171; color: #f87171; background: rgba(248,113,113,0.08); }
+.mexam-hist-grade {
+    font-size: 9px; font-weight: 700; opacity: 0.7;
+}
+.mexam-hist-info { flex: 1; min-width: 0; }
+.mexam-hist-name {
+    font-size: 14px; font-weight: 700;
+    color: var(--text-primary);
+    white-space: nowrap; overflow: hidden;
+    text-overflow: ellipsis;
+}
+.mexam-hist-detail {
+    font-size: 11px; color: var(--text-secondary);
+    margin-top: 3px;
+}
+.mexam-hist-diff-bar {
+    display: flex; gap: 6px; margin-top: 5px;
+}
+.mexam-hist-diff-chip {
+    font-size: 9px; font-weight: 700;
+    padding: 1px 6px; border-radius: 4px;
+}
+.mexam-hist-actions {
+    display: flex; gap: 6px; flex-shrink: 0;
+}
+.mexam-hist-action-btn {
+    width: 32px; height: 32px; border-radius: 8px;
+    border: 1px solid var(--border);
+    background: transparent;
+    color: var(--text-secondary);
+    cursor: pointer; display: flex;
+    align-items: center; justify-content: center;
+    transition: all 0.2s;
+}
+.mexam-hist-action-btn:hover {
+    border-color: var(--accent);
+    color: var(--accent);
+}
+.mexam-hist-action-btn.delete:hover {
+    border-color: #ef4444; color: #ef4444;
+}
+
 @media (max-width: 640px) {
     .mexam-inner { padding: 0 12px; }
     .mexam-title { font-size: 17px; }
@@ -5378,6 +5487,9 @@ html.light-mode .mexam-page { background: #eef0ff; }
     .mexam-options-row { flex-direction: column; gap: 12px; }
     .mexam-generate-btn { width: 100%; justify-content: center; }
     .mexam-video-thumb { width: 48px; height: 27px; }
+    .mexam-tab { font-size: 12px; padding: 8px 10px; }
+    .mexam-hist-card { padding: 12px; gap: 10px; }
+    .mexam-hist-score { width: 44px; height: 44px; font-size: 15px; }
 }
 
 /* ══════════════════════════════════════════════════════
