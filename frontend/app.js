@@ -3840,3 +3840,275 @@ var _notesSyncTimer = null;
         });
     }
 })();
+
+
+// ══════════════════════════════════════════════════════
+// SM-2 SPACED REPETITION
+// ══════════════════════════════════════════════════════
+
+var SM2_KEY_PREFIX = 'lectureDigest_sm2_';
+
+function sm2Key(videoId) { return SM2_KEY_PREFIX + videoId; }
+
+function loadSm2(videoId) {
+    try { return JSON.parse(localStorage.getItem(sm2Key(videoId)) || '{}'); }
+    catch(e) { return {}; }
+}
+
+function saveSm2(videoId, data) {
+    try {
+        localStorage.setItem(sm2Key(videoId), JSON.stringify(data));
+        // Sync to backend
+        if (typeof dbFetch === 'function') {
+            dbFetch('/notes/' + videoId + '_sm2', {
+                method: 'PUT',
+                body: JSON.stringify({ content: JSON.stringify(data) })
+            });
+        }
+    } catch(e) {}
+}
+
+// SM-2 algorithm implementation
+// q: quality of response (0-5)
+//   0 = complete blackout, 1 = wrong, 2 = wrong but remembered after seeing answer
+//   3 = correct with difficulty, 4 = correct, 5 = perfect
+function sm2Calculate(card, quality) {
+    var ef = card.ef || 2.5;
+    var interval = card.interval || 0;
+    var reps = card.repetitions || 0;
+
+    if (quality < 3) {
+        // Failed — reset
+        reps = 0;
+        interval = 0;
+    } else {
+        // Success
+        if (reps === 0) {
+            interval = 1;       // 1 day
+        } else if (reps === 1) {
+            interval = 3;       // 3 days
+        } else {
+            interval = Math.round(interval * ef);
+        }
+        reps += 1;
+    }
+
+    // Update easiness factor
+    ef = ef + (0.1 - (5 - quality) * (0.08 + (5 - quality) * 0.02));
+    if (ef < 1.3) ef = 1.3;
+
+    // Calculate next review date
+    var now = new Date();
+    var next = new Date(now.getTime() + interval * 24 * 60 * 60 * 1000);
+    var nextISO = next.toISOString().split('T')[0]; // YYYY-MM-DD
+
+    return {
+        ef: Math.round(ef * 100) / 100,
+        interval: interval,
+        repetitions: reps,
+        nextReview: nextISO,
+        lastReview: now.toISOString().split('T')[0],
+        quality: quality
+    };
+}
+
+// Get number of cards due for review
+function countDueCards(videoId) {
+    var sm2Data = loadSm2(videoId);
+    var today = new Date().toISOString().split('T')[0];
+    var count = 0;
+    for (var key in sm2Data) {
+        if (sm2Data[key].nextReview && sm2Data[key].nextReview <= today) count++;
+    }
+    return count;
+}
+
+// Override rateCard to use SM-2
+(function patchRateCardSM2() {
+    rateCard = function(rating) {
+        if (!fcFlipped) { flipCard(); return; }
+        var card = fcFiltered[fcIndex];
+        if (!card) return;
+
+        // Map rating to SM-2 quality
+        var qualityMap = { hard: 1, ok: 3, easy: 5 };
+        var quality = qualityMap[rating] || 3;
+
+        // Get video ID
+        var videoId = window._spaVideoId || (window.analysisData && window.analysisData.video_id);
+        if (!videoId) return;
+
+        // Load SM-2 data
+        var sm2Data = loadSm2(videoId);
+        var cardKey = 'card_' + fcIndex + '_' + (card.front || '').substring(0, 20).replace(/\s+/g, '_');
+
+        // Get existing card data or create new
+        var cardSm2 = sm2Data[cardKey] || { ef: 2.5, interval: 0, repetitions: 0 };
+
+        // Calculate new SM-2 values
+        var result = sm2Calculate(cardSm2, quality);
+        sm2Data[cardKey] = result;
+        saveSm2(videoId, sm2Data);
+
+        // Update card rating for visual feedback
+        var masterIdx = fcCards.indexOf(card);
+        if (masterIdx !== -1) fcCards[masterIdx].rating = rating;
+        card.rating = rating;
+        card._sm2 = result;
+
+        // Show feedback
+        var feedbackMap = {
+            hard: 'Kho! On lai ngay mai',
+            ok: 'OK! On lai sau ' + result.interval + ' ngay',
+            easy: 'De! On lai sau ' + result.interval + ' ngay'
+        };
+        showSmallFeedback(feedbackMap[rating] || '');
+
+        // Auto-advance
+        if (fcIndex < fcFiltered.length - 1) {
+            fcIndex++;
+            renderFcCard();
+        } else {
+            showFcSummary();
+        }
+    };
+})();
+
+// Small feedback toast inside flashcard modal
+function showSmallFeedback(text) {
+    var existing = document.getElementById('sm2Feedback');
+    if (existing) existing.remove();
+
+    var el = document.createElement('div');
+    el.id = 'sm2Feedback';
+    el.style.cssText = 'position:absolute;bottom:100px;left:50%;transform:translateX(-50%);' +
+        'background:rgba(139,92,246,0.9);color:white;padding:6px 16px;border-radius:8px;' +
+        'font-size:12px;font-weight:600;z-index:9999;white-space:nowrap;' +
+        'animation:fadeIn 0.2s ease;pointer-events:none;';
+    el.textContent = text;
+
+    var modal = document.querySelector('.compare-modal') || document.getElementById('fcModalOverlay');
+    if (modal) modal.appendChild(el);
+    else document.body.appendChild(el);
+
+    setTimeout(function() { el.remove(); }, 1500);
+}
+
+// Override renderFcCard to show SM-2 info
+(function patchRenderFcCardSM2() {
+    var _origRender = renderFcCard;
+    renderFcCard = function() {
+        _origRender();
+
+        var videoId = window._spaVideoId || (window.analysisData && window.analysisData.video_id);
+        if (!videoId) return;
+
+        var card = fcFiltered[fcIndex];
+        if (!card) return;
+
+        var sm2Data = loadSm2(videoId);
+        var cardKey = 'card_' + fcIndex + '_' + (card.front || '').substring(0, 20).replace(/\s+/g, '_');
+        var cardSm2 = sm2Data[cardKey];
+
+        // Add SM-2 badge to card
+        var badge = document.getElementById('fcModeBadge');
+        if (badge && cardSm2) {
+            var today = new Date().toISOString().split('T')[0];
+            var isDue = !cardSm2.nextReview || cardSm2.nextReview <= today;
+            var dueText = isDue ? ' | Can on!' : ' | On: ' + cardSm2.nextReview;
+            var efText = ' | EF:' + cardSm2.ef;
+            badge.textContent = badge.textContent + dueText;
+        }
+
+        // Update rate button labels with SM-2 intervals
+        updateRateLabels(cardSm2);
+    };
+})();
+
+function updateRateLabels(cardSm2) {
+    var base = cardSm2 || { ef: 2.5, interval: 0, repetitions: 0 };
+    var hardResult = sm2Calculate(Object.assign({}, base), 1);
+    var okResult   = sm2Calculate(Object.assign({}, base), 3);
+    var easyResult = sm2Calculate(Object.assign({}, base), 5);
+
+    // Find rate buttons and update labels
+    var btns = document.querySelectorAll('.fc-rate-btn');
+    btns.forEach(function(btn) {
+        var label = btn.querySelector('.fc-rate-sublabel');
+        if (!label) {
+            label = document.createElement('span');
+            label.className = 'fc-rate-sublabel';
+            label.style.cssText = 'display:block;font-size:9px;opacity:0.7;margin-top:2px;font-weight:400;';
+            btn.appendChild(label);
+        }
+        var rating = btn.getAttribute('data-rating') || btn.textContent.toLowerCase().trim();
+        if (rating.indexOf('hard') >= 0 || rating.indexOf('kho') >= 0) {
+            label.textContent = hardResult.interval <= 1 ? 'Ngay mai' : hardResult.interval + ' ngay';
+        } else if (rating.indexOf('ok') >= 0) {
+            label.textContent = okResult.interval + ' ngay';
+        } else if (rating.indexOf('easy') >= 0 || rating.indexOf('de') >= 0) {
+            label.textContent = easyResult.interval + ' ngay';
+        }
+    });
+}
+
+// Override showFcSummary to include SM-2 stats
+(function patchShowFcSummary() {
+    showFcSummary = function() {
+        var hard = fcCards.filter(function(c) { return c.rating === 'hard'; }).length;
+        var ok   = fcCards.filter(function(c) { return c.rating === 'ok'; }).length;
+        var easy = fcCards.filter(function(c) { return c.rating === 'easy'; }).length;
+        var unrated = fcCards.filter(function(c) { return !c.rating; }).length;
+        var total = fcCards.length;
+        var reviewed = hard + ok + easy;
+
+        var videoId = window._spaVideoId || (window.analysisData && window.analysisData.video_id);
+        var dueCount = videoId ? countDueCards(videoId) : 0;
+
+        var msg = 'Xong! Da on ' + reviewed + '/' + total + ' the.\n'
+            + 'Kho: ' + hard + '  OK: ' + ok + '  De: ' + easy
+            + (unrated ? '\nBo qua: ' + unrated : '')
+            + (dueCount > 0 ? '\nCon ' + dueCount + ' the can on!' : '\nHen on lai ngay mai!');
+
+        showToast(msg, 5000);
+    };
+})();
+
+// Add filter for due cards in flashcard modal
+(function patchFilterWithDue() {
+    var _origUpdateFilter = typeof updateFilterBtns === 'function' ? updateFilterBtns : null;
+
+    // Override fcFilter to support 'due' filter
+    var _origFcFilter = typeof fcFilter === 'function' ? fcFilter : null;
+
+    if (typeof fcFilter === 'function') {
+        var _baseFcFilter = fcFilter;
+        fcFilter = function(key) {
+            if (key === 'due') {
+                fcFilterKey = 'due';
+                var videoId = window._spaVideoId || (window.analysisData && window.analysisData.video_id);
+                var sm2Data = videoId ? loadSm2(videoId) : {};
+                var today = new Date().toISOString().split('T')[0];
+
+                fcFiltered = fcCards.filter(function(card, idx) {
+                    var cardKey = 'card_' + idx + '_' + (card.front || '').substring(0, 20).replace(/\s+/g, '_');
+                    var cardSm2 = sm2Data[cardKey];
+                    // Include if: never reviewed, or due today/past
+                    return !cardSm2 || !cardSm2.nextReview || cardSm2.nextReview <= today;
+                });
+
+                if (!fcFiltered.length) {
+                    showToast('Khong co the nao can on hom nay!');
+                    fcFiltered = [...fcCards];
+                    fcFilterKey = 'all';
+                }
+
+                fcIndex = 0;
+                if (_origUpdateFilter) _origUpdateFilter();
+                renderFcCard();
+            } else {
+                _baseFcFilter(key);
+            }
+        };
+    }
+})();
