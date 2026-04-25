@@ -4470,3 +4470,112 @@ function renderCustomCardList(videoId) {
             + '</div>';
     }).join('');
 }
+
+
+// ══════════════════════════════════════════════════════
+// FILE UPLOAD ANALYSIS
+// ══════════════════════════════════════════════════════
+function initUploadZone() {
+    var zone = document.getElementById('uploadZone');
+    var fileInput = document.getElementById('uploadFileInput');
+    if (!zone || !fileInput) return;
+    zone.addEventListener('click', function() { fileInput.click(); });
+    zone.addEventListener('dragover', function(e) { e.preventDefault(); zone.classList.add('drag-over'); });
+    zone.addEventListener('dragleave', function() { zone.classList.remove('drag-over'); });
+    zone.addEventListener('drop', function(e) {
+        e.preventDefault(); zone.classList.remove('drag-over');
+        if (e.dataTransfer.files.length) { fileInput.files = e.dataTransfer.files; handleFileUpload(e.dataTransfer.files[0]); }
+    });
+    fileInput.addEventListener('change', function() { if (fileInput.files.length) handleFileUpload(fileInput.files[0]); });
+}
+
+function handleFileUpload(file) {
+    if (file.size > 100*1024*1024) { showToast('File qua lon! Toi da 100MB'); return; }
+    var ok = ['.mp3','.wav','.m4a','.ogg','.flac','.mp4','.webm','.mkv','.avi','.mov'];
+    var ext = '.' + file.name.split('.').pop().toLowerCase();
+    if (ok.indexOf(ext) < 0) { showToast('Dinh dang khong ho tro: ' + ext); return; }
+
+    var zone = document.getElementById('uploadZone');
+    if (zone) {
+        zone.innerHTML = '<div class="upload-progress">'
+            + '<div class="upload-spinner"></div>'
+            + '<div class="upload-filename">' + file.name.substring(0,40) + '</div>'
+            + '<div class="upload-status" id="uploadStatus">Dang tai len...</div>'
+            + '<div class="upload-pbar"><div class="upload-pfill" id="uploadPFill"></div></div>'
+            + '</div>';
+    }
+
+    var fd = new FormData();
+    fd.append('file', file);
+    fd.append('language', selectedLang || 'en');
+    fd.append('output_language', selectedLang || 'en');
+
+    var xhr = new XMLHttpRequest();
+    xhr.open('POST', (window.API_BASE || '') + '/api/upload-analyze');
+
+    xhr.upload.onprogress = function(e) {
+        if (e.lengthComputable) {
+            var pct = Math.round(e.loaded / e.total * 50);
+            var fill = document.getElementById('uploadPFill');
+            if (fill) fill.style.width = pct + '%';
+            var st = document.getElementById('uploadStatus');
+            if (st && pct < 50) st.textContent = 'Dang tai len... ' + (pct*2) + '%';
+        }
+    };
+
+    var analyzeTimer = null;
+    xhr.onreadystatechange = function() {
+        if (xhr.readyState === 4 && !analyzeTimer) return;
+        if (xhr.readyState === 2) {
+            var st = document.getElementById('uploadStatus');
+            if (st) st.textContent = 'AI dang phan tich noi dung...';
+            var fill = document.getElementById('uploadPFill');
+            if (fill) fill.style.width = '55%';
+            analyzeTimer = setInterval(function() {
+                var f2 = document.getElementById('uploadPFill');
+                if (f2) { var w = parseFloat(f2.style.width)||55; if(w<92) f2.style.width = (w+2)+'%'; }
+            }, 800);
+        }
+    };
+
+    xhr.onload = function() {
+        if (analyzeTimer) clearInterval(analyzeTimer);
+        if (xhr.status === 200) {
+            try {
+                var data = JSON.parse(xhr.responseText);
+                analysisData = data;
+                window._spaVideoId = data.video_id;
+                displayResults(data);
+                showSection('resultsSection');
+                saveToHistory(data);
+                showToast('Phan tich thanh cong!');
+            } catch(e) { showToast('Loi xu ly: ' + e.message); }
+        } else {
+            try { var err = JSON.parse(xhr.responseText); showToast('Loi: ' + (err.detail || xhr.statusText)); }
+            catch(e) { showToast('Loi: ' + xhr.statusText); }
+        }
+        resetUploadZone();
+    };
+
+    xhr.onerror = function() {
+        if (analyzeTimer) clearInterval(analyzeTimer);
+        showToast('Loi ket noi server!');
+        resetUploadZone();
+    };
+
+    xhr.send(fd);
+}
+
+function resetUploadZone() {
+    var zone = document.getElementById('uploadZone');
+    if (zone) {
+        zone.innerHTML = '<div class="upload-icon">\ud83d\udcc1</div>'
+            + '<div class="upload-text">Keo tha file audio/video hoac click de chon</div>'
+            + '<div class="upload-formats">MP3, WAV, M4A, MP4, WebM, MKV (toi da 100MB)</div>';
+    }
+    var inp = document.getElementById('uploadFileInput');
+    if (inp) inp.value = '';
+}
+
+if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', initUploadZone);
+else setTimeout(initUploadZone, 500);
