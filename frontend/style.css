@@ -4220,8 +4220,10 @@ html.light-mode .typing-indicator span { background: #a78bfa; }
     justify-content: space-between;
     font-size: 11px;
     color: var(--text-secondary);
-    margin-bottom: 10px;
+    margin-bottom: 12px;
+    padding: 0 4px;
     font-weight: 600;
+    gap: 12px;
 }
 .stats-bar-chart {
     display: flex;
