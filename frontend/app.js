@@ -1454,10 +1454,12 @@ function exportPDF() {
     } catch(e) {}
     const bookmarksHtml = bookmarksList.length
         ? bookmarksList.map(function(bm) {
+            var ts = typeof bm.time === 'number' ? fmtSecs(bm.time) : (bm.timestamp_str || '');
+            var lbl = bm.label || bm.note || bm.title || '';
             return '<div style="display:flex;gap:10px;padding:6px 0;border-bottom:1px solid #f3f4f6;font-size:10.5pt">'
                 + '<span style="background:#ede9fe;color:#5b21b6;padding:2px 8px;border-radius:4px;font-size:9.5pt;font-weight:700;white-space:nowrap;font-family:Courier New,monospace">'
-                + (bm.timestamp_str || '') + '</span>'
-                + '<span style="color:#374151">' + (bm.note || bm.title || '') + '</span></div>';
+                + ts + '</span>'
+                + '<span style="color:#374151">' + lbl + '</span></div>';
           }).join('')
         : '<p style="color:#9ca3af;font-style:italic">Chua co bookmark</p>';
 
