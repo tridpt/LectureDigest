@@ -210,17 +210,18 @@ function toggleHistoryPanel(force) {
 
 function renderHistoryPanel(filter) {
     filter = filter || '';
-    const list = loadHistory();
-    const container = document.getElementById('historyList');
-    const empty = document.getElementById('historyEmpty');
-    const countEl = document.getElementById('historyCount');
+    var list = loadHistory();
+    var container = document.getElementById('historyList');
+    var empty = document.getElementById('historyEmpty');
+    var countEl = document.getElementById('historyCount');
     if (!container) return;
     if (countEl) countEl.textContent = list.length;
 
-    const q = filter.trim().toLowerCase();
-    const filtered = q ? list.filter(h =>
-        (h.title || '').toLowerCase().includes(q) || (h.author || '').toLowerCase().includes(q)
-    ) : list;
+    var q = filter.trim().toLowerCase();
+    var filtered = q ? list.filter(function(h) {
+        return (h.title || '').toLowerCase().indexOf(q) >= 0 ||
+               (h.author || '').toLowerCase().indexOf(q) >= 0;
+    }) : list;
 
     if (list.length === 0) {
         container.innerHTML = '';
@@ -232,24 +233,24 @@ function renderHistoryPanel(filter) {
         container.innerHTML = '<div style="text-align:center;padding:24px 12px;opacity:.5;font-size:13px">Khong tim thay video nao</div>';
         return;
     }
-    container.innerHTML = filtered.map(h => {
-        const date = new Date(h.savedAt);
-        const dateStr = date.toLocaleDateString('vi-VN', { day:'2-digit', month:'2-digit', year:'numeric' });
-        const timeStr = date.toLocaleTimeString('vi-VN', { hour:'2-digit', minute:'2-digit' });
-        const safeQ = q ? q.replace(/[.*+?^${}()|[\]\]/g, '\$&') : '';
-        const titleHtml = q ? escHtml(h.title || 'Untitled').replace(
-            new RegExp('(' + safeQ + ')', 'gi'),
-            '<mark style="background:rgba(139,92,246,.35);color:inherit;border-radius:2px">$1</mark>'
-        ) : escHtml(h.title || 'Untitled');
+    container.innerHTML = filtered.map(function(h) {
+        var date = new Date(h.savedAt);
+        var dateStr = date.toLocaleDateString('vi-VN', { day:'2-digit', month:'2-digit', year:'numeric' });
+        var timeStr = date.toLocaleTimeString('vi-VN', { hour:'2-digit', minute:'2-digit' });
+        var titleText = escHtml(h.title || 'Untitled');
+        if (q) {
+            var re = new RegExp('(' + q.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + ')', 'gi');
+            titleText = titleText.replace(re, '<mark style="background:rgba(139,92,246,.35);color:inherit;border-radius:2px">$1</mark>');
+        }
         return '<div class="hist-item" data-id="' + h.video_id + '">' +
             '<img class="hist-thumb" src="' + h.thumbnail + '" alt="' + escHtml(h.title) + '" loading="lazy"' +
-            ' onerror="this.src='https://img.youtube.com/vi/' + h.video_id + '/mqdefault.jpg'">' +
-            '<div class="hist-info" onclick="loadFromHistory('' + h.video_id + '')" role="button" tabindex="0" title="Tai ket qua">' +
-            '<div class="hist-title">' + titleHtml + '</div>' +
+            " onerror=\"this.src='https://img.youtube.com/vi/" + h.video_id + "/mqdefault.jpg'\">" +
+            '<div class="hist-info" onclick="loadFromHistory(\'' + h.video_id + '\')" role="button" tabindex="0">' +
+            '<div class="hist-title">' + titleText + '</div>' +
             '<div class="hist-meta">' + escHtml(h.author || '') + ' &bull; ' + dateStr + ' ' + timeStr + '</div>' +
             '<div class="hist-lang">' + (h.lang || 'English') + '</div>' +
             '</div>' +
-            '<button class="hist-del" onclick="deleteFromHistory('' + h.video_id + '')" title="Xoa" aria-label="Xoa khoi lich su">' +
+            '<button class="hist-del" onclick="deleteFromHistory(\'' + h.video_id + '\')" title="Xoa">' +
             '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6L6 18M6 6l12 12"/></svg>' +
             '</button></div>';
     }).join('');
