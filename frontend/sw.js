@@ -2,13 +2,36 @@
 // LectureDigest Service Worker — Offline-first caching
 // ══════════════════════════════════════════════════════
 
-const CACHE_NAME = 'lecturedigest-v1';
+const CACHE_NAME = 'lecturedigest-v2';
 const STATIC_ASSETS = [
   '/',
   '/index.html',
   '/style.css',
-  '/app.js',
+  '/js/core.js',
+  '/js/youtube.js',
+  '/js/history.js',
+  '/js/notes.js',
+  '/js/analyze.js',
+  '/js/quiz.js',
+  '/js/flashcard.js',
+  '/js/chat.js',
+  '/js/transcript.js',
+  '/js/mindmap.js',
+  '/js/progress.js',
+  '/js/gamification.js',
+  '/js/badges-page.js',
+  '/js/theme-routing.js',
+  '/js/tags.js',
+  '/js/compare.js',
+  '/js/share.js',
+  '/js/pdf-export.js',
+  '/js/playlist.js',
+  '/js/knowledge-graph.js',
+  '/js/exam.js',
+  '/js/db-sync.js',
+  '/js/mobile.js',
   '/dashboard.js',
+  '/concept-explainer.js',
   '/manifest.json',
   '/icon-192.png',
   '/icon-512.png'

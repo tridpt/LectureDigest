@@ -993,10 +993,59 @@
         </div>
     </div>
 
-    <!-- YouTube IFrame API (must come before app.js) -->
+    <!-- YouTube IFrame API (must come before app modules) -->
     <script src="https://www.youtube.com/iframe_api"></script>
-    <script src="/app.js"></script>
+
+    <!-- ══ LectureDigest Modular JS ══ -->
+    <!-- Core: state, utilities, section management -->
+    <script src="/js/core.js"></script>
+    <!-- YouTube player & transcript client fetch -->
+    <script src="/js/youtube.js"></script>
+    <!-- History CRUD & panel -->
+    <script src="/js/history.js"></script>
+    <!-- Notes management -->
+    <script src="/js/notes.js"></script>
+    <!-- Video analysis flow & results rendering -->
+    <script src="/js/analyze.js"></script>
+    <!-- Quiz engine -->
+    <script src="/js/quiz.js"></script>
+    <!-- Flashcards, export, custom cards, SM-2 -->
+    <script src="/js/flashcard.js"></script>
+    <!-- Chat with lecture -->
+    <script src="/js/chat.js"></script>
+    <!-- Transcript search, sync, translation -->
+    <script src="/js/transcript.js"></script>
+    <!-- Mind map (D3.js) -->
+    <script src="/js/mindmap.js"></script>
+    <!-- Learning progress & bookmarks -->
+    <script src="/js/progress.js"></script>
+    <!-- Gamification: streaks, badges -->
+    <script src="/js/gamification.js"></script>
+    <!-- Badges page -->
+    <script src="/js/badges-page.js"></script>
+    <!-- Theme toggle & SPA routing -->
+    <script src="/js/theme-routing.js"></script>
+    <!-- Video tags -->
+    <script src="/js/tags.js"></script>
+    <!-- Auto-summarize comparison -->
+    <script src="/js/compare.js"></script>
+    <!-- Share results -->
+    <script src="/js/share.js"></script>
+    <!-- PDF study guide export -->
+    <script src="/js/pdf-export.js"></script>
+    <!-- Playlist / course mode -->
+    <script src="/js/playlist.js"></script>
+    <!-- Knowledge graph -->
+    <script src="/js/knowledge-graph.js"></script>
+    <!-- Multi-video exam -->
+    <script src="/js/exam.js"></script>
+    <!-- Database sync layer (patches functions, load last) -->
+    <script src="/js/db-sync.js"></script>
+    <!-- Mobile UX helpers -->
+    <script src="/js/mobile.js"></script>
+    <!-- Dashboard -->
     <script src="/dashboard.js"></script>
+    <!-- Concept explainer -->
     <script src="/concept-explainer.js"></script>
 
     <!-- ══════════════════════════════ SHARE MODAL ══════════════════════════════ -->
