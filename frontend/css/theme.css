@@ -165,16 +165,28 @@ html.light-mode .quiz-option {
 html.light-mode .quiz-option:hover { background: rgba(109,40,217,0.07); border-color: rgba(109,40,217,0.2); }
 
 /* ── Transcript ── */
-html.light-mode .transcript-line { color: #6b7280; }
-html.light-mode .transcript-line.ts-active {
+html.light-mode .transcript-line { color: #4b5563; }
+html.light-mode .transcript-line:hover { background: rgba(0,0,0,0.03); }
+html.light-mode .transcript-line.tl-active {
     color: #1e1b4b;
-    background: rgba(109,40,217,0.07);
+    background: rgba(109,40,217,0.1) !important;
+    border-left-color: #7c3aed;
+    font-weight: 500;
 }
+html.light-mode .transcript-line.tl-active .tl-text { color: #1e1b4b; }
+html.light-mode .transcript-line.tl-active .tl-ts { color: #5b21b6; background: rgba(109,40,217,0.18); }
+html.light-mode .tl-ts { color: #6d28d9; background: rgba(109,40,217,0.08); }
+html.light-mode .tl-text { color: #4b5563; }
+html.light-mode .tl-highlight { background: rgba(250,204,21,0.35); color: #92400e; }
 html.light-mode .transcript-search-input {
     background: rgba(0,0,0,0.04);
     border-color: rgba(0,0,0,0.1);
     color: #1e1b4b;
 }
+html.light-mode .transcript-count { background: rgba(0,0,0,0.06); color: #6b7280; }
+html.light-mode .transcript-line { border-bottom-color: rgba(0,0,0,0.04); }
+html.light-mode .ts-nav-btn { border-color: rgba(0,0,0,0.1); background: rgba(0,0,0,0.04); color: #374151; }
+html.light-mode .ts-nav-btn:hover { background: rgba(109,40,217,0.1); border-color: #7c3aed; }
 
 /* ── Notes ── */
 html.light-mode .notes-textarea {
@@ -206,11 +218,29 @@ html.light-mode .progress-label { color: #6b7280; }
 html.light-mode .progress-pct   { color: #7c3aed; }
 
 /* ── Bookmarks ── */
-html.light-mode .bookmark-item { border-color: rgba(0,0,0,0.07); }
-html.light-mode .bookmark-item:hover { background: rgba(0,0,0,0.03); }
-html.light-mode .bookmark-label { color: #374151; }
-html.light-mode .bookmark-time  { color: #7c3aed; }
+html.light-mode .bookmark-bar {
+    background: rgba(0,0,0,0.03);
+    border-color: rgba(0,0,0,0.08);
+}
+html.light-mode .add-bookmark-btn {
+    background: rgba(109,40,217,0.1);
+    border-color: rgba(109,40,217,0.3);
+    color: #5b21b6;
+}
+html.light-mode .add-bookmark-btn:hover {
+    background: rgba(109,40,217,0.18);
+    border-color: #7c3aed;
+}
+html.light-mode .bookmark-current-time { color: #6b7280; }
+html.light-mode .bookmark-item, html.light-mode .bm-item { border-color: rgba(0,0,0,0.07); }
+html.light-mode .bookmark-item:hover, html.light-mode .bm-item:hover { background: rgba(0,0,0,0.03); }
+html.light-mode .bookmark-label, html.light-mode .bm-label { color: #374151; }
+html.light-mode .bookmark-time { color: #7c3aed; }
+html.light-mode .bm-ts-badge { color: #6d28d9; background: rgba(109,40,217,0.08); border-color: rgba(109,40,217,0.2); }
 html.light-mode .bookmarks-empty { color: #9ca3af; }
+html.light-mode .bookmarks-count { background: rgba(0,0,0,0.06); color: #6b7280; }
+html.light-mode .bm-delete-btn { color: #9ca3af; }
+html.light-mode .bm-delete-btn:hover { background: rgba(239,68,68,0.1); color: #ef4444; }
 
 /* ── Badges Page ── */
 html.light-mode .badges-page { background: #eef0ff; }

@@ -19,3 +19,16 @@
     font-weight: 500;
 }
 
+/* Light mode: dark text on light purple background */
+html.light-mode .tl-sync-active {
+    background: rgba(109,40,217,0.12) !important;
+    border-left-color: #7c3aed !important;
+}
+html.light-mode .tl-sync-active .tl-ts {
+    color: #5b21b6 !important;
+    background: rgba(109,40,217,0.18) !important;
+}
+html.light-mode .tl-sync-active .tl-text {
+    color: #1e1b4b !important;
+}
+
