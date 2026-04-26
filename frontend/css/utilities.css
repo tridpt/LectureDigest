@@ -1,1 +1,45 @@
-/* ════════════════════════════════════════════════\n   Footer, Utilities & Responsive Breakpoints\n   ════════════════════════════════════════════════ */\n\n/* ═══════════════════════════════════════════════\n   FOOTER\n   ═══════════════════════════════════════════════ */\n.footer {\n    text-align: center; padding: 28px 24px;\n    font-size: 13px; color: var(--text-muted);\n    border-top: 1px solid var(--border);\n}\n\n/* ═══════════════════════════════════════════════\n   UTILITIES\n   ═══════════════════════════════════════════════ */\n.hidden { display: none !important; }\n\n/* ═══════════════════════════════════════════════\n   RESPONSIVE\n   ═══════════════════════════════════════════════ */\n@media (max-width: 1024px) {\n    .results-grid { grid-template-columns: 360px 1fr; }\n}\n\n@media (max-width: 900px) {\n    .results-grid { grid-template-columns: 1fr; }\n    .video-column { position: static; }\n    .video-header-inner { flex-direction: column; gap: 12px; }\n    .new-video-btn { align-self: flex-start; }\n}\n\n@media (max-width: 640px) {\n    .features { grid-template-columns: 1fr; }\n    .hero-title { letter-spacing: -1px; }\n    .hero { padding: 60px 20px 40px; }\n    .btn-text { display: none; }\n    .search-btn { padding: 13px 16px; }\n    .results-breakdown { gap: 20px; }\n}\n\n\n\n\n\n
+/* ════════════════════════════════════════════════
+   Footer, Utilities & Responsive Breakpoints
+   ════════════════════════════════════════════════ */
+
+/* ═══════════════════════════════════════════════
+   FOOTER
+   ═══════════════════════════════════════════════ */
+.footer {
+    text-align: center; padding: 28px 24px;
+    font-size: 13px; color: var(--text-muted);
+    border-top: 1px solid var(--border);
+}
+
+/* ═══════════════════════════════════════════════
+   UTILITIES
+   ═══════════════════════════════════════════════ */
+.hidden { display: none !important; }
+
+/* ═══════════════════════════════════════════════
+   RESPONSIVE
+   ═══════════════════════════════════════════════ */
+@media (max-width: 1024px) {
+    .results-grid { grid-template-columns: 360px 1fr; }
+}
+
+@media (max-width: 900px) {
+    .results-grid { grid-template-columns: 1fr; }
+    .video-column { position: static; }
+    .video-header-inner { flex-direction: column; gap: 12px; }
+    .new-video-btn { align-self: flex-start; }
+}
+
+@media (max-width: 640px) {
+    .features { grid-template-columns: 1fr; }
+    .hero-title { letter-spacing: -1px; }
+    .hero { padding: 60px 20px 40px; }
+    .btn-text { display: none; }
+    .search-btn { padding: 13px 16px; }
+    .results-breakdown { gap: 20px; }
+}
+
+
+
+
+

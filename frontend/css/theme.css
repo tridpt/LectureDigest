@@ -1,1 +1,253 @@
-/* ════════════════════════════════════════════════\n   Theme Toggle & Light Mode\n   ════════════════════════════════════════════════ */\n\n/* ════════════════════════════════════ THEME TOGGLE BUTTON === */\n.theme-toggle-btn {\n    width: 36px; height: 36px; border-radius: 10px;\n    border: 1px solid rgba(255,255,255,0.1);\n    background: rgba(255,255,255,0.06);\n    cursor: pointer; font-size: 16px;\n    display: flex; align-items: center; justify-content: center;\n    transition: all 0.2s; flex-shrink: 0;\n}\n.theme-toggle-btn:hover {\n    background: rgba(255,255,255,0.12);\n    transform: rotate(20deg) scale(1.1);\n}\n\n/* ════════════════════════════════════ LIGHT MODE ═══ */\nhtml.light-mode {\n    /* Override CSS variables */\n    --bg-primary:    #eef0ff;\n    --bg-card:       rgba(255,255,255,0.85);\n    --bg-card-hover: rgba(255,255,255,0.95);\n    --border:        rgba(0,0,0,0.08);\n    --border-accent: rgba(109,40,217,0.3);\n    --text-primary:  #1e1b4b;\n    --text-secondary:#4b5563;\n    --text-muted:    #6b7280;\n    --shadow-card:   0 4px 24px rgba(0,0,0,0.08);\n    --accent-glow:   rgba(109,40,217,0.12);\n}\n\n/* Body */\nhtml.light-mode body {\n    background: #eef0ff;\n    color: #1e1b4b;\n}\n\n/* Replace dark ambient background with soft light version */\nhtml.light-mode .bg-gradient {\n    background:\n        radial-gradient(ellipse 90% 60% at 15% 0%, rgba(139,92,246,0.08) 0%, transparent 55%),\n        radial-gradient(ellipse 70% 55% at 85% 95%, rgba(96,165,250,0.06) 0%, transparent 55%),\n        linear-gradient(180deg, #eef0ff 0%, #f3f0ff 100%);\n}\nhtml.light-mode .bg-orbs { opacity: 0.3; }\n\n/* ── Header ── */\nhtml.light-mode .header {\n    background: rgba(238,240,255,0.95);\n    border-bottom: 1px solid rgba(0,0,0,0.08);\n    backdrop-filter: blur(12px);\n}\nhtml.light-mode .logo-text { color: #1e1b4b; }\nhtml.light-mode .history-btn {\n    background: rgba(0,0,0,0.05);\n    border-color: rgba(0,0,0,0.1);\n    color: #4b5563;\n}\nhtml.light-mode .history-btn:hover { background: rgba(0,0,0,0.1); }\nhtml.light-mode .theme-toggle-btn {\n    border-color: rgba(0,0,0,0.12);\n    background: rgba(0,0,0,0.05);\n}\nhtml.light-mode .theme-toggle-btn:hover { background: rgba(0,0,0,0.1); }\nhtml.light-mode .history-panel {\n    background: #fff;\n    border-color: rgba(0,0,0,0.1);\n    box-shadow: 0 8px 32px rgba(0,0,0,0.12);\n}\nhtml.light-mode .hist-entry { border-bottom-color: rgba(0,0,0,0.05); }\nhtml.light-mode .hist-entry:hover { background: rgba(0,0,0,0.03); }\nhtml.light-mode .hist-title { color: #1e1b4b; }\nhtml.light-mode .hist-meta  { color: #9ca3af; }\n\n/* ── Hero ── */\nhtml.light-mode .hero-tag {\n    background: rgba(109,40,217,0.08);\n    border-color: rgba(109,40,217,0.2);\n    color: #6d28d9;\n}\nhtml.light-mode .hero-title { color: #1e1b4b; }\nhtml.light-mode .hero-subtitle { color: #4b5563; }\n\n/* Fix gradient text — re-color to dark purple gradient */\nhtml.light-mode .gradient-text {\n    background: linear-gradient(135deg, #7c3aed 0%, #4f46e5 50%, #7c3aed 100%);\n    -webkit-background-clip: text;\n    background-clip: text;\n    -webkit-text-fill-color: transparent;\n}\n\n/* ── URL Input ── */\nhtml.light-mode .url-form-card {\n    background: rgba(255,255,255,0.9);\n    border-color: rgba(109,40,217,0.15);\n    box-shadow: 0 8px 40px rgba(109,40,217,0.08);\n}\nhtml.light-mode .url-input-wrapper {\n    background: rgba(0,0,0,0.03);\n    border-color: rgba(0,0,0,0.08);\n}\nhtml.light-mode .url-input {\n    background: transparent;\n    color: #1e1b4b;\n}\nhtml.light-mode .url-input::placeholder { color: #9ca3af; }\nhtml.light-mode .url-hint { color: #9ca3af; }\nhtml.light-mode .language-grid-btn {\n    background: rgba(0,0,0,0.04);\n    border-color: rgba(0,0,0,0.08);\n    color: #4b5563;\n}\nhtml.light-mode .language-grid-btn:hover { background: rgba(109,40,217,0.08); }\nhtml.light-mode .language-grid-btn.active {\n    background: rgba(109,40,217,0.1);\n    border-color: rgba(109,40,217,0.3);\n    color: #6d28d9;\n}\nhtml.light-mode .label-text { color: #6b7280; }\n\n/* ── Feature cards ── */\nhtml.light-mode .feature-card {\n    background: rgba(255,255,255,0.7);\n    border-color: rgba(0,0,0,0.08);\n}\nhtml.light-mode .feature-title { color: #1e1b4b; }\nhtml.light-mode .feature-desc  { color: #6b7280; }\n\n/* ── Cards ── */\nhtml.light-mode .card {\n    background: rgba(255,255,255,0.9);\n    border-color: rgba(0,0,0,0.08);\n    box-shadow: 0 2px 12px rgba(0,0,0,0.06);\n}\nhtml.light-mode .card-title  { color: #1e1b4b; }\nhtml.light-mode .overview-text { color: #374151; }\nhtml.light-mode .takeaway-item { color: #4b5563; }\nhtml.light-mode .takeaways-title { color: #374151; }\n\n/* ── Video Header ── */\nhtml.light-mode .video-header {\n    background: rgba(238,240,255,0.95);\n    border-bottom-color: rgba(0,0,0,0.08);\n}\nhtml.light-mode .video-title      { color: #1e1b4b; }\nhtml.light-mode .video-meta-info  { color: #6b7280; }\nhtml.light-mode .video-meta-info span { color: #6b7280; }\n\n/* ── Chapters ── */\nhtml.light-mode .chapter-item { border-left-color: rgba(0,0,0,0.08); }\nhtml.light-mode .chapter-item:hover { background: rgba(0,0,0,0.03); }\nhtml.light-mode .chapter-title { color: #1e1b4b; }\nhtml.light-mode .chapter-desc  { color: #6b7280; }\nhtml.light-mode .chapter-time  { color: #9ca3af; }\n\n/* ── Quiz ── */\nhtml.light-mode .quiz-question-text { color: #1e1b4b; }\nhtml.light-mode .quiz-option {\n    background: rgba(0,0,0,0.04);\n    border-color: rgba(0,0,0,0.1);\n    color: #374151;\n}\nhtml.light-mode .quiz-option:hover { background: rgba(109,40,217,0.07); border-color: rgba(109,40,217,0.2); }\n\n/* ── Transcript ── */\nhtml.light-mode .transcript-line { color: #6b7280; }\nhtml.light-mode .transcript-line.ts-active {\n    color: #1e1b4b;\n    background: rgba(109,40,217,0.07);\n}\nhtml.light-mode .transcript-search-input {\n    background: rgba(0,0,0,0.04);\n    border-color: rgba(0,0,0,0.1);\n    color: #1e1b4b;\n}\n\n/* ── Notes ── */\nhtml.light-mode .notes-textarea {\n    background: rgba(0,0,0,0.02);\n    color: #1e1b4b;\n}\nhtml.light-mode .notes-word-count { color: #9ca3af; }\nhtml.light-mode .notes-save-status { color: #9ca3af; }\n\n/* ── Streak Card ── */\nhtml.light-mode .streak-card {\n    background: rgba(109,40,217,0.05);\n    border-color: rgba(109,40,217,0.12);\n}\nhtml.light-mode .streak-label { color: #9ca3af; }\nhtml.light-mode .streak-best  { color: #7c3aed; }\nhtml.light-mode .streak-unit  { color: #9ca3af; }\nhtml.light-mode .badges-open-btn {\n    background: rgba(109,40,217,0.06);\n    border-color: rgba(109,40,217,0.15);\n    color: #7c3aed;\n}\nhtml.light-mode .streak-dot { background: rgba(0,0,0,0.08); border-color: rgba(0,0,0,0.1); }\nhtml.light-mode .streak-dow { color: #9ca3af; }\n\n/* ── Progress ── */\nhtml.light-mode .progress-track { background: rgba(0,0,0,0.08); }\nhtml.light-mode .progress-label { color: #6b7280; }\nhtml.light-mode .progress-pct   { color: #7c3aed; }\n\n/* ── Bookmarks ── */\nhtml.light-mode .bookmark-item { border-color: rgba(0,0,0,0.07); }\nhtml.light-mode .bookmark-item:hover { background: rgba(0,0,0,0.03); }\nhtml.light-mode .bookmark-label { color: #374151; }\nhtml.light-mode .bookmark-time  { color: #7c3aed; }\nhtml.light-mode .bookmarks-empty { color: #9ca3af; }\n\n/* ── Badges Page ── */\nhtml.light-mode .badges-page { background: #eef0ff; }\nhtml.light-mode .badges-page-header { border-bottom-color: rgba(0,0,0,0.08); }\nhtml.light-mode .bp-title    { color: #1e1b4b; }\nhtml.light-mode .bp-subtitle { color: #6b7280; }\nhtml.light-mode .bp-back-btn { background: rgba(0,0,0,0.05); border-color: rgba(0,0,0,0.1); color: #4b5563; }\nhtml.light-mode .badge-stat-chip { background: rgba(0,0,0,0.05); border-color: rgba(0,0,0,0.08); color: #6b7280; }\nhtml.light-mode .bp-sb-label { color: #9ca3af; }\nhtml.light-mode .bp-streak-bar { background: rgba(0,0,0,0.08); }\nhtml.light-mode .badge-cat-label { color: #9ca3af; }\nhtml.light-mode .bc-progress { background: rgba(0,0,0,0.06); color: #9ca3af; }\nhtml.light-mode .bp-item.badge-earned { background: rgba(109,40,217,0.07); border-color: rgba(109,40,217,0.18); }\nhtml.light-mode .bp-item.badge-locked { background: rgba(0,0,0,0.03); border-color: rgba(0,0,0,0.07); }\nhtml.light-mode .badge-name { color: #7c3aed; }\nhtml.light-mode .badge-desc { color: #9ca3af; }\nhtml.light-mode .badge-earned .badge-desc { color: #6b7280; }\n\n/* ── Toast ── */\nhtml.light-mode .badge-toast {\n    background: linear-gradient(135deg, #ede9fe, #e0e7ff);\n    border-color: rgba(109,40,217,0.25);\n}\nhtml.light-mode .bt-text strong { color: #7c3aed; }\nhtml.light-mode .bt-text span   { color: #1e1b4b; }\n\n/* ── Badge tooltip popover ── */\nhtml.light-mode #badgeTooltip {\n    background: #fff;\n    border-color: rgba(109,40,217,0.2);\n    color: #374151;\n    box-shadow: 0 6px 24px rgba(0,0,0,0.1);\n}\nhtml.light-mode #badgeTooltip strong { color: #7c3aed; }\n\n/* ── Scrollbars ── */\nhtml.light-mode ::-webkit-scrollbar-track { background: rgba(0,0,0,0.04); }\nhtml.light-mode ::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.18); border-radius: 4px; }\n\n\n
+/* ════════════════════════════════════════════════
+   Theme Toggle & Light Mode
+   ════════════════════════════════════════════════ */
+
+/* ════════════════════════════════════ THEME TOGGLE BUTTON === */
+.theme-toggle-btn {
+    width: 36px; height: 36px; border-radius: 10px;
+    border: 1px solid rgba(255,255,255,0.1);
+    background: rgba(255,255,255,0.06);
+    cursor: pointer; font-size: 16px;
+    display: flex; align-items: center; justify-content: center;
+    transition: all 0.2s; flex-shrink: 0;
+}
+.theme-toggle-btn:hover {
+    background: rgba(255,255,255,0.12);
+    transform: rotate(20deg) scale(1.1);
+}
+
+/* ════════════════════════════════════ LIGHT MODE ═══ */
+html.light-mode {
+    /* Override CSS variables */
+    --bg-primary:    #eef0ff;
+    --bg-card:       rgba(255,255,255,0.85);
+    --bg-card-hover: rgba(255,255,255,0.95);
+    --border:        rgba(0,0,0,0.08);
+    --border-accent: rgba(109,40,217,0.3);
+    --text-primary:  #1e1b4b;
+    --text-secondary:#4b5563;
+    --text-muted:    #6b7280;
+    --shadow-card:   0 4px 24px rgba(0,0,0,0.08);
+    --accent-glow:   rgba(109,40,217,0.12);
+}
+
+/* Body */
+html.light-mode body {
+    background: #eef0ff;
+    color: #1e1b4b;
+}
+
+/* Replace dark ambient background with soft light version */
+html.light-mode .bg-gradient {
+    background:
+        radial-gradient(ellipse 90% 60% at 15% 0%, rgba(139,92,246,0.08) 0%, transparent 55%),
+        radial-gradient(ellipse 70% 55% at 85% 95%, rgba(96,165,250,0.06) 0%, transparent 55%),
+        linear-gradient(180deg, #eef0ff 0%, #f3f0ff 100%);
+}
+html.light-mode .bg-orbs { opacity: 0.3; }
+
+/* ── Header ── */
+html.light-mode .header {
+    background: rgba(238,240,255,0.95);
+    border-bottom: 1px solid rgba(0,0,0,0.08);
+    backdrop-filter: blur(12px);
+}
+html.light-mode .logo-text { color: #1e1b4b; }
+html.light-mode .history-btn {
+    background: rgba(0,0,0,0.05);
+    border-color: rgba(0,0,0,0.1);
+    color: #4b5563;
+}
+html.light-mode .history-btn:hover { background: rgba(0,0,0,0.1); }
+html.light-mode .theme-toggle-btn {
+    border-color: rgba(0,0,0,0.12);
+    background: rgba(0,0,0,0.05);
+}
+html.light-mode .theme-toggle-btn:hover { background: rgba(0,0,0,0.1); }
+html.light-mode .history-panel {
+    background: #fff;
+    border-color: rgba(0,0,0,0.1);
+    box-shadow: 0 8px 32px rgba(0,0,0,0.12);
+}
+html.light-mode .hist-entry { border-bottom-color: rgba(0,0,0,0.05); }
+html.light-mode .hist-entry:hover { background: rgba(0,0,0,0.03); }
+html.light-mode .hist-title { color: #1e1b4b; }
+html.light-mode .hist-meta  { color: #9ca3af; }
+
+/* ── Hero ── */
+html.light-mode .hero-tag {
+    background: rgba(109,40,217,0.08);
+    border-color: rgba(109,40,217,0.2);
+    color: #6d28d9;
+}
+html.light-mode .hero-title { color: #1e1b4b; }
+html.light-mode .hero-subtitle { color: #4b5563; }
+
+/* Fix gradient text — re-color to dark purple gradient */
+html.light-mode .gradient-text {
+    background: linear-gradient(135deg, #7c3aed 0%, #4f46e5 50%, #7c3aed 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+/* ── URL Input ── */
+html.light-mode .url-form-card {
+    background: rgba(255,255,255,0.9);
+    border-color: rgba(109,40,217,0.15);
+    box-shadow: 0 8px 40px rgba(109,40,217,0.08);
+}
+html.light-mode .url-input-wrapper {
+    background: rgba(0,0,0,0.03);
+    border-color: rgba(0,0,0,0.08);
+}
+html.light-mode .url-input {
+    background: transparent;
+    color: #1e1b4b;
+}
+html.light-mode .url-input::placeholder { color: #9ca3af; }
+html.light-mode .url-hint { color: #9ca3af; }
+html.light-mode .language-grid-btn {
+    background: rgba(0,0,0,0.04);
+    border-color: rgba(0,0,0,0.08);
+    color: #4b5563;
+}
+html.light-mode .language-grid-btn:hover { background: rgba(109,40,217,0.08); }
+html.light-mode .language-grid-btn.active {
+    background: rgba(109,40,217,0.1);
+    border-color: rgba(109,40,217,0.3);
+    color: #6d28d9;
+}
+html.light-mode .label-text { color: #6b7280; }
+
+/* ── Feature cards ── */
+html.light-mode .feature-card {
+    background: rgba(255,255,255,0.7);
+    border-color: rgba(0,0,0,0.08);
+}
+html.light-mode .feature-title { color: #1e1b4b; }
+html.light-mode .feature-desc  { color: #6b7280; }
+
+/* ── Cards ── */
+html.light-mode .card {
+    background: rgba(255,255,255,0.9);
+    border-color: rgba(0,0,0,0.08);
+    box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+}
+html.light-mode .card-title  { color: #1e1b4b; }
+html.light-mode .overview-text { color: #374151; }
+html.light-mode .takeaway-item { color: #4b5563; }
+html.light-mode .takeaways-title { color: #374151; }
+
+/* ── Video Header ── */
+html.light-mode .video-header {
+    background: rgba(238,240,255,0.95);
+    border-bottom-color: rgba(0,0,0,0.08);
+}
+html.light-mode .video-title      { color: #1e1b4b; }
+html.light-mode .video-meta-info  { color: #6b7280; }
+html.light-mode .video-meta-info span { color: #6b7280; }
+
+/* ── Chapters ── */
+html.light-mode .chapter-item { border-left-color: rgba(0,0,0,0.08); }
+html.light-mode .chapter-item:hover { background: rgba(0,0,0,0.03); }
+html.light-mode .chapter-title { color: #1e1b4b; }
+html.light-mode .chapter-desc  { color: #6b7280; }
+html.light-mode .chapter-time  { color: #9ca3af; }
+
+/* ── Quiz ── */
+html.light-mode .quiz-question-text { color: #1e1b4b; }
+html.light-mode .quiz-option {
+    background: rgba(0,0,0,0.04);
+    border-color: rgba(0,0,0,0.1);
+    color: #374151;
+}
+html.light-mode .quiz-option:hover { background: rgba(109,40,217,0.07); border-color: rgba(109,40,217,0.2); }
+
+/* ── Transcript ── */
+html.light-mode .transcript-line { color: #6b7280; }
+html.light-mode .transcript-line.ts-active {
+    color: #1e1b4b;
+    background: rgba(109,40,217,0.07);
+}
+html.light-mode .transcript-search-input {
+    background: rgba(0,0,0,0.04);
+    border-color: rgba(0,0,0,0.1);
+    color: #1e1b4b;
+}
+
+/* ── Notes ── */
+html.light-mode .notes-textarea {
+    background: rgba(0,0,0,0.02);
+    color: #1e1b4b;
+}
+html.light-mode .notes-word-count { color: #9ca3af; }
+html.light-mode .notes-save-status { color: #9ca3af; }
+
+/* ── Streak Card ── */
+html.light-mode .streak-card {
+    background: rgba(109,40,217,0.05);
+    border-color: rgba(109,40,217,0.12);
+}
+html.light-mode .streak-label { color: #9ca3af; }
+html.light-mode .streak-best  { color: #7c3aed; }
+html.light-mode .streak-unit  { color: #9ca3af; }
+html.light-mode .badges-open-btn {
+    background: rgba(109,40,217,0.06);
+    border-color: rgba(109,40,217,0.15);
+    color: #7c3aed;
+}
+html.light-mode .streak-dot { background: rgba(0,0,0,0.08); border-color: rgba(0,0,0,0.1); }
+html.light-mode .streak-dow { color: #9ca3af; }
+
+/* ── Progress ── */
+html.light-mode .progress-track { background: rgba(0,0,0,0.08); }
+html.light-mode .progress-label { color: #6b7280; }
+html.light-mode .progress-pct   { color: #7c3aed; }
+
+/* ── Bookmarks ── */
+html.light-mode .bookmark-item { border-color: rgba(0,0,0,0.07); }
+html.light-mode .bookmark-item:hover { background: rgba(0,0,0,0.03); }
+html.light-mode .bookmark-label { color: #374151; }
+html.light-mode .bookmark-time  { color: #7c3aed; }
+html.light-mode .bookmarks-empty { color: #9ca3af; }
+
+/* ── Badges Page ── */
+html.light-mode .badges-page { background: #eef0ff; }
+html.light-mode .badges-page-header { border-bottom-color: rgba(0,0,0,0.08); }
+html.light-mode .bp-title    { color: #1e1b4b; }
+html.light-mode .bp-subtitle { color: #6b7280; }
+html.light-mode .bp-back-btn { background: rgba(0,0,0,0.05); border-color: rgba(0,0,0,0.1); color: #4b5563; }
+html.light-mode .badge-stat-chip { background: rgba(0,0,0,0.05); border-color: rgba(0,0,0,0.08); color: #6b7280; }
+html.light-mode .bp-sb-label { color: #9ca3af; }
+html.light-mode .bp-streak-bar { background: rgba(0,0,0,0.08); }
+html.light-mode .badge-cat-label { color: #9ca3af; }
+html.light-mode .bc-progress { background: rgba(0,0,0,0.06); color: #9ca3af; }
+html.light-mode .bp-item.badge-earned { background: rgba(109,40,217,0.07); border-color: rgba(109,40,217,0.18); }
+html.light-mode .bp-item.badge-locked { background: rgba(0,0,0,0.03); border-color: rgba(0,0,0,0.07); }
+html.light-mode .badge-name { color: #7c3aed; }
+html.light-mode .badge-desc { color: #9ca3af; }
+html.light-mode .badge-earned .badge-desc { color: #6b7280; }
+
+/* ── Toast ── */
+html.light-mode .badge-toast {
+    background: linear-gradient(135deg, #ede9fe, #e0e7ff);
+    border-color: rgba(109,40,217,0.25);
+}
+html.light-mode .bt-text strong { color: #7c3aed; }
+html.light-mode .bt-text span   { color: #1e1b4b; }
+
+/* ── Badge tooltip popover ── */
+html.light-mode #badgeTooltip {
+    background: #fff;
+    border-color: rgba(109,40,217,0.2);
+    color: #374151;
+    box-shadow: 0 6px 24px rgba(0,0,0,0.1);
+}
+html.light-mode #badgeTooltip strong { color: #7c3aed; }
+
+/* ── Scrollbars ── */
+html.light-mode ::-webkit-scrollbar-track { background: rgba(0,0,0,0.04); }
+html.light-mode ::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.18); border-radius: 4px; }
+
+

@@ -1,1 +1,233 @@
-/* ════════════════════════════════════════════════\n   Flashcard Study Modal\n   ════════════════════════════════════════════════ */\n\n/* ═══════════════════════════════════════════════\n   FLASHCARD STUDY MODAL\n   ═══════════════════════════════════════════════ */\n\n/* Study item in dropdown */\n.fc-study-item { border-bottom: 1px solid rgba(255,255,255,0.06); margin-bottom: 4px; }\n.fc-study-item .fc-menu-title { color: var(--accent-light); }\n.fc-menu-divider { height: 1px; background: rgba(255,255,255,0.07); margin: 4px 0; }\n\n/* Modal overlay */\n.fc-modal-overlay {\n    position: fixed; inset: 0;\n    background: rgba(0,0,0,0.75);\n    backdrop-filter: blur(8px);\n    z-index: 9999;\n    display: flex;\n    align-items: center;\n    justify-content: center;\n    padding: 20px;\n    animation: fcOverlayIn 0.2s ease;\n}\n.fc-modal-overlay.hidden { display: none; }\n@keyframes fcOverlayIn { from { opacity: 0; } to { opacity: 1; } }\n\n.fc-modal {\n    background: var(--card-bg);\n    border: 1px solid rgba(255,255,255,0.1);\n    border-radius: 20px;\n    width: 100%;\n    max-width: 640px;\n    max-height: 90vh;\n    display: flex;\n    flex-direction: column;\n    overflow: hidden;\n    box-shadow: 0 32px 80px rgba(0,0,0,0.6);\n    animation: fcModalIn 0.25s cubic-bezier(0.34,1.56,0.64,1);\n}\n@keyframes fcModalIn { from { transform: scale(0.92) translateY(16px); opacity: 0; } to { transform: scale(1) translateY(0); opacity: 1; } }\n\n/* Header */\n.fc-modal-header {\n    display: flex;\n    align-items: center;\n    gap: 12px;\n    padding: 18px 20px 12px;\n    border-bottom: 1px solid rgba(255,255,255,0.06);\n}\n.fc-modal-title {\n    display: flex; align-items: center; gap: 8px;\n    font-size: 15px; font-weight: 600; color: var(--text-primary);\n    flex: 1; min-width: 0;\n}\n.fc-modal-title span:last-child {\n    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;\n}\n.fc-modal-meta { display: flex; align-items: center; gap: 10px; flex-shrink: 0; }\n.fc-modal-badge {\n    font-size: 11px; padding: 2px 8px;\n    background: rgba(139,92,246,0.15);\n    color: var(--accent-light);\n    border-radius: 20px;\n    border: 1px solid rgba(139,92,246,0.3);\n}\n.fc-card-counter { font-size: 12px; color: var(--text-muted); }\n.fc-modal-close {\n    background: rgba(255,255,255,0.07); border: none;\n    color: var(--text-muted); width: 30px; height: 30px;\n    border-radius: 8px; cursor: pointer; font-size: 14px;\n    display: flex; align-items: center; justify-content: center;\n    transition: all 0.15s; flex-shrink: 0;\n}\n.fc-modal-close:hover { background: rgba(239,68,68,0.15); color: #f87171; }\n\n/* Progress */\n.fc-modal-progress { height: 3px; background: rgba(255,255,255,0.07); }\n.fc-modal-progress-fill {\n    height: 100%; width: 0%;\n    background: linear-gradient(90deg, var(--accent), #a78bfa);\n    transition: width 0.4s ease;\n}\n\n/* Card area */\n.fc-card-area {\n    flex: 1;\n    display: flex;\n    align-items: center;\n    justify-content: center;\n    padding: 24px 20px;\n    perspective: 1200px;\n}\n\n.fc-card {\n    width: 100%; max-width: 560px;\n    height: 220px;\n    cursor: pointer;\n    position: relative;\n    transform-style: preserve-3d;\n    outline: none;\n}\n.fc-card:focus-visible { outline: 2px solid var(--accent); border-radius: 16px; }\n\n.fc-card-inner {\n    width: 100%; height: 100%;\n    position: relative;\n    transform-style: preserve-3d;\n    transition: transform 0.5s cubic-bezier(0.4,0.2,0.2,1);\n    border-radius: 16px;\n}\n\n.fc-card-front, .fc-card-back {\n    position: absolute; inset: 0;\n    backface-visibility: hidden;\n    -webkit-backface-visibility: hidden;\n    border-radius: 16px;\n    display: flex; flex-direction: column;\n    align-items: center; justify-content: center;\n    padding: 24px 28px;\n    gap: 12px;\n    text-align: center;\n    border: 1px solid rgba(255,255,255,0.1);\n}\n.fc-card-front {\n    background: linear-gradient(135deg, rgba(139,92,246,0.12), rgba(99,102,241,0.08));\n}\n.fc-card-back {\n    background: linear-gradient(135deg, rgba(16,185,129,0.1), rgba(5,150,105,0.06));\n    transform: rotateY(180deg);\n    border-color: rgba(16,185,129,0.2);\n}\n\n.fc-side-label {\n    font-size: 10px; font-weight: 600; letter-spacing: 0.1em;\n    text-transform: uppercase; color: var(--text-muted);\n    position: absolute; top: 12px;\n}\n.fc-card-back .fc-side-label { color: #34d399; }\n\n.fc-card-text {\n    font-size: 14px; line-height: 1.65;\n    color: var(--text-primary);\n    white-space: pre-line;\n    max-height: 160px;\n    overflow-y: auto;\n    scrollbar-width: none;\n    width: 100%;\n}\n.fc-card-text::-webkit-scrollbar { display: none; }\n\n.fc-flip-hint {\n    position: absolute; bottom: 12px;\n    font-size: 11px; color: var(--text-muted);\n}\n\n/* Controls row */\n.fc-controls {\n    display: flex;\n    align-items: center;\n    justify-content: space-between;\n    padding: 0 20px 16px;\n    gap: 12px;\n}\n.fc-ctrl-btn {\n    width: 42px; height: 42px;\n    border-radius: 12px;\n    border: 1px solid rgba(255,255,255,0.1);\n    background: rgba(255,255,255,0.05);\n    color: var(--text-primary);\n    cursor: pointer;\n    display: flex; align-items: center; justify-content: center;\n    transition: all 0.15s;\n    flex-shrink: 0;\n}\n.fc-ctrl-btn:hover:not([disabled]) { background: rgba(139,92,246,0.2); border-color: var(--accent); }\n.fc-ctrl-btn[disabled] { opacity: 0.3; cursor: not-allowed; }\n.fc-ctrl-btn svg { width: 18px; height: 18px; }\n\n.fc-rate-btns {\n    display: flex; gap: 8px;\n    transition: opacity 0.25s;\n}\n.fc-rate-btn {\n    padding: 8px 14px;\n    border-radius: 10px;\n    border: 1px solid rgba(255,255,255,0.1);\n    background: rgba(255,255,255,0.05);\n    color: var(--text-primary);\n    font-size: 12px; font-weight: 500;\n    cursor: pointer;\n    transition: all 0.15s;\n    white-space: nowrap;\n}\n.fc-rate-hard:hover { background: rgba(239,68,68,0.15); border-color: #ef4444; color: #f87171; }\n.fc-rate-ok:hover   { background: rgba(234,179,8,0.15);  border-color: #eab308; color: #fde047; }\n.fc-rate-easy:hover { background: rgba(16,185,129,0.15); border-color: #10b981; color: #34d399; }\n\n/* Footer */\n.fc-modal-footer {\n    display: flex;\n    align-items: center;\n    justify-content: center;\n    gap: 8px;\n    padding: 12px 20px 16px;\n    border-top: 1px solid rgba(255,255,255,0.06);\n    flex-wrap: wrap;\n}\n.fc-footer-btn {\n    padding: 6px 14px;\n    border-radius: 8px;\n    border: 1px solid rgba(255,255,255,0.1);\n    background: rgba(255,255,255,0.05);\n    color: var(--text-secondary);\n    font-size: 12px;\n    cursor: pointer;\n    transition: all 0.15s;\n}\n.fc-footer-btn:hover { background: rgba(255,255,255,0.1); color: var(--text-primary); }\n.fc-footer-btn.active {\n    background: rgba(139,92,246,0.2);\n    border-color: var(--accent);\n    color: var(--accent-light);\n}\n\n/* Mobile */\n@media (max-width: 480px) {\n    .fc-card { height: 200px; }\n    .fc-rate-btn { padding: 7px 10px; font-size: 11px; }\n    .fc-modal-footer { gap: 6px; }\n}\n\n
+/* ════════════════════════════════════════════════
+   Flashcard Study Modal
+   ════════════════════════════════════════════════ */
+
+/* ═══════════════════════════════════════════════
+   FLASHCARD STUDY MODAL
+   ═══════════════════════════════════════════════ */
+
+/* Study item in dropdown */
+.fc-study-item { border-bottom: 1px solid rgba(255,255,255,0.06); margin-bottom: 4px; }
+.fc-study-item .fc-menu-title { color: var(--accent-light); }
+.fc-menu-divider { height: 1px; background: rgba(255,255,255,0.07); margin: 4px 0; }
+
+/* Modal overlay */
+.fc-modal-overlay {
+    position: fixed; inset: 0;
+    background: rgba(0,0,0,0.75);
+    backdrop-filter: blur(8px);
+    z-index: 9999;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    animation: fcOverlayIn 0.2s ease;
+}
+.fc-modal-overlay.hidden { display: none; }
+@keyframes fcOverlayIn { from { opacity: 0; } to { opacity: 1; } }
+
+.fc-modal {
+    background: var(--card-bg);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 20px;
+    width: 100%;
+    max-width: 640px;
+    max-height: 90vh;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    box-shadow: 0 32px 80px rgba(0,0,0,0.6);
+    animation: fcModalIn 0.25s cubic-bezier(0.34,1.56,0.64,1);
+}
+@keyframes fcModalIn { from { transform: scale(0.92) translateY(16px); opacity: 0; } to { transform: scale(1) translateY(0); opacity: 1; } }
+
+/* Header */
+.fc-modal-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 18px 20px 12px;
+    border-bottom: 1px solid rgba(255,255,255,0.06);
+}
+.fc-modal-title {
+    display: flex; align-items: center; gap: 8px;
+    font-size: 15px; font-weight: 600; color: var(--text-primary);
+    flex: 1; min-width: 0;
+}
+.fc-modal-title span:last-child {
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.fc-modal-meta { display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
+.fc-modal-badge {
+    font-size: 11px; padding: 2px 8px;
+    background: rgba(139,92,246,0.15);
+    color: var(--accent-light);
+    border-radius: 20px;
+    border: 1px solid rgba(139,92,246,0.3);
+}
+.fc-card-counter { font-size: 12px; color: var(--text-muted); }
+.fc-modal-close {
+    background: rgba(255,255,255,0.07); border: none;
+    color: var(--text-muted); width: 30px; height: 30px;
+    border-radius: 8px; cursor: pointer; font-size: 14px;
+    display: flex; align-items: center; justify-content: center;
+    transition: all 0.15s; flex-shrink: 0;
+}
+.fc-modal-close:hover { background: rgba(239,68,68,0.15); color: #f87171; }
+
+/* Progress */
+.fc-modal-progress { height: 3px; background: rgba(255,255,255,0.07); }
+.fc-modal-progress-fill {
+    height: 100%; width: 0%;
+    background: linear-gradient(90deg, var(--accent), #a78bfa);
+    transition: width 0.4s ease;
+}
+
+/* Card area */
+.fc-card-area {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 24px 20px;
+    perspective: 1200px;
+}
+
+.fc-card {
+    width: 100%; max-width: 560px;
+    height: 220px;
+    cursor: pointer;
+    position: relative;
+    transform-style: preserve-3d;
+    outline: none;
+}
+.fc-card:focus-visible { outline: 2px solid var(--accent); border-radius: 16px; }
+
+.fc-card-inner {
+    width: 100%; height: 100%;
+    position: relative;
+    transform-style: preserve-3d;
+    transition: transform 0.5s cubic-bezier(0.4,0.2,0.2,1);
+    border-radius: 16px;
+}
+
+.fc-card-front, .fc-card-back {
+    position: absolute; inset: 0;
+    backface-visibility: hidden;
+    -webkit-backface-visibility: hidden;
+    border-radius: 16px;
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    padding: 24px 28px;
+    gap: 12px;
+    text-align: center;
+    border: 1px solid rgba(255,255,255,0.1);
+}
+.fc-card-front {
+    background: linear-gradient(135deg, rgba(139,92,246,0.12), rgba(99,102,241,0.08));
+}
+.fc-card-back {
+    background: linear-gradient(135deg, rgba(16,185,129,0.1), rgba(5,150,105,0.06));
+    transform: rotateY(180deg);
+    border-color: rgba(16,185,129,0.2);
+}
+
+.fc-side-label {
+    font-size: 10px; font-weight: 600; letter-spacing: 0.1em;
+    text-transform: uppercase; color: var(--text-muted);
+    position: absolute; top: 12px;
+}
+.fc-card-back .fc-side-label { color: #34d399; }
+
+.fc-card-text {
+    font-size: 14px; line-height: 1.65;
+    color: var(--text-primary);
+    white-space: pre-line;
+    max-height: 160px;
+    overflow-y: auto;
+    scrollbar-width: none;
+    width: 100%;
+}
+.fc-card-text::-webkit-scrollbar { display: none; }
+
+.fc-flip-hint {
+    position: absolute; bottom: 12px;
+    font-size: 11px; color: var(--text-muted);
+}
+
+/* Controls row */
+.fc-controls {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 20px 16px;
+    gap: 12px;
+}
+.fc-ctrl-btn {
+    width: 42px; height: 42px;
+    border-radius: 12px;
+    border: 1px solid rgba(255,255,255,0.1);
+    background: rgba(255,255,255,0.05);
+    color: var(--text-primary);
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    transition: all 0.15s;
+    flex-shrink: 0;
+}
+.fc-ctrl-btn:hover:not([disabled]) { background: rgba(139,92,246,0.2); border-color: var(--accent); }
+.fc-ctrl-btn[disabled] { opacity: 0.3; cursor: not-allowed; }
+.fc-ctrl-btn svg { width: 18px; height: 18px; }
+
+.fc-rate-btns {
+    display: flex; gap: 8px;
+    transition: opacity 0.25s;
+}
+.fc-rate-btn {
+    padding: 8px 14px;
+    border-radius: 10px;
+    border: 1px solid rgba(255,255,255,0.1);
+    background: rgba(255,255,255,0.05);
+    color: var(--text-primary);
+    font-size: 12px; font-weight: 500;
+    cursor: pointer;
+    transition: all 0.15s;
+    white-space: nowrap;
+}
+.fc-rate-hard:hover { background: rgba(239,68,68,0.15); border-color: #ef4444; color: #f87171; }
+.fc-rate-ok:hover   { background: rgba(234,179,8,0.15);  border-color: #eab308; color: #fde047; }
+.fc-rate-easy:hover { background: rgba(16,185,129,0.15); border-color: #10b981; color: #34d399; }
+
+/* Footer */
+.fc-modal-footer {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 12px 20px 16px;
+    border-top: 1px solid rgba(255,255,255,0.06);
+    flex-wrap: wrap;
+}
+.fc-footer-btn {
+    padding: 6px 14px;
+    border-radius: 8px;
+    border: 1px solid rgba(255,255,255,0.1);
+    background: rgba(255,255,255,0.05);
+    color: var(--text-secondary);
+    font-size: 12px;
+    cursor: pointer;
+    transition: all 0.15s;
+}
+.fc-footer-btn:hover { background: rgba(255,255,255,0.1); color: var(--text-primary); }
+.fc-footer-btn.active {
+    background: rgba(139,92,246,0.2);
+    border-color: var(--accent);
+    color: var(--accent-light);
+}
+
+/* Mobile */
+@media (max-width: 480px) {
+    .fc-card { height: 200px; }
+    .fc-rate-btn { padding: 7px 10px; font-size: 11px; }
+    .fc-modal-footer { gap: 6px; }
+}
+

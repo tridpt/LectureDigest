@@ -1,1 +1,288 @@
-/* ════════════════════════════════════════════════\n   Mobile UX Enhancements\n   ════════════════════════════════════════════════ */\n\n/* ══════════════════════════════════════════════════════\n   MOBILE UX ENHANCEMENTS\n   ══════════════════════════════════════════════════════ */\n\n/* ── Bottom Navigation Bar (mobile results view) ── */\n.mobile-bottom-nav {\n    display: none;\n    position: fixed;\n    bottom: 0;\n    left: 0;\n    right: 0;\n    z-index: 150;\n    background: rgba(7,7,18,0.95);\n    backdrop-filter: blur(20px);\n    -webkit-backdrop-filter: blur(20px);\n    border-top: 1px solid rgba(139,92,246,0.15);\n    padding: 6px 8px calc(6px + env(safe-area-inset-bottom, 0px));\n    box-shadow: 0 -4px 30px rgba(0,0,0,0.4);\n}\nhtml.light-mode .mobile-bottom-nav {\n    background: rgba(255,255,255,0.95);\n    border-top-color: rgba(0,0,0,0.08);\n    box-shadow: 0 -4px 20px rgba(0,0,0,0.08);\n}\n.mob-nav-inner {\n    display: flex;\n    justify-content: space-around;\n    align-items: center;\n    max-width: 500px;\n    margin: 0 auto;\n}\n.mob-nav-btn {\n    display: flex;\n    flex-direction: column;\n    align-items: center;\n    gap: 2px;\n    padding: 6px 12px;\n    border-radius: 12px;\n    border: none;\n    background: none;\n    color: var(--text-secondary);\n    font-family: var(--font);\n    font-size: 10px;\n    font-weight: 600;\n    cursor: pointer;\n    transition: all 0.2s;\n    -webkit-tap-highlight-color: transparent;\n    min-width: 56px;\n}\n.mob-nav-btn svg { width: 20px; height: 20px; }\n.mob-nav-btn.active,\n.mob-nav-btn:active {\n    color: var(--accent);\n    background: rgba(139,92,246,0.12);\n}\n\n@media (max-width: 640px) {\n    /* Show bottom nav only on mobile */\n    .mobile-bottom-nav { display: block; }\n\n    /* ── Header: compact, icons only ── */\n    .header { padding: 0 12px; }\n    .header-inner { height: 52px; }\n    .logo-text { font-size: 16px; }\n    .logo-icon { width: 28px; height: 28px; }\n    .dashboard-nav-btn span,\n    .dashboard-nav-btn:not(svg) {\n        font-size: 0; /* hide text */\n    }\n    .dashboard-nav-btn {\n        padding: 8px;\n        gap: 0;\n        font-size: 0;\n    }\n    .dashboard-nav-btn svg { width: 18px; height: 18px; }\n    .history-btn .history-label { display: none; }\n    .history-btn { padding: 8px 10px; gap: 4px; }\n    .theme-toggle-btn { width: 36px; height: 36px; }\n    .header-actions { gap: 4px; }\n\n    /* ── Hero: tighter mobile layout ── */\n    .hero {\n        padding: 40px 16px 30px;\n        min-height: auto;\n    }\n    .hero-title {\n        font-size: 28px;\n        letter-spacing: -1px;\n        line-height: 1.15;\n    }\n    .hero-subtitle {\n        font-size: 14px;\n        padding: 0 8px;\n    }\n    .search-box {\n        padding: 6px;\n        border-radius: 16px;\n    }\n    .search-input {\n        font-size: 14px;\n        padding: 10px 14px;\n    }\n    .search-btn {\n        padding: 12px 20px;\n        font-size: 14px;\n        border-radius: 12px;\n    }\n    .search-hint { font-size: 11px; }\n    .lang-row { gap: 6px; padding: 0 4px; }\n    .lang-btn { padding: 6px 12px; font-size: 12px; }\n\n    /* ── Features grid: single column ── */\n    .features { grid-template-columns: 1fr; gap: 12px; }\n    .feature-card { padding: 16px; }\n\n    /* ── Results view ── */\n    .results-section { padding-bottom: 70px; } /* space for bottom nav */\n    .video-header { padding: 12px 14px; }\n    .video-header-inner {\n        flex-direction: column;\n        gap: 8px;\n        align-items: flex-start;\n    }\n    .video-title { font-size: 16px; line-height: 1.3; }\n    .video-header-actions { width: 100%; overflow-x: auto; -webkit-overflow-scrolling: touch; }\n    .video-header-actions { display: flex; gap: 6px; padding-bottom: 4px; }\n    .tab-nav {\n        overflow-x: auto;\n        -webkit-overflow-scrolling: touch;\n        scrollbar-width: none;\n        padding: 0 12px;\n        gap: 2px;\n    }\n    .tab-nav::-webkit-scrollbar { display: none; }\n    .tab-btn {\n        padding: 10px 14px;\n        font-size: 12px;\n        white-space: nowrap;\n        flex-shrink: 0;\n        min-height: 44px; /* touch target */\n    }\n\n    /* Video player column */\n    .video-column {\n        position: static;\n        height: auto;\n    }\n    .video-player-wrap { border-radius: 0; }\n\n    /* Content cards */\n    .analysis-column { padding: 12px; gap: 12px; }\n    .content-card { border-radius: 14px; }\n    .card-header { padding: 12px 14px; }\n    .card-body { padding: 14px; }\n\n    /* ── Quiz: larger touch targets ── */\n    .quiz-option {\n        padding: 14px 16px;\n        font-size: 14px;\n        min-height: 48px;\n        border-radius: 12px;\n    }\n    .quiz-nav {\n        flex-wrap: wrap;\n        gap: 8px;\n    }\n    .quiz-nav-btn {\n        flex: 1;\n        min-width: 100px;\n        min-height: 44px;\n        font-size: 13px;\n    }\n    .quiz-progress { font-size: 12px; }\n    .quiz-question { font-size: 15px; line-height: 1.5; }\n\n    /* ── Flashcard modal: bottom sheet on mobile ── */\n    .fc-modal-overlay {\n        align-items: flex-end;\n        padding: 0;\n    }\n    .fc-modal {\n        border-radius: 20px 20px 0 0;\n        max-height: 92vh;\n        width: 100%;\n        max-width: 100%;\n        animation: slideUpSheet 0.3s ease;\n    }\n    @keyframes slideUpSheet {\n        from { transform: translateY(100%); }\n        to   { transform: translateY(0); }\n    }\n    .fc-card {\n        height: 220px;\n        border-radius: 16px;\n    }\n    .fc-front, .fc-back { padding: 20px 16px; font-size: 15px; }\n    .fc-rate-row { flex-wrap: wrap; gap: 6px; }\n    .fc-rate-btn {\n        flex: 1;\n        min-width: 60px;\n        min-height: 44px;\n        font-size: 12px;\n    }\n\n    /* ── Topics/timeline ── */\n    .topic-item {\n        padding: 14px;\n    }\n    .topic-summary { font-size: 13px; }\n\n    /* ── Highlights ── */\n    .highlight-card { padding: 12px; }\n\n    /* ── Chat FAB ── */\n    .chat-fab {\n        bottom: 80px; /* above bottom nav */\n        right: 14px;\n    }\n    .chat-panel {\n        width: calc(100vw - 16px);\n        right: 8px;\n        bottom: 140px;\n        max-height: 60vh;\n        border-radius: 18px;\n    }\n\n    /* ── Notes textarea ── */\n    .notes-textarea { min-height: 120px; }\n\n    /* ── Key takeaways ── */\n    .takeaway-item { padding: 8px 12px; font-size: 13px; }\n\n    /* ── History panel ── */\n    .history-panel {\n        width: 100vw;\n        right: 0;\n        top: 52px;\n        border-radius: 0 0 16px 16px;\n        max-height: 70vh;\n    }\n\n    /* ── Export PDF button ── */\n    .export-pdf-btn {\n        padding: 8px 12px;\n        font-size: 11px;\n    }\n    .new-video-btn {\n        padding: 8px 14px;\n        font-size: 12px;\n    }\n\n    /* ── Bookmark button ── */\n    .bookmark-btn { min-height: 40px; }\n\n    /* ── Mind map modal ── */\n    .mm-overlay { padding: 8px; }\n    .mm-modal { border-radius: 16px; }\n\n    /* ── General touch improvements ── */\n    button, [role="button"] {\n        -webkit-tap-highlight-color: transparent;\n    }\n    * { -webkit-text-size-adjust: 100%; }\n}\n\n/* Extra small screens (< 380px) */\n@media (max-width: 380px) {\n    .hero-title { font-size: 24px; }\n    .search-btn { padding: 10px 16px; }\n    .mob-nav-btn { padding: 4px 8px; font-size: 9px; min-width: 48px; }\n    .tab-btn { padding: 8px 10px; font-size: 11px; }\n    .video-title { font-size: 14px; }\n}\n\n/* ── Safe area for notch devices ── */\n@supports(padding: max(0px)) {\n    .mobile-bottom-nav {\n        padding-bottom: max(6px, env(safe-area-inset-bottom));\n    }\n    .header {\n        padding-top: env(safe-area-inset-top, 0px);\n    }\n}\n\n
+/* ════════════════════════════════════════════════
+   Mobile UX Enhancements
+   ════════════════════════════════════════════════ */
+
+/* ══════════════════════════════════════════════════════
+   MOBILE UX ENHANCEMENTS
+   ══════════════════════════════════════════════════════ */
+
+/* ── Bottom Navigation Bar (mobile results view) ── */
+.mobile-bottom-nav {
+    display: none;
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    z-index: 150;
+    background: rgba(7,7,18,0.95);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border-top: 1px solid rgba(139,92,246,0.15);
+    padding: 6px 8px calc(6px + env(safe-area-inset-bottom, 0px));
+    box-shadow: 0 -4px 30px rgba(0,0,0,0.4);
+}
+html.light-mode .mobile-bottom-nav {
+    background: rgba(255,255,255,0.95);
+    border-top-color: rgba(0,0,0,0.08);
+    box-shadow: 0 -4px 20px rgba(0,0,0,0.08);
+}
+.mob-nav-inner {
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+    max-width: 500px;
+    margin: 0 auto;
+}
+.mob-nav-btn {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+    padding: 6px 12px;
+    border-radius: 12px;
+    border: none;
+    background: none;
+    color: var(--text-secondary);
+    font-family: var(--font);
+    font-size: 10px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+    -webkit-tap-highlight-color: transparent;
+    min-width: 56px;
+}
+.mob-nav-btn svg { width: 20px; height: 20px; }
+.mob-nav-btn.active,
+.mob-nav-btn:active {
+    color: var(--accent);
+    background: rgba(139,92,246,0.12);
+}
+
+@media (max-width: 640px) {
+    /* Show bottom nav only on mobile */
+    .mobile-bottom-nav { display: block; }
+
+    /* ── Header: compact, icons only ── */
+    .header { padding: 0 12px; }
+    .header-inner { height: 52px; }
+    .logo-text { font-size: 16px; }
+    .logo-icon { width: 28px; height: 28px; }
+    .dashboard-nav-btn span,
+    .dashboard-nav-btn:not(svg) {
+        font-size: 0; /* hide text */
+    }
+    .dashboard-nav-btn {
+        padding: 8px;
+        gap: 0;
+        font-size: 0;
+    }
+    .dashboard-nav-btn svg { width: 18px; height: 18px; }
+    .history-btn .history-label { display: none; }
+    .history-btn { padding: 8px 10px; gap: 4px; }
+    .theme-toggle-btn { width: 36px; height: 36px; }
+    .header-actions { gap: 4px; }
+
+    /* ── Hero: tighter mobile layout ── */
+    .hero {
+        padding: 40px 16px 30px;
+        min-height: auto;
+    }
+    .hero-title {
+        font-size: 28px;
+        letter-spacing: -1px;
+        line-height: 1.15;
+    }
+    .hero-subtitle {
+        font-size: 14px;
+        padding: 0 8px;
+    }
+    .search-box {
+        padding: 6px;
+        border-radius: 16px;
+    }
+    .search-input {
+        font-size: 14px;
+        padding: 10px 14px;
+    }
+    .search-btn {
+        padding: 12px 20px;
+        font-size: 14px;
+        border-radius: 12px;
+    }
+    .search-hint { font-size: 11px; }
+    .lang-row { gap: 6px; padding: 0 4px; }
+    .lang-btn { padding: 6px 12px; font-size: 12px; }
+
+    /* ── Features grid: single column ── */
+    .features { grid-template-columns: 1fr; gap: 12px; }
+    .feature-card { padding: 16px; }
+
+    /* ── Results view ── */
+    .results-section { padding-bottom: 70px; } /* space for bottom nav */
+    .video-header { padding: 12px 14px; }
+    .video-header-inner {
+        flex-direction: column;
+        gap: 8px;
+        align-items: flex-start;
+    }
+    .video-title { font-size: 16px; line-height: 1.3; }
+    .video-header-actions { width: 100%; overflow-x: auto; -webkit-overflow-scrolling: touch; }
+    .video-header-actions { display: flex; gap: 6px; padding-bottom: 4px; }
+    .tab-nav {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+        scrollbar-width: none;
+        padding: 0 12px;
+        gap: 2px;
+    }
+    .tab-nav::-webkit-scrollbar { display: none; }
+    .tab-btn {
+        padding: 10px 14px;
+        font-size: 12px;
+        white-space: nowrap;
+        flex-shrink: 0;
+        min-height: 44px; /* touch target */
+    }
+
+    /* Video player column */
+    .video-column {
+        position: static;
+        height: auto;
+    }
+    .video-player-wrap { border-radius: 0; }
+
+    /* Content cards */
+    .analysis-column { padding: 12px; gap: 12px; }
+    .content-card { border-radius: 14px; }
+    .card-header { padding: 12px 14px; }
+    .card-body { padding: 14px; }
+
+    /* ── Quiz: larger touch targets ── */
+    .quiz-option {
+        padding: 14px 16px;
+        font-size: 14px;
+        min-height: 48px;
+        border-radius: 12px;
+    }
+    .quiz-nav {
+        flex-wrap: wrap;
+        gap: 8px;
+    }
+    .quiz-nav-btn {
+        flex: 1;
+        min-width: 100px;
+        min-height: 44px;
+        font-size: 13px;
+    }
+    .quiz-progress { font-size: 12px; }
+    .quiz-question { font-size: 15px; line-height: 1.5; }
+
+    /* ── Flashcard modal: bottom sheet on mobile ── */
+    .fc-modal-overlay {
+        align-items: flex-end;
+        padding: 0;
+    }
+    .fc-modal {
+        border-radius: 20px 20px 0 0;
+        max-height: 92vh;
+        width: 100%;
+        max-width: 100%;
+        animation: slideUpSheet 0.3s ease;
+    }
+    @keyframes slideUpSheet {
+        from { transform: translateY(100%); }
+        to   { transform: translateY(0); }
+    }
+    .fc-card {
+        height: 220px;
+        border-radius: 16px;
+    }
+    .fc-front, .fc-back { padding: 20px 16px; font-size: 15px; }
+    .fc-rate-row { flex-wrap: wrap; gap: 6px; }
+    .fc-rate-btn {
+        flex: 1;
+        min-width: 60px;
+        min-height: 44px;
+        font-size: 12px;
+    }
+
+    /* ── Topics/timeline ── */
+    .topic-item {
+        padding: 14px;
+    }
+    .topic-summary { font-size: 13px; }
+
+    /* ── Highlights ── */
+    .highlight-card { padding: 12px; }
+
+    /* ── Chat FAB ── */
+    .chat-fab {
+        bottom: 80px; /* above bottom nav */
+        right: 14px;
+    }
+    .chat-panel {
+        width: calc(100vw - 16px);
+        right: 8px;
+        bottom: 140px;
+        max-height: 60vh;
+        border-radius: 18px;
+    }
+
+    /* ── Notes textarea ── */
+    .notes-textarea { min-height: 120px; }
+
+    /* ── Key takeaways ── */
+    .takeaway-item { padding: 8px 12px; font-size: 13px; }
+
+    /* ── History panel ── */
+    .history-panel {
+        width: 100vw;
+        right: 0;
+        top: 52px;
+        border-radius: 0 0 16px 16px;
+        max-height: 70vh;
+    }
+
+    /* ── Export PDF button ── */
+    .export-pdf-btn {
+        padding: 8px 12px;
+        font-size: 11px;
+    }
+    .new-video-btn {
+        padding: 8px 14px;
+        font-size: 12px;
+    }
+
+    /* ── Bookmark button ── */
+    .bookmark-btn { min-height: 40px; }
+
+    /* ── Mind map modal ── */
+    .mm-overlay { padding: 8px; }
+    .mm-modal { border-radius: 16px; }
+
+    /* ── General touch improvements ── */
+    button, [role="button"] {
+        -webkit-tap-highlight-color: transparent;
+    }
+    * { -webkit-text-size-adjust: 100%; }
+}
+
+/* Extra small screens (< 380px) */
+@media (max-width: 380px) {
+    .hero-title { font-size: 24px; }
+    .search-btn { padding: 10px 16px; }
+    .mob-nav-btn { padding: 4px 8px; font-size: 9px; min-width: 48px; }
+    .tab-btn { padding: 8px 10px; font-size: 11px; }
+    .video-title { font-size: 14px; }
+}
+
+/* ── Safe area for notch devices ── */
+@supports(padding: max(0px)) {
+    .mobile-bottom-nav {
+        padding-bottom: max(6px, env(safe-area-inset-bottom));
+    }
+    .header {
+        padding-top: env(safe-area-inset-top, 0px);
+    }
+}
+

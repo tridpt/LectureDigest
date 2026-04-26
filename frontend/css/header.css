@@ -1,1 +1,75 @@
-/* ════════════════════════════════════════════════\n   Header & Navigation\n   ════════════════════════════════════════════════ */\n\n/* ═══════════════════════════════════════════════\n   HEADER\n   ═══════════════════════════════════════════════ */\n.header {\n    position: sticky;\n    top: 0;\n    z-index: 100;\n    padding: 0 24px;\n    background: rgba(7, 7, 18, 0.85);\n    backdrop-filter: blur(24px);\n    -webkit-backdrop-filter: blur(24px);\n    border-bottom: 1px solid var(--border);\n}\n.header-inner {\n    max-width: 1300px;\n    margin: 0 auto;\n    height: 64px;\n    display: flex;\n    align-items: center;\n    justify-content: space-between;\n}\n.logo {\n    display: flex;\n    align-items: center;\n    gap: 10px;\n    text-decoration: none;\n    color: var(--text-primary);\n}\n.logo-icon {\n    width: 36px; height: 36px;\n    background: linear-gradient(135deg, var(--accent), var(--accent-dark));\n    border-radius: var(--radius-sm);\n    display: flex; align-items: center; justify-content: center;\n    padding: 8px;\n    box-shadow: 0 4px 16px var(--accent-glow);\n}\n.logo-icon svg { width: 100%; height: 100%; color: white; }\n.logo-text { font-size: 18px; font-weight: 700; letter-spacing: -0.3px; }\n.logo-text .accent { color: var(--accent-light); }\n\n.header-badge {\n    display: flex;\n    align-items: center;\n    gap: 8px;\n    font-size: 12px;\n    font-weight: 500;\n    color: var(--text-secondary);\n    background: var(--bg-card);\n    border: 1px solid var(--border);\n    padding: 6px 14px;\n    border-radius: 20px;\n}\n.badge-dot {\n    width: 6px; height: 6px;\n    border-radius: 50%;\n    background: var(--success);\n    box-shadow: 0 0 8px var(--success);\n    animation: pulseDot 2s infinite;\n}\n@keyframes pulseDot {\n    0%, 100% { opacity: 1; }\n    50%       { opacity: 0.4; }\n}\n\n/* ── Header actions wrapper ─────────────────── */\n.header-actions {\n    display: flex;\n    align-items: center;\n    gap: 12px;\n}\n\n
+/* ════════════════════════════════════════════════
+   Header & Navigation
+   ════════════════════════════════════════════════ */
+
+/* ═══════════════════════════════════════════════
+   HEADER
+   ═══════════════════════════════════════════════ */
+.header {
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    padding: 0 24px;
+    background: rgba(7, 7, 18, 0.85);
+    backdrop-filter: blur(24px);
+    -webkit-backdrop-filter: blur(24px);
+    border-bottom: 1px solid var(--border);
+}
+.header-inner {
+    max-width: 1300px;
+    margin: 0 auto;
+    height: 64px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+.logo {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    text-decoration: none;
+    color: var(--text-primary);
+}
+.logo-icon {
+    width: 36px; height: 36px;
+    background: linear-gradient(135deg, var(--accent), var(--accent-dark));
+    border-radius: var(--radius-sm);
+    display: flex; align-items: center; justify-content: center;
+    padding: 8px;
+    box-shadow: 0 4px 16px var(--accent-glow);
+}
+.logo-icon svg { width: 100%; height: 100%; color: white; }
+.logo-text { font-size: 18px; font-weight: 700; letter-spacing: -0.3px; }
+.logo-text .accent { color: var(--accent-light); }
+
+.header-badge {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--text-secondary);
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    padding: 6px 14px;
+    border-radius: 20px;
+}
+.badge-dot {
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: var(--success);
+    box-shadow: 0 0 8px var(--success);
+    animation: pulseDot 2s infinite;
+}
+@keyframes pulseDot {
+    0%, 100% { opacity: 1; }
+    50%       { opacity: 0.4; }
+}
+
+/* ── Header actions wrapper ─────────────────── */
+.header-actions {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+

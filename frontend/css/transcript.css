@@ -1,1 +1,149 @@
-/* ════════════════════════════════════════════════\n   Transcript Search\n   ════════════════════════════════════════════════ */\n\n/* ═══════════════════════════════════════════════\n   TRANSCRIPT SEARCH\n   ═══════════════════════════════════════════════ */\n\n.transcript-card { padding: 0; overflow: hidden; }\n.transcript-card .card-header {\n    padding: 16px 18px 12px;\n    border-bottom: 1px solid rgba(255,255,255,0.06);\n}\n.transcript-count {\n    margin-left: auto;\n    font-size: 11px;\n    color: var(--text-muted);\n    background: rgba(255,255,255,0.06);\n    padding: 2px 8px;\n    border-radius: 10px;\n}\n\n/* Search bar */\n.transcript-search-bar {\n    display: flex;\n    align-items: center;\n    gap: 10px;\n    padding: 10px 14px;\n    border-bottom: 1px solid rgba(255,255,255,0.04);\n}\n.transcript-search-wrap {\n    flex: 1;\n    position: relative;\n    display: flex;\n    align-items: center;\n}\n.transcript-search-icon {\n    position: absolute; left: 10px;\n    width: 15px; height: 15px;\n    color: var(--text-muted);\n    pointer-events: none;\n}\n.transcript-search-input {\n    width: 100%;\n    background: rgba(255,255,255,0.05);\n    border: 1px solid rgba(255,255,255,0.1);\n    border-radius: 10px;\n    color: var(--text-primary);\n    font-size: 13px;\n    font-family: inherit;\n    padding: 8px 34px 8px 32px;\n    outline: none;\n    transition: border-color 0.2s;\n}\n.transcript-search-input:focus { border-color: rgba(139,92,246,0.5); }\n.transcript-search-input::placeholder { color: var(--text-muted); }\n.transcript-search-clear {\n    position: absolute; right: 8px;\n    background: none; border: none;\n    color: var(--text-muted);\n    cursor: pointer; padding: 2px;\n    display: flex; align-items: center;\n}\n.transcript-search-clear:hover { color: var(--text-primary); }\n.transcript-search-clear svg { width: 14px; height: 14px; }\n\n/* Match navigation */\n.transcript-match-info {\n    display: flex;\n    align-items: center;\n    gap: 4px;\n    white-space: nowrap;\n    font-size: 12px;\n    color: var(--text-secondary);\n}\n.ts-nav-btn {\n    width: 26px; height: 26px;\n    border-radius: 6px;\n    border: 1px solid rgba(255,255,255,0.1);\n    background: rgba(255,255,255,0.05);\n    color: var(--text-primary);\n    cursor: pointer;\n    font-size: 16px;\n    line-height: 1;\n    display: flex; align-items: center; justify-content: center;\n    transition: all 0.15s;\n}\n.ts-nav-btn:hover { background: rgba(139,92,246,0.2); border-color: var(--accent); }\n\n/* Transcript list */\n.transcript-list {\n    max-height: 400px;\n    overflow-y: auto;\n    scrollbar-width: thin;\n    scrollbar-color: rgba(139,92,246,0.3) transparent;\n}\n.transcript-list::-webkit-scrollbar { width: 4px; }\n.transcript-list::-webkit-scrollbar-thumb { background: rgba(139,92,246,0.3); border-radius: 2px; }\n\n.transcript-line {\n    display: flex;\n    gap: 12px;\n    padding: 9px 16px;\n    cursor: pointer;\n    transition: background 0.15s;\n    align-items: flex-start;\n    border-bottom: 1px solid rgba(255,255,255,0.03);\n}\n.transcript-line:hover { background: rgba(255,255,255,0.04); }\n.transcript-line.tl-match { background: rgba(139,92,246,0.06); }\n.transcript-line.tl-dim { opacity: 0.25; }\n.transcript-line.tl-active {\n    background: rgba(139,92,246,0.14) !important;\n    border-left: 3px solid var(--accent);\n    opacity: 1 !important;\n}\n\n.tl-ts {\n    flex-shrink: 0;\n    font-size: 11px;\n    font-family: 'JetBrains Mono', monospace;\n    color: var(--accent-light);\n    background: rgba(139,92,246,0.1);\n    padding: 2px 6px;\n    border-radius: 5px;\n    margin-top: 2px;\n    min-width: 42px;\n    text-align: center;\n}\n.tl-text {\n    font-size: 13px;\n    color: var(--text-secondary);\n    line-height: 1.6;\n}\n.tl-highlight {\n    background: rgba(250,204,21,0.3);\n    color: #fde047;\n    border-radius: 3px;\n    padding: 0 2px;\n    font-style: normal;\n}\n\n.transcript-empty {\n    padding: 32px;\n    text-align: center;\n    color: var(--text-muted);\n    font-size: 13px;\n}\n\n
+/* ════════════════════════════════════════════════
+   Transcript Search
+   ════════════════════════════════════════════════ */
+
+/* ═══════════════════════════════════════════════
+   TRANSCRIPT SEARCH
+   ═══════════════════════════════════════════════ */
+
+.transcript-card { padding: 0; overflow: hidden; }
+.transcript-card .card-header {
+    padding: 16px 18px 12px;
+    border-bottom: 1px solid rgba(255,255,255,0.06);
+}
+.transcript-count {
+    margin-left: auto;
+    font-size: 11px;
+    color: var(--text-muted);
+    background: rgba(255,255,255,0.06);
+    padding: 2px 8px;
+    border-radius: 10px;
+}
+
+/* Search bar */
+.transcript-search-bar {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 14px;
+    border-bottom: 1px solid rgba(255,255,255,0.04);
+}
+.transcript-search-wrap {
+    flex: 1;
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+.transcript-search-icon {
+    position: absolute; left: 10px;
+    width: 15px; height: 15px;
+    color: var(--text-muted);
+    pointer-events: none;
+}
+.transcript-search-input {
+    width: 100%;
+    background: rgba(255,255,255,0.05);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 10px;
+    color: var(--text-primary);
+    font-size: 13px;
+    font-family: inherit;
+    padding: 8px 34px 8px 32px;
+    outline: none;
+    transition: border-color 0.2s;
+}
+.transcript-search-input:focus { border-color: rgba(139,92,246,0.5); }
+.transcript-search-input::placeholder { color: var(--text-muted); }
+.transcript-search-clear {
+    position: absolute; right: 8px;
+    background: none; border: none;
+    color: var(--text-muted);
+    cursor: pointer; padding: 2px;
+    display: flex; align-items: center;
+}
+.transcript-search-clear:hover { color: var(--text-primary); }
+.transcript-search-clear svg { width: 14px; height: 14px; }
+
+/* Match navigation */
+.transcript-match-info {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    white-space: nowrap;
+    font-size: 12px;
+    color: var(--text-secondary);
+}
+.ts-nav-btn {
+    width: 26px; height: 26px;
+    border-radius: 6px;
+    border: 1px solid rgba(255,255,255,0.1);
+    background: rgba(255,255,255,0.05);
+    color: var(--text-primary);
+    cursor: pointer;
+    font-size: 16px;
+    line-height: 1;
+    display: flex; align-items: center; justify-content: center;
+    transition: all 0.15s;
+}
+.ts-nav-btn:hover { background: rgba(139,92,246,0.2); border-color: var(--accent); }
+
+/* Transcript list */
+.transcript-list {
+    max-height: 400px;
+    overflow-y: auto;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(139,92,246,0.3) transparent;
+}
+.transcript-list::-webkit-scrollbar { width: 4px; }
+.transcript-list::-webkit-scrollbar-thumb { background: rgba(139,92,246,0.3); border-radius: 2px; }
+
+.transcript-line {
+    display: flex;
+    gap: 12px;
+    padding: 9px 16px;
+    cursor: pointer;
+    transition: background 0.15s;
+    align-items: flex-start;
+    border-bottom: 1px solid rgba(255,255,255,0.03);
+}
+.transcript-line:hover { background: rgba(255,255,255,0.04); }
+.transcript-line.tl-match { background: rgba(139,92,246,0.06); }
+.transcript-line.tl-dim { opacity: 0.25; }
+.transcript-line.tl-active {
+    background: rgba(139,92,246,0.14) !important;
+    border-left: 3px solid var(--accent);
+    opacity: 1 !important;
+}
+
+.tl-ts {
+    flex-shrink: 0;
+    font-size: 11px;
+    font-family: 'JetBrains Mono', monospace;
+    color: var(--accent-light);
+    background: rgba(139,92,246,0.1);
+    padding: 2px 6px;
+    border-radius: 5px;
+    margin-top: 2px;
+    min-width: 42px;
+    text-align: center;
+}
+.tl-text {
+    font-size: 13px;
+    color: var(--text-secondary);
+    line-height: 1.6;
+}
+.tl-highlight {
+    background: rgba(250,204,21,0.3);
+    color: #fde047;
+    border-radius: 3px;
+    padding: 0 2px;
+    font-style: normal;
+}
+
+.transcript-empty {
+    padding: 32px;
+    text-align: center;
+    color: var(--text-muted);
+    font-size: 13px;
+}
+

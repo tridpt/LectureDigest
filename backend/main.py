@@ -1150,6 +1150,21 @@ async def get_playlist_info(request: PlaylistRequest):
 
 _FRONTEND_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "frontend"))
 
+# MIME type map for static assets
+_MIME_TYPES = {
+    ".css": "text/css",
+    ".js":  "application/javascript",
+    ".json": "application/json",
+    ".png": "image/png",
+    ".jpg": "image/jpeg",
+    ".svg": "image/svg+xml",
+    ".html": "text/html",
+    ".webp": "image/webp",
+    ".woff2": "font/woff2",
+    ".woff": "font/woff",
+    ".ttf": "font/ttf",
+}
+
 if os.path.isdir(_FRONTEND_DIR):
     @app.get("/{full_path:path}", include_in_schema=False)
     async def spa_catch_all(full_path: str):
@@ -1159,10 +1174,19 @@ if os.path.isdir(_FRONTEND_DIR):
         """
         # Try to serve the actual file
         target = os.path.join(_FRONTEND_DIR, full_path)
+        # Security: prevent path traversal
+        target = os.path.abspath(target)
+        if not target.startswith(_FRONTEND_DIR):
+            raise HTTPException(status_code=403, detail="Forbidden")
         if os.path.isfile(target):
+            ext = os.path.splitext(target)[1].lower()
+            mime = _MIME_TYPES.get(ext)
+            if mime:
+                return FileResponse(target, media_type=mime)
             return FileResponse(target)
         # Fallback: serve index.html for all SPA routes
         index = os.path.join(_FRONTEND_DIR, "index.html")
         if os.path.isfile(index):
             return FileResponse(index)
         raise HTTPException(status_code=404, detail="Not found")
+

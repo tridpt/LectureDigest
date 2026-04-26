@@ -1,1 +1,239 @@
-/* ════════════════════════════════════════════════\n   Streak Card & Badges Modal\n   ════════════════════════════════════════════════ */\n\n/* ═══════════════════════════════════════ STREAK CARD ═══ */\n.streak-card {\n    padding: 14px 16px 10px;\n    background: linear-gradient(135deg, rgba(124,58,237,0.12), rgba(8,8,26,0));\n    border: 1px solid rgba(124,58,237,0.2);\n}\n.streak-main {\n    display: flex; align-items: center; gap: 12px;\n}\n.streak-flame-wrap {\n    display: flex; align-items: baseline; gap: 4px;\n    flex-shrink: 0;\n}\n.streak-flame { font-size: 22px; line-height: 1; }\n.streak-num   {\n    font-size: 32px; font-weight: 800;\n    background: linear-gradient(135deg, #f59e0b, #ef4444);\n    -webkit-background-clip: text; -webkit-text-fill-color: transparent;\n    background-clip: text; line-height: 1;\n}\n.streak-unit  { font-size: 12px; color: #888; margin-bottom: 2px; }\n.streak-meta  { flex: 1; display: flex; flex-direction: column; gap: 2px; }\n.streak-label { font-size: 11px; color: #888; }\n.streak-best  { font-size: 11px; color: #a78bfa; font-weight: 500; }\n.badges-open-btn {\n    flex-shrink: 0; padding: 6px 10px; border-radius: 10px;\n    border: 1px solid rgba(139,92,246,0.25);\n    background: rgba(139,92,246,0.08);\n    color: #c4b5fd; font-size: 13px; cursor: pointer;\n    transition: all 0.15s; display: flex; align-items: center; gap: 4px;\n}\n.badges-open-btn:hover { background: rgba(139,92,246,0.2); }\n/* 7-day mini calendar */\n.streak-week {\n    display: flex; gap: 5px; margin-top: 10px;\n    justify-content: space-between;\n}\n.streak-day {\n    flex: 1; display: flex; flex-direction: column;\n    align-items: center; gap: 3px;\n}\n.streak-dot {\n    width: 10px; height: 10px; border-radius: 50%;\n    background: rgba(255,255,255,0.08);\n    border: 1px solid rgba(255,255,255,0.12);\n    transition: all 0.2s;\n}\n.streak-day-active .streak-dot {\n    background: linear-gradient(135deg, #f59e0b, #ef4444);\n    border-color: #f59e0b;\n    box-shadow: 0 0 6px rgba(245,158,11,0.5);\n}\n.streak-dow { font-size: 9px; color: #555; }\n.streak-day-active .streak-dow { color: #f59e0b; }\n\n/* ═══════════════════════════════════ BADGES MODAL ═══ */\n.badges-modal-overlay {\n    position: fixed; inset: 0; z-index: 1000;\n    background: rgba(0,0,0,0.6); backdrop-filter: blur(4px);\n    display: flex; align-items: center; justify-content: center;\n    opacity: 0; transition: opacity 0.3s ease;\n}\n.badges-modal-overlay.bm-show { opacity: 1; }\n.badges-modal {\n    background: #0f0f23; border: 1px solid rgba(139,92,246,0.25);\n    border-radius: 20px; width: 90%; max-width: 640px;\n    max-height: 80vh; overflow-y: auto;\n    box-shadow: 0 24px 80px rgba(0,0,0,0.6);\n    transform: translateY(24px); transition: transform 0.3s ease;\n    scrollbar-width: thin; scrollbar-color: rgba(139,92,246,0.3) transparent;\n}\n.badges-modal-overlay.bm-show .badges-modal { transform: translateY(0); }\n.badges-modal-header {\n    position: sticky; top: 0; z-index: 10;\n    background: #0f0f23; border-bottom: 1px solid rgba(255,255,255,0.06);\n    padding: 18px 20px 12px; display: flex; flex-direction: column; gap: 10px;\n}\n.badges-modal-header h2 { font-size: 18px; font-weight: 700; color: #f1f1f1; margin: 0; }\n.badges-stats-row { display: flex; gap: 8px; flex-wrap: wrap; }\n.badge-stat-chip {\n    font-size: 11px; color: #888; background: rgba(255,255,255,0.05);\n    padding: 3px 10px; border-radius: 20px;\n    border: 1px solid rgba(255,255,255,0.08);\n}\n.badges-close-btn {\n    position: absolute; top: 16px; right: 16px;\n    width: 28px; height: 28px; border-radius: 8px; border: none;\n    background: rgba(255,255,255,0.08); color: #888;\n    cursor: pointer; font-size: 14px;\n    display: flex; align-items: center; justify-content: center;\n    transition: all 0.15s;\n}\n.badges-close-btn:hover { background: rgba(239,68,68,0.2); color: #f87171; }\n/* Badge grid */\n.badges-grid { padding: 16px 20px 20px; display: flex; flex-direction: column; gap: 20px; }\n.badge-category { display: flex; flex-direction: column; gap: 10px; }\n.badge-cat-label {\n    font-size: 11px; font-weight: 700; color: #666; text-transform: uppercase;\n    letter-spacing: 0.08em;\n}\n.badge-cat-grid {\n    display: grid; grid-template-columns: repeat(auto-fill, minmax(130px,1fr));\n    gap: 10px;\n}\n.badge-item {\n    position: relative; border-radius: 14px; padding: 12px 10px;\n    display: flex; flex-direction: column; align-items: center; gap: 6px;\n    text-align: center; transition: transform 0.15s, box-shadow 0.15s;\n    cursor: default;\n}\n.badge-earned {\n    background: rgba(139,92,246,0.12);\n    border: 1px solid rgba(139,92,246,0.3);\n}\n.badge-earned:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(139,92,246,0.2); }\n.badge-locked {\n    background: rgba(255,255,255,0.03);\n    border: 1px solid rgba(255,255,255,0.07);\n    opacity: 0.5;\n    filter: grayscale(0.6);\n}\n.badge-icon  { font-size: 28px; line-height: 1; }\n.badge-name  { font-size: 11px; font-weight: 600; color: #c4b5fd; }\n.badge-desc  { font-size: 10px; color: #555; line-height: 1.4; }\n.badge-earned .badge-desc { color: #888; }\n.badge-check {\n    position: absolute; top: 6px; right: 6px;\n    background: #10b981; color: white;\n    width: 16px; height: 16px; border-radius: 50%;\n    font-size: 9px; display: flex; align-items: center; justify-content: center;\n}\n\n/* Badge unlock toast */\n.badge-toast {\n    position: fixed; bottom: 80px; left: 50%; transform: translateX(-50%) translateY(20px);\n    background: linear-gradient(135deg, #1e1b4b, #312e81);\n    border: 1px solid rgba(139,92,246,0.4);\n    border-radius: 14px; padding: 12px 18px;\n    display: flex; align-items: center; gap: 12px;\n    box-shadow: 0 8px 32px rgba(0,0,0,0.5);\n    z-index: 9999; opacity: 0;\n    transition: opacity 0.35s ease, transform 0.35s ease;\n    min-width: 220px;\n}\n.badge-toast.bt-show { opacity: 1; transform: translateX(-50%) translateY(0); }\n.bt-icon { font-size: 28px; }\n.bt-text { display: flex; flex-direction: column; }\n.bt-text strong { font-size: 11px; color: #a78bfa; font-weight: 700; text-transform: uppercase; }\n.bt-text span    { font-size: 13px; color: #f1f1f1; font-weight: 500; }\n/* Badge hover tooltip (inline, to the right) */\n.badge-item {\n    overflow: visible !important;  /* allow tooltip to overflow */\n}\n.badge-item::after {\n    content: attr(data-tooltip);\n    position: absolute;\n    left: calc(100% + 10px);\n    top: 50%;\n    transform: translateY(-50%);\n    background: #1a1a3e;\n    border: 1px solid rgba(139,92,246,0.35);\n    border-radius: 10px;\n    padding: 8px 12px;\n    font-size: 11px;\n    color: #ccc;\n    white-space: nowrap;\n    pointer-events: none;\n    opacity: 0;\n    transition: opacity 0.18s ease;\n    z-index: 100;\n    box-shadow: 0 4px 20px rgba(0,0,0,0.5);\n    min-width: 140px;\n    max-width: 200px;\n    white-space: normal;\n    line-height: 1.5;\n}\n/* Arrow pointing left */\n.badge-item::before {\n    content: \'\';\n    position: absolute;\n    left: calc(100% + 4px);\n    top: 50%;\n    transform: translateY(-50%);\n    border: 5px solid transparent;\n    border-right-color: rgba(139,92,246,0.35);\n    pointer-events: none;\n    opacity: 0;\n    transition: opacity 0.18s ease;\n    z-index: 101;\n}\n.badge-item:hover::after,\n.badge-item:hover::before {\n    opacity: 1;\n}\n/* For badges in last 2 columns — flip tooltip to the left */\n.badge-item.tip-left::after {\n    left: auto;\n    right: calc(100% + 10px);\n}\n.badge-item.tip-left::before {\n    left: auto;\n    right: calc(100% + 4px);\n    border-right-color: transparent;\n    border-left-color: rgba(139,92,246,0.35);\n}\n/* Floating badge tooltip (JS-positioned, body-level) */\n#badgeTooltip {\n    position: fixed;\n    background: #16163a;\n    border: 1px solid rgba(139,92,246,0.4);\n    border-radius: 10px;\n    padding: 9px 13px;\n    font-size: 12px;\n    color: #ccc;\n    line-height: 1.5;\n    pointer-events: none;\n    z-index: 9999;\n    max-width: 200px;\n    box-shadow: 0 6px 24px rgba(0,0,0,0.55);\n    opacity: 0;\n    transition: opacity 0.15s ease;\n}\n#badgeTooltip.bt-visible { opacity: 1; }\n#badgeTooltip strong { display: block; color: #c4b5fd; margin-bottom: 2px; font-size: 11px; }\n/* Badge popover refinements */\n#badgeTooltip {\n    cursor: default;\n    display: flex; flex-direction: column; gap: 4px;\n}\n#badgeTooltip strong { font-size: 13px; color: #e2d9f3; font-weight: 700; }\n.bt-desc   { font-size: 11.5px; color: #999; line-height: 1.45; }\n.bt-status { font-size: 11px; margin-top: 2px; }\n.bt-earned { color: #10b981; }\n.bt-locked { color: #666; }\n\n
+/* ════════════════════════════════════════════════
+   Streak Card & Badges Modal
+   ════════════════════════════════════════════════ */
+
+/* ═══════════════════════════════════════ STREAK CARD ═══ */
+.streak-card {
+    padding: 14px 16px 10px;
+    background: linear-gradient(135deg, rgba(124,58,237,0.12), rgba(8,8,26,0));
+    border: 1px solid rgba(124,58,237,0.2);
+}
+.streak-main {
+    display: flex; align-items: center; gap: 12px;
+}
+.streak-flame-wrap {
+    display: flex; align-items: baseline; gap: 4px;
+    flex-shrink: 0;
+}
+.streak-flame { font-size: 22px; line-height: 1; }
+.streak-num   {
+    font-size: 32px; font-weight: 800;
+    background: linear-gradient(135deg, #f59e0b, #ef4444);
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    background-clip: text; line-height: 1;
+}
+.streak-unit  { font-size: 12px; color: #888; margin-bottom: 2px; }
+.streak-meta  { flex: 1; display: flex; flex-direction: column; gap: 2px; }
+.streak-label { font-size: 11px; color: #888; }
+.streak-best  { font-size: 11px; color: #a78bfa; font-weight: 500; }
+.badges-open-btn {
+    flex-shrink: 0; padding: 6px 10px; border-radius: 10px;
+    border: 1px solid rgba(139,92,246,0.25);
+    background: rgba(139,92,246,0.08);
+    color: #c4b5fd; font-size: 13px; cursor: pointer;
+    transition: all 0.15s; display: flex; align-items: center; gap: 4px;
+}
+.badges-open-btn:hover { background: rgba(139,92,246,0.2); }
+/* 7-day mini calendar */
+.streak-week {
+    display: flex; gap: 5px; margin-top: 10px;
+    justify-content: space-between;
+}
+.streak-day {
+    flex: 1; display: flex; flex-direction: column;
+    align-items: center; gap: 3px;
+}
+.streak-dot {
+    width: 10px; height: 10px; border-radius: 50%;
+    background: rgba(255,255,255,0.08);
+    border: 1px solid rgba(255,255,255,0.12);
+    transition: all 0.2s;
+}
+.streak-day-active .streak-dot {
+    background: linear-gradient(135deg, #f59e0b, #ef4444);
+    border-color: #f59e0b;
+    box-shadow: 0 0 6px rgba(245,158,11,0.5);
+}
+.streak-dow { font-size: 9px; color: #555; }
+.streak-day-active .streak-dow { color: #f59e0b; }
+
+/* ═══════════════════════════════════ BADGES MODAL ═══ */
+.badges-modal-overlay {
+    position: fixed; inset: 0; z-index: 1000;
+    background: rgba(0,0,0,0.6); backdrop-filter: blur(4px);
+    display: flex; align-items: center; justify-content: center;
+    opacity: 0; transition: opacity 0.3s ease;
+}
+.badges-modal-overlay.bm-show { opacity: 1; }
+.badges-modal {
+    background: #0f0f23; border: 1px solid rgba(139,92,246,0.25);
+    border-radius: 20px; width: 90%; max-width: 640px;
+    max-height: 80vh; overflow-y: auto;
+    box-shadow: 0 24px 80px rgba(0,0,0,0.6);
+    transform: translateY(24px); transition: transform 0.3s ease;
+    scrollbar-width: thin; scrollbar-color: rgba(139,92,246,0.3) transparent;
+}
+.badges-modal-overlay.bm-show .badges-modal { transform: translateY(0); }
+.badges-modal-header {
+    position: sticky; top: 0; z-index: 10;
+    background: #0f0f23; border-bottom: 1px solid rgba(255,255,255,0.06);
+    padding: 18px 20px 12px; display: flex; flex-direction: column; gap: 10px;
+}
+.badges-modal-header h2 { font-size: 18px; font-weight: 700; color: #f1f1f1; margin: 0; }
+.badges-stats-row { display: flex; gap: 8px; flex-wrap: wrap; }
+.badge-stat-chip {
+    font-size: 11px; color: #888; background: rgba(255,255,255,0.05);
+    padding: 3px 10px; border-radius: 20px;
+    border: 1px solid rgba(255,255,255,0.08);
+}
+.badges-close-btn {
+    position: absolute; top: 16px; right: 16px;
+    width: 28px; height: 28px; border-radius: 8px; border: none;
+    background: rgba(255,255,255,0.08); color: #888;
+    cursor: pointer; font-size: 14px;
+    display: flex; align-items: center; justify-content: center;
+    transition: all 0.15s;
+}
+.badges-close-btn:hover { background: rgba(239,68,68,0.2); color: #f87171; }
+/* Badge grid */
+.badges-grid { padding: 16px 20px 20px; display: flex; flex-direction: column; gap: 20px; }
+.badge-category { display: flex; flex-direction: column; gap: 10px; }
+.badge-cat-label {
+    font-size: 11px; font-weight: 700; color: #666; text-transform: uppercase;
+    letter-spacing: 0.08em;
+}
+.badge-cat-grid {
+    display: grid; grid-template-columns: repeat(auto-fill, minmax(130px,1fr));
+    gap: 10px;
+}
+.badge-item {
+    position: relative; border-radius: 14px; padding: 12px 10px;
+    display: flex; flex-direction: column; align-items: center; gap: 6px;
+    text-align: center; transition: transform 0.15s, box-shadow 0.15s;
+    cursor: default;
+}
+.badge-earned {
+    background: rgba(139,92,246,0.12);
+    border: 1px solid rgba(139,92,246,0.3);
+}
+.badge-earned:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(139,92,246,0.2); }
+.badge-locked {
+    background: rgba(255,255,255,0.03);
+    border: 1px solid rgba(255,255,255,0.07);
+    opacity: 0.5;
+    filter: grayscale(0.6);
+}
+.badge-icon  { font-size: 28px; line-height: 1; }
+.badge-name  { font-size: 11px; font-weight: 600; color: #c4b5fd; }
+.badge-desc  { font-size: 10px; color: #555; line-height: 1.4; }
+.badge-earned .badge-desc { color: #888; }
+.badge-check {
+    position: absolute; top: 6px; right: 6px;
+    background: #10b981; color: white;
+    width: 16px; height: 16px; border-radius: 50%;
+    font-size: 9px; display: flex; align-items: center; justify-content: center;
+}
+
+/* Badge unlock toast */
+.badge-toast {
+    position: fixed; bottom: 80px; left: 50%; transform: translateX(-50%) translateY(20px);
+    background: linear-gradient(135deg, #1e1b4b, #312e81);
+    border: 1px solid rgba(139,92,246,0.4);
+    border-radius: 14px; padding: 12px 18px;
+    display: flex; align-items: center; gap: 12px;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+    z-index: 9999; opacity: 0;
+    transition: opacity 0.35s ease, transform 0.35s ease;
+    min-width: 220px;
+}
+.badge-toast.bt-show { opacity: 1; transform: translateX(-50%) translateY(0); }
+.bt-icon { font-size: 28px; }
+.bt-text { display: flex; flex-direction: column; }
+.bt-text strong { font-size: 11px; color: #a78bfa; font-weight: 700; text-transform: uppercase; }
+.bt-text span    { font-size: 13px; color: #f1f1f1; font-weight: 500; }
+/* Badge hover tooltip (inline, to the right) */
+.badge-item {
+    overflow: visible !important;  /* allow tooltip to overflow */
+}
+.badge-item::after {
+    content: attr(data-tooltip);
+    position: absolute;
+    left: calc(100% + 10px);
+    top: 50%;
+    transform: translateY(-50%);
+    background: #1a1a3e;
+    border: 1px solid rgba(139,92,246,0.35);
+    border-radius: 10px;
+    padding: 8px 12px;
+    font-size: 11px;
+    color: #ccc;
+    white-space: nowrap;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.18s ease;
+    z-index: 100;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+    min-width: 140px;
+    max-width: 200px;
+    white-space: normal;
+    line-height: 1.5;
+}
+/* Arrow pointing left */
+.badge-item::before {
+    content: \'\';
+    position: absolute;
+    left: calc(100% + 4px);
+    top: 50%;
+    transform: translateY(-50%);
+    border: 5px solid transparent;
+    border-right-color: rgba(139,92,246,0.35);
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.18s ease;
+    z-index: 101;
+}
+.badge-item:hover::after,
+.badge-item:hover::before {
+    opacity: 1;
+}
+/* For badges in last 2 columns — flip tooltip to the left */
+.badge-item.tip-left::after {
+    left: auto;
+    right: calc(100% + 10px);
+}
+.badge-item.tip-left::before {
+    left: auto;
+    right: calc(100% + 4px);
+    border-right-color: transparent;
+    border-left-color: rgba(139,92,246,0.35);
+}
+/* Floating badge tooltip (JS-positioned, body-level) */
+#badgeTooltip {
+    position: fixed;
+    background: #16163a;
+    border: 1px solid rgba(139,92,246,0.4);
+    border-radius: 10px;
+    padding: 9px 13px;
+    font-size: 12px;
+    color: #ccc;
+    line-height: 1.5;
+    pointer-events: none;
+    z-index: 9999;
+    max-width: 200px;
+    box-shadow: 0 6px 24px rgba(0,0,0,0.55);
+    opacity: 0;
+    transition: opacity 0.15s ease;
+}
+#badgeTooltip.bt-visible { opacity: 1; }
+#badgeTooltip strong { display: block; color: #c4b5fd; margin-bottom: 2px; font-size: 11px; }
+/* Badge popover refinements */
+#badgeTooltip {
+    cursor: default;
+    display: flex; flex-direction: column; gap: 4px;
+}
+#badgeTooltip strong { font-size: 13px; color: #e2d9f3; font-weight: 700; }
+.bt-desc   { font-size: 11.5px; color: #999; line-height: 1.45; }
+.bt-status { font-size: 11px; margin-top: 2px; }
+.bt-earned { color: #10b981; }
+.bt-locked { color: #666; }
+
