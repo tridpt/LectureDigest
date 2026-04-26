@@ -135,7 +135,11 @@ function renderMindMap() {
     const W    = area.clientWidth  || 960;
     const H    = area.clientHeight || 580;
 
-    const COLORS = {
+    // Detect light mode for color adaptation
+    const isLight = document.documentElement.classList.contains('light-mode');
+    const strokeBg = isLight ? '#f8f9fc' : '#08081a';
+
+    const COLORS_DARK = {
         root:     { node: '#7c3aed', glow: '#7c3aed', text: '#f1f1f1'  },
         category: { node: '#7c3aed', glow: '#9333ea', text: '#e9d5ff'  },
         chapter:  { node: '#4338ca', glow: '#6366f1', text: '#c7d2fe'  },
@@ -143,6 +147,15 @@ function renderMindMap() {
         highlight:{ node: '#92400e', glow: '#f59e0b', text: '#fde68a'  },
         term:     { node: '#065f46', glow: '#10b981', text: '#a7f3d0'  },
     };
+    const COLORS_LIGHT = {
+        root:     { node: '#7c3aed', glow: '#7c3aed', text: '#1e1b4b'  },
+        category: { node: '#7c3aed', glow: '#9333ea', text: '#3730a3'  },
+        chapter:  { node: '#4338ca', glow: '#6366f1', text: '#312e81'  },
+        takeaway: { node: '#0e7490', glow: '#22d3ee', text: '#155e75'  },
+        highlight:{ node: '#92400e', glow: '#f59e0b', text: '#78350f'  },
+        term:     { node: '#065f46', glow: '#10b981', text: '#064e3b'  },
+    };
+    const COLORS = isLight ? COLORS_LIGHT : COLORS_DARK;
     const getColor = (d, prop) => (COLORS[d.data.type] || COLORS.chapter)[prop];
 
     // ── Build data + layout ──
@@ -228,7 +241,7 @@ function renderMindMap() {
     node.append('circle')
         .attr('r', d => d.depth === 0 ? 14 : d.depth === 1 ? 9 : 5)
         .attr('fill', d => getColor(d, 'node'))
-        .attr('stroke', '#08081a')
+        .attr('stroke', strokeBg)
         .attr('stroke-width', d => d.depth === 0 ? 3 : 2)
         .attr('filter', d => d.depth <= 1 ? 'url(#glow-' + d.data.type + ')' : null);
 
@@ -246,10 +259,10 @@ function renderMindMap() {
               .attr('text-anchor', 'middle')
               .attr('font-size', '11px')
               .attr('font-weight', '600')
-              .attr('fill', '#c4b5fd')
+              .attr('fill', isLight ? '#4c1d95' : '#c4b5fd')
               .attr('font-family', 'Inter, system-ui, sans-serif')
               .style('paint-order', 'stroke')
-              .style('stroke', '#08081a')
+              .style('stroke', strokeBg)
               .style('stroke-width', '3px')
               .text(label);
             return;
@@ -268,7 +281,7 @@ function renderMindMap() {
             .attr('fill', getColor(d, 'text'))
             .attr('font-family', 'Inter, system-ui, sans-serif')
             .style('paint-order', 'stroke')
-            .style('stroke', '#08081a')
+            .style('stroke', strokeBg)
             .style('stroke-width', '4px');
 
         // Wrap text into ≤ 2 tspan lines of ~22 chars each
@@ -334,8 +347,10 @@ function mmDownload() {
     const serializer  = new XMLSerializer();
     let   svgStr      = serializer.serializeToString(svgEl);
 
-    // Inject background
-    svgStr = svgStr.replace('<svg', '<svg style="background:#0f0f1e"');
+    // Inject background (light or dark)
+    const isLight = document.documentElement.classList.contains('light-mode');
+    const bgColor = isLight ? '#f8f9fc' : '#0f0f1e';
+    svgStr = svgStr.replace('<svg', '<svg style="background:' + bgColor + '"');
 
     const blob = new Blob([svgStr], { type: 'image/svg+xml;charset=utf-8' });
     const url  = URL.createObjectURL(blob);
@@ -347,7 +362,7 @@ function mmDownload() {
         canvas.width  = svgEl.clientWidth  * 2;
         canvas.height = svgEl.clientHeight * 2;
         const ctx = canvas.getContext('2d');
-        ctx.fillStyle = '#0f0f1e';
+        ctx.fillStyle = bgColor;
         ctx.fillRect(0, 0, canvas.width, canvas.height);
         ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
         URL.revokeObjectURL(url);

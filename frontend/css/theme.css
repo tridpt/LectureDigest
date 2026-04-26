@@ -246,6 +246,134 @@ html.light-mode #badgeTooltip {
 }
 html.light-mode #badgeTooltip strong { color: #7c3aed; }
 
+/* ── Mind Map Button ── */
+html.light-mode .mindmap-btn {
+    background: rgba(79,70,229,0.12);
+    border-color: rgba(79,70,229,0.4);
+    color: #3730a3;
+}
+html.light-mode .mindmap-btn:hover {
+    background: rgba(79,70,229,0.2);
+    border-color: #4f46e5;
+    color: #312e81;
+}
+
+/* ── Mind Map Modal ── */
+html.light-mode .mm-modal-overlay { background: rgba(0,0,0,0.4); }
+html.light-mode .mm-modal {
+    background: #fff;
+    border-color: rgba(0,0,0,0.1);
+    box-shadow: 0 24px 80px rgba(0,0,0,0.15);
+}
+html.light-mode .mm-modal-header { border-bottom-color: rgba(0,0,0,0.08); }
+html.light-mode .mm-modal-title { color: #1e1b4b; }
+html.light-mode .mm-ctrl-btn {
+    border-color: rgba(0,0,0,0.1);
+    background: rgba(0,0,0,0.04);
+    color: #4b5563;
+}
+html.light-mode .mm-ctrl-btn:hover { background: rgba(0,0,0,0.08); color: #1e1b4b; }
+html.light-mode .mm-download-btn:hover { background: rgba(99,102,241,0.1); border-color: #6366f1; color: #4338ca; }
+html.light-mode .mm-modal-close {
+    background: rgba(0,0,0,0.05);
+    color: #6b7280;
+}
+html.light-mode .mm-modal-close:hover { background: rgba(239,68,68,0.1); color: #ef4444; }
+html.light-mode .mm-canvas-area {
+    background: #f8f9fc;
+    background-image:
+        radial-gradient(ellipse at center, #eef0ff 0%, #f8f9fc 60%),
+        radial-gradient(circle, rgba(99,102,241,0.12) 1px, transparent 1px);
+    background-size: 100% 100%, 28px 28px;
+}
+html.light-mode .mm-tooltip {
+    background: rgba(255,255,255,0.97);
+    border-color: rgba(99,102,241,0.25);
+    color: #374151;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.12);
+}
+html.light-mode .mm-legend { border-top-color: rgba(0,0,0,0.06); }
+html.light-mode .mm-legend-item { color: #6b7280; }
+html.light-mode .mm-legend-hint { color: #9ca3af; }
+
+/* ── Share Button ── */
+html.light-mode .share-btn {
+    background: rgba(124,58,237,0.12);
+    border-color: rgba(124,58,237,0.4);
+    color: #5b21b6;
+}
+html.light-mode .share-btn:hover {
+    background: rgba(124,58,237,0.2);
+    border-color: #6d28d9;
+    color: #4c1d95;
+}
+
+/* ── Share Modal ── */
+html.light-mode .share-modal-overlay { background: rgba(0,0,0,0.35); }
+html.light-mode .share-modal {
+    background: #fff;
+    border-color: rgba(0,0,0,0.1);
+    box-shadow: 0 24px 80px rgba(0,0,0,0.15);
+}
+html.light-mode .share-modal-header { border-bottom-color: rgba(0,0,0,0.08); }
+html.light-mode .share-modal-title { color: #1e1b4b; }
+html.light-mode .share-modal-close {
+    background: rgba(0,0,0,0.05);
+    color: #6b7280;
+}
+html.light-mode .share-modal-close:hover { background: rgba(239,68,68,0.1); color: #ef4444; }
+html.light-mode .share-preview-card {
+    background: linear-gradient(135deg, rgba(139,92,246,0.06), rgba(99,102,241,0.03));
+    border-color: rgba(139,92,246,0.15);
+}
+html.light-mode .share-preview-badge { color: #7c3aed; }
+html.light-mode .share-preview-title { color: #1e1b4b; }
+html.light-mode .share-preview-author { color: #9ca3af; }
+html.light-mode .share-preview-summary { color: #4b5563; border-top-color: rgba(0,0,0,0.06); }
+html.light-mode .sp-ta-item { color: #4b5563; background: rgba(0,0,0,0.04); }
+html.light-mode .share-preview-footer { border-top-color: rgba(0,0,0,0.06); color: #9ca3af; }
+html.light-mode .share-preview-footer span:first-child { color: #7c3aed; }
+html.light-mode .share-action-btn {
+    border-color: rgba(0,0,0,0.1);
+    background: rgba(0,0,0,0.04);
+    color: #374151;
+}
+html.light-mode .share-action-btn:hover { background: rgba(0,0,0,0.08); }
+html.light-mode .share-action-native { background: rgba(139,92,246,0.1); border-color: rgba(139,92,246,0.25); color: #6d28d9; }
+html.light-mode .share-action-native:hover { background: rgba(139,92,246,0.18); }
+html.light-mode .share-action-copy:hover { background: rgba(234,179,8,0.1); border-color: rgba(234,179,8,0.3); color: #b45309; }
+html.light-mode .share-action-link:hover { background: rgba(16,185,129,0.1); border-color: rgba(16,185,129,0.3); color: #059669; }
+
+/* ── Export PDF & New Video Buttons ── */
+html.light-mode .export-pdf-btn {
+    background: rgba(16,185,129,0.1);
+    border-color: rgba(16,185,129,0.3);
+    color: #059669;
+}
+html.light-mode .export-pdf-btn:hover {
+    background: rgba(16,185,129,0.18);
+    border-color: #10b981;
+    box-shadow: 0 4px 12px rgba(16,185,129,0.15);
+}
+html.light-mode .new-video-btn {
+    background: rgba(0,0,0,0.04);
+    border-color: rgba(0,0,0,0.1);
+    color: #374151;
+}
+html.light-mode .new-video-btn:hover { border-color: #7c3aed; color: #6d28d9; }
+
+/* ── Dashboard Nav Buttons ── */
+html.light-mode .dashboard-nav-btn {
+    background: rgba(0,0,0,0.05);
+    border-color: rgba(0,0,0,0.1);
+    color: #4b5563;
+}
+html.light-mode .dashboard-nav-btn:hover {
+    background: rgba(109,40,217,0.08);
+    border-color: rgba(109,40,217,0.2);
+    color: #6d28d9;
+}
+
 /* ── Scrollbars ── */
 html.light-mode ::-webkit-scrollbar-track { background: rgba(0,0,0,0.04); }
 html.light-mode ::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.18); border-radius: 4px; }
