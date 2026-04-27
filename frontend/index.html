@@ -54,6 +54,7 @@
     <link rel="stylesheet" href="/css/auth.css">
     <link rel="stylesheet" href="/css/upload.css">
     <link rel="stylesheet" href="/css/share-notes.css">
+    <link rel="stylesheet" href="/css/pwa-install.css">
     <!-- Utilities & Responsive -->
     <link rel="stylesheet" href="/css/utilities.css">
     <link rel="stylesheet" href="/css/mobile.css">
@@ -1554,6 +1555,32 @@
             <div class="compare-body" id="compareBody">
                 <!-- filled by JS -->
             </div>
+        </div>
+    </div>
+
+    <!-- PWA Install Prompt -->
+    <script src="/js/pwa-install.js"></script>
+
+    <!-- ══════════════════════════════ PWA INSTALL BANNER ══════════════════════════════ -->
+    <div class="pwa-install-banner hidden" id="pwaInstallBanner">
+        <button class="pwa-banner-close" onclick="dismissPwaInstall()" aria-label="Đóng">✕</button>
+        <div class="pwa-banner-body">
+            <div class="pwa-banner-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M2 3h6a4 4 0 014 4v14a3 3 0 00-3-3H2z"/><path d="M22 3h-6a4 4 0 00-4 4v14a3 3 0 013-3h7z"/>
+                </svg>
+            </div>
+            <div class="pwa-banner-content">
+                <div class="pwa-banner-title">Cài LectureDigest</div>
+                <div class="pwa-banner-desc">Truy cập nhanh hơn, hoạt động offline, trải nghiệm như app native</div>
+            </div>
+        </div>
+        <div class="pwa-banner-actions">
+            <button class="pwa-install-btn" id="pwaInstallBtn" onclick="installPwa()">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M7 10l5 5 5-5M12 15V3" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                Cài đặt
+            </button>
+            <button class="pwa-later-btn" onclick="dismissPwaInstall()">Để sau</button>
         </div>
     </div>
 

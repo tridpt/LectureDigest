@@ -2,11 +2,10 @@
 // LectureDigest Service Worker — Offline-first caching
 // ══════════════════════════════════════════════════════
 
-const CACHE_NAME = 'lecturedigest-v3';
+const CACHE_NAME = 'lecturedigest-v4';
 const STATIC_ASSETS = [
   '/',
   '/index.html',
-  '/style.css',
   '/css/base.css',
   '/css/ambient.css',
   '/css/header.css',
@@ -35,6 +34,10 @@ const STATIC_ASSETS = [
   '/css/playlist.css',
   '/css/knowledge-graph.css',
   '/css/exam.css',
+  '/css/exercises.css',
+  '/css/auth.css',
+  '/css/upload.css',
+  '/css/share-notes.css',
   '/css/utilities.css',
   '/css/mobile.css',
   '/js/core.js',
@@ -60,6 +63,9 @@ const STATIC_ASSETS = [
   '/js/exam.js',
   '/js/db-sync.js',
   '/js/mobile.js',
+  '/js/auth.js',
+  '/js/upload.js',
+  '/js/share-notes.js',
   '/dashboard.js',
   '/concept-explainer.js',
   '/manifest.json',
