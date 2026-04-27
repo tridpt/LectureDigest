@@ -258,6 +258,44 @@
 }
 .auth-switch a:hover { text-decoration: underline; }
 
+/* ── Forgot Password Link ── */
+.auth-forgot-link {
+    text-align: right;
+    margin-top: 6px;
+}
+.auth-forgot-link a {
+    font-size: 12px;
+    color: var(--text-muted);
+    text-decoration: none;
+    transition: color var(--transition);
+}
+.auth-forgot-link a:hover {
+    color: var(--accent-light);
+    text-decoration: underline;
+}
+
+/* ── Auth Success Message ── */
+.auth-success {
+    background: rgba(16, 185, 129, 0.1);
+    border: 1px solid rgba(16, 185, 129, 0.3);
+    border-radius: var(--radius-md);
+    padding: 12px 14px;
+    font-size: 13px;
+    color: var(--success);
+    margin-bottom: 16px;
+    animation: fadeInUp 0.3s ease;
+    line-height: 1.5;
+}
+
+/* ── Forgot Password Form ── */
+.auth-forgot-form .auth-switch {
+    margin-top: 16px;
+}
+.auth-forgot-form .auth-switch a {
+    color: var(--accent-light);
+    font-weight: 600;
+}
+
 /* ══════════════════════════════════════════
    PROFILE MODAL
    ══════════════════════════════════════════ */

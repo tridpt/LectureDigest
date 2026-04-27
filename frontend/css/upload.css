@@ -1,0 +1,294 @@
+/* ════════════════════════════════════════════════
+   Upload Zone — Input Mode Tabs & File Upload
+   ════════════════════════════════════════════════ */
+
+/* ── Input Mode Tabs ── */
+.input-mode-tabs {
+    display: flex;
+    gap: 4px;
+    max-width: 720px;
+    margin: 0 auto 12px;
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 4px;
+}
+
+.input-tab {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 10px 16px;
+    background: none;
+    border: none;
+    border-radius: var(--radius-md);
+    color: var(--text-muted);
+    font-family: var(--font);
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all var(--transition);
+}
+
+.input-tab:hover {
+    color: var(--text-primary);
+    background: rgba(255, 255, 255, 0.04);
+}
+
+.input-tab.active {
+    background: rgba(139, 92, 246, 0.12);
+    color: var(--accent-light);
+    box-shadow: 0 2px 8px rgba(139, 92, 246, 0.15);
+}
+
+.input-tab svg {
+    flex-shrink: 0;
+}
+
+/* ── Upload Zone ── */
+.upload-zone {
+    max-width: 720px;
+    margin: 0 auto;
+    background: rgba(255, 255, 255, 0.02);
+    border: 2px dashed var(--border);
+    border-radius: var(--radius-xl);
+    padding: 32px 24px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    position: relative;
+}
+
+.upload-zone:hover {
+    border-color: rgba(139, 92, 246, 0.4);
+    background: rgba(139, 92, 246, 0.03);
+}
+
+.upload-zone.drag-over {
+    border-color: var(--accent);
+    background: rgba(139, 92, 246, 0.08);
+    box-shadow: 0 0 0 4px rgba(139, 92, 246, 0.1), 0 8px 32px rgba(139, 92, 246, 0.15);
+    transform: scale(1.01);
+}
+
+.upload-file-input {
+    display: none;
+}
+
+/* ── Upload Zone Content ── */
+.upload-zone-content {
+    text-align: center;
+}
+
+.upload-icon-wrap {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    background: rgba(139, 92, 246, 0.1);
+    margin-bottom: 16px;
+}
+
+.upload-icon {
+    width: 28px;
+    height: 28px;
+    color: var(--accent-light);
+}
+
+.upload-text-primary {
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin-bottom: 6px;
+}
+
+.upload-text-secondary {
+    font-size: 12px;
+    color: var(--text-muted);
+    line-height: 1.5;
+}
+
+/* ── File Preview ── */
+.upload-file-preview {
+    animation: fadeInUp 0.3s ease;
+}
+
+.upload-file-info {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    background: rgba(139, 92, 246, 0.06);
+    border: 1px solid rgba(139, 92, 246, 0.15);
+    border-radius: var(--radius-md);
+    padding: 14px 18px;
+}
+
+.upload-file-icon {
+    font-size: 28px;
+    flex-shrink: 0;
+}
+
+.upload-file-details {
+    flex: 1;
+    min-width: 0;
+    text-align: left;
+}
+
+.upload-file-name {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text-primary);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.upload-file-size {
+    font-size: 12px;
+    color: var(--text-muted);
+    margin-top: 2px;
+}
+
+.upload-file-remove {
+    width: 28px;
+    height: 28px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(239, 68, 68, 0.1);
+    border: 1px solid rgba(239, 68, 68, 0.2);
+    border-radius: 50%;
+    color: #f87171;
+    font-size: 12px;
+    cursor: pointer;
+    transition: all var(--transition);
+    flex-shrink: 0;
+}
+
+.upload-file-remove:hover {
+    background: rgba(239, 68, 68, 0.2);
+    border-color: rgba(239, 68, 68, 0.4);
+}
+
+/* ── Upload Progress ── */
+.upload-progress {
+    margin-top: 16px;
+    animation: fadeIn 0.2s ease;
+}
+
+.upload-progress-bar {
+    height: 4px;
+    background: rgba(255, 255, 255, 0.06);
+    border-radius: 4px;
+    overflow: hidden;
+}
+
+.upload-progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--accent), #60a5fa);
+    border-radius: 4px;
+    transition: width 0.3s ease;
+    width: 0%;
+}
+
+.upload-progress-text {
+    font-size: 12px;
+    color: var(--text-muted);
+    margin-top: 6px;
+    text-align: center;
+}
+
+/* ── Upload Analyze Button ── */
+.upload-analyze-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    width: 100%;
+    margin-top: 16px;
+    padding: 14px 24px;
+    background: linear-gradient(135deg, var(--accent), var(--accent-dark));
+    border: none;
+    border-radius: var(--radius-lg);
+    color: white;
+    font-family: var(--font);
+    font-size: 15px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all var(--transition);
+    box-shadow: 0 4px 16px rgba(109, 40, 217, 0.4);
+}
+
+.upload-analyze-btn:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px rgba(109, 40, 217, 0.55);
+}
+
+.upload-analyze-btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none;
+}
+
+/* ── Upload Language Row ── */
+.upload-lang-row {
+    margin-top: 16px;
+    justify-content: center;
+}
+
+/* ── Upload Player Placeholder (in results view) ── */
+.upload-player-placeholder {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 40px 24px;
+    text-align: center;
+    min-height: 200px;
+}
+
+.upload-player-icon {
+    font-size: 48px;
+    margin-bottom: 12px;
+}
+
+.upload-player-title {
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--text-primary);
+    max-width: 300px;
+    word-break: break-word;
+    margin-bottom: 8px;
+}
+
+.upload-player-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 4px 12px;
+    background: rgba(139, 92, 246, 0.1);
+    border: 1px solid rgba(139, 92, 246, 0.2);
+    border-radius: 20px;
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--accent-light);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+/* ── Animations ── */
+@keyframes fadeInUp {
+    from { opacity: 0; transform: translateY(8px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}

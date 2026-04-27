@@ -9,9 +9,10 @@ import atexit
 import hashlib
 import secrets
 import urllib.request
-from fastapi import FastAPI, HTTPException, Request
+from fastapi import FastAPI, HTTPException, Request, UploadFile, File, Form
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
+import shutil
 
 # Database sync
 from database import (
@@ -27,6 +28,9 @@ from database import (
 )
 from fastapi.responses import FileResponse
 from pydantic import BaseModel, Field
+import smtplib
+from email.mime.text import MIMEText
+from email.mime.multipart import MIMEMultipart
 from typing import Optional
 from youtube_transcript_api import YouTubeTranscriptApi
 from google import genai
@@ -492,6 +496,93 @@ class GoogleAuthRequest(BaseModel):
     credential: str        # Google ID token from GSI
     client_id: str = ''    # optional, for verification
 
+class ForgotPasswordRequest(BaseModel):
+    email: str
+
+class ResetPasswordRequest(BaseModel):
+    token: str
+    new_password: str = Field(min_length=6)
+
+
+# ── Password Reset Token Store ──
+# In-memory store: { token: { email, expires_at, created_at } }
+_reset_tokens: dict = {}
+_RESET_TOKEN_EXPIRY = 3600  # 1 hour
+_RESET_RATE_LIMIT: dict = {}  # { email: last_request_timestamp }
+_RESET_RATE_LIMIT_SECONDS = 60  # 1 request per 60 seconds per email
+
+
+def _cleanup_expired_tokens():
+    """Remove expired tokens from memory."""
+    now = time.time()
+    expired = [t for t, data in _reset_tokens.items() if data["expires_at"] < now]
+    for t in expired:
+        del _reset_tokens[t]
+
+
+def _send_reset_email(to_email: str, reset_url: str, display_name: str = ""):
+    """Send password reset email via SMTP. Falls back to console logging in dev."""
+    smtp_host = os.getenv("SMTP_HOST", "").strip()
+    smtp_port = int(os.getenv("SMTP_PORT", "587"))
+    smtp_user = os.getenv("SMTP_USER", "").strip()
+    smtp_pass = os.getenv("SMTP_PASS", "").strip()
+    smtp_from = os.getenv("SMTP_FROM", smtp_user).strip()
+
+    name = display_name or to_email.split("@")[0]
+
+    html_body = f"""\
+<!DOCTYPE html>
+<html>
+<body style="font-family:'Inter',Arial,sans-serif;background:#0f0f23;color:#e2e8f0;padding:40px 20px;">
+<div style="max-width:480px;margin:0 auto;background:#1a1a2e;border-radius:16px;padding:32px;border:1px solid rgba(139,92,246,0.2);">
+    <div style="text-align:center;margin-bottom:24px;">
+        <div style="font-size:48px;margin-bottom:8px;">🔐</div>
+        <h2 style="margin:0;color:#fff;font-size:22px;font-weight:800;">Đặt lại mật khẩu</h2>
+        <p style="margin:8px 0 0;color:#94a3b8;font-size:14px;">LectureDigest</p>
+    </div>
+    <p style="color:#cbd5e1;font-size:14px;line-height:1.6;">Xin chào <strong>{name}</strong>,</p>
+    <p style="color:#cbd5e1;font-size:14px;line-height:1.6;">Chúng tôi nhận được yêu cầu đặt lại mật khẩu cho tài khoản của bạn. Nhấn nút bên dưới để tạo mật khẩu mới:</p>
+    <div style="text-align:center;margin:28px 0;">
+        <a href="{reset_url}" style="display:inline-block;padding:14px 32px;background:linear-gradient(135deg,#8b5cf6,#6d28d9);color:#fff;border-radius:12px;font-weight:700;font-size:15px;text-decoration:none;">Đặt lại mật khẩu</a>
+    </div>
+    <p style="color:#94a3b8;font-size:13px;line-height:1.5;">Link này sẽ hết hạn sau <strong>1 giờ</strong>. Nếu bạn không yêu cầu đặt lại mật khẩu, hãy bỏ qua email này.</p>
+    <hr style="border:none;border-top:1px solid rgba(255,255,255,0.06);margin:24px 0;">
+    <p style="color:#64748b;font-size:11px;text-align:center;">Nếu nút không hoạt động, hãy copy và dán link này vào trình duyệt:<br>
+    <a href="{reset_url}" style="color:#8b5cf6;word-break:break-all;">{reset_url}</a></p>
+</div>
+</body>
+</html>
+"""
+
+    text_body = f"""Xin chào {name},\n\nĐặt lại mật khẩu LectureDigest:\n{reset_url}\n\nLink hết hạn sau 1 giờ.\nNếu bạn không yêu cầu, hãy bỏ qua email này."""
+
+    if not smtp_host or not smtp_user:
+        # Dev mode: print to console
+        print(f"\n{'='*60}")
+        print(f"📧 PASSWORD RESET EMAIL (dev mode — no SMTP configured)")
+        print(f"To: {to_email}")
+        print(f"Reset URL: {reset_url}")
+        print(f"{'='*60}\n")
+        return
+
+    # Production: send via SMTP
+    msg = MIMEMultipart("alternative")
+    msg["Subject"] = "🔐 Đặt lại mật khẩu — LectureDigest"
+    msg["From"] = f"LectureDigest <{smtp_from}>"
+    msg["To"] = to_email
+    msg.attach(MIMEText(text_body, "plain", "utf-8"))
+    msg.attach(MIMEText(html_body, "html", "utf-8"))
+
+    try:
+        with smtplib.SMTP(smtp_host, smtp_port, timeout=15) as server:
+            server.starttls()
+            server.login(smtp_user, smtp_pass)
+            server.sendmail(smtp_from, to_email, msg.as_string())
+        print(f"[Auth] Reset email sent to {to_email}")
+    except Exception as e:
+        print(f"[Auth] SMTP error: {e}")
+        raise Exception(f"Không thể gửi email: {e}")
+
 
 @app.post("/api/auth/register")
 async def register(req: RegisterRequest):
@@ -670,6 +761,386 @@ async def get_google_client_id():
     """Return the Google Client ID for frontend GSI initialization."""
     client_id = os.getenv("GOOGLE_CLIENT_ID", "").strip()
     return {"client_id": client_id}
+
+
+@app.post("/api/auth/forgot-password")
+async def forgot_password(req: ForgotPasswordRequest):
+    """Request a password reset link. Always returns success to prevent email enumeration."""
+    email = req.email.lower().strip()
+    if not email or "@" not in email:
+        raise HTTPException(status_code=400, detail="Email không hợp lệ")
+
+    # Rate limiting per email
+    now = time.time()
+    last_req = _RESET_RATE_LIMIT.get(email, 0)
+    if now - last_req < _RESET_RATE_LIMIT_SECONDS:
+        remaining = int(_RESET_RATE_LIMIT_SECONDS - (now - last_req))
+        raise HTTPException(
+            status_code=429,
+            detail=f"Vui lòng đợi {remaining} giây trước khi yêu cầu lại"
+        )
+    _RESET_RATE_LIMIT[email] = now
+
+    # Cleanup expired tokens
+    _cleanup_expired_tokens()
+
+    # Check if user exists (do this silently — always return success)
+    user = db_get_user_by_email(email)
+    if user:
+        # Check if account has a password (Google-only accounts can't reset)
+        if not user.get("password_hash"):
+            # Still return success to prevent enumeration
+            return {"ok": True, "message": "Nếu email tồn tại, chúng tôi đã gửi link đặt lại mật khẩu."}
+
+        # Generate secure token
+        token = secrets.token_urlsafe(48)
+        _reset_tokens[token] = {
+            "email": email,
+            "expires_at": now + _RESET_TOKEN_EXPIRY,
+            "created_at": now,
+        }
+
+        # Build reset URL
+        base_url = os.getenv("APP_BASE_URL", "http://localhost:8000").rstrip("/")
+        reset_url = f"{base_url}/reset-password?token={token}"
+
+        # Send email (or print to console in dev)
+        try:
+            _send_reset_email(email, reset_url, user.get("display_name", ""))
+        except Exception as e:
+            print(f"[Auth] Failed to send reset email: {e}")
+            # Don't expose the error to the user
+
+    # Always return success (prevent email enumeration)
+    return {"ok": True, "message": "Nếu email tồn tại, chúng tôi đã gửi link đặt lại mật khẩu."}
+
+
+@app.post("/api/auth/reset-password")
+async def reset_password(req: ResetPasswordRequest):
+    """Reset password using a valid token."""
+    _cleanup_expired_tokens()
+
+    token_data = _reset_tokens.get(req.token)
+    if not token_data:
+        raise HTTPException(status_code=400, detail="Link đặt lại mật khẩu không hợp lệ hoặc đã hết hạn")
+
+    if token_data["expires_at"] < time.time():
+        del _reset_tokens[req.token]
+        raise HTTPException(status_code=400, detail="Link đặt lại mật khẩu đã hết hạn")
+
+    email = token_data["email"]
+    user = db_get_user_by_email(email)
+    if not user:
+        del _reset_tokens[req.token]
+        raise HTTPException(status_code=400, detail="Tài khoản không tồn tại")
+
+    # Hash new password
+    import asyncio
+    loop = asyncio.get_event_loop()
+    new_hash = await loop.run_in_executor(
+        None,
+        lambda: bcrypt.hashpw(req.new_password.encode("utf-8"), bcrypt.gensalt()).decode("utf-8")
+    )
+
+    # Update password in database
+    db_update_user(user["id"], password_hash=new_hash)
+
+    # Invalidate the used token
+    del _reset_tokens[req.token]
+
+    # Also invalidate any other tokens for the same email
+    to_remove = [t for t, d in _reset_tokens.items() if d["email"] == email]
+    for t in to_remove:
+        del _reset_tokens[t]
+
+    print(f"[Auth] Password reset successful for {email}")
+    return {"ok": True, "message": "Mật khẩu đã được đặt lại thành công!"}
+
+
+@app.get("/api/auth/verify-reset-token")
+async def verify_reset_token(token: str):
+    """Verify if a reset token is still valid (used by frontend before showing form)."""
+    _cleanup_expired_tokens()
+    token_data = _reset_tokens.get(token)
+    if not token_data or token_data["expires_at"] < time.time():
+        return {"valid": False}
+    return {"valid": True, "email": token_data["email"]}
+
+
+# ── Supported upload formats ──
+_UPLOAD_MIME_MAP = {
+    ".mp3": "audio/mpeg",
+    ".mp4": "video/mp4",
+    ".wav": "audio/wav",
+    ".m4a": "audio/mp4",
+    ".webm": "video/webm",
+    ".ogg": "audio/ogg",
+    ".flac": "audio/flac",
+    ".aac": "audio/aac",
+    ".mpeg": "video/mpeg",
+    ".mov": "video/quicktime",
+    ".mkv": "video/x-matroska",
+}
+_UPLOAD_MAX_SIZE = 200 * 1024 * 1024  # 200MB
+
+
+@app.post("/api/upload-analyze")
+async def upload_analyze(
+    file: UploadFile = File(...),
+    output_language: str = Form("Vietnamese"),
+    title: str = Form(""),
+):
+    """
+    Upload an audio/video file, transcribe it with Gemini, then analyze.
+    Returns the same JSON structure as /api/analyze for YouTube videos.
+    """
+    if not os.getenv("GEMINI_API_KEY"):
+        raise HTTPException(status_code=500, detail="GEMINI_API_KEY not configured in .env")
+
+    # Validate file extension
+    original_name = file.filename or "upload"
+    ext = os.path.splitext(original_name)[1].lower()
+    if ext not in _UPLOAD_MIME_MAP:
+        supported = ", ".join(_UPLOAD_MIME_MAP.keys())
+        raise HTTPException(
+            status_code=400,
+            detail=f"Định dạng file không được hỗ trợ ({ext}). Hỗ trợ: {supported}"
+        )
+
+    mime_type = _UPLOAD_MIME_MAP[ext]
+
+    # Save to temp file
+    upload_dir = os.path.join(os.path.dirname(__file__), "uploads")
+    os.makedirs(upload_dir, exist_ok=True)
+    tmp_path = os.path.join(upload_dir, f"upload_{secrets.token_hex(8)}{ext}")
+
+    try:
+        # Stream file to disk (memory-safe for large files)
+        total_size = 0
+        with open(tmp_path, "wb") as buf:
+            while True:
+                chunk = await file.read(1024 * 1024)  # 1MB chunks
+                if not chunk:
+                    break
+                total_size += len(chunk)
+                if total_size > _UPLOAD_MAX_SIZE:
+                    raise HTTPException(
+                        status_code=413,
+                        detail=f"File quá lớn. Giới hạn: {_UPLOAD_MAX_SIZE // (1024*1024)}MB"
+                    )
+                buf.write(chunk)
+
+        print(f"[Upload] Saved {original_name} ({total_size // 1024}KB) → {tmp_path}")
+
+        # ── Step 1: Upload to Gemini Files API ──
+        client = get_genai_client()
+        print(f"[Upload] Uploading to Gemini Files API...")
+
+        gemini_file = client.files.upload(file=tmp_path, config={"mime_type": mime_type})
+        print(f"[Upload] Gemini file: {gemini_file.name}, state: {gemini_file.state}")
+
+        # Wait for file to be processed
+        max_wait = 120  # seconds
+        waited = 0
+        while gemini_file.state.name == "PROCESSING" and waited < max_wait:
+            time.sleep(3)
+            waited += 3
+            gemini_file = client.files.get(name=gemini_file.name)
+            print(f"[Upload] Processing... ({waited}s)")
+
+        if gemini_file.state.name == "FAILED":
+            raise HTTPException(status_code=500, detail="Gemini không thể xử lý file này")
+
+        if gemini_file.state.name != "ACTIVE":
+            raise HTTPException(status_code=500, detail=f"File chưa sẵn sàng (state: {gemini_file.state.name})")
+
+        # ── Step 2: Transcribe with Gemini ──
+        print(f"[Upload] Transcribing with Gemini...")
+        transcribe_prompt = """Transcribe this audio/video content with precise timestamps.
+
+Output format — return ONLY a JSON array like this (no markdown, no extra text):
+[
+  {"start": 0.0, "duration": 5.2, "text": "transcribed text for this segment"},
+  {"start": 5.2, "duration": 4.8, "text": "next segment text"},
+  ...
+]
+
+RULES:
+- Segment every 5-15 seconds of speech
+- "start" is in seconds from the beginning (float)
+- "duration" is the length of this segment in seconds (float)
+- Transcribe ALL spoken content accurately
+- Include timestamps for the entire audio/video
+- If there's silence or music, skip those sections
+- Return ONLY the JSON array, no other text"""
+
+        transcript_resp = client.models.generate_content(
+            model=_PRIMARY_MODEL,
+            contents=[transcribe_prompt, gemini_file],
+        )
+        transcript_text = transcript_resp.text.strip()
+
+        # Parse transcript
+        if transcript_text.startswith("```"):
+            transcript_text = re.sub(r"^```(?:json)?\s*\n?", "", transcript_text)
+            transcript_text = re.sub(r"\n?\s*```$", "", transcript_text)
+
+        try:
+            transcript_data = json.loads(transcript_text)
+        except json.JSONDecodeError:
+            # Fallback: try to extract JSON array from text
+            match = re.search(r'\[.*\]', transcript_text, re.DOTALL)
+            if match:
+                transcript_data = json.loads(match.group())
+            else:
+                raise HTTPException(status_code=500, detail="Không thể phân tích transcript từ Gemini")
+
+        if not transcript_data or not isinstance(transcript_data, list):
+            raise HTTPException(status_code=500, detail="Transcript trống hoặc không hợp lệ")
+
+        print(f"[Upload] Got {len(transcript_data)} transcript segments")
+
+        # ── Step 3: Format transcript for analysis ──
+        lines = []
+        for entry in transcript_data:
+            start = float(entry.get("start", 0))
+            text = str(entry.get("text", "")).strip().replace("\n", " ")
+            time_str = format_seconds(int(start))
+            lines.append(f"[{time_str}] {text}")
+
+        full_transcript = "\n".join(lines)
+
+        # Limit transcript length
+        if len(full_transcript) > 60000:
+            chunk = 18000
+            mid = len(full_transcript) // 2
+            full_transcript = (
+                full_transcript[:chunk]
+                + "\n...[middle section]...\n"
+                + full_transcript[mid - chunk // 2 : mid + chunk // 2]
+                + "\n...[end section]...\n"
+                + full_transcript[-chunk:]
+            )
+
+        # ── Step 4: Analyze with Gemini (same prompt as YouTube) ──
+        display_title = title.strip() or original_name
+        print(f"[Upload] Analyzing content: {display_title}")
+
+        prompt = f"""You are an expert educational content analyzer. Analyze this audio/video transcript carefully.
+
+CONTENT INFO:
+Title: {display_title}
+Source: Uploaded file ({original_name})
+
+TRANSCRIPT (with timestamps):
+{full_transcript}
+
+⚠️ IMPORTANT: Generate ALL text in **{output_language}** — this includes the title, overview,
+topic titles, topic summaries, key takeaways, quiz questions, answer options, and explanations.
+Only timestamps and numeric values remain language-neutral.
+
+Analyze this lecture and return a JSON object with the EXACT structure below.
+Be thorough, accurate, and educational in your analysis.
+
+{{
+  "title": "The actual or improved title of this content",
+  "author": "The speaker name if identifiable, otherwise 'Unknown'",
+  "overview": "A comprehensive 3-4 sentence overview of what this content covers and what learners will gain",
+  "total_duration": "Estimated total duration from the transcript",
+  "difficulty": "Beginner or Intermediate or Advanced",
+  "topics": [
+    {{
+      "id": 1,
+      "title": "Topic title (concise, 3-7 words)",
+      "timestamp": <seconds as integer>,
+      "timestamp_str": "MM:SS",
+      "summary": "2-3 sentences describing what is covered in this section",
+      "emoji": "single relevant emoji"
+    }}
+  ],
+  "key_takeaways": [
+    "Clear, actionable takeaway (start with verb)",
+    "..."
+  ],
+  "quiz": [
+    {{
+      "id": 1,
+      "question": "A thoughtful question testing deep understanding",
+      "options": ["Option A text", "Option B text", "Option C text", "Option D text"],
+      "correct_index": 0,
+      "explanation": "Detailed explanation of why the answer is correct and why others are wrong",
+      "timestamp": <seconds as integer>,
+      "timestamp_str": "MM:SS",
+      "difficulty": "easy or medium or hard"
+    }}
+  ],
+  "highlights": [
+    {{
+      "timestamp": <seconds as integer>,
+      "timestamp_str": "MM:SS",
+      "title": "Short moment title (3-6 words)",
+      "description": "1-2 sentences explaining why this exact moment is crucial to understanding the lecture",
+      "type": "key_insight or definition or example or turning_point or summary"
+    }}
+  ]
+}}
+
+REQUIREMENTS:
+- Generate 4-8 topic sections based on actual content structure
+- Generate 8-12 quiz questions covering different parts of the content
+- Generate 4-6 highlights: the most impactful, must-watch moments
+- Timestamps must match actual content in the transcript
+- correct_index is 0-based (0=A, 1=B, 2=C, 3=D)
+- Return ONLY the JSON object — no markdown, no extra text, no code fences"""
+
+        text = call_gemini(prompt)
+        text = text.strip()
+
+        if text.startswith("```"):
+            text = re.sub(r"^```(?:json)?\s*\n?", "", text)
+            text = re.sub(r"\n?\s*```$", "", text)
+
+        result = json.loads(text)
+
+        # Generate a unique ID for uploaded content
+        file_hash = hashlib.md5(original_name.encode() + str(total_size).encode()).hexdigest()[:11]
+        result["video_id"] = f"upload_{file_hash}"
+        result["thumbnail"] = ""  # No thumbnail for uploaded files
+        result["is_upload"] = True
+        result["upload_filename"] = original_name
+
+        if not result.get("title"):
+            result["title"] = display_title
+        if not result.get("author"):
+            result["author"] = "Uploaded File"
+
+        # Include transcript
+        result["transcript"] = transcript_data
+
+        print(f"[Upload] Analysis complete: {result.get('title')}")
+
+        # Clean up Gemini file
+        try:
+            client.files.delete(name=gemini_file.name)
+        except Exception:
+            pass
+
+        return result
+
+    except HTTPException:
+        raise
+    except json.JSONDecodeError as e:
+        raise HTTPException(status_code=500, detail=f"Failed to parse AI response: {str(e)}")
+    except Exception as e:
+        print(f"[Upload] Error: {e}")
+        raise HTTPException(status_code=500, detail=f"Lỗi phân tích file: {str(e)}")
+    finally:
+        # Clean up temp file
+        if os.path.exists(tmp_path):
+            try:
+                os.remove(tmp_path)
+            except Exception:
+                pass
 
 
 @app.post("/api/analyze")
@@ -1566,6 +2037,13 @@ if os.path.isdir(_FRONTEND_DIR):
             if mime:
                 return FileResponse(target, media_type=mime)
             return FileResponse(target)
+
+        # Dedicated pages for specific routes
+        if full_path.rstrip("/") == "reset-password":
+            reset_page = os.path.join(_FRONTEND_DIR, "reset-password.html")
+            if os.path.isfile(reset_page):
+                return FileResponse(reset_page, media_type="text/html")
+
         # Fallback: serve index.html for all SPA routes
         index = os.path.join(_FRONTEND_DIR, "index.html")
         if os.path.isfile(index):

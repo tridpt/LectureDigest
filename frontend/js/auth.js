@@ -183,27 +183,132 @@ function closeAuthModal() {
     if (form) form.reset();
     var errEl = document.getElementById('authError');
     if (errEl) { errEl.textContent = ''; errEl.classList.add('hidden'); }
+    // Reset forgot form state
+    var forgotForm = document.getElementById('authForgotForm');
+    if (forgotForm) {
+        forgotForm.classList.add('hidden');
+        // Re-show hidden fields/buttons in case they were hidden after success
+        var emailField = forgotForm.querySelector('.auth-field');
+        if (emailField) emailField.style.display = '';
+        var btn = document.getElementById('authForgotSubmitBtn');
+        if (btn) btn.style.display = '';
+        var forgotEmail = document.getElementById('authForgotEmail');
+        if (forgotEmail) forgotEmail.value = '';
+    }
+    var forgotErr = document.getElementById('authForgotError');
+    if (forgotErr) { forgotErr.textContent = ''; forgotErr.classList.add('hidden'); }
+    var forgotSuccess = document.getElementById('authForgotSuccess');
+    if (forgotSuccess) { forgotSuccess.textContent = ''; forgotSuccess.classList.add('hidden'); }
+    // Ensure auth form is visible for next open
+    var authForm = document.getElementById('authForm');
+    if (authForm) authForm.classList.remove('hidden');
 }
 
 function _authSetMode(mode) {
     var isRegister = mode === 'register';
+    var isForgot = mode === 'forgot';
     var title = document.getElementById('authModalTitle');
     var nameRow = document.getElementById('authNameRow');
     var submitBtn = document.getElementById('authSubmitBtn');
     var switchText = document.getElementById('authSwitchText');
+    var authForm = document.getElementById('authForm');
+    var forgotForm = document.getElementById('authForgotForm');
+    var authIcon = document.querySelector('.auth-modal-icon');
+    var authSubtitle = document.querySelector('.auth-modal-subtitle');
+    var googleWrap = document.getElementById('authGoogleWrap');
+    var divider = document.querySelector('.auth-divider');
+    var forgotLink = document.getElementById('authForgotLink');
+    var passwordRow = document.getElementById('authPasswordRow');
 
-    if (title) title.textContent = isRegister ? 'Đăng ký tài khoản' : 'Đăng nhập';
-    if (nameRow) nameRow.classList.toggle('hidden', !isRegister);
-    if (submitBtn) submitBtn.textContent = isRegister ? 'Đăng ký' : 'Đăng nhập';
-    if (switchText) {
-        switchText.innerHTML = isRegister
-            ? 'Đã có tài khoản? <a href="#" onclick="event.preventDefault();_authSetMode(\'login\')">Đăng nhập</a>'
-            : 'Chưa có tài khoản? <a href="#" onclick="event.preventDefault();_authSetMode(\'register\')">Đăng ký ngay</a>';
-    }
-
-    document.getElementById('authForm')?.setAttribute('data-mode', mode);
+    // Hide all messages
     var errEl = document.getElementById('authError');
     if (errEl) { errEl.textContent = ''; errEl.classList.add('hidden'); }
+    var successEl = document.getElementById('authSuccess');
+    if (successEl) { successEl.textContent = ''; successEl.classList.add('hidden'); }
+    var forgotErr = document.getElementById('authForgotError');
+    if (forgotErr) { forgotErr.textContent = ''; forgotErr.classList.add('hidden'); }
+    var forgotSuccess = document.getElementById('authForgotSuccess');
+    if (forgotSuccess) { forgotSuccess.textContent = ''; forgotSuccess.classList.add('hidden'); }
+
+    if (isForgot) {
+        // Show forgot password form, hide auth form
+        if (authForm) authForm.classList.add('hidden');
+        if (forgotForm) forgotForm.classList.remove('hidden');
+        if (title) title.textContent = 'Quên mật khẩu';
+        if (authIcon) authIcon.textContent = '📧';
+        if (authSubtitle) authSubtitle.textContent = 'Nhập email để nhận link đặt lại mật khẩu';
+        if (googleWrap) googleWrap.classList.add('hidden');
+        if (divider) divider.classList.add('hidden');
+        // Focus email input
+        setTimeout(function() {
+            var inp = document.getElementById('authForgotEmail');
+            if (inp) inp.focus();
+        }, 100);
+    } else {
+        // Show auth form, hide forgot form
+        if (authForm) authForm.classList.remove('hidden');
+        if (forgotForm) forgotForm.classList.add('hidden');
+        if (googleWrap) googleWrap.classList.remove('hidden');
+        if (divider) divider.classList.remove('hidden');
+
+        if (title) title.textContent = isRegister ? 'Đăng ký tài khoản' : 'Đăng nhập';
+        if (authIcon) authIcon.textContent = '🔐';
+        if (authSubtitle) authSubtitle.textContent = 'Lưu tiến trình học tập của bạn';
+        if (nameRow) nameRow.classList.toggle('hidden', !isRegister);
+        if (submitBtn) submitBtn.textContent = isRegister ? 'Đăng ký' : 'Đăng nhập';
+        if (forgotLink) forgotLink.classList.toggle('hidden', isRegister);
+        if (switchText) {
+            switchText.innerHTML = isRegister
+                ? 'Đã có tài khoản? <a href="#" onclick="event.preventDefault();_authSetMode(\'login\')">Đăng nhập</a>'
+                : 'Chưa có tài khoản? <a href="#" onclick="event.preventDefault();_authSetMode(\'register\')">Đăng ký ngay</a>';
+        }
+
+        authForm?.setAttribute('data-mode', mode);
+    }
+}
+
+// ── Submit Forgot Password ──
+async function submitForgotPassword() {
+    var email = document.getElementById('authForgotEmail')?.value.trim();
+    var errEl = document.getElementById('authForgotError');
+    var successEl = document.getElementById('authForgotSuccess');
+    var btn = document.getElementById('authForgotSubmitBtn');
+
+    if (errEl) errEl.classList.add('hidden');
+    if (successEl) successEl.classList.add('hidden');
+
+    if (!email || email.indexOf('@') === -1) {
+        if (errEl) { errEl.textContent = 'Vui lòng nhập email hợp lệ'; errEl.classList.remove('hidden'); }
+        return;
+    }
+
+    var origText = btn?.textContent;
+    if (btn) { btn.disabled = true; btn.textContent = 'Đang gửi...'; }
+
+    try {
+        var res = await fetch(API_BASE + '/api/auth/forgot-password', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email: email })
+        });
+        var data = await res.json();
+        if (!res.ok) throw new Error(data.detail || 'Lỗi xử lý');
+
+        // Show success message
+        if (successEl) {
+            successEl.innerHTML = '✅ ' + data.message + '<br><small style="opacity:0.7;margin-top:4px;display:block;">Kiểm tra hộp thư (và thư mục spam) của bạn</small>';
+            successEl.classList.remove('hidden');
+        }
+        // Hide email input
+        var emailField = document.querySelector('#authForgotForm .auth-field');
+        if (emailField) emailField.style.display = 'none';
+        if (btn) btn.style.display = 'none';
+
+    } catch (err) {
+        if (errEl) { errEl.textContent = err.message; errEl.classList.remove('hidden'); }
+    } finally {
+        if (btn) { btn.disabled = false; btn.textContent = origText; }
+    }
 }
 
 // ── Submit auth form ──

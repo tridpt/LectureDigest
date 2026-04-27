@@ -52,6 +52,7 @@
     <link rel="stylesheet" href="/css/exam.css">
     <link rel="stylesheet" href="/css/exercises.css">
     <link rel="stylesheet" href="/css/auth.css">
+    <link rel="stylesheet" href="/css/upload.css">
     <!-- Utilities & Responsive -->
     <link rel="stylesheet" href="/css/utilities.css">
     <link rel="stylesheet" href="/css/mobile.css">
@@ -208,6 +209,18 @@
                 and quiz questions — all linked to exact timestamps.
             </p>
 
+            <div class="input-mode-tabs" id="inputModeTabs">
+                <button class="input-tab active" data-mode="url" onclick="setInputMode('url')">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><path d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"/><path d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                    YouTube URL
+                </button>
+                <button class="input-tab" data-mode="upload" onclick="setInputMode('upload')">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M17 8l-5-5-5 5M12 3v12" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                    Upload File
+                </button>
+            </div>
+
+            <!-- URL Input Mode -->
             <div class="search-box" id="searchBox" role="search">
                 <div class="search-input-wrapper">
                     <svg class="search-icon" viewBox="0 0 24 24" fill="none" aria-hidden="true">
@@ -247,7 +260,65 @@
                         <button class="lang-btn" data-lang="Chinese" onclick="setLang(this)">🇨🇳 中文</button>
                     </div>
                 </div>
-        </div>
+            </div>
+
+            <!-- Upload Mode -->
+            <div class="upload-zone hidden" id="uploadZone"
+                 ondragover="handleUploadDragOver(event)"
+                 ondragleave="handleUploadDragLeave(event)"
+                 ondrop="handleUploadDrop(event)"
+                 onclick="triggerFileUpload()">
+                <input type="file" id="uploadFileInput" class="upload-file-input"
+                       accept=".mp3,.mp4,.wav,.m4a,.webm,.ogg,.flac,.aac,.mov,.mkv,.mpeg"
+                       onchange="handleFileSelected(event)">
+                <div class="upload-zone-content" id="uploadZoneContent">
+                    <div class="upload-icon-wrap">
+                        <svg class="upload-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                            <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M17 8l-5-5-5 5M12 3v12" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                    </div>
+                    <div class="upload-text-primary">Kéo thả file hoặc click để chọn</div>
+                    <div class="upload-text-secondary">MP3, MP4, WAV, M4A, WebM, OGG, FLAC, AAC, MOV • Tối đa 200MB</div>
+                </div>
+                <!-- File selected preview -->
+                <div class="upload-file-preview hidden" id="uploadFilePreview">
+                    <div class="upload-file-info">
+                        <div class="upload-file-icon">🎵</div>
+                        <div class="upload-file-details">
+                            <div class="upload-file-name" id="uploadFileName"></div>
+                            <div class="upload-file-size" id="uploadFileSize"></div>
+                        </div>
+                        <button class="upload-file-remove" onclick="event.stopPropagation();removeUploadFile()" aria-label="Xóa file">✕</button>
+                    </div>
+                </div>
+                <!-- Upload progress -->
+                <div class="upload-progress hidden" id="uploadProgress">
+                    <div class="upload-progress-bar">
+                        <div class="upload-progress-fill" id="uploadProgressFill"></div>
+                    </div>
+                    <div class="upload-progress-text" id="uploadProgressText">Đang upload...</div>
+                </div>
+
+                <!-- Language selector for upload -->
+                <div class="lang-row upload-lang-row" role="group" aria-label="Output language" onclick="event.stopPropagation()">
+                    <span class="lang-label">📝 Output in:</span>
+                    <div class="lang-options" id="uploadLangOptions">
+                        <button class="lang-btn" data-lang="English" onclick="event.stopPropagation();setLang(this)">🇺🇸 English</button>
+                        <button class="lang-btn active" data-lang="Vietnamese" onclick="event.stopPropagation();setLang(this)">🇻🇳 Tiếng Việt</button>
+                        <button class="lang-btn" data-lang="French" onclick="event.stopPropagation();setLang(this)">🇫🇷 Français</button>
+                        <button class="lang-btn" data-lang="German" onclick="event.stopPropagation();setLang(this)">🇩🇪 Deutsch</button>
+                        <button class="lang-btn" data-lang="Japanese" onclick="event.stopPropagation();setLang(this)">🇯🇵 日本語</button>
+                        <button class="lang-btn" data-lang="Korean" onclick="event.stopPropagation();setLang(this)">🇰🇷 한국어</button>
+                        <button class="lang-btn" data-lang="Chinese" onclick="event.stopPropagation();setLang(this)">🇨🇳 中文</button>
+                    </div>
+                </div>
+
+                <button class="upload-analyze-btn hidden" id="uploadAnalyzeBtn"
+                        onclick="event.stopPropagation();analyzeUploadedFile()">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><path d="M13 7l5 5m0 0l-5 5m5-5H6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                    Phân tích file
+                </button>
+            </div>
 
         <!-- Feature cards -->
         <div class="features" role="list">
@@ -1160,6 +1231,8 @@
     <script src="/dashboard.js"></script>
     <!-- Concept explainer -->
     <script src="/concept-explainer.js"></script>
+    <!-- Upload -->
+    <script src="/js/upload.js"></script>
 
     <!-- ══════════════════════════════ AUTH MODAL ══════════════════════════════ -->
     <div class="auth-modal-overlay hidden" id="authModalOverlay" role="dialog" aria-modal="true" aria-label="Đăng nhập">
@@ -1195,16 +1268,23 @@
                 </div>
 
                 <!-- Password -->
-                <div class="auth-field">
+                <div class="auth-field" id="authPasswordRow">
                     <label for="authPassword">Mật khẩu</label>
                     <div class="auth-input-wrapper">
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>
                         <input type="password" id="authPassword" placeholder="Tối thiểu 6 ký tự" autocomplete="current-password" required>
                     </div>
+                    <!-- Forgot password link (login mode only) -->
+                    <div class="auth-forgot-link" id="authForgotLink">
+                        <a href="#" onclick="event.preventDefault();_authSetMode('forgot')">Quên mật khẩu?</a>
+                    </div>
                 </div>
 
                 <!-- Error message -->
                 <div class="auth-error hidden" id="authError"></div>
+
+                <!-- Success message (for forgot password) -->
+                <div class="auth-success hidden" id="authSuccess"></div>
 
                 <!-- Submit -->
                 <button type="submit" class="auth-submit-btn" id="authSubmitBtn">Đăng nhập</button>
@@ -1214,6 +1294,23 @@
                     Chưa có tài khoản? <a href="#" onclick="event.preventDefault();_authSetMode('register')">Đăng ký ngay</a>
                 </div>
             </form>
+
+            <!-- Forgot Password Form (separate from login/register) -->
+            <div class="auth-forgot-form hidden" id="authForgotForm">
+                <div class="auth-field">
+                    <label for="authForgotEmail">Email đăng ký</label>
+                    <div class="auth-input-wrapper">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+                        <input type="email" id="authForgotEmail" placeholder="email@example.com" autocomplete="email">
+                    </div>
+                </div>
+                <div class="auth-error hidden" id="authForgotError"></div>
+                <div class="auth-success hidden" id="authForgotSuccess"></div>
+                <button type="button" class="auth-submit-btn" id="authForgotSubmitBtn" onclick="submitForgotPassword()">Gửi link đặt lại</button>
+                <div class="auth-switch">
+                    <a href="#" onclick="event.preventDefault();_authSetMode('login')">← Quay lại đăng nhập</a>
+                </div>
+            </div>
         </div>
     </div>
 
