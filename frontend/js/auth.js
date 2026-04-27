@@ -158,7 +158,28 @@ async function submitAuthForm(event) {
         _authUpdateUI();
         closeAuthModal();
 
-        // Trigger cloud sync — pull user's data from server
+        // Clear any stale data before syncing new user's data
+        localStorage.removeItem('lectureDigest_history');
+        localStorage.removeItem('lectureDigest_gamification');
+        var keysToRemove = [];
+        for (var ci = 0; ci < localStorage.length; ci++) {
+            var ck = localStorage.key(ci);
+            if (ck && (
+                ck.indexOf('lectureDigest_note_') === 0 ||
+                ck.indexOf('lectureDigest_bookmarks_') === 0 ||
+                ck.indexOf('lectureDigest_examHistory') === 0 ||
+                ck.indexOf('lectureDigest_sm2_') === 0 ||
+                ck.indexOf('lectureDigest_customfc_') === 0 ||
+                ck.indexOf('lectureDigest_tags') === 0 ||
+                ck.indexOf('lectureDigest_progress_') === 0 ||
+                ck.indexOf('lectureDigest_playlist_') === 0
+            )) {
+                keysToRemove.push(ck);
+            }
+        }
+        keysToRemove.forEach(function(k) { localStorage.removeItem(k); });
+
+        // Now sync — pull ONLY this user's data from server
         if (typeof doDbSync === 'function') {
             setTimeout(doDbSync, 300);
         }
@@ -186,7 +207,7 @@ function authLogout() {
     _authUser = null;
     localStorage.removeItem('ld_auth_token');
 
-    // Clear user-specific data from localStorage
+    // Clear ALL user-specific data from localStorage
     localStorage.removeItem('lectureDigest_history');
     localStorage.removeItem('lectureDigest_gamification');
     // Clear notes, bookmarks, and all per-user extra data
@@ -213,16 +234,14 @@ function authLogout() {
 
     // Re-render history panel (now empty)
     if (typeof renderHistoryPanel === 'function') renderHistoryPanel();
+    // Re-render streak (now empty)
+    if (typeof renderStreakCard === 'function') renderStreakCard();
 
     // Navigate back to home page
     if (typeof showSection === 'function') showSection('hero');
     history.pushState(null, '', '/');
 
-    // Re-sync to load anonymous data (if any)
-    if (typeof doDbSync === 'function') {
-        setTimeout(doDbSync, 300);
-    }
-
+    // DO NOT re-sync anonymous data — it would restore old data into localStorage
     showToast('👋 Đã đăng xuất', 2000);
 }
 
