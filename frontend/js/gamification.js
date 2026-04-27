@@ -65,8 +65,25 @@ function loadGamif() {
         return Object.assign(defaultGamif(), raw);
     } catch { return defaultGamif(); }
 }
+var _gamifSyncTimer = null;
 function saveGamif(g) {
     try { localStorage.setItem(GAMIF_KEY, JSON.stringify(g)); } catch {}
+    // Debounce push to server
+    clearTimeout(_gamifSyncTimer);
+    _gamifSyncTimer = setTimeout(function() {
+        if (typeof dbFetch === 'function') {
+            dbFetch('/sync', {
+                method: 'POST',
+                body: JSON.stringify({
+                    history: [],
+                    notes: {},
+                    bookmarks: {},
+                    gamification: g,
+                    extra_data: {}
+                })
+            });
+        }
+    }, 1500);
 }
 
 // ── Record a study session (call on analyze complete / history open) ──
