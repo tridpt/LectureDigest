@@ -46,6 +46,8 @@
     justify-content: center;
     flex-shrink: 0;
     box-shadow: 0 4px 12px rgba(109, 40, 217, 0.35);
+    position: relative;
+    overflow: hidden;
 }
 .pwa-banner-icon svg { width: 24px; height: 24px; color: white; }
 
@@ -97,6 +99,8 @@
     display: flex;
     gap: 8px;
     margin-top: 14px;
+    position: relative;
+    z-index: 2;
 }
 
 .pwa-install-btn {

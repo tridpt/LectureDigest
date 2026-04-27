@@ -66,6 +66,8 @@ const STATIC_ASSETS = [
   '/js/auth.js',
   '/js/upload.js',
   '/js/share-notes.js',
+  '/js/pwa-install.js',
+  '/css/pwa-install.css',
   '/dashboard.js',
   '/concept-explainer.js',
   '/manifest.json',

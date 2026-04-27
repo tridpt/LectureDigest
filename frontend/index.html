@@ -1563,7 +1563,7 @@
 
     <!-- ══════════════════════════════ PWA INSTALL BANNER ══════════════════════════════ -->
     <div class="pwa-install-banner hidden" id="pwaInstallBanner">
-        <button class="pwa-banner-close" onclick="dismissPwaInstall()" aria-label="Đóng">✕</button>
+        <button class="pwa-banner-close" id="pwaCloseBtn" aria-label="Đóng">✕</button>
         <div class="pwa-banner-body">
             <div class="pwa-banner-icon">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -1576,13 +1576,24 @@
             </div>
         </div>
         <div class="pwa-banner-actions">
-            <button class="pwa-install-btn" id="pwaInstallBtn" onclick="installPwa()">
+            <button class="pwa-install-btn" id="pwaInstallBtn">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M7 10l5 5 5-5M12 15V3" stroke-linecap="round" stroke-linejoin="round"/></svg>
                 Cài đặt
             </button>
-            <button class="pwa-later-btn" onclick="dismissPwaInstall()">Để sau</button>
+            <button class="pwa-later-btn" id="pwaLaterBtn">Để sau</button>
         </div>
     </div>
+    <script>
+    // Bind PWA banner buttons via JS (onclick attributes can fail in some contexts)
+    document.addEventListener('DOMContentLoaded', function() {
+        var installBtn = document.getElementById('pwaInstallBtn');
+        var laterBtn = document.getElementById('pwaLaterBtn');
+        var closeBtn = document.getElementById('pwaCloseBtn');
+        if (installBtn) installBtn.addEventListener('click', function(e) { e.stopPropagation(); installPwa(); });
+        if (laterBtn)   laterBtn.addEventListener('click', function(e) { e.stopPropagation(); dismissPwaInstall(); });
+        if (closeBtn)   closeBtn.addEventListener('click', function(e) { e.stopPropagation(); dismissPwaInstall(); });
+    });
+    </script>
 
     <!-- PWA Service Worker -->
     <script>
