@@ -43,6 +43,14 @@ function saveToHistory(data) {
     list.splice(HISTORY_MAX);
     localStorage.setItem(HISTORY_KEY, JSON.stringify(list));
     renderHistoryPanel();
+
+    // Push updated history entry to server immediately
+    if (typeof dbFetch === 'function') {
+        dbFetch('/sync', {
+            method: 'POST',
+            body: JSON.stringify({ history: [entry], notes: {}, bookmarks: {}, gamification: {}, extra_data: {} })
+        });
+    }
 }
 
 function deleteFromHistory(idOrEntryId) {
