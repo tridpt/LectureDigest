@@ -1,0 +1,587 @@
+/* ════════════════════════════════════════════════
+   Exercises — Fill-in-the-Blank, True/False, Matching, Short Answer
+   ════════════════════════════════════════════════ */
+
+/* ── Exercise Card ── */
+.exercises-card { position: relative; }
+
+.ex-gen-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 16px;
+    flex-wrap: wrap;
+}
+
+.ex-gen-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: linear-gradient(135deg, #f59e0b, #d97706);
+    border: none;
+    color: white;
+    padding: 9px 18px;
+    border-radius: var(--radius-md);
+    font-family: var(--font);
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all var(--transition);
+    box-shadow: 0 4px 14px rgba(245, 158, 11, 0.3);
+}
+.ex-gen-btn:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(245, 158, 11, 0.4);
+}
+.ex-gen-btn:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
+.ex-gen-btn svg { width: 14px; height: 14px; }
+
+.ex-score-badge {
+    font-size: 13px;
+    font-weight: 700;
+    color: white;
+    background: linear-gradient(135deg, #f59e0b, #d97706);
+    padding: 4px 12px;
+    border-radius: 20px;
+    margin-left: auto;
+}
+
+/* ── Tab Bar ── */
+.ex-tab-bar {
+    display: flex;
+    gap: 4px;
+    background: rgba(255, 255, 255, 0.04);
+    border-radius: var(--radius-md);
+    padding: 4px;
+    margin-bottom: 16px;
+    overflow-x: auto;
+}
+
+.ex-tab {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 14px;
+    background: transparent;
+    border: none;
+    color: var(--text-muted);
+    font-family: var(--font);
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    border-radius: 8px;
+    transition: all var(--transition);
+    white-space: nowrap;
+}
+.ex-tab:hover { color: var(--text-primary); background: rgba(255, 255, 255, 0.05); }
+.ex-tab.active {
+    color: #f59e0b;
+    background: rgba(245, 158, 11, 0.12);
+}
+.ex-tab-icon { font-size: 14px; }
+.ex-tab-count {
+    font-size: 10px;
+    background: rgba(255, 255, 255, 0.1);
+    padding: 1px 6px;
+    border-radius: 8px;
+    min-width: 18px;
+    text-align: center;
+}
+.ex-tab.active .ex-tab-count { background: rgba(245, 158, 11, 0.2); }
+
+/* ── Section Header ── */
+.ex-section-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 16px;
+    flex-wrap: wrap;
+}
+.ex-section-icon { font-size: 20px; }
+.ex-section-header h4 {
+    font-size: 16px;
+    font-weight: 700;
+    margin: 0;
+    color: var(--text-primary);
+}
+.ex-section-hint {
+    font-size: 12px;
+    color: var(--text-muted);
+    margin-left: auto;
+}
+
+/* ── Exercise Item ── */
+.ex-item {
+    display: flex;
+    gap: 14px;
+    padding: 16px;
+    border: 1.5px solid var(--border);
+    border-radius: var(--radius-md);
+    margin-bottom: 12px;
+    transition: all 0.3s ease;
+    animation: fadeInUp 0.3s ease both;
+}
+.ex-item:hover { border-color: rgba(245, 158, 11, 0.3); }
+.ex-item.checked-correct { border-color: var(--success); background: rgba(16, 185, 129, 0.04); }
+.ex-item.checked-wrong { border-color: var(--error); background: rgba(239, 68, 68, 0.04); }
+
+.ex-item-num {
+    width: 28px;
+    height: 28px;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(245, 158, 11, 0.1);
+    color: #f59e0b;
+    font-size: 12px;
+    font-weight: 700;
+    border-radius: 8px;
+    font-family: var(--font-mono);
+}
+.ex-item-body { flex: 1; min-width: 0; }
+
+/* ── Fill-in-the-Blank ── */
+.ex-fb-sentence {
+    font-size: 15px;
+    line-height: 2;
+    color: var(--text-primary);
+    margin-bottom: 10px;
+}
+
+.ex-blank-input {
+    display: inline-block;
+    width: 140px;
+    padding: 4px 10px;
+    border: 2px dashed rgba(245, 158, 11, 0.4);
+    border-radius: 6px;
+    background: rgba(245, 158, 11, 0.06);
+    color: var(--text-primary);
+    font-family: var(--font);
+    font-size: 14px;
+    font-weight: 600;
+    text-align: center;
+    outline: none;
+    transition: all var(--transition);
+    vertical-align: middle;
+}
+.ex-blank-input:focus {
+    border-color: #f59e0b;
+    background: rgba(245, 158, 11, 0.1);
+    box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.15);
+}
+.ex-blank-input.correct {
+    border-color: var(--success);
+    background: rgba(16, 185, 129, 0.08);
+    border-style: solid;
+    color: var(--success);
+}
+.ex-blank-input.wrong {
+    border-color: var(--error);
+    background: rgba(239, 68, 68, 0.08);
+    border-style: solid;
+    color: var(--error);
+    text-decoration: line-through;
+}
+
+/* ── Hint ── */
+.ex-hint {
+    font-size: 12px;
+    color: var(--text-muted);
+    background: rgba(139, 92, 246, 0.06);
+    border-left: 3px solid rgba(139, 92, 246, 0.3);
+    padding: 6px 12px;
+    border-radius: 0 6px 6px 0;
+    margin-bottom: 10px;
+}
+
+/* ── True/False ── */
+.ex-tf-statement {
+    font-size: 15px;
+    line-height: 1.6;
+    color: var(--text-primary);
+    margin-bottom: 12px;
+    font-weight: 500;
+}
+
+.ex-tf-buttons {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 10px;
+}
+
+.ex-tf-btn {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 12px 16px;
+    border: 1.5px solid var(--border);
+    border-radius: var(--radius-md);
+    background: transparent;
+    color: var(--text-primary);
+    font-family: var(--font);
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all var(--transition);
+}
+
+.ex-tf-icon { font-size: 16px; font-weight: 700; }
+
+.ex-tf-true:hover:not(:disabled) {
+    border-color: rgba(16, 185, 129, 0.5);
+    background: rgba(16, 185, 129, 0.06);
+}
+.ex-tf-false:hover:not(:disabled) {
+    border-color: rgba(239, 68, 68, 0.5);
+    background: rgba(239, 68, 68, 0.06);
+}
+.ex-tf-btn.selected {
+    border-color: var(--accent);
+    background: rgba(139, 92, 246, 0.08);
+}
+.ex-tf-btn.correct {
+    border-color: var(--success) !important;
+    background: var(--success-bg) !important;
+    color: var(--success);
+}
+.ex-tf-btn.wrong {
+    border-color: var(--error) !important;
+    background: var(--error-bg) !important;
+    color: var(--error);
+}
+.ex-tf-btn.reveal-correct {
+    border-color: var(--success) !important;
+    background: var(--success-bg) !important;
+}
+.ex-tf-btn:disabled { cursor: not-allowed; opacity: 0.85; }
+
+/* ── Matching ── */
+.ex-match-container {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    margin-bottom: 16px;
+}
+
+.ex-match-col {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.ex-match-card {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px 14px;
+    border: 1.5px solid var(--border);
+    border-radius: var(--radius-md);
+    cursor: pointer;
+    transition: all var(--transition);
+    font-size: 13px;
+    color: var(--text-primary);
+    line-height: 1.5;
+    position: relative;
+}
+
+.ex-match-card:hover { border-color: rgba(245, 158, 11, 0.4); }
+.ex-match-card.selected {
+    border-color: #f59e0b;
+    background: rgba(245, 158, 11, 0.08);
+    box-shadow: 0 0 0 2px rgba(245, 158, 11, 0.2);
+}
+.ex-match-card.matched {
+    border-color: var(--accent);
+    background: rgba(139, 92, 246, 0.06);
+}
+.ex-match-card.correct {
+    border-color: var(--success) !important;
+    background: rgba(16, 185, 129, 0.06) !important;
+}
+.ex-match-card.wrong {
+    border-color: var(--error) !important;
+    background: rgba(239, 68, 68, 0.06) !important;
+}
+
+.ex-match-letter, .ex-match-num {
+    width: 24px;
+    height: 24px;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 6px;
+    font-size: 11px;
+    font-weight: 700;
+    font-family: var(--font-mono);
+}
+.ex-match-letter {
+    background: rgba(245, 158, 11, 0.15);
+    color: #f59e0b;
+}
+.ex-match-num {
+    background: rgba(139, 92, 246, 0.15);
+    color: var(--accent-light);
+}
+
+.ex-match-linked {
+    margin-left: auto;
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--accent-light);
+    flex-shrink: 0;
+}
+
+.ex-match-actions {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.ex-match-result {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+.ex-match-score {
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--accent-light);
+}
+
+/* ── Short Answer ── */
+.ex-sa-question {
+    font-size: 15px;
+    font-weight: 600;
+    line-height: 1.55;
+    color: var(--text-primary);
+    margin-bottom: 10px;
+}
+
+.ex-sa-textarea {
+    width: 100%;
+    min-height: 80px;
+    padding: 12px;
+    border: 1.5px solid var(--border);
+    border-radius: var(--radius-md);
+    background: rgba(255, 255, 255, 0.02);
+    color: var(--text-primary);
+    font-family: var(--font);
+    font-size: 13px;
+    line-height: 1.6;
+    resize: vertical;
+    outline: none;
+    transition: border-color var(--transition);
+    margin-bottom: 10px;
+    box-sizing: border-box;
+}
+.ex-sa-textarea:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.15);
+}
+.ex-sa-textarea:disabled {
+    opacity: 0.7;
+    background: rgba(255, 255, 255, 0.01);
+}
+
+.ex-sa-model-answer {
+    background: rgba(139, 92, 246, 0.06);
+    border: 1px solid rgba(139, 92, 246, 0.2);
+    border-radius: var(--radius-md);
+    padding: 14px;
+    margin-bottom: 12px;
+    animation: fadeInUp 0.3s ease both;
+}
+.ex-sa-label {
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--accent-light);
+    margin-bottom: 6px;
+}
+.ex-sa-answer-text {
+    font-size: 14px;
+    line-height: 1.6;
+    color: var(--text-primary);
+}
+.ex-sa-keypoints {
+    margin-top: 10px;
+    padding-top: 10px;
+    border-top: 1px solid rgba(139, 92, 246, 0.15);
+    font-size: 12px;
+    color: var(--text-secondary);
+}
+.ex-sa-keypoints strong { color: var(--text-primary); font-size: 11px; text-transform: uppercase; letter-spacing: 0.3px; }
+.ex-sa-keypoints ul { margin: 6px 0 0 16px; padding: 0; }
+.ex-sa-keypoints li { margin-bottom: 3px; }
+
+/* Self-assessment */
+.ex-sa-self-assess {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+.ex-sa-assess-label {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text-muted);
+}
+.ex-sa-assess-btn {
+    padding: 6px 14px;
+    border: 1.5px solid var(--border);
+    border-radius: 20px;
+    background: transparent;
+    color: var(--text-secondary);
+    font-family: var(--font);
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all var(--transition);
+}
+.ex-sa-assess-btn:hover { border-color: rgba(245, 158, 11, 0.4); }
+.ex-sa-assess-btn.active {
+    border-color: #f59e0b;
+    background: rgba(245, 158, 11, 0.12);
+    color: #f59e0b;
+}
+
+/* ── Feedback ── */
+.ex-feedback {
+    font-size: 13px;
+    padding: 10px 14px;
+    border-radius: 8px;
+    margin-top: 8px;
+    line-height: 1.5;
+    animation: fadeInUp 0.3s ease both;
+}
+.ex-feedback.correct {
+    background: rgba(16, 185, 129, 0.08);
+    border-left: 3px solid var(--success);
+    color: var(--success);
+}
+.ex-feedback.wrong {
+    background: rgba(239, 68, 68, 0.08);
+    border-left: 3px solid var(--error);
+    color: var(--text-primary);
+}
+.ex-fb-explain {
+    margin-top: 6px;
+    font-size: 12px;
+    color: var(--text-secondary);
+}
+
+/* ── Buttons ── */
+.ex-check-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 18px;
+    background: linear-gradient(135deg, var(--accent), var(--accent-dark));
+    border: none;
+    color: white;
+    border-radius: var(--radius-md);
+    font-family: var(--font);
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all var(--transition);
+    margin-top: 4px;
+}
+.ex-check-btn:hover:not(:disabled) { transform: translateY(-1px); box-shadow: 0 4px 12px rgba(109, 40, 217, 0.35); }
+.ex-check-btn:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
+
+.ex-reset-btn {
+    padding: 8px 18px;
+    background: transparent;
+    border: 1px solid var(--border);
+    color: var(--text-muted);
+    border-radius: var(--radius-md);
+    font-family: var(--font);
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all var(--transition);
+}
+.ex-reset-btn:hover { border-color: var(--text-secondary); color: var(--text-primary); }
+
+.ex-reveal-btn { background: linear-gradient(135deg, #6366f1, #4f46e5); }
+
+/* ── Loading & Empty ── */
+.ex-loading {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 40px 20px;
+    gap: 16px;
+    color: var(--text-muted);
+}
+.ex-loading-spinner {
+    width: 36px; height: 36px;
+    border: 3px solid rgba(245, 158, 11, 0.15);
+    border-top-color: #f59e0b;
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+.ex-empty {
+    text-align: center;
+    padding: 40px 20px;
+    color: var(--text-muted);
+    font-size: 14px;
+}
+
+.ex-error {
+    text-align: center;
+    padding: 30px 20px;
+    color: var(--text-muted);
+}
+.ex-retry-btn {
+    margin-top: 12px;
+    padding: 8px 20px;
+    background: var(--accent);
+    border: none;
+    color: white;
+    border-radius: var(--radius-md);
+    font-family: var(--font);
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+/* ── Responsive ── */
+@media (max-width: 600px) {
+    .ex-match-container {
+        grid-template-columns: 1fr;
+    }
+    .ex-tab-bar {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+    .ex-tab { padding: 6px 10px; font-size: 11px; }
+    .ex-tf-buttons { flex-direction: column; }
+    .ex-sa-self-assess { flex-direction: column; align-items: flex-start; }
+}
+
+/* ── Light Mode ── */
+.light-mode .ex-blank-input {
+    background: rgba(245, 158, 11, 0.04);
+}
+.light-mode .ex-tab.active {
+    background: rgba(245, 158, 11, 0.08);
+}
+.light-mode .ex-match-card:hover {
+    background: rgba(245, 158, 11, 0.03);
+}
+.light-mode .ex-sa-textarea {
+    background: rgba(0, 0, 0, 0.01);
+}
+.light-mode .ex-sa-model-answer {
+    background: rgba(139, 92, 246, 0.04);
+}
+.light-mode .ex-feedback.correct { color: #047857; }
