@@ -196,8 +196,14 @@ function doDbSync() {
             }
             console.log('[DB Sync] Extra data synced:', extraKeys.length, 'keys');
         }
-        // Always re-render history panel
+        // Always re-render UI after sync
         if (typeof renderHistoryPanel === 'function') renderHistoryPanel();
+        if (typeof renderStreakCard === 'function') renderStreakCard();
+        // Re-render dashboard if it's currently visible
+        if (typeof renderDashboard === 'function') {
+            var ds = document.getElementById('dashboardSection');
+            if (ds && !ds.classList.contains('hidden')) renderDashboard();
+        }
     });
 }
 
