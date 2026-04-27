@@ -59,18 +59,16 @@ function resetShareNotesModal() {
 }
 
 function _getBookmarksForShare() {
-    // Get bookmarks from the DOM
-    var items = document.querySelectorAll('#bookmarksList .bm-item');
-    var bookmarks = [];
-    items.forEach(function(item) {
-        var label = item.querySelector('.bm-label')?.textContent || '';
-        var time = item.querySelector('.bm-time')?.textContent || '';
-        var secs = parseInt(item.dataset?.timeSecs || '0');
-        if (label || time) {
-            bookmarks.push({ label: label, time_str: time, time_secs: secs });
-        }
+    // Read from localStorage (source of truth) instead of DOM scraping
+    if (!bmCurrentVideoId) return [];
+    var bms = loadBookmarks(bmCurrentVideoId);
+    return bms.map(function(bm) {
+        return {
+            label: bm.label || '',
+            time_str: fmtSecs(bm.time || 0),
+            time_secs: bm.time || 0
+        };
     });
-    return bookmarks;
 }
 
 async function generateShareLink() {
