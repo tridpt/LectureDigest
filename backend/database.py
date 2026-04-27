@@ -62,8 +62,10 @@ def init_db():
             id           INTEGER PRIMARY KEY AUTOINCREMENT,
             email        TEXT UNIQUE NOT NULL,
             display_name TEXT NOT NULL DEFAULT '',
-            password_hash TEXT NOT NULL,
+            password_hash TEXT NOT NULL DEFAULT '',
             avatar_color TEXT DEFAULT '#8b5cf6',
+            avatar_url   TEXT DEFAULT '',
+            google_id    TEXT DEFAULT '',
             created_at   INTEGER NOT NULL,
             updated_at   INTEGER
         );
@@ -77,6 +79,12 @@ def init_db():
 
     # ── Migration: add user_id columns to support per-user data ──
     _migrate_add_user_id(conn)
+
+    # Create Google index (after migration adds the column to existing DBs)
+    try:
+        conn.execute("CREATE INDEX IF NOT EXISTS idx_users_google ON users(google_id)")
+    except:
+        pass
 
     conn.commit()
     conn.close()
@@ -94,6 +102,18 @@ def _migrate_add_user_id(conn):
         try:
             conn.execute(f"ALTER TABLE {table} ADD COLUMN {col_def}")
             print(f"[DB Migration] Added user_id to {table}")
+        except sqlite3.OperationalError:
+            pass  # Column already exists
+
+    # Add Google OAuth columns to users table
+    google_cols = {
+        "google_id": "google_id TEXT DEFAULT ''",
+        "avatar_url": "avatar_url TEXT DEFAULT ''",
+    }
+    for col_name, col_def in google_cols.items():
+        try:
+            conn.execute(f"ALTER TABLE users ADD COLUMN {col_def}")
+            print(f"[DB Migration] Added {col_name} to users")
         except sqlite3.OperationalError:
             pass  # Column already exists
 
@@ -626,15 +646,15 @@ def db_kv_delete(user_id: int, data_key: str):
 # ══════════════════════════════════════════
 # USERS (Authentication)
 # ══════════════════════════════════════════
-def db_create_user(email: str, display_name: str, password_hash: str, avatar_color: str = '#8b5cf6'):
+def db_create_user(email: str, display_name: str, password_hash: str, avatar_color: str = '#8b5cf6', google_id: str = '', avatar_url: str = ''):
     """Create a new user. Returns the user id."""
     conn = get_db()
     now = int(time.time() * 1000)
     try:
         cur = conn.execute("""
-            INSERT INTO users (email, display_name, password_hash, avatar_color, created_at, updated_at)
-            VALUES (?, ?, ?, ?, ?, ?)
-        """, (email.lower().strip(), display_name.strip(), password_hash, avatar_color, now, now))
+            INSERT INTO users (email, display_name, password_hash, avatar_color, google_id, avatar_url, created_at, updated_at)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+        """, (email.lower().strip(), display_name.strip(), password_hash, avatar_color, google_id, avatar_url, now, now))
         conn.commit()
         user_id = cur.lastrowid
     except sqlite3.IntegrityError:
@@ -642,6 +662,26 @@ def db_create_user(email: str, display_name: str, password_hash: str, avatar_col
         return None  # Email already exists
     conn.close()
     return user_id
+
+def db_get_user_by_google_id(google_id: str):
+    """Find a user by Google ID. Returns dict or None."""
+    if not google_id:
+        return None
+    conn = get_db()
+    row = conn.execute("SELECT * FROM users WHERE google_id = ? AND google_id != ''", (google_id,)).fetchone()
+    conn.close()
+    if not row:
+        return None
+    return {
+        "id": row["id"],
+        "email": row["email"],
+        "display_name": row["display_name"],
+        "password_hash": row["password_hash"],
+        "avatar_color": row["avatar_color"],
+        "avatar_url": row["avatar_url"] if "avatar_url" in row.keys() else '',
+        "google_id": row["google_id"] if "google_id" in row.keys() else '',
+        "created_at": row["created_at"],
+    }
 
 def db_get_user_by_email(email: str):
     """Find a user by email. Returns dict or None."""
@@ -656,6 +696,8 @@ def db_get_user_by_email(email: str):
         "display_name": row["display_name"],
         "password_hash": row["password_hash"],
         "avatar_color": row["avatar_color"],
+        "avatar_url": row["avatar_url"] if "avatar_url" in row.keys() else '',
+        "google_id": row["google_id"] if "google_id" in row.keys() else '',
         "created_at": row["created_at"],
     }
 
@@ -671,10 +713,12 @@ def db_get_user_by_id(user_id: int):
         "email": row["email"],
         "display_name": row["display_name"],
         "avatar_color": row["avatar_color"],
+        "avatar_url": row["avatar_url"] if "avatar_url" in row.keys() else '',
+        "google_id": row["google_id"] if "google_id" in row.keys() else '',
         "created_at": row["created_at"],
     }
 
-def db_update_user(user_id: int, display_name: str = None, avatar_color: str = None, password_hash: str = None):
+def db_update_user(user_id: int, display_name: str = None, avatar_color: str = None, password_hash: str = None, google_id: str = None, avatar_url: str = None):
     """Update user profile fields."""
     conn = get_db()
     fields = []
@@ -688,6 +732,12 @@ def db_update_user(user_id: int, display_name: str = None, avatar_color: str = N
     if password_hash is not None:
         fields.append("password_hash = ?")
         values.append(password_hash)
+    if google_id is not None:
+        fields.append("google_id = ?")
+        values.append(google_id)
+    if avatar_url is not None:
+        fields.append("avatar_url = ?")
+        values.append(avatar_url)
     if not fields:
         conn.close()
         return

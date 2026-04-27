@@ -422,3 +422,51 @@
     from { opacity: 0; }
     to { opacity: 1; }
 }
+
+/* ══════════════════════════════════════════
+   GOOGLE SIGN-IN
+   ══════════════════════════════════════════ */
+.auth-google-wrap {
+    display: flex;
+    justify-content: center;
+    margin-bottom: 16px;
+    min-height: 44px;
+}
+.auth-google-wrap > div {
+    width: 100%;
+    display: flex;
+    justify-content: center;
+}
+
+/* "hoặc" divider */
+.auth-divider {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 18px;
+    color: var(--text-muted);
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+.auth-divider::before,
+.auth-divider::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--border);
+}
+
+/* Google avatar image in header */
+.auth-avatar-img {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    object-fit: cover;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+    transition: all var(--transition);
+}
+.auth-avatar-img:hover {
+    transform: scale(1.1);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}

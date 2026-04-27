@@ -20,6 +20,7 @@ from database import (
     db_get_bookmarks, db_sync_bookmarks, db_delete_bookmark, db_get_all_bookmarks,
     db_get_gamification, db_save_gamification,
     db_create_user, db_get_user_by_email, db_get_user_by_id, db_update_user,
+    db_get_user_by_google_id,
     db_migrate_anonymous_to_user,
     db_kv_get, db_kv_set, db_kv_get_all, db_kv_delete,
     db_full_sync
@@ -33,7 +34,7 @@ from dotenv import load_dotenv
 import bcrypt
 import jwt as pyjwt
 
-load_dotenv()
+load_dotenv(override=True)
 
 app = FastAPI(title="LectureDigest API", version="1.0.0")
 
@@ -487,6 +488,10 @@ class UpdateProfileRequest(BaseModel):
     current_password: Optional[str] = None
     new_password: Optional[str] = None
 
+class GoogleAuthRequest(BaseModel):
+    credential: str        # Google ID token from GSI
+    client_id: str = ''    # optional, for verification
+
 
 @app.post("/api/auth/register")
 async def register(req: RegisterRequest):
@@ -585,6 +590,86 @@ async def update_profile(req: UpdateProfileRequest, request: Request):
 
     updated = db_get_user_by_id(user["id"])
     return {"user": updated}
+
+
+@app.post("/api/auth/google")
+async def google_login(req: GoogleAuthRequest):
+    """Login/register via Google One Tap or Sign-In button.
+    Verifies the Google ID token and creates or links the account."""
+    from google.oauth2 import id_token as google_id_token
+    from google.auth.transport import requests as google_requests
+
+    expected_client_id = os.getenv("GOOGLE_CLIENT_ID", "").strip()
+    if not expected_client_id:
+        raise HTTPException(status_code=500, detail="GOOGLE_CLIENT_ID not configured in .env")
+
+    # 1. Verify the Google ID token
+    try:
+        idinfo = google_id_token.verify_oauth2_token(
+            req.credential,
+            google_requests.Request(),
+            expected_client_id,
+        )
+    except Exception as e:
+        raise HTTPException(status_code=401, detail=f"Invalid Google token: {e}")
+
+    google_sub  = idinfo.get("sub", "")       # unique Google user ID
+    email       = idinfo.get("email", "").lower().strip()
+    name        = idinfo.get("name", "")       # display name
+    picture     = idinfo.get("picture", "")    # avatar URL
+
+    if not email:
+        raise HTTPException(status_code=400, detail="Google account has no email")
+
+    # 2. Check if user already exists by google_id
+    user = db_get_user_by_google_id(google_sub)
+
+    if not user:
+        # 3. Check if user exists by email (registered with email+password before)
+        user = db_get_user_by_email(email)
+        if user:
+            # Link Google account to existing email account
+            db_update_user(
+                user["id"],
+                google_id=google_sub,
+                avatar_url=picture if picture else None,
+            )
+            user = db_get_user_by_id(user["id"])
+        else:
+            # 4. Create new user (no password needed for Google-only accounts)
+            color_idx = int(hashlib.md5(email.encode()).hexdigest(), 16) % len(_AVATAR_COLORS)
+            avatar_color = _AVATAR_COLORS[color_idx]
+
+            user_id = db_create_user(
+                email=email,
+                display_name=name or email.split("@")[0],
+                password_hash="",   # no password for Google-only accounts
+                avatar_color=avatar_color,
+                google_id=google_sub,
+                avatar_url=picture,
+            )
+            if not user_id:
+                raise HTTPException(status_code=409, detail="Không thể tạo tài khoản")
+            user = db_get_user_by_id(user_id)
+
+    # 5. Issue JWT
+    token = _create_jwt(user["id"])
+
+    # Don't send password hash to client
+    safe_user = {k: v for k, v in user.items() if k != "password_hash"}
+
+    return {
+        "token": token,
+        "user": safe_user,
+        "is_new": not bool(db_get_user_by_google_id(google_sub)),  # was it just linked?
+    }
+
+
+@app.get("/api/auth/google-client-id")
+async def get_google_client_id():
+    """Return the Google Client ID for frontend GSI initialization."""
+    client_id = os.getenv("GOOGLE_CLIENT_ID", "").strip()
+    return {"client_id": client_id}
 
 
 @app.post("/api/analyze")

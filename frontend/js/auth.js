@@ -1,10 +1,11 @@
 /* ════════════════════════════════════════════════
    LectureDigest — Auth Module
-   Login, Register, Profile management
+   Login, Register, Profile management + Google OAuth
    ════════════════════════════════════════════════ */
 
 var _authUser = null;
 var _authToken = localStorage.getItem('ld_auth_token') || null;
+var _googleClientId = null;
 
 // ── Initialize auth on page load ──
 (function _initAuth() {
@@ -13,7 +14,100 @@ var _authToken = localStorage.getItem('ld_auth_token') || null;
     } else {
         _authUpdateUI();
     }
+    // Load Google Sign-In
+    _loadGoogleSignIn();
 })();
+
+// ── Google Sign-In ──────────────────────────────────────
+function _loadGoogleSignIn() {
+    // 1. Fetch client ID from backend
+    fetch(API_BASE + '/api/auth/google-client-id')
+        .then(function(r) { return r.json(); })
+        .then(function(data) {
+            _googleClientId = data.client_id;
+            if (!_googleClientId) return;
+            // 2. Load GSI script
+            var script = document.createElement('script');
+            script.src = 'https://accounts.google.com/gsi/client';
+            script.async = true;
+            script.defer = true;
+            script.onload = function() { _initGoogleButton(); };
+            document.head.appendChild(script);
+        })
+        .catch(function() { /* Google Sign-In not available */ });
+}
+
+function _initGoogleButton() {
+    if (!window.google || !_googleClientId) return;
+    window.google.accounts.id.initialize({
+        client_id: _googleClientId,
+        callback: _handleGoogleCallback,
+        auto_select: false,
+        cancel_on_tap_outside: true,
+    });
+    // Render button into auth modal placeholder
+    var target = document.getElementById('googleSignInBtn');
+    if (target) {
+        window.google.accounts.id.renderButton(target, {
+            theme: 'outline',
+            size: 'large',
+            width: 340,
+            text: 'continue_with',
+            shape: 'pill',
+            logo_alignment: 'center',
+        });
+    }
+}
+
+async function _handleGoogleCallback(response) {
+    if (!response || !response.credential) return;
+    var errEl = document.getElementById('authError');
+    try {
+        var res = await fetch(API_BASE + '/api/auth/google', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ credential: response.credential })
+        });
+        var data = await res.json();
+        if (!res.ok) throw new Error(data.detail || 'Google login failed');
+
+        _authToken = data.token;
+        _authUser = data.user;
+        localStorage.setItem('ld_auth_token', data.token);
+        _authUpdateUI();
+        closeAuthModal();
+
+        // Clear stale localStorage & sync
+        _authClearLocalData();
+        if (typeof doDbSync === 'function') setTimeout(doDbSync, 300);
+
+        showToast('👋 Xin chào, ' + _authUser.display_name + '!', 3000);
+    } catch (err) {
+        if (errEl) { errEl.textContent = err.message; errEl.classList.remove('hidden'); }
+    }
+}
+
+function _authClearLocalData() {
+    localStorage.removeItem('lectureDigest_history');
+    localStorage.removeItem('lectureDigest_gamification');
+    var keysToRemove = [];
+    for (var ci = 0; ci < localStorage.length; ci++) {
+        var ck = localStorage.key(ci);
+        if (ck && (
+            ck.indexOf('lectureDigest_note_') === 0 ||
+            ck.indexOf('lectureDigest_bookmarks_') === 0 ||
+            ck.indexOf('lectureDigest_examHistory') === 0 ||
+            ck.indexOf('lectureDigest_sm2_') === 0 ||
+            ck.indexOf('lectureDigest_customfc_') === 0 ||
+            ck.indexOf('lectureDigest_tags') === 0 ||
+            ck.indexOf('lectureDigest_progress_') === 0 ||
+            ck.indexOf('lectureDigest_playlist_') === 0
+        )) {
+            keysToRemove.push(ck);
+        }
+    }
+    keysToRemove.forEach(function(k) { localStorage.removeItem(k); });
+}
 
 // ── Fetch current user ──
 async function _authFetchMe() {
@@ -44,8 +138,12 @@ function _authUpdateUI() {
         if (loginBtn) loginBtn.classList.add('hidden');
         if (userAvatar) {
             userAvatar.classList.remove('hidden');
-            var initials = _authGetInitials(_authUser.display_name);
-            userAvatar.innerHTML = '<span class="auth-avatar-circle" style="background:' + _authUser.avatar_color + '">' + initials + '</span>';
+            if (_authUser.avatar_url) {
+                userAvatar.innerHTML = '<img class="auth-avatar-img" src="' + _authUser.avatar_url + '" alt="" referrerpolicy="no-referrer">';
+            } else {
+                var initials = _authGetInitials(_authUser.display_name);
+                userAvatar.innerHTML = '<span class="auth-avatar-circle" style="background:' + _authUser.avatar_color + '">' + initials + '</span>';
+            }
         }
     } else {
         // Not logged in
@@ -68,11 +166,13 @@ function openAuthModal(mode) {
     if (!overlay) return;
     overlay.classList.remove('hidden');
     _authSetMode(mode || 'login');
+    // Re-render Google button (GSI needs visible container)
+    setTimeout(function() { _initGoogleButton(); }, 50);
     // Focus first input
     setTimeout(function() {
-        var inp = overlay.querySelector('.auth-input:not(.hidden) input');
+        var inp = overlay.querySelector('.auth-field:not(.hidden) input');
         if (inp) inp.focus();
-    }, 100);
+    }, 150);
 }
 
 function closeAuthModal() {
@@ -158,31 +258,9 @@ async function submitAuthForm(event) {
         _authUpdateUI();
         closeAuthModal();
 
-        // Clear any stale data before syncing new user's data
-        localStorage.removeItem('lectureDigest_history');
-        localStorage.removeItem('lectureDigest_gamification');
-        var keysToRemove = [];
-        for (var ci = 0; ci < localStorage.length; ci++) {
-            var ck = localStorage.key(ci);
-            if (ck && (
-                ck.indexOf('lectureDigest_note_') === 0 ||
-                ck.indexOf('lectureDigest_bookmarks_') === 0 ||
-                ck.indexOf('lectureDigest_examHistory') === 0 ||
-                ck.indexOf('lectureDigest_sm2_') === 0 ||
-                ck.indexOf('lectureDigest_customfc_') === 0 ||
-                ck.indexOf('lectureDigest_tags') === 0 ||
-                ck.indexOf('lectureDigest_progress_') === 0 ||
-                ck.indexOf('lectureDigest_playlist_') === 0
-            )) {
-                keysToRemove.push(ck);
-            }
-        }
-        keysToRemove.forEach(function(k) { localStorage.removeItem(k); });
-
-        // Now sync — pull ONLY this user's data from server
-        if (typeof doDbSync === 'function') {
-            setTimeout(doDbSync, 300);
-        }
+        // Clear stale data & sync
+        _authClearLocalData();
+        if (typeof doDbSync === 'function') setTimeout(doDbSync, 300);
 
         showToast('👋 Xin chào, ' + _authUser.display_name + '!', 3000);
 
