@@ -172,6 +172,22 @@ function doDbSync() {
             localStorage.setItem('lectureDigest_gamification', JSON.stringify(result.gamification));
             console.log('[DB Sync] Gamification synced');
         }
+        // Restore notes from server
+        if (result.notes) {
+            var noteVids = Object.keys(result.notes);
+            for (var n = 0; n < noteVids.length; n++) {
+                localStorage.setItem('lectureDigest_note_' + noteVids[n], result.notes[noteVids[n]]);
+            }
+            console.log('[DB Sync] Notes synced:', noteVids.length, 'videos');
+        }
+        // Restore bookmarks from server
+        if (result.bookmarks) {
+            var bmVids = Object.keys(result.bookmarks);
+            for (var b = 0; b < bmVids.length; b++) {
+                localStorage.setItem('lectureDigest_bookmarks_' + bmVids[b], JSON.stringify(result.bookmarks[bmVids[b]]));
+            }
+            console.log('[DB Sync] Bookmarks synced:', bmVids.length, 'videos');
+        }
         // Restore extra data from server
         if (result.extra_data) {
             var extraKeys = Object.keys(result.extra_data);

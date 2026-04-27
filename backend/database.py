@@ -238,6 +238,16 @@ def db_save_notes(video_id: str, content: str, user_id=None):
     conn.commit()
     conn.close()
 
+def db_get_all_notes(user_id=None):
+    """Get all notes for a user. Returns dict {video_id: content}."""
+    conn = get_db()
+    if user_id:
+        rows = conn.execute("SELECT video_id, content FROM notes WHERE user_id = ?", (user_id,)).fetchall()
+    else:
+        rows = conn.execute("SELECT video_id, content FROM notes WHERE user_id IS NULL").fetchall()
+    conn.close()
+    return {r["video_id"]: r["content"] for r in rows if r["content"]}
+
 # ══════════════════════════════════════════
 # BOOKMARKS
 # ══════════════════════════════════════════
@@ -283,6 +293,26 @@ def db_sync_bookmarks(video_id: str, bookmarks: list, user_id=None):
         """, (video_id, bm.get("time", 0), bm.get("label", ""), bm.get("createdAt", ""), user_id))
     conn.commit()
     conn.close()
+
+def db_get_all_bookmarks(user_id=None):
+    """Get all bookmarks for a user grouped by video_id. Returns dict {video_id: [bookmarks]}."""
+    conn = get_db()
+    if user_id:
+        rows = conn.execute(
+            "SELECT * FROM bookmarks WHERE user_id = ? ORDER BY video_id, time_secs ASC", (user_id,)
+        ).fetchall()
+    else:
+        rows = conn.execute(
+            "SELECT * FROM bookmarks WHERE user_id IS NULL ORDER BY video_id, time_secs ASC"
+        ).fetchall()
+    conn.close()
+    result = {}
+    for r in rows:
+        vid = r["video_id"]
+        if vid not in result:
+            result[vid] = []
+        result[vid].append({"time": r["time_secs"], "label": r["label"], "createdAt": r["created_at"]})
+    return result
 
 # ══════════════════════════════════════════
 # GAMIFICATION

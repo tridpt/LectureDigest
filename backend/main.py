@@ -15,7 +15,8 @@ from fastapi.staticfiles import StaticFiles
 # Database sync
 from database import (
     init_db, db_get_history, db_save_history, db_delete_history, db_clear_history,
-    db_get_notes, db_save_notes, db_get_bookmarks, db_sync_bookmarks, db_delete_bookmark,
+    db_get_notes, db_save_notes, db_get_all_notes,
+    db_get_bookmarks, db_sync_bookmarks, db_delete_bookmark, db_get_all_bookmarks,
     db_get_gamification, db_save_gamification,
     db_create_user, db_get_user_by_email, db_get_user_by_id, db_update_user,
     db_migrate_anonymous_to_user,
@@ -1154,11 +1155,22 @@ async def api_full_sync(request: Request):
         except Exception as e:
             print(f"[Sync] Error fetching extra data: {e}")
 
-    print(f"[Sync] Returning {len(result_history)} history, {len(result_extra)} extra keys for user {uid}")
+    # Fetch all notes and bookmarks for this user
+    result_notes = {}
+    result_bookmarks = {}
+    try:
+        result_notes = db_get_all_notes(user_id=uid)
+        result_bookmarks = db_get_all_bookmarks(user_id=uid)
+    except Exception as e:
+        print(f"[Sync] Error fetching notes/bookmarks: {e}")
+
+    print(f"[Sync] Returning {len(result_history)} history, {len(result_notes)} notes, {len(result_bookmarks)} bookmark groups, {len(result_extra)} extra keys for user {uid}")
     return {
         "ok": True,
         "history": result_history,
         "gamification": result_gamif,
+        "notes": result_notes,
+        "bookmarks": result_bookmarks,
         "extra_data": result_extra
     }
 
