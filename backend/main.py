@@ -1,4 +1,5 @@
 import os
+import asyncio
 import re
 import json
 import time
@@ -497,8 +498,10 @@ async def register(req: RegisterRequest):
     if db_get_user_by_email(email):
         raise HTTPException(status_code=409, detail="Email này đã được đăng ký")
 
-    # Hash password
-    pw_hash = bcrypt.hashpw(req.password.encode("utf-8"), bcrypt.gensalt()).decode("utf-8")
+    # Hash password (run in threadpool to avoid blocking event loop)
+    import asyncio
+    loop = asyncio.get_event_loop()
+    pw_hash = await loop.run_in_executor(None, lambda: bcrypt.hashpw(req.password.encode("utf-8"), bcrypt.gensalt()).decode("utf-8"))
 
     # Random avatar color
     color_idx = int(hashlib.md5(email.encode()).hexdigest(), 16) % len(_AVATAR_COLORS)
@@ -524,7 +527,10 @@ async def login(req: LoginRequest):
     if not user:
         raise HTTPException(status_code=401, detail="Email hoặc mật khẩu không đúng")
 
-    if not bcrypt.checkpw(req.password.encode("utf-8"), user["password_hash"].encode("utf-8")):
+    import asyncio
+    loop = asyncio.get_event_loop()
+    pw_ok = await loop.run_in_executor(None, lambda: bcrypt.checkpw(req.password.encode("utf-8"), user["password_hash"].encode("utf-8")))
+    if not pw_ok:
         raise HTTPException(status_code=401, detail="Email hoặc mật khẩu không đúng")
 
     token = _create_jwt(user["id"])
@@ -560,11 +566,14 @@ async def update_profile(req: UpdateProfileRequest, request: Request):
             raise HTTPException(status_code=400, detail="Vui lòng nhập mật khẩu hiện tại")
         # Verify current password
         full_user = db_get_user_by_email(user["email"])
-        if not bcrypt.checkpw(req.current_password.encode("utf-8"), full_user["password_hash"].encode("utf-8")):
+        import asyncio
+        loop = asyncio.get_event_loop()
+        pw_ok = await loop.run_in_executor(None, lambda: bcrypt.checkpw(req.current_password.encode("utf-8"), full_user["password_hash"].encode("utf-8")))
+        if not pw_ok:
             raise HTTPException(status_code=403, detail="Mật khẩu hiện tại không đúng")
         if len(req.new_password) < 6:
             raise HTTPException(status_code=400, detail="Mật khẩu mới tối thiểu 6 ký tự")
-        new_hash = bcrypt.hashpw(req.new_password.encode("utf-8"), bcrypt.gensalt()).decode("utf-8")
+        new_hash = await loop.run_in_executor(None, lambda: bcrypt.hashpw(req.new_password.encode("utf-8"), bcrypt.gensalt()).decode("utf-8"))
 
     db_update_user(
         user["id"],
