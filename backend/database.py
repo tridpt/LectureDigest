@@ -70,6 +70,20 @@ def init_db():
             updated_at   INTEGER
         );
         CREATE INDEX IF NOT EXISTS idx_users_email ON users(email);
+
+        CREATE TABLE IF NOT EXISTS shared_notes (
+            share_id    TEXT PRIMARY KEY,
+            video_id    TEXT NOT NULL,
+            title       TEXT DEFAULT '',
+            author      TEXT DEFAULT '',
+            notes       TEXT DEFAULT '',
+            bookmarks   TEXT DEFAULT '[]',
+            overview    TEXT DEFAULT '',
+            shared_by   TEXT DEFAULT '',
+            created_at  INTEGER NOT NULL,
+            view_count  INTEGER DEFAULT 0
+        );
+        CREATE INDEX IF NOT EXISTS idx_shared_video ON shared_notes(video_id);
     """)
     # Ensure gamification row exists
     conn.execute(
@@ -748,3 +762,32 @@ def db_update_user(user_id: int, display_name: str = None, avatar_color: str = N
     conn.commit()
     conn.close()
 
+
+# ──────────────────────────────────────────
+# SHARED NOTES
+# ──────────────────────────────────────────
+def db_create_shared_notes(share_id, video_id, title, author, notes, bookmarks_json, overview, shared_by):
+    """Create a shared notes snapshot."""
+    conn = get_db()
+    conn.execute(
+        """INSERT OR REPLACE INTO shared_notes
+           (share_id, video_id, title, author, notes, bookmarks, overview, shared_by, created_at, view_count)
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 0)""",
+        (share_id, video_id, title, author, notes, bookmarks_json, overview, shared_by, int(time.time()))
+    )
+    conn.commit()
+    conn.close()
+
+
+def db_get_shared_notes(share_id):
+    """Fetch a shared notes entry and increment view count."""
+    conn = get_db()
+    row = conn.execute("SELECT * FROM shared_notes WHERE share_id = ?", (share_id,)).fetchone()
+    if row:
+        conn.execute("UPDATE shared_notes SET view_count = view_count + 1 WHERE share_id = ?", (share_id,))
+        conn.commit()
+        result = dict(row)
+    else:
+        result = None
+    conn.close()
+    return result

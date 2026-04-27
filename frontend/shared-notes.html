@@ -1,0 +1,458 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ghi chú chia sẻ — LectureDigest</title>
+    <link rel="icon" href="/favicon.ico">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg: #070712;
+            --bg-card: rgba(255, 255, 255, 0.04);
+            --border: rgba(255, 255, 255, 0.08);
+            --accent: #8b5cf6;
+            --accent-light: #a78bfa;
+            --text: #f1f5f9;
+            --text-2: #94a3b8;
+            --text-3: #64748b;
+            --success: #10b981;
+            --font: 'Inter', -apple-system, sans-serif;
+            --radius: 16px;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: var(--font);
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 40px 20px;
+        }
+
+        /* ── Header ── */
+        .shared-header {
+            text-align: center;
+            margin-bottom: 32px;
+            max-width: 700px;
+            width: 100%;
+        }
+
+        .shared-logo {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            text-decoration: none;
+            margin-bottom: 24px;
+        }
+        .shared-logo-icon {
+            width: 36px; height: 36px;
+            background: linear-gradient(135deg, var(--accent), #6d28d9);
+            border-radius: 10px;
+            display: flex; align-items: center; justify-content: center;
+        }
+        .shared-logo-icon svg { width: 20px; height: 20px; color: white; }
+        .shared-logo-text {
+            font-size: 18px; font-weight: 800; color: var(--text);
+        }
+
+        .shared-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 5px 14px;
+            background: rgba(139, 92, 246, 0.1);
+            border: 1px solid rgba(139, 92, 246, 0.2);
+            border-radius: 20px;
+            font-size: 11px;
+            font-weight: 700;
+            color: var(--accent-light);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 16px;
+        }
+
+        .shared-title {
+            font-size: clamp(22px, 4vw, 32px);
+            font-weight: 900;
+            line-height: 1.2;
+            margin-bottom: 8px;
+        }
+
+        .shared-author {
+            font-size: 14px;
+            color: var(--text-3);
+            margin-bottom: 6px;
+        }
+
+        .shared-meta {
+            font-size: 12px;
+            color: var(--text-3);
+        }
+
+        /* ── Content Cards ── */
+        .shared-content {
+            max-width: 700px;
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .shared-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            overflow: hidden;
+        }
+
+        .shared-card-header {
+            padding: 16px 20px;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-weight: 700;
+            font-size: 15px;
+        }
+
+        .shared-card-icon { font-size: 18px; }
+
+        .shared-card-count {
+            margin-left: auto;
+            font-size: 12px;
+            color: var(--text-3);
+            font-weight: 500;
+        }
+
+        /* ── Overview ── */
+        .shared-overview {
+            padding: 18px 20px;
+            font-size: 14px;
+            line-height: 1.75;
+            color: var(--text-2);
+        }
+
+        /* ── Notes ── */
+        .shared-notes-content {
+            padding: 18px 20px;
+            white-space: pre-wrap;
+            font-size: 14px;
+            line-height: 1.85;
+            color: var(--text);
+        }
+
+        .shared-notes-content .note-timestamp {
+            display: inline-block;
+            background: rgba(139, 92, 246, 0.12);
+            border: 1px solid rgba(139, 92, 246, 0.2);
+            border-radius: 6px;
+            padding: 1px 8px;
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--accent-light);
+            font-family: 'JetBrains Mono', monospace;
+            margin-right: 4px;
+        }
+
+        /* ── Bookmarks ── */
+        .shared-bookmarks-list {
+            padding: 8px 12px;
+        }
+
+        .shared-bm-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 10px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+            transition: background 0.15s;
+        }
+        .shared-bm-item:last-child { border-bottom: none; }
+        .shared-bm-item:hover { background: rgba(139, 92, 246, 0.04); border-radius: 8px; }
+
+        .shared-bm-time {
+            background: rgba(96, 165, 250, 0.1);
+            border: 1px solid rgba(96, 165, 250, 0.2);
+            border-radius: 8px;
+            padding: 4px 10px;
+            font-size: 12px;
+            font-weight: 700;
+            color: #60a5fa;
+            font-family: 'JetBrains Mono', monospace;
+            white-space: nowrap;
+        }
+
+        .shared-bm-label {
+            font-size: 14px;
+            color: var(--text);
+            flex: 1;
+        }
+
+        /* ── Video Link ── */
+        .shared-video-link {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            padding: 14px;
+            background: rgba(239, 68, 68, 0.06);
+            border: 1px solid rgba(239, 68, 68, 0.15);
+            border-radius: var(--radius);
+            color: #f87171;
+            text-decoration: none;
+            font-size: 14px;
+            font-weight: 600;
+            transition: all 0.2s;
+        }
+        .shared-video-link:hover {
+            background: rgba(239, 68, 68, 0.1);
+            transform: translateY(-1px);
+        }
+        .shared-video-link svg { width: 18px; height: 18px; flex-shrink: 0; }
+
+        /* ── Loading / Error ── */
+        .shared-loading {
+            text-align: center;
+            padding: 80px 20px;
+        }
+
+        .shared-spinner {
+            width: 40px; height: 40px;
+            border: 3px solid var(--border);
+            border-top-color: var(--accent);
+            border-radius: 50%;
+            margin: 0 auto 16px;
+            animation: spin 0.8s linear infinite;
+        }
+
+        .shared-error {
+            text-align: center;
+            padding: 60px 20px;
+        }
+
+        .shared-error-icon { font-size: 48px; margin-bottom: 12px; }
+        .shared-error-title { font-size: 20px; font-weight: 700; margin-bottom: 8px; }
+        .shared-error-msg { font-size: 14px; color: var(--text-3); margin-bottom: 24px; }
+
+        .shared-home-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 12px 24px;
+            background: linear-gradient(135deg, var(--accent), #6d28d9);
+            color: white;
+            text-decoration: none;
+            border-radius: 12px;
+            font-weight: 700;
+            font-size: 14px;
+            transition: all 0.2s;
+        }
+        .shared-home-btn:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(109, 40, 217, 0.4); }
+
+        /* ── Footer ── */
+        .shared-footer {
+            margin-top: 40px;
+            text-align: center;
+            font-size: 12px;
+            color: var(--text-3);
+        }
+        .shared-footer a { color: var(--accent-light); text-decoration: none; }
+        .shared-footer a:hover { text-decoration: underline; }
+
+        @keyframes spin { to { transform: rotate(360deg); } }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+        @media (max-width: 600px) {
+            body { padding: 20px 12px; }
+            .shared-card-header { padding: 14px 16px; }
+            .shared-notes-content, .shared-overview { padding: 14px 16px; }
+        }
+    </style>
+</head>
+<body>
+    <!-- Loading -->
+    <div class="shared-content" id="sharedLoading">
+        <div class="shared-loading">
+            <div class="shared-spinner"></div>
+            <div style="color: var(--text-3); font-size: 14px;">Đang tải ghi chú...</div>
+        </div>
+    </div>
+
+    <!-- Error -->
+    <div class="shared-content hidden" id="sharedError">
+        <div class="shared-error">
+            <div class="shared-error-icon">😔</div>
+            <div class="shared-error-title">Không tìm thấy ghi chú</div>
+            <div class="shared-error-msg" id="sharedErrorMsg">Link chia sẻ không hợp lệ hoặc đã bị xóa.</div>
+            <a href="/" class="shared-home-btn">← Về trang chủ</a>
+        </div>
+    </div>
+
+    <!-- Content -->
+    <div class="shared-content hidden" id="sharedContent" style="animation: fadeIn 0.4s ease;">
+        <!-- Header -->
+        <div class="shared-header">
+            <a href="/" class="shared-logo">
+                <div class="shared-logo-icon">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M2 3h6a4 4 0 014 4v14a3 3 0 00-3-3H2z"/><path d="M22 3h-6a4 4 0 00-4 4v14a3 3 0 013-3h7z"/>
+                    </svg>
+                </div>
+                <span class="shared-logo-text">LectureDigest</span>
+            </a>
+            <div><div class="shared-badge">📎 Ghi chú chia sẻ</div></div>
+            <h1 class="shared-title" id="sharedTitle"></h1>
+            <div class="shared-author" id="sharedAuthor"></div>
+            <div class="shared-meta" id="sharedMeta"></div>
+        </div>
+
+        <!-- Video Link -->
+        <a class="shared-video-link hidden" id="sharedVideoLink" target="_blank">
+            <svg viewBox="0 0 24 24" fill="currentColor"><path d="M19.615 3.184c-3.604-.246-11.631-.245-15.23 0C.488 3.45.029 5.804 0 12c.029 6.185.484 8.549 4.385 8.816 3.6.245 11.626.246 15.23 0C23.512 20.55 23.971 18.196 24 12c-.029-6.185-.484-8.549-4.385-8.816zM9 16V8l8 4-8 4z"/></svg>
+            <span id="sharedVideoLinkText">Xem video gốc trên YouTube</span>
+        </a>
+
+        <!-- Overview -->
+        <div class="shared-card hidden" id="sharedOverviewCard">
+            <div class="shared-card-header">
+                <span class="shared-card-icon">📋</span>
+                Tóm tắt bài giảng
+            </div>
+            <div class="shared-overview" id="sharedOverview"></div>
+        </div>
+
+        <!-- Notes -->
+        <div class="shared-card hidden" id="sharedNotesCard">
+            <div class="shared-card-header">
+                <span class="shared-card-icon">📝</span>
+                Ghi chú
+                <span class="shared-card-count" id="sharedNotesCount"></span>
+            </div>
+            <div class="shared-notes-content" id="sharedNotesBody"></div>
+        </div>
+
+        <!-- Bookmarks -->
+        <div class="shared-card hidden" id="sharedBookmarksCard">
+            <div class="shared-card-header">
+                <span class="shared-card-icon">🔖</span>
+                Bookmarks
+                <span class="shared-card-count" id="sharedBookmarksCount"></span>
+            </div>
+            <div class="shared-bookmarks-list" id="sharedBookmarksList"></div>
+        </div>
+
+        <!-- Footer -->
+        <div class="shared-footer">
+            Chia sẻ bởi <strong id="sharedByName">một người dùng</strong> trên
+            <a href="/">LectureDigest</a>
+            <br>
+            <a href="/" style="margin-top:8px;display:inline-block;">✨ Tạo ghi chú AI cho bài giảng của bạn →</a>
+        </div>
+    </div>
+
+    <script>
+    (function() {
+        var params = new URLSearchParams(window.location.search);
+        var shareId = params.get('id');
+
+        if (!shareId) {
+            showError('Thiếu ID chia sẻ trong URL');
+            return;
+        }
+
+        fetch('/api/shared-notes/' + encodeURIComponent(shareId))
+            .then(function(res) {
+                if (!res.ok) return res.json().then(function(d) { throw new Error(d.detail || 'Not found'); });
+                return res.json();
+            })
+            .then(function(data) {
+                renderShared(data);
+            })
+            .catch(function(err) {
+                showError(err.message);
+            });
+
+        function showError(msg) {
+            document.getElementById('sharedLoading').classList.add('hidden');
+            var errorDiv = document.getElementById('sharedError');
+            errorDiv.classList.remove('hidden');
+            document.getElementById('sharedErrorMsg').textContent = msg;
+        }
+
+        function renderShared(data) {
+            document.getElementById('sharedLoading').classList.add('hidden');
+            document.getElementById('sharedContent').classList.remove('hidden');
+
+            // Title
+            document.getElementById('sharedTitle').textContent = data.title || 'Bài giảng';
+            document.title = (data.title || 'Ghi chú') + ' — LectureDigest';
+
+            // Author
+            if (data.author) {
+                document.getElementById('sharedAuthor').textContent = '👤 ' + data.author;
+            }
+
+            // Meta
+            var date = new Date(data.created_at * 1000);
+            var dateStr = date.toLocaleDateString('vi-VN', { day: 'numeric', month: 'long', year: 'numeric' });
+            document.getElementById('sharedMeta').textContent =
+                '📅 ' + dateStr + '  •  👁 ' + (data.view_count || 0) + ' lượt xem';
+
+            // Video link
+            if (data.video_id && !data.video_id.startsWith('upload_')) {
+                var linkEl = document.getElementById('sharedVideoLink');
+                linkEl.href = 'https://youtube.com/watch?v=' + data.video_id;
+                linkEl.classList.remove('hidden');
+            }
+
+            // Overview
+            if (data.overview) {
+                document.getElementById('sharedOverviewCard').classList.remove('hidden');
+                document.getElementById('sharedOverview').textContent = data.overview;
+            }
+
+            // Notes
+            if (data.notes && data.notes.trim()) {
+                document.getElementById('sharedNotesCard').classList.remove('hidden');
+                var notesHtml = escHtml(data.notes);
+                // Highlight timestamps [MM:SS]
+                notesHtml = notesHtml.replace(/\[(\d{1,2}:\d{2})\]/g, '<span class="note-timestamp">$1</span>');
+                document.getElementById('sharedNotesBody').innerHTML = notesHtml;
+                var words = data.notes.trim().split(/\s+/).length;
+                document.getElementById('sharedNotesCount').textContent = words + ' từ';
+            }
+
+            // Bookmarks
+            var bookmarks = data.bookmarks || [];
+            if (bookmarks.length > 0) {
+                document.getElementById('sharedBookmarksCard').classList.remove('hidden');
+                document.getElementById('sharedBookmarksCount').textContent = bookmarks.length + ' mục';
+                var listHtml = bookmarks.map(function(bm) {
+                    var videoId = data.video_id && !data.video_id.startsWith('upload_') ? data.video_id : null;
+                    var timeLink = videoId
+                        ? '<a href="https://youtube.com/watch?v=' + videoId + '&t=' + (bm.time_secs || 0) + '" target="_blank" class="shared-bm-time">' + escHtml(bm.time_str || '00:00') + '</a>'
+                        : '<span class="shared-bm-time">' + escHtml(bm.time_str || '00:00') + '</span>';
+                    return '<div class="shared-bm-item">' + timeLink +
+                           '<span class="shared-bm-label">' + escHtml(bm.label || 'Bookmark') + '</span></div>';
+                }).join('');
+                document.getElementById('sharedBookmarksList').innerHTML = listHtml;
+            }
+
+            // Shared by
+            if (data.shared_by) {
+                document.getElementById('sharedByName').textContent = data.shared_by;
+            }
+        }
+
+        function escHtml(s) {
+            return String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+        }
+    })();
+    </script>
+</body>
+</html>

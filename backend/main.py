@@ -24,7 +24,8 @@ from database import (
     db_get_user_by_google_id,
     db_migrate_anonymous_to_user,
     db_kv_get, db_kv_set, db_kv_get_all, db_kv_delete,
-    db_full_sync
+    db_full_sync,
+    db_create_shared_notes, db_get_shared_notes
 )
 from fastapi.responses import FileResponse
 from pydantic import BaseModel, Field
@@ -1293,6 +1294,61 @@ async def health():
     }
 
 
+# ══════════════════════════════════════════
+# SHARED NOTES
+# ══════════════════════════════════════════
+class ShareNotesRequest(BaseModel):
+    video_id: str
+    title: str = ""
+    author: str = ""
+    notes: str = ""
+    bookmarks: list = []
+    overview: str = ""
+    shared_by: str = ""
+
+
+@app.post("/api/share-notes")
+async def share_notes(req: ShareNotesRequest):
+    """Create a shareable link for notes + bookmarks."""
+    if not req.notes.strip() and not req.bookmarks:
+        raise HTTPException(status_code=400, detail="Không có ghi chú hoặc bookmark để chia sẻ")
+
+    share_id = secrets.token_urlsafe(9)  # ~12 chars, URL-safe
+    bookmarks_json = json.dumps(req.bookmarks, ensure_ascii=False)
+
+    db_create_shared_notes(
+        share_id=share_id,
+        video_id=req.video_id,
+        title=req.title,
+        author=req.author,
+        notes=req.notes,
+        bookmarks_json=bookmarks_json,
+        overview=req.overview,
+        shared_by=req.shared_by,
+    )
+
+    base_url = os.getenv("APP_BASE_URL", "http://localhost:8000").rstrip("/")
+    share_url = f"{base_url}/shared-notes?id={share_id}"
+
+    print(f"[Share] Created shared notes: {share_id} for video {req.video_id}")
+    return {"ok": True, "share_id": share_id, "share_url": share_url}
+
+
+@app.get("/api/shared-notes/{share_id}")
+async def get_shared_notes(share_id: str):
+    """Fetch shared notes by share ID."""
+    data = db_get_shared_notes(share_id)
+    if not data:
+        raise HTTPException(status_code=404, detail="Ghi chú chia sẻ không tồn tại hoặc đã bị xóa")
+
+    # Parse bookmarks JSON
+    try:
+        data["bookmarks"] = json.loads(data.get("bookmarks", "[]"))
+    except (json.JSONDecodeError, TypeError):
+        data["bookmarks"] = []
+
+    return data
+
 @app.post("/api/quiz")
 async def regenerate_quiz(request: QuizRequest):
     """Generate additional quiz questions, avoiding duplicates with existing ones."""
@@ -2043,6 +2099,11 @@ if os.path.isdir(_FRONTEND_DIR):
             reset_page = os.path.join(_FRONTEND_DIR, "reset-password.html")
             if os.path.isfile(reset_page):
                 return FileResponse(reset_page, media_type="text/html")
+
+        if full_path.rstrip("/") == "shared-notes":
+            shared_page = os.path.join(_FRONTEND_DIR, "shared-notes.html")
+            if os.path.isfile(shared_page):
+                return FileResponse(shared_page, media_type="text/html")
 
         # Fallback: serve index.html for all SPA routes
         index = os.path.join(_FRONTEND_DIR, "index.html")
