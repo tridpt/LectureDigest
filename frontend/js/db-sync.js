@@ -1,5 +1,5 @@
 /* ════════════════════════════════════════════════
-   LectureDigest — Database Sync Layer
+   LectureDigest — Database Sync Layer (User-aware)
    ════════════════════════════════════════════════ */
 
 // ══════════════════════════════════════════════════════
@@ -7,10 +7,16 @@
 // ══════════════════════════════════════════════════════
 var DB_SYNC_BASE = (window.API_BASE || '') + '/api/db';
 
+function _dbAuthHeaders() {
+    var headers = { 'Content-Type': 'application/json' };
+    var token = localStorage.getItem('ld_auth_token');
+    if (token) headers['Authorization'] = 'Bearer ' + token;
+    return headers;
+}
+
 function dbFetch(endpoint, opts) {
-    return fetch(DB_SYNC_BASE + endpoint, Object.assign({
-        headers: { 'Content-Type': 'application/json' }
-    }, opts || {})).then(function(r) {
+    var finalOpts = Object.assign({ headers: _dbAuthHeaders() }, opts || {});
+    return fetch(DB_SYNC_BASE + endpoint, finalOpts).then(function(r) {
         if (!r.ok) throw new Error('DB sync failed: ' + r.status);
         return r.json();
     }).catch(function(e) {
@@ -99,60 +105,64 @@ var _notesSyncTimer = null;
 })();
 
 // ── Initial sync: pull from backend on page load ──
-(function initialDbSync() {
-    // Only run after DOM is ready
-    function doSync() {
-        // First push localStorage to backend (in case backend is empty)
-        var localHist = [];
-        try { localHist = JSON.parse(localStorage.getItem('lectureDigest_history') || '[]'); } catch(e) {}
-        var localGamif = {};
-        try { localGamif = JSON.parse(localStorage.getItem('lectureDigest_gamification') || '{}'); } catch(e) {}
+function doDbSync() {
+    // Push localStorage to backend (in case backend is empty)
+    var localHist = [];
+    try { localHist = JSON.parse(localStorage.getItem('lectureDigest_history') || '[]'); } catch(e) {}
+    var localGamif = {};
+    try { localGamif = JSON.parse(localStorage.getItem('lectureDigest_gamification') || '{}'); } catch(e) {}
 
-        // Collect notes and bookmarks
-        var localNotes = {};
-        var localBookmarks = {};
-        for (var i = 0; i < localStorage.length; i++) {
-            var key = localStorage.key(i);
-            if (key && key.indexOf('lectureDigest_note_') === 0) {
-                var vid = key.replace('lectureDigest_note_', '');
-                localNotes[vid] = localStorage.getItem(key) || '';
-            }
-            if (key && key.indexOf('lectureDigest_bookmarks_') === 0) {
-                var vid2 = key.replace('lectureDigest_bookmarks_', '');
-                try { localBookmarks[vid2] = JSON.parse(localStorage.getItem(key) || '[]'); } catch(e) {}
-            }
+    // Collect notes and bookmarks
+    var localNotes = {};
+    var localBookmarks = {};
+    for (var i = 0; i < localStorage.length; i++) {
+        var key = localStorage.key(i);
+        if (key && key.indexOf('lectureDigest_note_') === 0) {
+            var vid = key.replace('lectureDigest_note_', '');
+            localNotes[vid] = localStorage.getItem(key) || '';
         }
-
-        dbFetch('/sync', {
-            method: 'POST',
-            body: JSON.stringify({
-                history: localHist,
-                notes: localNotes,
-                bookmarks: localBookmarks,
-                gamification: localGamif
-            })
-        }).then(function(result) {
-            if (!result) return;
-            // Merge backend history into localStorage
-            if (result.history && result.history.length) {
-                var merged = result.history;
-                localStorage.setItem('lectureDigest_history', JSON.stringify(merged));
-                if (typeof renderHistoryPanel === 'function') renderHistoryPanel();
-                console.log('[DB Sync] History synced:', merged.length, 'entries');
-            }
-            if (result.gamification) {
-                localStorage.setItem('lectureDigest_gamification', JSON.stringify(result.gamification));
-                console.log('[DB Sync] Gamification synced');
-            }
-        });
+        if (key && key.indexOf('lectureDigest_bookmarks_') === 0) {
+            var vid2 = key.replace('lectureDigest_bookmarks_', '');
+            try { localBookmarks[vid2] = JSON.parse(localStorage.getItem(key) || '[]'); } catch(e) {}
+        }
     }
 
+    console.log('[DB Sync] Sending', localHist.length, 'history entries to server');
+
+    dbFetch('/sync', {
+        method: 'POST',
+        body: JSON.stringify({
+            history: localHist,
+            notes: localNotes,
+            bookmarks: localBookmarks,
+            gamification: localGamif
+        })
+    }).then(function(result) {
+        if (!result) {
+            console.warn('[DB Sync] No result from server');
+            return;
+        }
+        // Always update localStorage from server (server is source of truth)
+        if (result.history !== undefined) {
+            localStorage.setItem('lectureDigest_history', JSON.stringify(result.history));
+            console.log('[DB Sync] History synced:', result.history.length, 'entries');
+        }
+        if (result.gamification !== undefined) {
+            localStorage.setItem('lectureDigest_gamification', JSON.stringify(result.gamification));
+            console.log('[DB Sync] Gamification synced');
+        }
+        // Always re-render history panel
+        if (typeof renderHistoryPanel === 'function') renderHistoryPanel();
+    });
+}
+
+// Auto-sync on page load
+(function initialDbSync() {
     if (document.readyState === 'complete' || document.readyState === 'interactive') {
-        setTimeout(doSync, 1500);
+        setTimeout(doDbSync, 1500);
     } else {
         window.addEventListener('DOMContentLoaded', function() {
-            setTimeout(doSync, 1500);
+            setTimeout(doDbSync, 1500);
         });
     }
 })();
-

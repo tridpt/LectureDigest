@@ -5,6 +5,8 @@ import time
 import base64
 import tempfile
 import atexit
+import hashlib
+import secrets
 import urllib.request
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
@@ -14,13 +16,18 @@ from fastapi.staticfiles import StaticFiles
 from database import (
     init_db, db_get_history, db_save_history, db_delete_history, db_clear_history,
     db_get_notes, db_save_notes, db_get_bookmarks, db_sync_bookmarks, db_delete_bookmark,
-    db_get_gamification, db_save_gamification
+    db_get_gamification, db_save_gamification,
+    db_create_user, db_get_user_by_email, db_get_user_by_id, db_update_user,
+    db_migrate_anonymous_to_user
 )
 from fastapi.responses import FileResponse
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
+from typing import Optional
 from youtube_transcript_api import YouTubeTranscriptApi
 from google import genai
 from dotenv import load_dotenv
+import bcrypt
+import jwt as pyjwt
 
 load_dotenv()
 
@@ -404,6 +411,168 @@ def get_transcript(video_id: str, language: str = "en") -> list:
         status_code=404,
         detail="No transcript found. This video may not have captions — try another video.",
     )
+
+
+# ═══════════════════════════════════════════════════════
+# AUTHENTICATION (JWT + bcrypt)
+# ═══════════════════════════════════════════════════════
+
+# JWT secret — auto-generated on first run, stored in .env
+_JWT_SECRET = os.getenv("JWT_SECRET", "")
+if not _JWT_SECRET:
+    _JWT_SECRET = secrets.token_hex(32)
+    # Try to persist it
+    try:
+        env_path = os.path.join(os.path.dirname(__file__), ".env")
+        with open(env_path, "a", encoding="utf-8") as f:
+            f.write(f"\nJWT_SECRET={_JWT_SECRET}\n")
+        print(f"[Auth] Generated and saved JWT_SECRET")
+    except Exception:
+        print(f"[Auth] Generated JWT_SECRET (not saved to .env)")
+
+_JWT_EXPIRY = 7 * 24 * 3600  # 7 days
+
+_AVATAR_COLORS = [
+    '#8b5cf6', '#6366f1', '#3b82f6', '#0ea5e9', '#14b8a6',
+    '#10b981', '#f59e0b', '#ef4444', '#ec4899', '#a855f7'
+]
+
+
+def _create_jwt(user_id: int) -> str:
+    payload = {
+        "user_id": user_id,
+        "exp": int(time.time()) + _JWT_EXPIRY,
+        "iat": int(time.time()),
+    }
+    return pyjwt.encode(payload, _JWT_SECRET, algorithm="HS256")
+
+
+def _verify_jwt(token: str) -> dict | None:
+    try:
+        return pyjwt.decode(token, _JWT_SECRET, algorithms=["HS256"])
+    except pyjwt.ExpiredSignatureError:
+        return None
+    except pyjwt.InvalidTokenError:
+        return None
+
+
+def _get_current_user(request: Request) -> dict | None:
+    """Extract user from Authorization header. Returns user dict or None."""
+    auth = request.headers.get("Authorization", "")
+    if not auth.startswith("Bearer "):
+        return None
+    token = auth[7:]
+    payload = _verify_jwt(token)
+    if not payload:
+        return None
+    return db_get_user_by_id(payload.get("user_id"))
+
+
+class RegisterRequest(BaseModel):
+    email: str
+    password: str = Field(min_length=6)
+    display_name: str = Field(min_length=1, max_length=50)
+
+class LoginRequest(BaseModel):
+    email: str
+    password: str
+
+class UpdateProfileRequest(BaseModel):
+    display_name: Optional[str] = None
+    avatar_color: Optional[str] = None
+    current_password: Optional[str] = None
+    new_password: Optional[str] = None
+
+
+@app.post("/api/auth/register")
+async def register(req: RegisterRequest):
+    """Register a new user account."""
+    email = req.email.lower().strip()
+    if not email or "@" not in email:
+        raise HTTPException(status_code=400, detail="Email không hợp lệ")
+
+    # Check existing
+    if db_get_user_by_email(email):
+        raise HTTPException(status_code=409, detail="Email này đã được đăng ký")
+
+    # Hash password
+    pw_hash = bcrypt.hashpw(req.password.encode("utf-8"), bcrypt.gensalt()).decode("utf-8")
+
+    # Random avatar color
+    color_idx = int(hashlib.md5(email.encode()).hexdigest(), 16) % len(_AVATAR_COLORS)
+    avatar_color = _AVATAR_COLORS[color_idx]
+
+    user_id = db_create_user(email, req.display_name, pw_hash, avatar_color)
+    if not user_id:
+        raise HTTPException(status_code=409, detail="Email này đã được đăng ký")
+
+    token = _create_jwt(user_id)
+    user = db_get_user_by_id(user_id)
+
+    return {
+        "token": token,
+        "user": user
+    }
+
+
+@app.post("/api/auth/login")
+async def login(req: LoginRequest):
+    """Login with email and password."""
+    user = db_get_user_by_email(req.email)
+    if not user:
+        raise HTTPException(status_code=401, detail="Email hoặc mật khẩu không đúng")
+
+    if not bcrypt.checkpw(req.password.encode("utf-8"), user["password_hash"].encode("utf-8")):
+        raise HTTPException(status_code=401, detail="Email hoặc mật khẩu không đúng")
+
+    token = _create_jwt(user["id"])
+
+    # Don't send password hash to client
+    safe_user = {k: v for k, v in user.items() if k != "password_hash"}
+
+    return {
+        "token": token,
+        "user": safe_user
+    }
+
+
+@app.get("/api/auth/me")
+async def get_me(request: Request):
+    """Get current user info from JWT token."""
+    user = _get_current_user(request)
+    if not user:
+        raise HTTPException(status_code=401, detail="Chưa đăng nhập")
+    return {"user": user}
+
+
+@app.put("/api/auth/profile")
+async def update_profile(req: UpdateProfileRequest, request: Request):
+    """Update current user's profile."""
+    user = _get_current_user(request)
+    if not user:
+        raise HTTPException(status_code=401, detail="Chưa đăng nhập")
+
+    new_hash = None
+    if req.new_password:
+        if not req.current_password:
+            raise HTTPException(status_code=400, detail="Vui lòng nhập mật khẩu hiện tại")
+        # Verify current password
+        full_user = db_get_user_by_email(user["email"])
+        if not bcrypt.checkpw(req.current_password.encode("utf-8"), full_user["password_hash"].encode("utf-8")):
+            raise HTTPException(status_code=403, detail="Mật khẩu hiện tại không đúng")
+        if len(req.new_password) < 6:
+            raise HTTPException(status_code=400, detail="Mật khẩu mới tối thiểu 6 ký tự")
+        new_hash = bcrypt.hashpw(req.new_password.encode("utf-8"), bcrypt.gensalt()).decode("utf-8")
+
+    db_update_user(
+        user["id"],
+        display_name=req.display_name,
+        avatar_color=req.avatar_color,
+        password_hash=new_hash
+    )
+
+    updated = db_get_user_by_id(user["id"])
+    return {"user": updated}
 
 
 @app.post("/api/analyze")
@@ -805,126 +974,298 @@ Yêu cầu:
 # ══════════════════════════════════════════════════════
 
 @app.get("/api/db/history")
-async def api_get_history():
+async def api_get_history(request: Request):
     """Get all analysis history from database."""
-    return db_get_history(limit=100)
+    user = _get_current_user(request)
+    uid = user["id"] if user else None
+    return db_get_history(limit=100, user_id=uid)
 
 @app.post("/api/db/history")
 async def api_save_history(request: Request):
     """Save an analysis entry to database."""
     entry = await request.json()
-    entry_id = db_save_history(entry)
+    user = _get_current_user(request)
+    uid = user["id"] if user else None
+    entry_id = db_save_history(entry, user_id=uid)
     return {"ok": True, "entry_id": entry_id}
 
 @app.post("/api/db/history/bulk")
 async def api_bulk_save_history(request: Request):
     """Bulk import history entries (for initial sync from localStorage)."""
     entries = await request.json()
+    user = _get_current_user(request)
+    uid = user["id"] if user else None
     saved = 0
     for entry in entries:
         try:
-            db_save_history(entry)
+            db_save_history(entry, user_id=uid)
             saved += 1
         except Exception as e:
             print(f"[DB] Skip entry: {e}")
     return {"ok": True, "saved": saved, "total": len(entries)}
 
 @app.delete("/api/db/history/{entry_id}")
-async def api_delete_history(entry_id: str):
+async def api_delete_history(entry_id: str, request: Request):
     """Delete a single history entry."""
-    db_delete_history(entry_id)
+    user = _get_current_user(request)
+    uid = user["id"] if user else None
+    db_delete_history(entry_id, user_id=uid)
     return {"ok": True}
 
 @app.delete("/api/db/history")
-async def api_clear_history():
+async def api_clear_history(request: Request):
     """Clear all history."""
-    db_clear_history()
+    user = _get_current_user(request)
+    uid = user["id"] if user else None
+    db_clear_history(user_id=uid)
     return {"ok": True}
 
 @app.get("/api/db/notes/{video_id}")
-async def api_get_notes(video_id: str):
+async def api_get_notes(video_id: str, request: Request):
     """Get notes for a video."""
-    return {"video_id": video_id, "content": db_get_notes(video_id)}
+    user = _get_current_user(request)
+    uid = user["id"] if user else None
+    return {"video_id": video_id, "content": db_get_notes(video_id, user_id=uid)}
 
 @app.put("/api/db/notes/{video_id}")
 async def api_save_notes(video_id: str, request: Request):
     """Save/update notes for a video."""
     body = await request.json()
-    db_save_notes(video_id, body.get("content", ""))
+    user = _get_current_user(request)
+    uid = user["id"] if user else None
+    db_save_notes(video_id, body.get("content", ""), user_id=uid)
     return {"ok": True}
 
 @app.get("/api/db/bookmarks/{video_id}")
-async def api_get_bookmarks(video_id: str):
+async def api_get_bookmarks(video_id: str, request: Request):
     """Get bookmarks for a video."""
-    return db_get_bookmarks(video_id)
+    user = _get_current_user(request)
+    uid = user["id"] if user else None
+    return db_get_bookmarks(video_id, user_id=uid)
 
 @app.put("/api/db/bookmarks/{video_id}")
 async def api_sync_bookmarks(video_id: str, request: Request):
     """Sync all bookmarks for a video (replace)."""
     bookmarks = await request.json()
-    db_sync_bookmarks(video_id, bookmarks)
+    user = _get_current_user(request)
+    uid = user["id"] if user else None
+    db_sync_bookmarks(video_id, bookmarks, user_id=uid)
     return {"ok": True}
 
 @app.get("/api/db/gamification")
-async def api_get_gamification():
+async def api_get_gamification(request: Request):
     """Get gamification data."""
-    return db_get_gamification()
+    user = _get_current_user(request)
+    uid = user["id"] if user else None
+    return db_get_gamification(user_id=uid)
 
 @app.put("/api/db/gamification")
 async def api_save_gamification(request: Request):
     """Save gamification data."""
     data = await request.json()
-    db_save_gamification(data)
+    user = _get_current_user(request)
+    uid = user["id"] if user else None
+    db_save_gamification(data, user_id=uid)
     return {"ok": True}
 
 @app.post("/api/db/sync")
 async def api_full_sync(request: Request):
     """Full sync: receive all localStorage data, merge into DB, return merged result."""
-    payload = await request.json()
+    try:
+        payload = await request.json()
+    except Exception as e:
+        print(f"[Sync Error] Failed to parse JSON: {e}")
+        raise HTTPException(status_code=400, detail=f"Invalid JSON: {e}")
 
-    # Sync history
+    user = _get_current_user(request)
+    uid = user["id"] if user else None
+    print(f"[Sync] User ID: {uid}")
+
+    # Sync history (only non-empty entries)
     local_history = payload.get("history", [])
-    for entry in local_history:
-        try:
-            db_save_history(entry)
-        except:
-            pass
+    if local_history:
+        for entry in local_history:
+            try:
+                db_save_history(entry, user_id=uid)
+            except Exception as e:
+                print(f"[Sync] Skip history entry: {e}")
 
     # Sync notes
     local_notes = payload.get("notes", {})
     for video_id, content in local_notes.items():
         if content:
-            db_save_notes(video_id, content)
+            try:
+                db_save_notes(video_id, content, user_id=uid)
+            except Exception as e:
+                print(f"[Sync] Skip note {video_id}: {e}")
 
     # Sync bookmarks
     local_bookmarks = payload.get("bookmarks", {})
     for video_id, bms in local_bookmarks.items():
         if bms:
-            db_sync_bookmarks(video_id, bms)
+            try:
+                db_sync_bookmarks(video_id, bms, user_id=uid)
+            except Exception as e:
+                print(f"[Sync] Skip bookmarks {video_id}: {e}")
 
     # Sync gamification
     local_gamif = payload.get("gamification", {})
     if local_gamif:
-        existing = db_get_gamification()
-        # Merge: keep higher values
-        merged = {}
-        for key in set(list(existing.keys()) + list(local_gamif.keys())):
-            ev = existing.get(key)
-            lv = local_gamif.get(key)
-            if isinstance(ev, (int, float)) and isinstance(lv, (int, float)):
-                merged[key] = max(ev, lv)
-            elif isinstance(ev, list) and isinstance(lv, list):
-                merged[key] = list(set(ev + lv))
-            else:
-                merged[key] = lv if lv is not None else ev
-        db_save_gamification(merged)
+        try:
+            existing = db_get_gamification(user_id=uid)
+            # Merge: keep higher values
+            merged = {}
+            for key in set(list(existing.keys()) + list(local_gamif.keys())):
+                ev = existing.get(key)
+                lv = local_gamif.get(key)
+                if isinstance(ev, (int, float)) and isinstance(lv, (int, float)):
+                    merged[key] = max(ev, lv)
+                elif isinstance(ev, list) and isinstance(lv, list):
+                    merged[key] = list(set(ev + lv))
+                else:
+                    merged[key] = lv if lv is not None else ev
+            db_save_gamification(merged, user_id=uid)
+        except Exception as e:
+            print(f"[Sync] Gamification merge error: {e}")
 
+    # Return current server data
+    try:
+        result_history = db_get_history(limit=100, user_id=uid)
+        result_gamif = db_get_gamification(user_id=uid)
+    except Exception as e:
+        print(f"[Sync] Error fetching result: {e}")
+        result_history = []
+        result_gamif = {}
+
+    print(f"[Sync] Returning {len(result_history)} history entries for user {uid}")
     return {
         "ok": True,
-        "history": db_get_history(limit=100),
-        "gamification": db_get_gamification()
+        "history": result_history,
+        "gamification": result_gamif
     }
 
+
+
+# ═══════════════════════════════════════════════════════
+# EXERCISES (Fill-in-the-Blank, True/False, Matching, Short Answer)
+# ═══════════════════════════════════════════════════════
+
+class ExerciseRequest(BaseModel):
+    title: str = ''
+    transcript: list = []        # [{text, start}, ...]
+    topics: list = []            # [{title, summary}, ...]
+    key_takeaways: list = []
+    output_language: str = 'Vietnamese'
+
+
+@app.post("/api/exercises")
+async def generate_exercises(request: ExerciseRequest):
+    """Generate diverse exercise types from a video transcript."""
+    if not os.getenv("GEMINI_API_KEY"):
+        raise HTTPException(status_code=500, detail="GEMINI_API_KEY not configured")
+
+    if not request.transcript and not request.topics:
+        raise HTTPException(status_code=400, detail="transcript or topics required")
+
+    # Build content context
+    content_block = f"VIDEO TITLE: {request.title}\n\n"
+
+    if request.transcript:
+        lines = []
+        for entry in request.transcript:
+            text = entry.get("text", "").strip().replace("\n", " ")
+            lines.append(text)
+        transcript_text = " ".join(lines)
+        if len(transcript_text) > 30000:
+            transcript_text = transcript_text[:30000] + "...[truncated]..."
+        content_block += f"TRANSCRIPT:\n{transcript_text}\n\n"
+
+    if request.topics:
+        topics_text = "\n".join(
+            f"- {t.get('title', '')}: {t.get('summary', '')}" for t in request.topics[:8]
+        )
+        content_block += f"TOPICS:\n{topics_text}\n\n"
+
+    if request.key_takeaways:
+        kt_text = "\n".join(f"- {kt}" for kt in request.key_takeaways[:6])
+        content_block += f"KEY TAKEAWAYS:\n{kt_text}\n\n"
+
+    prompt = f"""You are an expert educational content creator. Create diverse exercises based on this video lecture content.
+
+{content_block}
+
+⚠️ Generate ALL text in **{request.output_language}**.
+
+Create exercises in 4 different formats. Return ONLY a valid JSON object (no markdown fences, no extra text):
+
+{{
+  "fill_blank": [
+    {{
+      "sentence": "A sentence with a key term replaced by ____ (use exactly 4+ underscores for the blank)",
+      "answer": "The correct word/phrase that fills the blank",
+      "hint": "A short hint to help the student (optional, can be empty string)",
+      "explanation": "Brief explanation of why this is the answer"
+    }}
+  ],
+  "true_false": [
+    {{
+      "statement": "A declarative statement that is either true or false",
+      "answer": true,
+      "explanation": "Why this statement is true/false based on the lecture content"
+    }}
+  ],
+  "matching": [
+    {{
+      "term": "A key term or concept from the lecture",
+      "definition": "The correct definition or description of that term"
+    }}
+  ],
+  "short_answer": [
+    {{
+      "question": "An open-ended question requiring a short written answer",
+      "model_answer": "A complete model answer (2-4 sentences)",
+      "hint": "A hint to guide the student",
+      "key_points": ["Point 1 the answer should cover", "Point 2"]
+    }}
+  ]
+}}
+
+REQUIREMENTS:
+- Generate 5-6 fill_blank items — use important terms/concepts from the lecture
+- Generate 5-6 true_false items — mix of true and false statements (roughly equal)
+- Generate 5-6 matching pairs — key terms matched with their definitions
+- Generate 3-4 short_answer items — deeper questions requiring understanding
+- All content must be based ONLY on the lecture content
+- fill_blank: The blank should replace a KEY concept word, not trivial words
+- true_false: Make false statements plausible (common misconceptions)
+- matching: Terms and definitions should be clearly distinct from each other
+- short_answer: Questions should test understanding, not just recall
+- Return ONLY the JSON object — no markdown, no extra text, no code fences"""
+
+    try:
+        text = call_gemini(prompt)
+        text = text.strip()
+        if text.startswith("```"):
+            text = re.sub(r"^```(?:json)?\s*\n?", "", text)
+            text = re.sub(r"\n?\s*```$", "", text)
+        result = json.loads(text)
+
+        # Validate structure
+        for key in ["fill_blank", "true_false", "matching", "short_answer"]:
+            if key not in result:
+                result[key] = []
+
+        # Ensure true_false answers are boolean
+        for item in result.get("true_false", []):
+            if isinstance(item.get("answer"), str):
+                item["answer"] = item["answer"].lower() in ("true", "đúng", "yes")
+
+        return result
+
+    except json.JSONDecodeError as e:
+        raise HTTPException(status_code=500, detail=f"Failed to parse AI response: {e}")
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Exercise generation failed: {e}")
 
 
 # ═══════════════════════════════════════════════════════

@@ -50,6 +50,8 @@
     <link rel="stylesheet" href="/css/playlist.css">
     <link rel="stylesheet" href="/css/knowledge-graph.css">
     <link rel="stylesheet" href="/css/exam.css">
+    <link rel="stylesheet" href="/css/exercises.css">
+    <link rel="stylesheet" href="/css/auth.css">
     <!-- Utilities & Responsive -->
     <link rel="stylesheet" href="/css/utilities.css">
     <link rel="stylesheet" href="/css/mobile.css">
@@ -160,6 +162,33 @@
                             <div class="hist-list" id="historyList"></div>
                         </div>
                     </div>
+                </div>
+
+                <!-- Auth: Login button / User avatar -->
+                <button class="auth-login-btn" id="authLoginBtn" onclick="openAuthModal('login')" title="Đăng nhập">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M15 3h4a2 2 0 012 2v14a2 2 0 01-2 2h-4M10 17l5-5-5-5M15 12H3" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                    Đăng nhập
+                </button>
+                <div class="auth-user-avatar hidden" id="authUserAvatar" onclick="toggleAuthUserMenu()">
+                    <!-- Filled by JS -->
+                </div>
+                <!-- User dropdown menu -->
+                <div class="auth-user-menu hidden" id="authUserMenu">
+                    <div class="auth-menu-header">
+                        <div class="auth-menu-name" id="authMenuName"></div>
+                        <div class="auth-menu-email" id="authMenuEmail"></div>
+                    </div>
+                    <button class="auth-menu-item" onclick="openProfileModal()">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2" stroke-linecap="round" stroke-linejoin="round"/><circle cx="12" cy="7" r="4"/></svg>
+                        Hồ sơ cá nhân
+                    </button>
+                    <div class="auth-menu-divider"></div>
+                    <button class="auth-menu-item logout" onclick="authLogout()">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4M16 17l5-5-5-5M21 12H9" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                        Đăng xuất
+                    </button>
                 </div>
 
             </div>
@@ -622,6 +651,49 @@
                     </div>
                 </div>
 
+                <!-- Exercises Card (Fill-in-the-Blank, True/False, Matching, Short Answer) -->
+                <div class="card exercises-card" id="exercisesCard">
+                    <div class="card-header">
+                        <span class="card-icon" aria-hidden="true">📝</span>
+                        <h3 class="card-title">Bài tập đa dạng</h3>
+                        <div class="quiz-header-right">
+                            <span class="ex-score-badge hidden" id="exScoreBadge" aria-live="polite">0/0</span>
+                            <button class="ex-gen-btn" id="exGenBtn" onclick="generateExercises()">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14">
+                                    <path d="M12 4v16m8-8H4" stroke-linecap="round" stroke-linejoin="round"/>
+                                </svg>
+                                Tạo bài tập
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Tab bar -->
+                    <div class="ex-tab-bar hidden" id="exTabBar">
+                        <button class="ex-tab active" data-tab="fill_blank" onclick="exSwitchTab('fill_blank')">
+                            <span class="ex-tab-icon">✏️</span> Điền từ <span class="ex-tab-count">0</span>
+                        </button>
+                        <button class="ex-tab" data-tab="true_false" onclick="exSwitchTab('true_false')">
+                            <span class="ex-tab-icon">⚖️</span> Đúng/Sai <span class="ex-tab-count">0</span>
+                        </button>
+                        <button class="ex-tab" data-tab="matching" onclick="exSwitchTab('matching')">
+                            <span class="ex-tab-icon">🔗</span> Nối cặp <span class="ex-tab-count">0</span>
+                        </button>
+                        <button class="ex-tab" data-tab="short_answer" onclick="exSwitchTab('short_answer')">
+                            <span class="ex-tab-icon">📝</span> Tự luận <span class="ex-tab-count">0</span>
+                        </button>
+                    </div>
+
+                    <!-- Exercise content -->
+                    <div id="exContent">
+                        <div class="ex-empty">
+                            <div style="font-size:2.5rem;margin-bottom:12px">🎯</div>
+                            <p style="margin:0 0 4px;font-weight:600;color:var(--text-primary)">Luyện tập đa dạng hơn!</p>
+                            <p style="margin:0;font-size:13px">Bấm "Tạo bài tập" để AI tạo các dạng bài tập khác nhau:<br>
+                            <strong>Điền từ</strong> · <strong>Đúng/Sai</strong> · <strong>Nối cặp</strong> · <strong>Tự luận ngắn</strong></p>
+                        </div>
+                    </div>
+                </div>
+
                 <!-- Transcript Search Card -->
                 <div class="card transcript-card" id="transcriptCard">
                     <div class="card-header">
@@ -1036,6 +1108,8 @@
     <!-- ══ LectureDigest Modular JS ══ -->
     <!-- Core: state, utilities, section management -->
     <script src="/js/core.js"></script>
+    <!-- Auth: login, register, profile -->
+    <script src="/js/auth.js"></script>
     <!-- YouTube player & transcript client fetch -->
     <script src="/js/youtube.js"></script>
     <!-- History CRUD & panel -->
@@ -1076,6 +1150,8 @@
     <script src="/js/knowledge-graph.js"></script>
     <!-- Multi-video exam -->
     <script src="/js/exam.js"></script>
+    <!-- Exercises (Fill-in-the-Blank, True/False, Matching, Short Answer) -->
+    <script src="/js/exercises.js"></script>
     <!-- Database sync layer (patches functions, load last) -->
     <script src="/js/db-sync.js"></script>
     <!-- Mobile UX helpers -->
@@ -1084,6 +1160,126 @@
     <script src="/dashboard.js"></script>
     <!-- Concept explainer -->
     <script src="/concept-explainer.js"></script>
+
+    <!-- ══════════════════════════════ AUTH MODAL ══════════════════════════════ -->
+    <div class="auth-modal-overlay hidden" id="authModalOverlay" role="dialog" aria-modal="true" aria-label="Đăng nhập">
+        <div class="auth-modal">
+            <button class="auth-modal-close" onclick="closeAuthModal()" aria-label="Đóng">✕</button>
+            <div class="auth-modal-icon">🔐</div>
+            <h3 class="auth-modal-title" id="authModalTitle">Đăng nhập</h3>
+            <p class="auth-modal-subtitle">Lưu tiến trình học tập của bạn</p>
+
+            <form id="authForm" data-mode="login" onsubmit="submitAuthForm(event)">
+                <!-- Display name (register only) -->
+                <div class="auth-field hidden" id="authNameRow">
+                    <label for="authDisplayName">Tên hiển thị</label>
+                    <div class="auth-input-wrapper">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2" stroke-linecap="round" stroke-linejoin="round"/><circle cx="12" cy="7" r="4"/></svg>
+                        <input type="text" id="authDisplayName" placeholder="Nguyễn Văn A" autocomplete="name">
+                    </div>
+                </div>
+
+                <!-- Email -->
+                <div class="auth-field">
+                    <label for="authEmail">Email</label>
+                    <div class="auth-input-wrapper">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+                        <input type="email" id="authEmail" placeholder="email@example.com" autocomplete="email" required>
+                    </div>
+                </div>
+
+                <!-- Password -->
+                <div class="auth-field">
+                    <label for="authPassword">Mật khẩu</label>
+                    <div class="auth-input-wrapper">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>
+                        <input type="password" id="authPassword" placeholder="Tối thiểu 6 ký tự" autocomplete="current-password" required>
+                    </div>
+                </div>
+
+                <!-- Error message -->
+                <div class="auth-error hidden" id="authError"></div>
+
+                <!-- Submit -->
+                <button type="submit" class="auth-submit-btn" id="authSubmitBtn">Đăng nhập</button>
+
+                <!-- Switch mode -->
+                <div class="auth-switch" id="authSwitchText">
+                    Chưa có tài khoản? <a href="#" onclick="event.preventDefault();_authSetMode('register')">Đăng ký ngay</a>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- ══════════════════════════════ PROFILE MODAL ══════════════════════════════ -->
+    <div class="profile-modal-overlay hidden" id="profileModalOverlay" role="dialog" aria-modal="true" aria-label="Hồ sơ cá nhân">
+        <div class="profile-modal">
+            <button class="profile-modal-close" onclick="closeProfileModal()" aria-label="Đóng">✕</button>
+            <div class="profile-header">
+                <h3>👤 Hồ sơ cá nhân</h3>
+                <p>Cập nhật thông tin của bạn</p>
+            </div>
+
+            <form onsubmit="saveProfile(event)">
+                <!-- Display Name -->
+                <div class="auth-field">
+                    <label for="profileName">Tên hiển thị</label>
+                    <div class="auth-input-wrapper">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2" stroke-linecap="round" stroke-linejoin="round"/><circle cx="12" cy="7" r="4"/></svg>
+                        <input type="text" id="profileName" placeholder="Tên hiển thị" required>
+                    </div>
+                </div>
+
+                <!-- Email (read-only) -->
+                <div class="auth-field">
+                    <label for="profileEmail">Email</label>
+                    <div class="auth-input-wrapper">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+                        <input type="email" id="profileEmail" disabled style="opacity:0.5;cursor:not-allowed">
+                    </div>
+                </div>
+
+                <!-- Avatar Color -->
+                <div class="profile-color-label">Màu avatar</div>
+                <div class="profile-color-grid">
+                    <div class="profile-color-option" data-color="#8b5cf6" style="background:#8b5cf6" onclick="selectProfileColor(this)"></div>
+                    <div class="profile-color-option" data-color="#6366f1" style="background:#6366f1" onclick="selectProfileColor(this)"></div>
+                    <div class="profile-color-option" data-color="#3b82f6" style="background:#3b82f6" onclick="selectProfileColor(this)"></div>
+                    <div class="profile-color-option" data-color="#0ea5e9" style="background:#0ea5e9" onclick="selectProfileColor(this)"></div>
+                    <div class="profile-color-option" data-color="#14b8a6" style="background:#14b8a6" onclick="selectProfileColor(this)"></div>
+                    <div class="profile-color-option" data-color="#10b981" style="background:#10b981" onclick="selectProfileColor(this)"></div>
+                    <div class="profile-color-option" data-color="#f59e0b" style="background:#f59e0b" onclick="selectProfileColor(this)"></div>
+                    <div class="profile-color-option" data-color="#ef4444" style="background:#ef4444" onclick="selectProfileColor(this)"></div>
+                    <div class="profile-color-option" data-color="#ec4899" style="background:#ec4899" onclick="selectProfileColor(this)"></div>
+                    <div class="profile-color-option" data-color="#a855f7" style="background:#a855f7" onclick="selectProfileColor(this)"></div>
+                </div>
+
+                <!-- Change Password (optional) -->
+                <div class="profile-section-title">Đổi mật khẩu (tùy chọn)</div>
+                <div class="auth-field">
+                    <label for="profileCurrentPw">Mật khẩu hiện tại</label>
+                    <div class="auth-input-wrapper">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>
+                        <input type="password" id="profileCurrentPw" placeholder="Nhập nếu muốn đổi" autocomplete="current-password">
+                    </div>
+                </div>
+                <div class="auth-field">
+                    <label for="profileNewPw">Mật khẩu mới</label>
+                    <div class="auth-input-wrapper">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>
+                        <input type="password" id="profileNewPw" placeholder="Tối thiểu 6 ký tự" autocomplete="new-password">
+                    </div>
+                </div>
+
+                <!-- Error/Success messages -->
+                <div class="profile-error hidden" id="profileError"></div>
+                <div class="profile-success hidden" id="profileSuccess"></div>
+
+                <!-- Save button -->
+                <button type="submit" class="profile-save-btn" id="profileSaveBtn">Lưu thay đổi</button>
+            </form>
+        </div>
+    </div>
 
     <!-- ══════════════════════════════ SHARE MODAL ══════════════════════════════ -->
     <div class="share-modal-overlay hidden" id="shareModalOverlay" onclick="closeShareModal(event)" role="dialog" aria-modal="true" aria-label="Chia sẻ kết quả">
