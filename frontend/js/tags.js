@@ -25,8 +25,21 @@ function loadAllTags() {
     catch(e) { return {}; }
 }
 
+var _tagSyncTimer = null;
 function saveAllTags(data) {
     try { localStorage.setItem(TAG_KEY, JSON.stringify(data)); } catch(e) {}
+    // Debounce push to server
+    clearTimeout(_tagSyncTimer);
+    _tagSyncTimer = setTimeout(function() {
+        if (typeof dbFetch === 'function') {
+            var extraData = {};
+            extraData[TAG_KEY] = localStorage.getItem(TAG_KEY) || '{}';
+            dbFetch('/sync', {
+                method: 'POST',
+                body: JSON.stringify({ history: [], notes: {}, bookmarks: {}, gamification: {}, extra_data: extraData })
+            });
+        }
+    }, 1000);
 }
 
 function getVideoTags(videoId) {
