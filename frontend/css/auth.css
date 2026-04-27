@@ -54,14 +54,16 @@
     position: absolute;
     top: calc(100% + 8px);
     right: 0;
-    background: var(--bg-elevated);
+    background: #1a1a2e;
     border: 1px solid var(--border);
     border-radius: var(--radius-lg);
-    box-shadow: 0 16px 48px rgba(0, 0, 0, 0.4);
+    box-shadow: 0 16px 48px rgba(0, 0, 0, 0.6), 0 0 0 1px rgba(255,255,255,0.05);
     min-width: 220px;
-    z-index: 200;
+    z-index: 500;
     overflow: hidden;
     animation: fadeInUp 0.2s ease both;
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
 }
 
 .auth-menu-header {
@@ -396,7 +398,8 @@
     background: rgba(0, 0, 0, 0.02);
 }
 .light-mode .auth-user-menu {
-    box-shadow: 0 12px 32px rgba(0, 0, 0, 0.12);
+    background: #ffffff;
+    box-shadow: 0 12px 32px rgba(0, 0, 0, 0.15), 0 0 0 1px rgba(0,0,0,0.06);
 }
 .light-mode .auth-menu-item:hover {
     background: rgba(0, 0, 0, 0.04);
