@@ -16,8 +16,21 @@ function loadProgress(videoId) {
     catch { return { watchedPct: 0, quizSessions: [] }; }
 }
 
+var _progSyncTimer = null;
 function saveProgress(videoId, data) {
     try { localStorage.setItem(progKey(videoId), JSON.stringify(data)); } catch {}
+    // Debounce push progress to server via extra_data
+    clearTimeout(_progSyncTimer);
+    _progSyncTimer = setTimeout(function() {
+        if (typeof dbFetch === 'function') {
+            var extraData = {};
+            extraData[progKey(videoId)] = JSON.stringify(data);
+            dbFetch('/sync', {
+                method: 'POST',
+                body: JSON.stringify({ history: [], notes: {}, bookmarks: {}, gamification: {}, extra_data: extraData })
+            });
+        }
+    }, 2000);
 }
 
 // ── Init progress tracking for a video ──
@@ -150,8 +163,21 @@ function loadBookmarks(videoId) {
     catch { return []; }
 }
 
+var _bmSyncTimer = null;
 function saveBookmarks(videoId, list) {
     try { localStorage.setItem(bmKey(videoId), JSON.stringify(list)); } catch {}
+    // Debounce push bookmarks to server
+    clearTimeout(_bmSyncTimer);
+    _bmSyncTimer = setTimeout(function() {
+        if (typeof dbFetch === 'function') {
+            var bm = {};
+            bm[videoId] = list;
+            dbFetch('/sync', {
+                method: 'POST',
+                body: JSON.stringify({ history: [], notes: {}, bookmarks: bm, gamification: {}, extra_data: {} })
+            });
+        }
+    }, 1500);
 }
 
 // ── Init: called when a video is loaded ──

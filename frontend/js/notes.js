@@ -12,11 +12,24 @@ function loadNote(videoId) {
     catch { return ''; }
 }
 
+var _noteSyncTimer = null;
 function saveNote(videoId, text) {
     try {
         localStorage.setItem(notesKey(videoId), text);
         if (text.trim().length > 0) recordGamifFeature('usedNotes');
     } catch {}
+    // Debounce push note to server
+    clearTimeout(_noteSyncTimer);
+    _noteSyncTimer = setTimeout(function() {
+        if (typeof dbFetch === 'function') {
+            var notes = {};
+            notes[videoId] = text;
+            dbFetch('/sync', {
+                method: 'POST',
+                body: JSON.stringify({ history: [], notes: notes, bookmarks: {}, gamification: {}, extra_data: {} })
+            });
+        }
+    }, 2000);
 }
 
 function initNotes(videoId) {
