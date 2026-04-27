@@ -104,6 +104,23 @@ var _notesSyncTimer = null;
     };
 })();
 
+// ── Extra data keys to sync per-user ──
+var _EXTRA_SYNC_PREFIXES = [
+    'lectureDigest_examHistory',
+    'lectureDigest_sm2_',
+    'lectureDigest_customfc_',
+    'lectureDigest_tags',
+    'lectureDigest_progress_',
+    'lectureDigest_playlist_'
+];
+
+function _isExtraSyncKey(key) {
+    for (var p = 0; p < _EXTRA_SYNC_PREFIXES.length; p++) {
+        if (key === _EXTRA_SYNC_PREFIXES[p] || key.indexOf(_EXTRA_SYNC_PREFIXES[p]) === 0) return true;
+    }
+    return false;
+}
+
 // ── Initial sync: pull from backend on page load ──
 function doDbSync() {
     // Push localStorage to backend (in case backend is empty)
@@ -112,22 +129,25 @@ function doDbSync() {
     var localGamif = {};
     try { localGamif = JSON.parse(localStorage.getItem('lectureDigest_gamification') || '{}'); } catch(e) {}
 
-    // Collect notes and bookmarks
+    // Collect notes, bookmarks, and extra data
     var localNotes = {};
     var localBookmarks = {};
+    var extraData = {};
     for (var i = 0; i < localStorage.length; i++) {
         var key = localStorage.key(i);
-        if (key && key.indexOf('lectureDigest_note_') === 0) {
+        if (!key) continue;
+        if (key.indexOf('lectureDigest_note_') === 0) {
             var vid = key.replace('lectureDigest_note_', '');
             localNotes[vid] = localStorage.getItem(key) || '';
-        }
-        if (key && key.indexOf('lectureDigest_bookmarks_') === 0) {
+        } else if (key.indexOf('lectureDigest_bookmarks_') === 0) {
             var vid2 = key.replace('lectureDigest_bookmarks_', '');
             try { localBookmarks[vid2] = JSON.parse(localStorage.getItem(key) || '[]'); } catch(e) {}
+        } else if (_isExtraSyncKey(key)) {
+            extraData[key] = localStorage.getItem(key) || '';
         }
     }
 
-    console.log('[DB Sync] Sending', localHist.length, 'history entries to server');
+    console.log('[DB Sync] Sending', localHist.length, 'history,', Object.keys(extraData).length, 'extra keys');
 
     dbFetch('/sync', {
         method: 'POST',
@@ -135,7 +155,8 @@ function doDbSync() {
             history: localHist,
             notes: localNotes,
             bookmarks: localBookmarks,
-            gamification: localGamif
+            gamification: localGamif,
+            extra_data: extraData
         })
     }).then(function(result) {
         if (!result) {
@@ -150,6 +171,14 @@ function doDbSync() {
         if (result.gamification !== undefined) {
             localStorage.setItem('lectureDigest_gamification', JSON.stringify(result.gamification));
             console.log('[DB Sync] Gamification synced');
+        }
+        // Restore extra data from server
+        if (result.extra_data) {
+            var extraKeys = Object.keys(result.extra_data);
+            for (var k = 0; k < extraKeys.length; k++) {
+                localStorage.setItem(extraKeys[k], result.extra_data[extraKeys[k]]);
+            }
+            console.log('[DB Sync] Extra data synced:', extraKeys.length, 'keys');
         }
         // Always re-render history panel
         if (typeof renderHistoryPanel === 'function') renderHistoryPanel();

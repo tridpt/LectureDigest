@@ -18,7 +18,8 @@ from database import (
     db_get_notes, db_save_notes, db_get_bookmarks, db_sync_bookmarks, db_delete_bookmark,
     db_get_gamification, db_save_gamification,
     db_create_user, db_get_user_by_email, db_get_user_by_id, db_update_user,
-    db_migrate_anonymous_to_user
+    db_migrate_anonymous_to_user,
+    db_kv_get, db_kv_set, db_kv_get_all, db_kv_delete
 )
 from fastapi.responses import FileResponse
 from pydantic import BaseModel, Field
@@ -1137,11 +1138,28 @@ async def api_full_sync(request: Request):
         result_history = []
         result_gamif = {}
 
-    print(f"[Sync] Returning {len(result_history)} history entries for user {uid}")
+    # Sync extra data (exam history, flashcards, tags, progress, etc.)
+    extra_data = payload.get("extra_data", {})
+    result_extra = {}
+    if uid:
+        for ekey, evalue in extra_data.items():
+            if evalue is not None and evalue != '' and evalue != '{}' and evalue != '[]':
+                try:
+                    db_kv_set(uid, ekey, evalue)
+                except Exception as e:
+                    print(f"[Sync] Skip extra {ekey}: {e}")
+        # Return all stored extra data for this user
+        try:
+            result_extra = db_kv_get_all(uid)
+        except Exception as e:
+            print(f"[Sync] Error fetching extra data: {e}")
+
+    print(f"[Sync] Returning {len(result_history)} history, {len(result_extra)} extra keys for user {uid}")
     return {
         "ok": True,
         "history": result_history,
-        "gamification": result_gamif
+        "gamification": result_gamif,
+        "extra_data": result_extra
     }
 
 

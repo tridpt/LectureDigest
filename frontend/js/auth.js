@@ -189,12 +189,20 @@ function authLogout() {
     // Clear user-specific data from localStorage
     localStorage.removeItem('lectureDigest_history');
     localStorage.removeItem('lectureDigest_gamification');
-    // Clear notes and bookmarks
+    // Clear notes, bookmarks, and all per-user extra data
     var keysToRemove = [];
     for (var i = 0; i < localStorage.length; i++) {
         var key = localStorage.key(i);
-        if (key && (key.indexOf('lectureDigest_note_') === 0 ||
-                    key.indexOf('lectureDigest_bookmarks_') === 0)) {
+        if (key && (
+            key.indexOf('lectureDigest_note_') === 0 ||
+            key.indexOf('lectureDigest_bookmarks_') === 0 ||
+            key.indexOf('lectureDigest_examHistory') === 0 ||
+            key.indexOf('lectureDigest_sm2_') === 0 ||
+            key.indexOf('lectureDigest_customfc_') === 0 ||
+            key.indexOf('lectureDigest_tags') === 0 ||
+            key.indexOf('lectureDigest_progress_') === 0 ||
+            key.indexOf('lectureDigest_playlist_') === 0
+        )) {
             keysToRemove.push(key);
         }
     }
