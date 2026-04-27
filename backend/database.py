@@ -130,25 +130,27 @@ def _migrate_add_user_id(conn):
 
 
 def _migrate_notes_composite_pk(conn):
-    """Recreate notes table with composite PK (video_id, user_id) instead of just video_id."""
+    """Recreate notes table so multiple users can have notes for the same video."""
     # Check current schema
     info = conn.execute("PRAGMA table_info(notes)").fetchall()
     pk_cols = [r[1] for r in info if r[5] > 0]  # r[5] is pk flag
     # If only video_id is PK (old schema), we need to recreate
     if len(pk_cols) == 1 and pk_cols[0] == 'video_id':
-        print("[DB Migration] Recreating notes table with composite PK (video_id, user_id)")
+        print("[DB Migration] Recreating notes table with user-aware unique constraint")
         conn.executescript("""
             CREATE TABLE IF NOT EXISTS notes_new (
+                id         INTEGER PRIMARY KEY AUTOINCREMENT,
                 video_id   TEXT NOT NULL,
                 content    TEXT NOT NULL DEFAULT '',
                 updated_at INTEGER,
-                user_id    INTEGER DEFAULT NULL,
-                PRIMARY KEY (video_id, COALESCE(user_id, 0))
+                user_id    INTEGER DEFAULT NULL
             );
             INSERT OR IGNORE INTO notes_new (video_id, content, updated_at, user_id)
                 SELECT video_id, content, updated_at, user_id FROM notes;
             DROP TABLE IF EXISTS notes;
             ALTER TABLE notes_new RENAME TO notes;
+            CREATE UNIQUE INDEX IF NOT EXISTS idx_notes_video_user
+                ON notes (video_id, COALESCE(user_id, 0));
         """)
         print("[DB Migration] Notes table recreated successfully")
 
