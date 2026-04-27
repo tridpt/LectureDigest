@@ -12,14 +12,18 @@ function loadHistory() {
 
 function saveToHistory(data) {
     const list = loadHistory();
+
+    // Check if this video already exists in history
+    const existingIdx = list.findIndex(h => h.video_id === data.video_id);
+
     const entry = {
         video_id:    data.video_id,
-        entry_id:    data.video_id + '_' + Date.now(),
+        entry_id:    existingIdx >= 0 ? list[existingIdx].entry_id : (data.video_id + '_' + Date.now()),
         url:         document.getElementById('urlInput').value.trim(),
         title:       data.title,
         author:      data.author,
         thumbnail:   data.thumbnail,
-        savedAt:     Date.now(),
+        savedAt:     existingIdx >= 0 ? list[existingIdx].savedAt : Date.now(),
         lang:        selectedLang,
         data,
         transcript:  data.transcript || null,
@@ -28,7 +32,14 @@ function saveToHistory(data) {
         entry.playlist_id = playlistState.data.playlist_id;
         entry.playlist_title = playlistState.data.title;
     }
-    list.unshift(entry);
+
+    if (existingIdx >= 0) {
+        // Update existing entry in place (keep its position)
+        list[existingIdx] = entry;
+    } else {
+        // New video — prepend
+        list.unshift(entry);
+    }
     list.splice(HISTORY_MAX);
     localStorage.setItem(HISTORY_KEY, JSON.stringify(list));
     renderHistoryPanel();
