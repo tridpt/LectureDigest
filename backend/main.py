@@ -21,7 +21,8 @@ from database import (
     db_get_gamification, db_save_gamification,
     db_create_user, db_get_user_by_email, db_get_user_by_id, db_update_user,
     db_migrate_anonymous_to_user,
-    db_kv_get, db_kv_set, db_kv_get_all, db_kv_delete
+    db_kv_get, db_kv_set, db_kv_get_all, db_kv_delete,
+    db_full_sync
 )
 from fastapi.responses import FileResponse
 from pydantic import BaseModel, Field
@@ -1081,107 +1082,23 @@ async def api_save_gamification(request: Request):
 
 @app.post("/api/db/sync")
 async def api_full_sync(request: Request):
-    """Full sync: receive all localStorage data, merge into DB, return merged result."""
+    """Full sync: single-connection sync to avoid DB locking."""
     try:
         payload = await request.json()
     except Exception as e:
-        print(f"[Sync Error] Failed to parse JSON: {e}")
         raise HTTPException(status_code=400, detail=f"Invalid JSON: {e}")
 
     user = _get_current_user(request)
     uid = user["id"] if user else None
-    print(f"[Sync] User ID: {uid}")
 
-    # Sync history (only non-empty entries)
-    local_history = payload.get("history", [])
-    if local_history:
-        for entry in local_history:
-            try:
-                db_save_history(entry, user_id=uid)
-            except Exception as e:
-                print(f"[Sync] Skip history entry: {e}")
-
-    # Sync notes
-    local_notes = payload.get("notes", {})
-    for video_id, content in local_notes.items():
-        if content:
-            try:
-                db_save_notes(video_id, content, user_id=uid)
-            except Exception as e:
-                print(f"[Sync] Skip note {video_id}: {e}")
-
-    # Sync bookmarks
-    local_bookmarks = payload.get("bookmarks", {})
-    for video_id, bms in local_bookmarks.items():
-        if bms:
-            try:
-                db_sync_bookmarks(video_id, bms, user_id=uid)
-            except Exception as e:
-                print(f"[Sync] Skip bookmarks {video_id}: {e}")
-
-    # Sync gamification
-    local_gamif = payload.get("gamification", {})
-    if local_gamif:
-        try:
-            existing = db_get_gamification(user_id=uid)
-            # Merge: keep higher values
-            merged = {}
-            for key in set(list(existing.keys()) + list(local_gamif.keys())):
-                ev = existing.get(key)
-                lv = local_gamif.get(key)
-                if isinstance(ev, (int, float)) and isinstance(lv, (int, float)):
-                    merged[key] = max(ev, lv)
-                elif isinstance(ev, list) and isinstance(lv, list):
-                    merged[key] = list(set(ev + lv))
-                else:
-                    merged[key] = lv if lv is not None else ev
-            db_save_gamification(merged, user_id=uid)
-        except Exception as e:
-            print(f"[Sync] Gamification merge error: {e}")
-
-    # Return current server data
-    try:
-        result_history = db_get_history(limit=100, user_id=uid)
-        result_gamif = db_get_gamification(user_id=uid)
-    except Exception as e:
-        print(f"[Sync] Error fetching result: {e}")
-        result_history = []
-        result_gamif = {}
-
-    # Sync extra data (exam history, flashcards, tags, progress, etc.)
-    extra_data = payload.get("extra_data", {})
-    result_extra = {}
-    if uid:
-        for ekey, evalue in extra_data.items():
-            if evalue is not None and evalue != '' and evalue != '{}' and evalue != '[]':
-                try:
-                    db_kv_set(uid, ekey, evalue)
-                except Exception as e:
-                    print(f"[Sync] Skip extra {ekey}: {e}")
-        # Return all stored extra data for this user
-        try:
-            result_extra = db_kv_get_all(uid)
-        except Exception as e:
-            print(f"[Sync] Error fetching extra data: {e}")
-
-    # Fetch all notes and bookmarks for this user
-    result_notes = {}
-    result_bookmarks = {}
-    try:
-        result_notes = db_get_all_notes(user_id=uid)
-        result_bookmarks = db_get_all_bookmarks(user_id=uid)
-    except Exception as e:
-        print(f"[Sync] Error fetching notes/bookmarks: {e}")
-
-    print(f"[Sync] Returning {len(result_history)} history, {len(result_notes)} notes, {len(result_bookmarks)} bookmark groups, {len(result_extra)} extra keys for user {uid}")
-    return {
-        "ok": True,
-        "history": result_history,
-        "gamification": result_gamif,
-        "notes": result_notes,
-        "bookmarks": result_bookmarks,
-        "extra_data": result_extra
-    }
+    return db_full_sync(
+        user_id=uid,
+        local_history=payload.get("history", []),
+        local_notes=payload.get("notes", {}),
+        local_bookmarks=payload.get("bookmarks", {}),
+        local_gamif=payload.get("gamification", {}),
+        extra_data=payload.get("extra_data", {})
+    )
 
 
 

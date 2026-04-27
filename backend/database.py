@@ -11,11 +11,11 @@ DB_PATH = os.path.join(os.path.dirname(__file__), "lecturedb.sqlite3")
 
 def get_db():
     """Get a database connection with row_factory."""
-    conn = sqlite3.connect(DB_PATH)
+    conn = sqlite3.connect(DB_PATH, timeout=10)
     conn.row_factory = sqlite3.Row
     conn.execute("PRAGMA journal_mode=WAL")
     conn.execute("PRAGMA foreign_keys=ON")
-    conn.execute("PRAGMA busy_timeout=5000")
+    conn.execute("PRAGMA busy_timeout=10000")
     return conn
 
 def init_db():
@@ -97,6 +97,9 @@ def _migrate_add_user_id(conn):
         except sqlite3.OperationalError:
             pass  # Column already exists
 
+    # Fix notes table: need composite PK (video_id, user_id) instead of just video_id
+    _migrate_notes_composite_pk(conn)
+
     # Create per-user gamification table
     conn.execute("""
         CREATE TABLE IF NOT EXISTS user_gamification (
@@ -124,6 +127,31 @@ def _migrate_add_user_id(conn):
             conn.execute(f"CREATE INDEX IF NOT EXISTS idx_{table}_user ON {table}(user_id)")
         except:
             pass
+
+
+def _migrate_notes_composite_pk(conn):
+    """Recreate notes table with composite PK (video_id, user_id) instead of just video_id."""
+    # Check current schema
+    info = conn.execute("PRAGMA table_info(notes)").fetchall()
+    pk_cols = [r[1] for r in info if r[5] > 0]  # r[5] is pk flag
+    # If only video_id is PK (old schema), we need to recreate
+    if len(pk_cols) == 1 and pk_cols[0] == 'video_id':
+        print("[DB Migration] Recreating notes table with composite PK (video_id, user_id)")
+        conn.executescript("""
+            CREATE TABLE IF NOT EXISTS notes_new (
+                video_id   TEXT NOT NULL,
+                content    TEXT NOT NULL DEFAULT '',
+                updated_at INTEGER,
+                user_id    INTEGER DEFAULT NULL,
+                PRIMARY KEY (video_id, COALESCE(user_id, 0))
+            );
+            INSERT OR IGNORE INTO notes_new (video_id, content, updated_at, user_id)
+                SELECT video_id, content, updated_at, user_id FROM notes;
+            DROP TABLE IF EXISTS notes;
+            ALTER TABLE notes_new RENAME TO notes;
+        """)
+        print("[DB Migration] Notes table recreated successfully")
+
 
 
 # ══════════════════════════════════════════
@@ -222,20 +250,21 @@ def db_get_notes(video_id: str, user_id=None):
 
 def db_save_notes(video_id: str, content: str, user_id=None):
     conn = get_db()
-    # Use composite key: video_id + user_id
-    if user_id:
-        existing = conn.execute("SELECT 1 FROM notes WHERE video_id = ? AND user_id = ?", (video_id, user_id)).fetchone()
-        if existing:
+    # Composite PK is (video_id, COALESCE(user_id, 0)), so we can use upsert
+    existing = conn.execute(
+        "SELECT 1 FROM notes WHERE video_id = ? AND COALESCE(user_id, 0) = ?",
+        (video_id, user_id or 0)
+    ).fetchone()
+    if existing:
+        if user_id:
             conn.execute("UPDATE notes SET content = ?, updated_at = ? WHERE video_id = ? AND user_id = ?",
                          (content, int(time.time() * 1000), video_id, user_id))
         else:
-            conn.execute("INSERT INTO notes (video_id, content, updated_at, user_id) VALUES (?, ?, ?, ?)",
-                         (video_id, content, int(time.time() * 1000), user_id))
+            conn.execute("UPDATE notes SET content = ?, updated_at = ? WHERE video_id = ? AND user_id IS NULL",
+                         (content, int(time.time() * 1000), video_id))
     else:
-        conn.execute("""
-            INSERT OR REPLACE INTO notes (video_id, content, updated_at)
-            VALUES (?, ?, ?)
-        """, (video_id, content, int(time.time() * 1000)))
+        conn.execute("INSERT INTO notes (video_id, content, updated_at, user_id) VALUES (?, ?, ?, ?)",
+                     (video_id, content, int(time.time() * 1000), user_id))
     conn.commit()
     conn.close()
 
@@ -381,6 +410,173 @@ def db_migrate_anonymous_to_user(user_id: int):
     conn.commit()
     conn.close()
     print(f"[DB] Migrated anonymous data to user {user_id}")
+
+
+# ══════════════════════════════════════════
+# FULL SYNC (single connection to avoid locking)
+# ══════════════════════════════════════════
+def db_full_sync(user_id, local_history, local_notes, local_bookmarks, local_gamif, extra_data):
+    """Perform full sync in a SINGLE connection to avoid 'database is locked' errors."""
+    conn = get_db()
+    try:
+        # 1. Save history
+        for entry in local_history:
+            try:
+                entry_id = entry.get("entry_id", f"{entry.get('video_id', 'unknown')}_{int(time.time()*1000)}")
+                data_json = json.dumps(entry.get("data", {}), ensure_ascii=False)
+                transcript = entry.get("transcript") or (entry.get("data", {}).get("transcript"))
+                transcript_json = json.dumps(transcript, ensure_ascii=False) if transcript else None
+                conn.execute("""
+                    INSERT OR REPLACE INTO history (entry_id, video_id, url, title, author, thumbnail, saved_at, lang, data_json, transcript_json, user_id)
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                """, (entry_id, entry.get("video_id",""), entry.get("url",""), entry.get("title",""),
+                      entry.get("author",""), entry.get("thumbnail",""), entry.get("savedAt", int(time.time()*1000)),
+                      entry.get("lang","en"), data_json, transcript_json, user_id))
+            except Exception as e:
+                print(f"[Sync] Skip history: {e}")
+
+        # 2. Save notes
+        for video_id, content in local_notes.items():
+            if not content:
+                continue
+            try:
+                uid_val = user_id or 0
+                existing = conn.execute(
+                    "SELECT 1 FROM notes WHERE video_id = ? AND COALESCE(user_id, 0) = ?",
+                    (video_id, uid_val)
+                ).fetchone()
+                if existing:
+                    if user_id:
+                        conn.execute("UPDATE notes SET content=?, updated_at=? WHERE video_id=? AND user_id=?",
+                                     (content, int(time.time()*1000), video_id, user_id))
+                    else:
+                        conn.execute("UPDATE notes SET content=?, updated_at=? WHERE video_id=? AND user_id IS NULL",
+                                     (content, int(time.time()*1000), video_id))
+                else:
+                    conn.execute("INSERT INTO notes (video_id, content, updated_at, user_id) VALUES (?,?,?,?)",
+                                 (video_id, content, int(time.time()*1000), user_id))
+            except Exception as e:
+                print(f"[Sync] Skip note {video_id}: {e}")
+
+        # 3. Save bookmarks
+        for video_id, bms in local_bookmarks.items():
+            if not bms:
+                continue
+            try:
+                if user_id:
+                    conn.execute("DELETE FROM bookmarks WHERE video_id=? AND user_id=?", (video_id, user_id))
+                else:
+                    conn.execute("DELETE FROM bookmarks WHERE video_id=? AND user_id IS NULL", (video_id,))
+                for bm in bms:
+                    conn.execute("INSERT INTO bookmarks (video_id, time_secs, label, created_at, user_id) VALUES (?,?,?,?,?)",
+                                 (video_id, bm.get("time",0), bm.get("label",""), bm.get("createdAt",""), user_id))
+            except Exception as e:
+                print(f"[Sync] Skip bookmarks {video_id}: {e}")
+
+        # 4. Save gamification (merge)
+        if local_gamif:
+            try:
+                if user_id:
+                    row = conn.execute("SELECT data_json FROM user_gamification WHERE user_id=?", (user_id,)).fetchone()
+                else:
+                    row = conn.execute("SELECT data_json FROM gamification WHERE id=1").fetchone()
+                existing = json.loads(row["data_json"]) if row else {}
+                merged = {}
+                for key in set(list(existing.keys()) + list(local_gamif.keys())):
+                    ev, lv = existing.get(key), local_gamif.get(key)
+                    if isinstance(ev, (int, float)) and isinstance(lv, (int, float)):
+                        merged[key] = max(ev, lv)
+                    elif isinstance(ev, list) and isinstance(lv, list):
+                        merged[key] = list(set(ev + lv))
+                    else:
+                        merged[key] = lv if lv is not None else ev
+                now = int(time.time()*1000)
+                data_str = json.dumps(merged, ensure_ascii=False)
+                if user_id:
+                    conn.execute("""INSERT INTO user_gamification (user_id, data_json, updated_at) VALUES (?,?,?)
+                        ON CONFLICT(user_id) DO UPDATE SET data_json=?, updated_at=?""",
+                        (user_id, data_str, now, data_str, now))
+                else:
+                    conn.execute("UPDATE gamification SET data_json=?, updated_at=? WHERE id=1", (data_str, now))
+            except Exception as e:
+                print(f"[Sync] Gamification error: {e}")
+
+        # 5. Save extra data (KV store)
+        if user_id and extra_data:
+            for ekey, evalue in extra_data.items():
+                if evalue and evalue not in ('', '{}', '[]'):
+                    try:
+                        now = int(time.time()*1000)
+                        conn.execute("""INSERT INTO user_kv_store (user_id, data_key, data_value, updated_at) VALUES (?,?,?,?)
+                            ON CONFLICT(user_id, data_key) DO UPDATE SET data_value=?, updated_at=?""",
+                            (user_id, ekey, evalue, now, evalue, now))
+                    except Exception as e:
+                        print(f"[Sync] Skip extra {ekey}: {e}")
+
+        conn.commit()
+
+        # 6. Read back all data for response
+        # History
+        if user_id:
+            rows = conn.execute("SELECT * FROM history WHERE user_id=? ORDER BY saved_at DESC LIMIT 100", (user_id,)).fetchall()
+        else:
+            rows = conn.execute("SELECT * FROM history WHERE user_id IS NULL ORDER BY saved_at DESC LIMIT 100").fetchall()
+        result_history = []
+        for r in rows:
+            entry = {"entry_id": r["entry_id"], "video_id": r["video_id"], "url": r["url"],
+                     "title": r["title"], "author": r["author"], "thumbnail": r["thumbnail"],
+                     "savedAt": r["saved_at"], "lang": r["lang"]}
+            try: entry["data"] = json.loads(r["data_json"]) if r["data_json"] else {}
+            except: entry["data"] = {}
+            try: entry["transcript"] = json.loads(r["transcript_json"]) if r["transcript_json"] else None
+            except: entry["transcript"] = None
+            result_history.append(entry)
+
+        # Gamification
+        if user_id:
+            row = conn.execute("SELECT data_json FROM user_gamification WHERE user_id=?", (user_id,)).fetchone()
+        else:
+            row = conn.execute("SELECT data_json FROM gamification WHERE id=1").fetchone()
+        result_gamif = json.loads(row["data_json"]) if row else {}
+
+        # Notes
+        if user_id:
+            nrows = conn.execute("SELECT video_id, content FROM notes WHERE user_id=?", (user_id,)).fetchall()
+        else:
+            nrows = conn.execute("SELECT video_id, content FROM notes WHERE user_id IS NULL").fetchall()
+        result_notes = {r["video_id"]: r["content"] for r in nrows if r["content"]}
+
+        # Bookmarks
+        if user_id:
+            brows = conn.execute("SELECT * FROM bookmarks WHERE user_id=? ORDER BY video_id, time_secs", (user_id,)).fetchall()
+        else:
+            brows = conn.execute("SELECT * FROM bookmarks WHERE user_id IS NULL ORDER BY video_id, time_secs").fetchall()
+        result_bookmarks = {}
+        for r in brows:
+            vid = r["video_id"]
+            if vid not in result_bookmarks: result_bookmarks[vid] = []
+            result_bookmarks[vid].append({"time": r["time_secs"], "label": r["label"], "createdAt": r["created_at"]})
+
+        # Extra data
+        result_extra = {}
+        if user_id:
+            erows = conn.execute("SELECT data_key, data_value FROM user_kv_store WHERE user_id=?", (user_id,)).fetchall()
+            result_extra = {r["data_key"]: r["data_value"] for r in erows}
+
+        print(f"[Sync] OK: {len(result_history)} hist, {len(result_notes)} notes, {len(result_bookmarks)} bm, {len(result_extra)} extra for user {user_id}")
+        return {
+            "ok": True,
+            "history": result_history,
+            "gamification": result_gamif,
+            "notes": result_notes,
+            "bookmarks": result_bookmarks,
+            "extra_data": result_extra
+        }
+    except Exception as e:
+        print(f"[Sync] Fatal error: {e}")
+        return {"ok": False, "error": str(e), "history": [], "gamification": {}, "notes": {}, "bookmarks": {}, "extra_data": {}}
+    finally:
+        conn.close()
 
 
 # ══════════════════════════════════════════
