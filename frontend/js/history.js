@@ -189,7 +189,11 @@ function filterHistory(value) { renderHistoryPanel(value); }
 document.addEventListener('click', e => {
     const panel = document.getElementById('historyPanel');
     const toggle = document.getElementById('historyToggle');
-    if (panel?.classList.contains('open') && !panel.contains(e.target) && !toggle?.contains(e.target)) {
+    const folderPicker = document.getElementById('folderPicker');
+    const folderModal = document.getElementById('folderModalOverlay');
+    if (panel?.classList.contains('open') && !panel.contains(e.target) && !toggle?.contains(e.target)
+        && !(folderPicker && folderPicker.contains(e.target))
+        && !(folderModal && folderModal.contains(e.target))) {
         toggleHistoryPanel(false);
     }
 });

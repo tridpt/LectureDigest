@@ -42,15 +42,15 @@ function renderFolderBar() {
     var html = '';
 
     // "All" chip
-    html += '<button class="folder-chip folder-chip-all' + (_activeFolderId === null ? ' active' : '') + '" onclick="filterByFolder(null)">' +
+    html += '<button class="folder-chip folder-chip-all' + (_activeFolderId === null ? ' active' : '') + '" onclick="event.stopPropagation();filterByFolder(null)">' +
         '<span class="folder-icon">📋</span>Tất cả</button>';
 
     // Folder chips
     _folders.forEach(function(f) {
         var count = (_folderVideos[f.id] || []).length;
         html += '<button class="folder-chip' + (_activeFolderId === f.id ? ' active' : '') + '" ' +
-            'onclick="filterByFolder(' + f.id + ')" ' +
-            'oncontextmenu="event.preventDefault();openFolderModal(' + f.id + ')" ' +
+            'onclick="event.stopPropagation();filterByFolder(' + f.id + ')" ' +
+            'oncontextmenu="event.preventDefault();event.stopPropagation();openFolderModal(' + f.id + ')" ' +
             'title="Click: filter | Right-click: edit">' +
             '<span class="folder-icon">' + f.icon + '</span>' +
             '<span>' + escHtml(f.name) + '</span>' +
@@ -59,7 +59,7 @@ function renderFolderBar() {
     });
 
     // "+ New" button
-    html += '<button class="folder-chip folder-chip-add" onclick="openFolderModal(null)">' +
+    html += '<button class="folder-chip folder-chip-add" onclick="event.stopPropagation();openFolderModal(null)">' +
         '<span class="folder-icon">+</span>Mới</button>';
 
     bar.innerHTML = html;
