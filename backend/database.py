@@ -817,7 +817,7 @@ def db_delete_user(user_id: int):
         if user_row:
             email = user_row["email"]
             conn.execute("DELETE FROM password_reset_tokens WHERE email = ?", (email,))
-            conn.execute("DELETE FROM login_attempts WHERE key LIKE ?", (f"%{email}%",))
+            conn.execute("DELETE FROM login_attempts WHERE ip_or_email LIKE ?", (f"%{email}%",))
         # Finally delete the user
         conn.execute("DELETE FROM users WHERE id = ?", (user_id,))
         conn.commit()
