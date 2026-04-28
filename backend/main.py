@@ -15,6 +15,7 @@ Route modules:
 """
 
 import os
+from dotenv import load_dotenv
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
@@ -30,9 +31,20 @@ app = FastAPI(title="LectureDigest API", version="1.0.0")
 # Initialize SQLite database
 init_db()
 
+# CORS: read allowed origins from env, default to localhost for development
+load_dotenv(os.path.join(os.path.dirname(__file__), ".env"), override=True)
+_allowed_origins = [
+    o.strip() for o in os.getenv("ALLOWED_ORIGINS", "").split(",") if o.strip()
+] or [
+    "http://localhost:8000",
+    "http://127.0.0.1:8000",
+    "http://localhost:3000",
+]
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=_allowed_origins,
+    allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )

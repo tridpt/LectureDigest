@@ -20,6 +20,9 @@ import jwt as pyjwt
 from database import (
     db_create_user, db_get_user_by_email, db_get_user_by_id,
     db_update_user, db_get_user_by_google_id,
+    db_save_reset_token, db_get_reset_token, db_delete_reset_token,
+    db_delete_reset_tokens_for_email, db_cleanup_expired_tokens,
+    db_check_rate_limit, db_reset_rate_limit,
 )
 
 router = APIRouter(prefix="/api/auth", tags=["auth"])
@@ -110,21 +113,11 @@ class ResetPasswordRequest(BaseModel):
 
 
 # ═══════════════════════════════════════════════════════
-# PASSWORD RESET TOKEN STORE
+# PASSWORD RESET CONFIG
 # ═══════════════════════════════════════════════════════
 
-_reset_tokens: dict = {}
 _RESET_TOKEN_EXPIRY = 3600  # 1 hour
-_RESET_RATE_LIMIT: dict = {}
 _RESET_RATE_LIMIT_SECONDS = 60
-
-
-def _cleanup_expired_tokens():
-    """Remove expired tokens from memory."""
-    now = time.time()
-    expired = [t for t, data in _reset_tokens.items() if data["expires_at"] < now]
-    for t in expired:
-        del _reset_tokens[t]
 
 
 def _send_reset_email(to_email: str, reset_url: str, display_name: str = ""):
@@ -196,11 +189,17 @@ def _send_reset_email(to_email: str, reset_url: str, display_name: str = ""):
 # ═══════════════════════════════════════════════════════
 
 @router.post("/register")
-async def register(req: RegisterRequest):
+async def register(req: RegisterRequest, request: Request):
     """Register a new user account."""
     email = req.email.lower().strip()
     if not email or "@" not in email:
         raise HTTPException(status_code=400, detail="Email không hợp lệ")
+
+    # Rate limiting: prevent mass account creation
+    client_ip = request.client.host if request.client else "unknown"
+    allowed, retry_after = db_check_rate_limit(f"register:{client_ip}", max_attempts=5, window_secs=600, block_secs=1800)
+    if not allowed:
+        raise HTTPException(status_code=429, detail=f"Quá nhiều yêu cầu đăng ký. Vui lòng thử lại sau {retry_after // 60} phút.")
 
     if db_get_user_by_email(email):
         raise HTTPException(status_code=409, detail="Email này đã được đăng ký")
@@ -222,9 +221,16 @@ async def register(req: RegisterRequest):
 
 
 @router.post("/login")
-async def login(req: LoginRequest):
+async def login(req: LoginRequest, request: Request):
     """Login with email and password."""
-    user = db_get_user_by_email(req.email)
+    email = req.email.lower().strip()
+
+    # Rate limiting: 5 failed attempts per email → block 15 min
+    allowed, retry_after = db_check_rate_limit(f"login:{email}", max_attempts=5, window_secs=300, block_secs=900)
+    if not allowed:
+        raise HTTPException(status_code=429, detail=f"Quá nhiều lần đăng nhập thất bại. Vui lòng thử lại sau {retry_after // 60} phút.")
+
+    user = db_get_user_by_email(email)
     if not user:
         raise HTTPException(status_code=401, detail="Email hoặc mật khẩu không đúng")
 
@@ -232,6 +238,9 @@ async def login(req: LoginRequest):
     pw_ok = await loop.run_in_executor(None, lambda: bcrypt.checkpw(req.password.encode("utf-8"), user["password_hash"].encode("utf-8")))
     if not pw_ok:
         raise HTTPException(status_code=401, detail="Email hoặc mật khẩu không đúng")
+
+    # Successful login → reset rate limit counter
+    db_reset_rate_limit(f"login:{email}")
 
     token = _create_jwt(user["id"])
     safe_user = {k: v for k, v in user.items() if k != "password_hash"}
@@ -354,29 +363,24 @@ async def forgot_password(req: ForgotPasswordRequest):
     if not email or "@" not in email:
         raise HTTPException(status_code=400, detail="Email không hợp lệ")
 
-    now = time.time()
-    last_req = _RESET_RATE_LIMIT.get(email, 0)
-    if now - last_req < _RESET_RATE_LIMIT_SECONDS:
-        remaining = int(_RESET_RATE_LIMIT_SECONDS - (now - last_req))
+    # Rate limit: 1 request per email per 60 seconds
+    allowed, retry_after = db_check_rate_limit(f"reset:{email}", max_attempts=1, window_secs=_RESET_RATE_LIMIT_SECONDS, block_secs=_RESET_RATE_LIMIT_SECONDS)
+    if not allowed:
         raise HTTPException(
             status_code=429,
-            detail=f"Vui lòng đợi {remaining} giây trước khi yêu cầu lại"
+            detail=f"Vui lòng đợi {retry_after} giây trước khi yêu cầu lại"
         )
-    _RESET_RATE_LIMIT[email] = now
 
-    _cleanup_expired_tokens()
+    db_cleanup_expired_tokens()
 
     user = db_get_user_by_email(email)
     if user:
         if not user.get("password_hash"):
             return {"ok": True, "message": "Nếu email tồn tại, chúng tôi đã gửi link đặt lại mật khẩu."}
 
+        now = time.time()
         token = secrets.token_urlsafe(48)
-        _reset_tokens[token] = {
-            "email": email,
-            "expires_at": now + _RESET_TOKEN_EXPIRY,
-            "created_at": now,
-        }
+        db_save_reset_token(token, email, now + _RESET_TOKEN_EXPIRY)
 
         base_url = os.getenv("APP_BASE_URL", "http://localhost:8000").rstrip("/")
         reset_url = f"{base_url}/reset-password?token={token}"
@@ -392,20 +396,16 @@ async def forgot_password(req: ForgotPasswordRequest):
 @router.post("/reset-password")
 async def reset_password(req: ResetPasswordRequest):
     """Reset password using a valid token."""
-    _cleanup_expired_tokens()
+    db_cleanup_expired_tokens()
 
-    token_data = _reset_tokens.get(req.token)
+    token_data = db_get_reset_token(req.token)
     if not token_data:
         raise HTTPException(status_code=400, detail="Link đặt lại mật khẩu không hợp lệ hoặc đã hết hạn")
-
-    if token_data["expires_at"] < time.time():
-        del _reset_tokens[req.token]
-        raise HTTPException(status_code=400, detail="Link đặt lại mật khẩu đã hết hạn")
 
     email = token_data["email"]
     user = db_get_user_by_email(email)
     if not user:
-        del _reset_tokens[req.token]
+        db_delete_reset_token(req.token)
         raise HTTPException(status_code=400, detail="Tài khoản không tồn tại")
 
     loop = asyncio.get_event_loop()
@@ -416,10 +416,8 @@ async def reset_password(req: ResetPasswordRequest):
 
     db_update_user(user["id"], password_hash=new_hash)
 
-    del _reset_tokens[req.token]
-    to_remove = [t for t, d in _reset_tokens.items() if d["email"] == email]
-    for t in to_remove:
-        del _reset_tokens[t]
+    # Delete this token and all other tokens for the same email
+    db_delete_reset_tokens_for_email(email)
 
     print(f"[Auth] Password reset successful for {email}")
     return {"ok": True, "message": "Mật khẩu đã được đặt lại thành công!"}
@@ -428,8 +426,8 @@ async def reset_password(req: ResetPasswordRequest):
 @router.get("/verify-reset-token")
 async def verify_reset_token(token: str):
     """Verify if a reset token is still valid."""
-    _cleanup_expired_tokens()
-    token_data = _reset_tokens.get(token)
-    if not token_data or token_data["expires_at"] < time.time():
+    db_cleanup_expired_tokens()
+    token_data = db_get_reset_token(token)
+    if not token_data:
         return {"valid": False}
     return {"valid": True, "email": token_data["email"]}

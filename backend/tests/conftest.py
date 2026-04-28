@@ -29,6 +29,15 @@ def _isolate_db(tmp_path_factory):
 @pytest.fixture()
 def client():
     """FastAPI TestClient that shares the isolated test DB."""
+    # Clear rate-limiting records so tests don't trip over each other
+    import database
+    try:
+        conn = database.get_db()
+        conn.execute("DELETE FROM login_attempts")
+        conn.commit()
+        conn.close()
+    except Exception:
+        pass
     from main import app
     with TestClient(app) as c:
         yield c
