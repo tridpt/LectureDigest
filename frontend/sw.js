@@ -2,7 +2,7 @@
 // LectureDigest Service Worker — Offline-first caching
 // ══════════════════════════════════════════════════════
 
-const CACHE_NAME = 'lecturedigest-v4';
+const CACHE_NAME = 'lecturedigest-v5';
 const STATIC_ASSETS = [
   '/',
   '/index.html',
@@ -66,8 +66,10 @@ const STATIC_ASSETS = [
   '/js/auth.js',
   '/js/upload.js',
   '/js/share-notes.js',
+  '/js/srs-review.js',
   '/js/pwa-install.js',
   '/css/pwa-install.css',
+  '/css/srs-review.css',
   '/dashboard.js',
   '/concept-explainer.js',
   '/manifest.json',

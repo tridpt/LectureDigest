@@ -57,6 +57,7 @@
     <link rel="stylesheet" href="/css/share-notes.css">
     <link rel="stylesheet" href="/css/pwa-install.css">
     <link rel="stylesheet" href="/css/search.css">
+    <link rel="stylesheet" href="/css/srs-review.css">
     <!-- Utilities & Responsive -->
     <link rel="stylesheet" href="/css/utilities.css">
     <link rel="stylesheet" href="/css/mobile.css">
@@ -869,6 +870,9 @@
                 </div>
             </div>
 
+            <!-- SRS Review Banner -->
+            <div id="srsBannerWrap" class="hidden"></div>
+
             <!-- Stat cards row -->
             <div class="db-stat-grid" id="dbStatGrid"></div>
 
@@ -1055,6 +1059,26 @@
                 </div>
             </div>
             <div class="kg-legend" id="kgLegend"></div>
+        </div>
+    </section>
+
+    <!-- ═══════════════════════════════ SRS DAILY REVIEW ══════════════════════════════ -->
+    <section class="srs-page hidden" id="srsReviewSection" aria-label="Ôn tập hàng ngày">
+        <div class="srs-inner">
+            <div class="srs-header">
+                <button class="bp-back-btn" onclick="closeSrsReview()" aria-label="Quay lại">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="18" height="18">
+                        <path d="M19 12H5M12 5l-7 7 7 7" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                    Quay lại
+                </button>
+                <div class="srs-header-center">
+                    <h1 class="srs-page-title">🧠 Ôn tập hàng ngày</h1>
+                    <p class="srs-page-sub" id="srsDateLabel"></p>
+                </div>
+                <div style="width:110px"></div>
+            </div>
+            <div id="srsReviewContent"></div>
         </div>
     </section>
 
@@ -1258,6 +1282,8 @@
     <script src="/concept-explainer.js"></script>
     <!-- Upload -->
     <script src="/js/upload.js"></script>
+    <!-- SRS Daily Review -->
+    <script src="/js/srs-review.js"></script>
     <!-- Share Notes -->
     <script src="/js/share-notes.js"></script>
 

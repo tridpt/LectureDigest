@@ -32,9 +32,14 @@ const BADGES = [
     { id: 'note_taker',     cat: 'feature',  icon: '📝', name: 'Người ghi chép',     desc: 'Viết ghi chú đầu tiên',             check: g => g.usedNotes },
     { id: 'flashcard_fan',  cat: 'feature',  icon: '🃏', name: 'Flashcard Fan',       desc: 'Ôn tập với flashcards',             check: g => g.usedFlashcards },
     { id: 'all_features',   cat: 'feature',  icon: '🚀', name: 'Người khám phá',     desc: 'Dùng tất cả tính năng',             check: g => g.usedBookmark && g.usedTranslation && g.usedMindMap && g.usedNotes && g.usedFlashcards },
+    // 🧠 SRS Review
+    { id: 'first_review',   cat: 'srs',      icon: '🧠', name: 'Bắt đầu ôn tập',    desc: 'Hoàn thành phiên ôn tập đầu tiên',  check: g => (g.totalSrsReviews || 0) >= 1 },
+    { id: 'review_50',      cat: 'srs',      icon: '📖', name: 'Siêng ôn bài',       desc: 'Ôn tập 50 thẻ flashcard',           check: g => (g.totalCardsReviewed || 0) >= 50 },
+    { id: 'review_100',     cat: 'srs',      icon: '💎', name: 'Trí nhớ vàng',       desc: 'Ôn tập 100 thẻ flashcard',          check: g => (g.totalCardsReviewed || 0) >= 100 },
+    { id: 'review_10sess',  cat: 'srs',      icon: '🔬', name: 'Nhà nghiên cứu',     desc: 'Hoàn thành 10 phiên ôn tập',        check: g => (g.totalSrsReviews || 0) >= 10 },
 ];
 
-const CAT_LABELS = { videos: '📚 Video', quiz: '🧠 Quiz', streak: '🔥 Streak', feature: '🛠 Tính năng' };
+const CAT_LABELS = { videos: '📚 Video', quiz: '🧠 Quiz', streak: '🔥 Streak', feature: '🛠 Tính năng', srs: '🧠 Ôn tập' };
 
 function defaultGamif() {
     return {

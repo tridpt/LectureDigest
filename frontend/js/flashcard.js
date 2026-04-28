@@ -451,6 +451,10 @@ function countDueCards(videoId) {
 
         // Calculate new SM-2 values
         var result = sm2Calculate(cardSm2, quality);
+        // Persist card content for cross-video SRS review
+        result._front = card.front || '';
+        result._back = card.back || '';
+        result._tag = card.tag || 'quiz';
         sm2Data[cardKey] = result;
         saveSm2(videoId, sm2Data);
 

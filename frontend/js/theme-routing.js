@@ -72,6 +72,7 @@ function updatePageTitle(sectionId) {
         badgesSection:  'Huy hiệu — LectureDigest',
         loadingSection: 'Đang phân tích... — LectureDigest',
         errorSection:   'Lỗi — LectureDigest',
+        srsReviewSection: 'Ôn tập hàng ngày — LectureDigest',
     };
     document.title = titles[sectionId] || titles.hero;
 }
@@ -106,6 +107,8 @@ window.addEventListener('popstate', function(e) {
         } else {
             showSection('hero');
         }
+    } else if (path === '/review') {
+        if (typeof openSrsReview === 'function') openSrsReview();
     } else {
         showSection('hero');
     }
@@ -158,6 +161,10 @@ window.addEventListener('popstate', function(e) {
                 showSection('hero');
                 showToast('Video chua co trong lich su. Bam Analyze de phan tich.');
             }
+        }, { once: true });
+    } else if (path === '/review') {
+        window.addEventListener('DOMContentLoaded', function() {
+            if (typeof openSrsReview === 'function') openSrsReview();
         }, { once: true });
     }
 })();

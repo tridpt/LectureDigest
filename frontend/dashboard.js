@@ -54,6 +54,9 @@ function renderDashboard() {
     renderStudyStats(g, history);
     renderDbVideos(history);
     renderDbBadgeCats(g);
+
+    // SRS Daily Review banner
+    if (typeof renderSrsBanner === 'function') renderSrsBanner('srsBannerWrap');
 }
 
 // ── Stat cards ──────────────────────────────────────────
