@@ -9,6 +9,7 @@ function initQuiz(questions) {
         score:        0,
         skipped:      0,
         answered:     false,
+        userAnswers:  [],
     });
 
     // Reset UI
@@ -16,6 +17,9 @@ function initQuiz(questions) {
     document.getElementById('quizContainer')?.classList.remove('hidden');
     document.getElementById('quizNav')?.classList.remove('hidden');
     document.getElementById('scoreBadge')?.classList.add('hidden');
+    document.getElementById('quizAnalysisResult')?.classList.add('hidden');
+    const analyzeBtn = document.getElementById('quizAnalyzeBtn');
+    if (analyzeBtn) { analyzeBtn.classList.remove('hidden'); analyzeBtn.disabled = false; }
 
     renderCurrentQuestion();
 }
@@ -87,6 +91,7 @@ function selectAnswer(selectedIdx) {
     const isCorrect  = selectedIdx === correctIdx;
 
     if (isCorrect) quizState.score++;
+    quizState.userAnswers[quizState.currentIndex] = selectedIdx;
 
     // Style options
     const options = document.querySelectorAll('.quiz-option');
@@ -128,6 +133,7 @@ function selectAnswer(selectedIdx) {
 }
 
 function skipQuestion() {
+    quizState.userAnswers[quizState.currentIndex] = -1;
     quizState.skipped++;
     quizState.currentIndex++;
     renderCurrentQuestion();
@@ -179,6 +185,118 @@ function showQuizResults() {
         recordQuizSession(analysisData.video_id, score, answered);
         recordGamifQuiz(score, answered);    // gamification
     }
+}
+
+// ── AI Weak Area Analysis ─────────────────────────
+async function analyzeQuizWeakAreas() {
+    const btn = document.getElementById('quizAnalyzeBtn');
+    if (!btn) return;
+    const origHtml = btn.innerHTML;
+    btn.disabled = true;
+    btn.innerHTML = '<svg class="spin" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><circle cx="12" cy="12" r="10" stroke-opacity="0.25"/><path d="M12 2a10 10 0 0 1 10 10"/></svg> Đang phân tích...';
+
+    const { questions, userAnswers, score, skipped } = quizState;
+    const totalAnswered = questions.length - skipped;
+
+    try {
+        const res = await fetch(`${API_BASE}/api/quiz-analysis`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                title: analysisData?.title || '',
+                questions: questions,
+                user_answers: userAnswers,
+                score: score,
+                total_answered: totalAnswered,
+                output_language: selectedLang || 'Vietnamese',
+            }),
+        });
+        if (!res.ok) throw new Error((await res.json().catch(() => ({}))).detail || 'Server error');
+        const data = await res.json();
+        renderQuizAnalysis(data);
+    } catch (err) {
+        showToast('Phân tích thất bại: ' + err.message);
+        btn.disabled = false;
+        btn.innerHTML = origHtml;
+    }
+}
+
+function renderQuizAnalysis(data) {
+    const container = document.getElementById('quizAnalysisResult');
+    if (!container) return;
+
+    // Rating colors
+    const ratingConfig = {
+        excellent:         { color: '#10b981', icon: '🏆', label: 'Xuất sắc' },
+        good:              { color: '#3b82f6', icon: '🎉', label: 'Tốt' },
+        average:           { color: '#f59e0b', icon: '📊', label: 'Trung bình' },
+        needs_improvement: { color: '#f97316', icon: '📚', label: 'Cần cải thiện' },
+        weak:              { color: '#ef4444', icon: '💪', label: 'Yếu' },
+    };
+    var rc = ratingConfig[data.overall_rating] || ratingConfig.average;
+
+    var html = '';
+
+    // Summary card
+    html += '<div class="qa-summary" style="border-left:3px solid ' + rc.color + '">' +
+        '<div class="qa-rating" style="color:' + rc.color + '">' + rc.icon + ' ' + rc.label + '</div>' +
+        '<p class="qa-summary-text">' + escHtml(data.summary || '') + '</p>' +
+        '</div>';
+
+    // Weak areas
+    if (data.weak_areas && data.weak_areas.length) {
+        html += '<div class="qa-section">' +
+            '<h4 class="qa-section-title qa-weak">⚠️ Điểm yếu cần cải thiện</h4>';
+        data.weak_areas.forEach(function(w) {
+            html += '<div class="qa-card qa-card-weak">' +
+                '<div class="qa-card-topic">' + escHtml(w.topic) + '</div>' +
+                '<div class="qa-card-detail">' + escHtml(w.detail) + '</div>' +
+                '<div class="qa-card-tip">💡 ' + escHtml(w.tip) + '</div>' +
+                '</div>';
+        });
+        html += '</div>';
+    }
+
+    // Strong areas
+    if (data.strong_areas && data.strong_areas.length) {
+        html += '<div class="qa-section">' +
+            '<h4 class="qa-section-title qa-strong">✅ Điểm mạnh</h4>';
+        data.strong_areas.forEach(function(s) {
+            html += '<div class="qa-card qa-card-strong">' +
+                '<div class="qa-card-topic">' + escHtml(s.topic) + '</div>' +
+                '<div class="qa-card-detail">' + escHtml(s.detail) + '</div>' +
+                '</div>';
+        });
+        html += '</div>';
+    }
+
+    // Study plan
+    if (data.study_plan && data.study_plan.length) {
+        html += '<div class="qa-section">' +
+            '<h4 class="qa-section-title">📋 Kế hoạch ôn tập</h4>' +
+            '<ol class="qa-study-plan">';
+        data.study_plan.forEach(function(step) {
+            html += '<li>' + escHtml(step) + '</li>';
+        });
+        html += '</ol></div>';
+    }
+
+    // Misconceptions
+    if (data.misconceptions && data.misconceptions.length) {
+        html += '<div class="qa-section">' +
+            '<h4 class="qa-section-title">🔍 Hiểu lầm phổ biến</h4>';
+        data.misconceptions.forEach(function(m) {
+            html += '<div class="qa-misconception">⚡ ' + escHtml(m) + '</div>';
+        });
+        html += '</div>';
+    }
+
+    container.innerHTML = html;
+    container.classList.remove('hidden');
+
+    // Hide the button
+    var btn = document.getElementById('quizAnalyzeBtn');
+    if (btn) btn.classList.add('hidden');
 }
 
 function statBox(num, label, color) {

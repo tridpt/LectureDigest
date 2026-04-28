@@ -216,3 +216,167 @@
 }
 .retry-quiz-btn:hover { border-color: var(--accent); color: var(--accent-light); }
 
+/* Quiz results action row */
+.quiz-results-actions {
+    display: flex;
+    justify-content: center;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+
+/* Analyze weak areas button */
+.analyze-quiz-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: linear-gradient(135deg, #8b5cf6, #6d28d9);
+    border: none !important;
+    color: white !important;
+    padding: 12px 24px;
+    border-radius: var(--radius-md);
+    font-family: var(--font);
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+    box-shadow: 0 4px 14px rgba(109, 40, 217, 0.35);
+}
+.analyze-quiz-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(109, 40, 217, 0.5);
+    filter: brightness(1.1);
+}
+.analyze-quiz-btn:disabled {
+    opacity: 0.7;
+    cursor: not-allowed;
+    transform: none !important;
+}
+.analyze-quiz-btn svg { width: 16px; height: 16px; flex-shrink: 0; }
+.analyze-quiz-btn svg.spin {
+    animation: spinIcon 1s linear infinite;
+}
+
+/* ═══════════════════════════════════════════════
+   QUIZ ANALYSIS RESULTS
+   ═══════════════════════════════════════════════ */
+.quiz-analysis-result {
+    text-align: left;
+    margin-top: 24px;
+    animation: fadeInUp 0.4s ease both;
+}
+
+/* Summary card */
+.qa-summary {
+    padding: 16px 18px;
+    background: rgba(255, 255, 255, 0.03);
+    border-radius: 12px;
+    margin-bottom: 20px;
+}
+.qa-rating {
+    font-size: 18px;
+    font-weight: 800;
+    margin-bottom: 8px;
+}
+.qa-summary-text {
+    font-size: 14px;
+    color: var(--text-secondary);
+    line-height: 1.65;
+    margin: 0;
+}
+
+/* Sections */
+.qa-section {
+    margin-bottom: 20px;
+}
+.qa-section-title {
+    font-size: 14px;
+    font-weight: 700;
+    margin: 0 0 10px;
+    color: var(--text-primary);
+}
+.qa-section-title.qa-weak { color: #f59e0b; }
+.qa-section-title.qa-strong { color: #10b981; }
+
+/* Cards */
+.qa-card {
+    padding: 14px 16px;
+    border-radius: 10px;
+    margin-bottom: 10px;
+    border: 1px solid transparent;
+}
+.qa-card-weak {
+    background: rgba(245, 158, 11, 0.06);
+    border-color: rgba(245, 158, 11, 0.15);
+}
+.qa-card-strong {
+    background: rgba(16, 185, 129, 0.06);
+    border-color: rgba(16, 185, 129, 0.15);
+}
+.qa-card-topic {
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin-bottom: 5px;
+}
+.qa-card-detail {
+    font-size: 13px;
+    color: var(--text-secondary);
+    line-height: 1.6;
+    margin-bottom: 8px;
+}
+.qa-card-tip {
+    font-size: 12px;
+    color: var(--accent-light);
+    background: rgba(139, 92, 246, 0.08);
+    padding: 8px 12px;
+    border-radius: 8px;
+    line-height: 1.5;
+}
+
+/* Study plan */
+.qa-study-plan {
+    margin: 0;
+    padding-left: 20px;
+    list-style: none;
+    counter-reset: study-step;
+}
+.qa-study-plan li {
+    position: relative;
+    padding: 10px 14px 10px 32px;
+    margin-bottom: 6px;
+    font-size: 13px;
+    color: var(--text-secondary);
+    line-height: 1.6;
+    background: rgba(255, 255, 255, 0.02);
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    counter-increment: study-step;
+}
+.qa-study-plan li::before {
+    content: counter(study-step);
+    position: absolute;
+    left: 10px;
+    top: 10px;
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #8b5cf6, #6d28d9);
+    color: white;
+    font-size: 10px;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* Misconceptions */
+.qa-misconception {
+    font-size: 13px;
+    color: var(--text-secondary);
+    line-height: 1.6;
+    padding: 10px 14px;
+    background: rgba(239, 68, 68, 0.05);
+    border: 1px solid rgba(239, 68, 68, 0.12);
+    border-radius: 8px;
+    margin-bottom: 6px;
+}

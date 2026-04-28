@@ -269,3 +269,124 @@ Yêu cầu:
         return {"term": term, "explanation": explanation.strip()}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+
+# ═══════════════════════════════════════════════════════
+# QUIZ WEAK AREA ANALYSIS
+# ═══════════════════════════════════════════════════════
+
+class QuizAnalysisRequest(BaseModel):
+    title: str = ''
+    questions: list = []           # [{question, options, correct_index, explanation, difficulty}, ...]
+    user_answers: list = []        # [selectedIndex or -1 for skipped, ...]
+    score: int = 0
+    total_answered: int = 0
+    output_language: str = 'Vietnamese'
+
+
+@router.post("/quiz-analysis")
+async def analyze_quiz_results(request: QuizAnalysisRequest):
+    """Analyze quiz results to identify weak areas and provide study recommendations."""
+    if not os.getenv("GEMINI_API_KEY"):
+        raise HTTPException(status_code=500, detail="GEMINI_API_KEY not configured")
+
+    if not request.questions:
+        raise HTTPException(status_code=400, detail="questions required")
+
+    # Build detailed results
+    results_block = []
+    for i, q in enumerate(request.questions):
+        user_ans = request.user_answers[i] if i < len(request.user_answers) else -1
+        correct_idx = q.get("correct_index", 0)
+        is_correct = user_ans == correct_idx
+        is_skipped = user_ans == -1
+
+        status = "✓ CORRECT" if is_correct else ("⊘ SKIPPED" if is_skipped else "✗ WRONG")
+        options = q.get("options", [])
+        user_choice = options[user_ans] if 0 <= user_ans < len(options) else "(skipped)"
+        correct_choice = options[correct_idx] if 0 <= correct_idx < len(options) else ""
+
+        results_block.append(
+            f"Q{i+1} [{status}] (difficulty: {q.get('difficulty', 'medium')})\n"
+            f"  Question: {q.get('question', '')}\n"
+            f"  User answered: {user_choice}\n"
+            f"  Correct answer: {correct_choice}\n"
+            f"  Explanation: {q.get('explanation', '')}"
+        )
+
+    results_text = "\n\n".join(results_block)
+    pct = round(request.score / max(request.total_answered, 1) * 100)
+
+    prompt = f"""You are an expert educational analyst. Analyze this student's quiz performance on a video lecture and provide actionable insights.
+
+VIDEO: {request.title}
+SCORE: {request.score}/{request.total_answered} ({pct}%)
+
+DETAILED RESULTS:
+{results_text}
+
+⚠️ Respond in **{request.output_language}**.
+
+Analyze the results and return ONLY a valid JSON object (no markdown fences):
+{{
+  "overall_rating": "excellent|good|average|needs_improvement|weak",
+  "summary": "1-2 sentence overall assessment of the student's understanding",
+  "weak_areas": [
+    {{
+      "topic": "Name of the weak topic/concept",
+      "detail": "What the student got wrong and why it matters",
+      "tip": "Specific advice to improve understanding of this topic"
+    }}
+  ],
+  "strong_areas": [
+    {{
+      "topic": "Name of the strong topic/concept",
+      "detail": "Brief note on what the student understood well"
+    }}
+  ],
+  "study_plan": [
+    "Actionable step 1 to improve",
+    "Actionable step 2 to improve",
+    "Actionable step 3 to improve"
+  ],
+  "misconceptions": [
+    "Any common misconception the student may have based on wrong answers"
+  ]
+}}
+
+RULES:
+- weak_areas: list 2-4 topics where the student struggled (based on wrong/skipped questions)
+- strong_areas: list 1-3 topics the student knows well
+- study_plan: 3-4 specific, actionable study steps
+- misconceptions: 1-2 if any detected from wrong answer patterns
+- If the score is perfect, weak_areas can be empty and give advanced study suggestions instead
+- Be encouraging but honest"""
+
+    try:
+        text = call_gemini(prompt)
+        text = text.strip()
+        if text.startswith('```'):
+            text = re.sub(r'^```(?:json)?\s*\n?', '', text)
+            text = re.sub(r'\n?\s*```$', '', text)
+        result = json.loads(text)
+
+        # Ensure all keys exist
+        for key in ["weak_areas", "strong_areas", "study_plan", "misconceptions"]:
+            if key not in result:
+                result[key] = []
+        if "overall_rating" not in result:
+            result["overall_rating"] = "average"
+        if "summary" not in result:
+            result["summary"] = ""
+
+        result["score"] = request.score
+        result["total"] = request.total_answered
+        result["percentage"] = pct
+
+        return result
+
+    except json.JSONDecodeError as e:
+        raise HTTPException(status_code=500, detail=f"Failed to parse AI response: {e}")
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Quiz analysis failed: {e}")
+
