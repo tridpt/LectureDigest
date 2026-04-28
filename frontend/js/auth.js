@@ -543,3 +543,79 @@ async function saveProfile(event) {
         if (saveBtn) { saveBtn.disabled = false; saveBtn.textContent = 'Lưu thay đổi'; }
     }
 }
+
+// ── Delete Account ──
+async function authDeleteAccount() {
+    var password = document.getElementById('deleteAccountPw')?.value || '';
+    var errEl = document.getElementById('deleteAccountError');
+    var btn = document.getElementById('deleteAccountBtn');
+
+    if (errEl) errEl.classList.add('hidden');
+
+    // Double confirmation
+    if (!confirm('Bạn có chắc chắn muốn XÓA VĨNH VIỄN tài khoản? Tất cả dữ liệu sẽ bị mất và không thể khôi phục!')) {
+        return;
+    }
+
+    if (btn) { btn.disabled = true; btn.textContent = 'Đang xóa...'; }
+
+    try {
+        var res = await fetch(API_BASE + '/api/auth/delete-account', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': 'Bearer ' + _authToken
+            },
+            body: JSON.stringify({ password: password })
+        });
+        var data = await res.json();
+        if (!res.ok) throw new Error(data.detail || 'Không thể xóa tài khoản');
+
+        // Clear everything client-side
+        _authToken = null;
+        _authUser = null;
+        localStorage.clear();
+        closeProfileModal();
+        _authUpdateUI();
+        showToast('👋 Tài khoản đã được xóa. Tạm biệt!', 4000);
+        if (typeof showSection === 'function') showSection('hero');
+
+    } catch (err) {
+        if (errEl) { errEl.textContent = err.message; errEl.classList.remove('hidden'); }
+    } finally {
+        if (btn) { btn.disabled = false; btn.textContent = '🗑️ Xóa tài khoản vĩnh viễn'; }
+    }
+}
+
+// ── Export Data ──
+async function authExportData() {
+    if (!_authToken) {
+        showToast('⚠️ Vui lòng đăng nhập để tải dữ liệu', 2000);
+        return;
+    }
+
+    showToast('📦 Đang chuẩn bị dữ liệu...', 2000);
+
+    try {
+        var res = await fetch(API_BASE + '/api/auth/export-data', {
+            headers: { 'Authorization': 'Bearer ' + _authToken }
+        });
+        if (!res.ok) throw new Error('Không thể tải dữ liệu');
+        var data = await res.json();
+
+        // Download as JSON file
+        var blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+        var url = URL.createObjectURL(blob);
+        var a = document.createElement('a');
+        a.href = url;
+        a.download = 'lecturedigest-data-' + new Date().toISOString().split('T')[0] + '.json';
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+
+        showToast('✅ Đã tải xuống dữ liệu!', 2000);
+    } catch (err) {
+        showToast('❌ ' + err.message, 3000);
+    }
+}

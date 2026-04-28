@@ -798,6 +798,73 @@ def db_update_user(user_id: int, display_name: str = None, avatar_color: str = N
     conn.close()
 
 
+def db_delete_user(user_id: int):
+    """Delete a user and ALL their data from every table. GDPR compliance."""
+    conn = get_db()
+    try:
+        conn.execute("DELETE FROM history WHERE user_id = ?", (user_id,))
+        conn.execute("DELETE FROM notes WHERE user_id = ?", (user_id,))
+        conn.execute("DELETE FROM bookmarks WHERE user_id = ?", (user_id,))
+        conn.execute("DELETE FROM gamification WHERE user_id = ?", (user_id,))
+        conn.execute("DELETE FROM kv_store WHERE user_id = ?", (user_id,))
+        # Delete folders and their video associations
+        folder_ids = [r["id"] for r in conn.execute("SELECT id FROM folders WHERE user_id = ?", (user_id,)).fetchall()]
+        for fid in folder_ids:
+            conn.execute("DELETE FROM folder_videos WHERE folder_id = ?", (fid,))
+        conn.execute("DELETE FROM folders WHERE user_id = ?", (user_id,))
+        # Get email for reset token cleanup
+        user_row = conn.execute("SELECT email FROM users WHERE id = ?", (user_id,)).fetchone()
+        if user_row:
+            email = user_row["email"]
+            conn.execute("DELETE FROM password_reset_tokens WHERE email = ?", (email,))
+            conn.execute("DELETE FROM login_attempts WHERE key LIKE ?", (f"%{email}%",))
+        # Finally delete the user
+        conn.execute("DELETE FROM users WHERE id = ?", (user_id,))
+        conn.commit()
+    except Exception as e:
+        conn.rollback()
+        raise e
+    finally:
+        conn.close()
+
+
+def db_export_user_data(user_id: int) -> dict:
+    """Export all user data as a dictionary. GDPR data portability."""
+    conn = get_db()
+    result = {}
+
+    # User profile
+    user_row = conn.execute("SELECT id, email, display_name, avatar_color, avatar_url, google_id, created_at FROM users WHERE id = ?", (user_id,)).fetchone()
+    result["profile"] = dict(user_row) if user_row else {}
+
+    # History
+    rows = conn.execute("SELECT * FROM history WHERE user_id = ?", (user_id,)).fetchall()
+    result["history"] = [dict(r) for r in rows]
+
+    # Notes
+    rows = conn.execute("SELECT * FROM notes WHERE user_id = ?", (user_id,)).fetchall()
+    result["notes"] = [dict(r) for r in rows]
+
+    # Bookmarks
+    rows = conn.execute("SELECT * FROM bookmarks WHERE user_id = ?", (user_id,)).fetchall()
+    result["bookmarks"] = [dict(r) for r in rows]
+
+    # Gamification
+    row = conn.execute("SELECT * FROM gamification WHERE user_id = ?", (user_id,)).fetchone()
+    result["gamification"] = dict(row) if row else {}
+
+    # KV store (SM2, custom cards, etc.)
+    rows = conn.execute("SELECT * FROM kv_store WHERE user_id = ?", (user_id,)).fetchall()
+    result["extra_data"] = [dict(r) for r in rows]
+
+    # Folders
+    rows = conn.execute("SELECT * FROM folders WHERE user_id = ?", (user_id,)).fetchall()
+    result["folders"] = [dict(r) for r in rows]
+
+    conn.close()
+    return result
+
+
 # ──────────────────────────────────────────
 # SHARED NOTES
 # ──────────────────────────────────────────

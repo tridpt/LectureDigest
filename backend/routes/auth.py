@@ -23,6 +23,7 @@ from database import (
     db_save_reset_token, db_get_reset_token, db_delete_reset_token,
     db_delete_reset_tokens_for_email, db_cleanup_expired_tokens,
     db_check_rate_limit, db_reset_rate_limit,
+    db_delete_user, db_export_user_data,
 )
 
 router = APIRouter(prefix="/api/auth", tags=["auth"])
@@ -431,3 +432,51 @@ async def verify_reset_token(token: str):
     if not token_data:
         return {"valid": False}
     return {"valid": True, "email": token_data["email"]}
+
+
+class DeleteAccountRequest(BaseModel):
+    password: str = ""
+
+
+@router.post("/delete-account")
+async def delete_account(req: DeleteAccountRequest, request: Request):
+    """Permanently delete a user account and all associated data."""
+    user = get_current_user(request)
+    if not user:
+        raise HTTPException(status_code=401, detail="Chưa đăng nhập")
+
+    # For password-based accounts, verify password
+    full_user = db_get_user_by_email(user["email"])
+    if full_user and full_user.get("password_hash"):
+        if not req.password:
+            raise HTTPException(status_code=400, detail="Vui lòng nhập mật khẩu để xác nhận xóa tài khoản")
+        loop = asyncio.get_event_loop()
+        pw_ok = await loop.run_in_executor(
+            None,
+            lambda: bcrypt.checkpw(req.password.encode("utf-8"), full_user["password_hash"].encode("utf-8"))
+        )
+        if not pw_ok:
+            raise HTTPException(status_code=403, detail="Mật khẩu không đúng")
+
+    user_id = user["id"]
+    email = user["email"]
+
+    try:
+        db_delete_user(user_id)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Không thể xóa tài khoản: {e}")
+
+    print(f"[Auth] Account deleted: {email} (user_id={user_id})")
+    return {"ok": True, "message": "Tài khoản đã được xóa vĩnh viễn"}
+
+
+@router.get("/export-data")
+async def export_data(request: Request):
+    """Export all user data as JSON. GDPR data portability."""
+    user = get_current_user(request)
+    if not user:
+        raise HTTPException(status_code=401, detail="Chưa đăng nhập")
+
+    data = db_export_user_data(user["id"])
+    data["exported_at"] = int(time.time())
+    return data
