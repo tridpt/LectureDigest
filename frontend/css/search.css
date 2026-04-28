@@ -249,3 +249,37 @@
     box-shadow: 0 16px 48px rgba(0, 0, 0, 0.18);
 }
 [data-theme="light"] .gsearch-input { color: #1a1a2e; }
+
+/* ═══════════════════════════════════════════════
+   PAGE-LEVEL HIGHLIGHT (after search result click)
+   ═══════════════════════════════════════════════ */
+.gsearch-page-highlight {
+    outline: 2px solid rgba(139, 92, 246, 0.6) !important;
+    outline-offset: 3px;
+    background: rgba(139, 92, 246, 0.08) !important;
+    border-radius: 6px;
+    animation: gsearchPulse 1s ease-in-out 3;
+    position: relative;
+    z-index: 1;
+}
+@keyframes gsearchPulse {
+    0%   { outline-color: rgba(139, 92, 246, 0.6); box-shadow: 0 0 0 0 rgba(139, 92, 246, 0.3); }
+    50%  { outline-color: rgba(139, 92, 246, 0.9); box-shadow: 0 0 20px 4px rgba(139, 92, 246, 0.2); }
+    100% { outline-color: rgba(139, 92, 246, 0.6); box-shadow: 0 0 0 0 rgba(139, 92, 246, 0.3); }
+}
+
+/* Injected text mark */
+.gsearch-text-mark {
+    background: rgba(139, 92, 246, 0.35);
+    color: inherit;
+    border-radius: 2px;
+    padding: 1px 3px;
+    font-weight: 700;
+    animation: gsearchMarkPulse 0.8s ease-in-out 3;
+}
+@keyframes gsearchMarkPulse {
+    0%   { background: rgba(139, 92, 246, 0.35); }
+    50%  { background: rgba(139, 92, 246, 0.65); }
+    100% { background: rgba(139, 92, 246, 0.35); }
+}
+
