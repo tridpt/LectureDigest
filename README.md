@@ -1,6 +1,6 @@
 # LectureDigest 🎓
 
-**Transform any YouTube lecture into a smart study guide — powered by Gemini AI**
+**Transform any YouTube lecture (or uploaded audio/video) into a complete AI-powered study companion — summaries, quizzes, flashcards, mind maps, and more.**
 
 [![Deploy to Render](https://render.com/images/deploy-to-render-button.svg)](https://render.com/deploy)
 
@@ -8,22 +8,64 @@
 
 ## ✨ Features
 
+### 📚 Core Analysis
 | Feature | Description |
 |---|---|
-| 📖 **AI Summary** | Comprehensive overview of the entire lecture |
-| 🗺️ **Chapter Timeline** | Clickable timestamps → seek video to exact section |
-| 🔥 **Key Moments** | AI-identified highlight moments (key insight, definition, example...) |
-| ✅ **Key Takeaways** | Bullet-point list of core concepts |
-| 🧠 **Interactive Quiz** | 8-12 AI-generated Q&As with explanations + timestamps |
-| 📇 **Flashcard Export** | Export quiz + takeaways as Anki TSV or CSV |
-| 📄 **PDF Study Guide** | Print-quality study guide via browser |
-| 🌍 **Multilingual** | Output in Vietnamese, English, French, German, Japanese, Korean, Chinese |
+| 📖 **AI Summary & Overview** | Comprehensive summary with key takeaways extracted by Gemini AI |
+| 🗺️ **Chapter Timeline** | Clickable AI-generated timestamps — seek to any section instantly |
+| 🔥 **Key Moments** | AI-identified highlights: insights, definitions, examples, turning points |
+| 🧠 **Interactive Quiz** | 8–12 multiple-choice questions with explanations + video timestamps |
+| 📝 **Diverse Exercises** | Fill-in-the-blank, True/False, Matching, and Short Answer exercises |
+| 📇 **Flashcard System** | In-app spaced-repetition study mode + export to Anki (TSV) or CSV |
+| 📜 **Transcript Search** | Full transcript with live sync highlighting, search, and click-to-seek |
+| 💬 **AI Chat** | Ask follow-up questions about the lecture with full context |
+| 🌍 **Multilingual** | Output in 7 languages: Vietnamese, English, French, German, Japanese, Korean, Chinese |
+
+### 🧠 Learning & Study Tools
+| Feature | Description |
+|---|---|
+| 🧠 **Mind Map** | Visual mind map generated from lecture content |
+| 🕸️ **Knowledge Graph** | Interactive D3.js graph connecting concepts across videos |
+| 📋 **Multi-Video Exam** | Generate exams from multiple analyzed videos with history tracking |
+| 📚 **Playlist / Course Mode** | Analyze entire YouTube playlists as a course with progress tracking |
+| 📊 **Dashboard** | Learning statistics: videos analyzed, quiz scores, time spent |
+| 🔥 **Streak Tracking** | Daily learning streak with gamification and weekly heatmap |
+| 🏆 **Achievement Badges** | Unlock badges for milestones (first video, streak records, quiz mastery) |
+| 📈 **Progress Tracking** | Per-video watch progress, quiz history charts, bookmark timeline |
+| 🔖 **Bookmarks** | Mark important moments during playback with custom labels |
+| 📝 **Notes** | Rich notes editor with auto-save, timestamp insertion, and Markdown export |
+| 📊 **Video Compare** | Compare quiz scores and progress across analyzed videos |
+| 🏷️ **Video Tags** | Organize videos with customizable category tags |
+| 📄 **PDF Export** | Print-quality study guide combining summary, chapters, quiz, and notes |
+
+### 🎬 Input Sources
+| Feature | Description |
+|---|---|
+| ▶️ **YouTube URL** | Paste any YouTube video or playlist URL |
+| 📤 **File Upload** | Upload audio/video files directly (MP3, MP4, WAV, M4A, WebM, OGG, FLAC, AAC, MOV — up to 200MB) |
+
+### 🔐 Accounts & Sharing
+| Feature | Description |
+|---|---|
+| 👤 **User Accounts** | Email registration + login with JWT authentication |
+| 🔑 **Google OAuth** | One-click sign-in with Google account linking |
+| 🔒 **Forgot Password** | Secure token-based password reset via email (SMTP) |
+| ☁️ **Cloud Sync** | Sync progress, notes, bookmarks, and history across devices in real-time |
+| 📤 **Share Notes** | Generate shareable read-only links for notes & bookmarks |
+
+### 📱 Platform
+| Feature | Description |
+|---|---|
+| 📱 **PWA** | Install as app on mobile/desktop with offline caching |
+| 🌙 **Dark / Light Theme** | Toggle between premium dark and clean light modes |
+| 📱 **Responsive** | Optimized for mobile, tablet, and desktop |
+| 📜 **History** | Search and filter analyzed videos by name or category tags |
 
 ---
 
 ## 🚀 Quick Start (Local)
 
-### Option A — Docker (Recommended, no Python needed)
+### Option A — Docker (Recommended)
 
 ```bash
 # 1. Clone the repo
@@ -39,7 +81,7 @@ docker compose up --build
 # 4. Open http://localhost:8000
 ```
 
-### Option B — Run Directly with Python
+### Option B — Python
 
 ```bash
 # Requirements: Python 3.9+
@@ -57,7 +99,40 @@ uvicorn main:app --reload --port 8000
 # Open http://localhost:8000
 ```
 
+### Option C — Windows One-Click
+
+```bash
+# Double-click run.bat — it installs deps and starts the server automatically
+```
+
 Get your **Gemini API Key** → [aistudio.google.com/app/apikey](https://aistudio.google.com/app/apikey)
+
+---
+
+## ⚙️ Configuration
+
+All config goes in `backend/.env`:
+
+```env
+# Required
+GEMINI_API_KEY=your_gemini_api_key_here
+
+# Optional — Google OAuth
+GOOGLE_CLIENT_ID=your_google_client_id
+
+# Optional — Password Reset Email (SMTP)
+SMTP_HOST=smtp.gmail.com
+SMTP_PORT=587
+SMTP_USER=your_email@gmail.com
+SMTP_PASS=your_app_password
+SMTP_FROM=your_email@gmail.com
+
+# Optional — YouTube anti-block (for cloud deploy)
+YOUTUBE_COOKIES_B64=base64_encoded_cookies
+YOUTUBE_PROXY_URL=http://user:pass@host:port
+```
+
+> Without SMTP configured, password reset links are printed to the server console (dev mode).
 
 ---
 
@@ -76,21 +151,19 @@ Get your **Gemini API Key** → [aistudio.google.com/app/apikey](https://aistudi
 ### Railway.app
 
 ```bash
-# Install Railway CLI
 npm install -g @railway/cli
 railway login
-railway link        # connect to your project
-railway up          # deploy from local
+railway link
+railway up
 ```
 Then set `GEMINI_API_KEY` in the Railway dashboard.
 
 ### Fly.io
 
 ```bash
-# Install flyctl
 curl -L https://fly.io/install.sh | sh
 fly auth login
-fly launch          # auto-detects Dockerfile
+fly launch
 fly secrets set GEMINI_API_KEY=your_key_here
 fly deploy
 ```
@@ -103,7 +176,7 @@ fly deploy
 # Build image
 docker build -t lecturedigest .
 
-# Run with env var directly
+# Run with env var
 docker run -p 8000:8000 -e GEMINI_API_KEY=your_key lecturedigest
 
 # Using docker compose
@@ -119,17 +192,47 @@ docker compose logs -f app       # view logs
 ```
 LectureDigest/
 ├── backend/
-│   ├── main.py            # FastAPI app (transcript + Gemini AI)
-│   ├── requirements.txt
-│   └── .env               # Your API key (never commit this!)
+│   ├── main.py              # FastAPI app — all API routes
+│   ├── database.py          # SQLite database (users, sync, shared notes)
+│   ├── requirements.txt     # Python dependencies
+│   └── .env                 # API keys & config (never commit!)
 ├── frontend/
-│   ├── index.html         # App shell
-│   ├── style.css          # Premium dark UI
-│   └── app.js             # All frontend logic
-├── Dockerfile             # Production container
-├── docker-compose.yml     # Local Docker dev
-├── render.yaml            # Render.com deploy blueprint
-└── run.bat                # Windows one-click start (no Docker)
+│   ├── index.html           # Main SPA shell (1600+ lines)
+│   ├── css/                 # 35 modular CSS files
+│   │   ├── base.css         # CSS variables & design tokens
+│   │   ├── theme.css        # Dark/Light mode theming
+│   │   ├── hero.css         # Landing page hero section
+│   │   ├── quiz.css         # Quiz card styling
+│   │   ├── ...              # And 30+ more modules
+│   │   └── mobile.css       # Responsive breakpoints
+│   ├── js/                  # 28 modular JS files
+│   │   ├── core.js          # App initialization & routing
+│   │   ├── analyze.js       # Video analysis flow
+│   │   ├── quiz.js          # Quiz engine
+│   │   ├── flashcard.js     # Flashcard study system
+│   │   ├── exercises.js     # Diverse exercise types
+│   │   ├── transcript.js    # Transcript search & sync
+│   │   ├── notes.js         # Notes editor
+│   │   ├── chat.js          # AI chat
+│   │   ├── mindmap.js       # Mind map visualization
+│   │   ├── knowledge-graph.js # D3.js knowledge graph
+│   │   ├── exam.js          # Multi-video exam
+│   │   ├── gamification.js  # Streaks & XP
+│   │   ├── auth.js          # Authentication UI
+│   │   ├── db-sync.js       # Cloud sync engine
+│   │   ├── upload.js        # File upload handler
+│   │   ├── share-notes.js   # Shareable note links
+│   │   ├── pwa-install.js   # PWA install prompt
+│   │   └── ...              # And 10+ more modules
+│   ├── shared-notes.html    # Standalone shared notes viewer
+│   ├── reset-password.html  # Password reset page
+│   ├── manifest.json        # PWA manifest
+│   └── sw.js                # Service worker (offline cache)
+├── cloudflare-worker/       # Optional CDN worker
+├── Dockerfile               # Production container
+├── docker-compose.yml       # Local Docker dev
+├── render.yaml              # Render.com deploy blueprint
+└── run.bat                  # Windows one-click start
 ```
 
 ---
@@ -138,10 +241,20 @@ LectureDigest/
 
 | Layer | Technology |
 |---|---|
-| Backend | Python 3.13 + FastAPI |
-| AI Engine | Google Gemini 2.5 Flash |
-| Transcripts | youtube-transcript-api v1.x |
-| Video Player | YouTube IFrame API |
-| Frontend | Vanilla HTML/CSS/JS |
-| Container | Docker + Docker Compose |
-| Deployment | Render / Railway / Fly.io |
+| **Backend** | Python 3.13 + FastAPI + SQLite |
+| **AI Engine** | Google Gemini 2.5 Flash (with auto-fallback to Lite) |
+| **Auth** | JWT + bcrypt + Google OAuth 2.0 |
+| **Transcripts** | youtube-transcript-api v1.x + InnerTube fallback |
+| **File Upload** | Gemini Files API (audio/video transcription) |
+| **Video Player** | YouTube IFrame API |
+| **Visualization** | D3.js (Knowledge Graph, Mind Map) |
+| **Frontend** | Vanilla HTML / CSS / JS (no framework) |
+| **PWA** | Service Worker + Web App Manifest |
+| **Container** | Docker + Docker Compose |
+| **Deployment** | Render / Railway / Fly.io |
+
+---
+
+## 📝 License
+
+MIT
