@@ -445,9 +445,13 @@ async def delete_account(req: DeleteAccountRequest, request: Request):
     if not user:
         raise HTTPException(status_code=401, detail="Chưa đăng nhập")
 
-    # For password-based accounts, verify password
+    # For password-based accounts (no Google), verify password
     full_user = db_get_user_by_email(user["email"])
-    if full_user and full_user.get("password_hash"):
+    has_google = full_user and full_user.get("google_id")
+    has_password = full_user and full_user.get("password_hash")
+
+    if has_password and not has_google:
+        # Pure email/password account → require password confirmation
         if not req.password:
             raise HTTPException(status_code=400, detail="Vui lòng nhập mật khẩu để xác nhận xóa tài khoản")
         loop = asyncio.get_event_loop()

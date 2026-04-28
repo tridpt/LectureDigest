@@ -479,11 +479,11 @@ function openProfileModal() {
     var successEl = document.getElementById('profileSuccess');
     if (successEl) successEl.classList.add('hidden');
 
-    // Hide delete account password field for Google-only users
+    // Hide delete account password field for Google users (even if linked with email)
     var deletePwField = document.getElementById('deleteAccountPwField');
     if (deletePwField) {
-        var isGoogleOnly = _authUser.google_id && !_authUser.password_hash;
-        deletePwField.style.display = isGoogleOnly ? 'none' : '';
+        var hasGoogle = !!_authUser.google_id;
+        deletePwField.style.display = hasGoogle ? 'none' : '';
     }
     var deleteErr = document.getElementById('deleteAccountError');
     if (deleteErr) { deleteErr.textContent = ''; deleteErr.classList.add('hidden'); }
