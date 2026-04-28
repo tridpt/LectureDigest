@@ -56,6 +56,7 @@
     <link rel="stylesheet" href="/css/upload.css">
     <link rel="stylesheet" href="/css/share-notes.css">
     <link rel="stylesheet" href="/css/pwa-install.css">
+    <link rel="stylesheet" href="/css/search.css">
     <!-- Utilities & Responsive -->
     <link rel="stylesheet" href="/css/utilities.css">
     <link rel="stylesheet" href="/css/mobile.css">
@@ -95,6 +96,12 @@
                 <!-- Theme toggle -->
                 <button class="theme-toggle-btn" id="themeToggleBtn" onclick="toggleTheme()" aria-label="Chuyển theme" title="Chuyển sáng/tối">
                     <span class="theme-icon" id="themeIcon">🌙</span>
+                </button>
+
+                <!-- Global Search -->
+                <button class="gsearch-trigger" onclick="openGlobalSearch()" title="Tim kiem (Ctrl+K)">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35" stroke-linecap="round"/></svg>
+                    <span class="gsearch-trigger-kbd">Ctrl+K</span>
                 </button>
 
                 <!-- Dashboard button -->
@@ -1569,6 +1576,8 @@
         </div>
     </div>
 
+    <!-- Global Search -->
+    <script src="/js/search.js"></script>
     <!-- PWA Install Prompt -->
     <script src="/js/pwa-install.js"></script>
 

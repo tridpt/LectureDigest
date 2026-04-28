@@ -1,0 +1,251 @@
+/* ════════════════════════════════════════════════
+   Global Search
+   ════════════════════════════════════════════════ */
+
+/* Modal overlay */
+.gsearch-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 9999;
+    background: rgba(0, 0, 0, 0.6);
+    backdrop-filter: blur(6px);
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    padding-top: min(20vh, 120px);
+    animation: gsearchFadeIn 0.12s ease;
+}
+@keyframes gsearchFadeIn {
+    from { opacity: 0; }
+    to   { opacity: 1; }
+}
+
+/* Modal box */
+.gsearch-modal {
+    width: 580px;
+    max-width: 94vw;
+    max-height: 65vh;
+    background: #12122a;
+    border: 1px solid rgba(139, 92, 246, 0.2);
+    border-radius: 16px;
+    box-shadow: 0 32px 80px rgba(0, 0, 0, 0.8), 0 0 0 1px rgba(255,255,255,0.03);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    animation: gsearchSlideIn 0.15s ease;
+}
+@keyframes gsearchSlideIn {
+    from { opacity: 0; transform: translateY(-16px) scale(0.98); }
+    to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+/* Search input area */
+.gsearch-input-wrap {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 14px 18px;
+    border-bottom: 1px solid rgba(139, 92, 246, 0.12);
+}
+.gsearch-icon {
+    flex-shrink: 0;
+    color: var(--accent-light);
+    opacity: 0.7;
+}
+.gsearch-icon svg { width: 18px; height: 18px; }
+.gsearch-input {
+    flex: 1;
+    background: transparent;
+    border: none;
+    outline: none;
+    color: var(--text-primary);
+    font-size: 16px;
+    font-family: inherit;
+}
+.gsearch-input::placeholder {
+    color: var(--text-muted);
+}
+.gsearch-kbd {
+    font-size: 10px;
+    padding: 2px 6px;
+    border-radius: 4px;
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: var(--text-muted);
+    font-family: var(--font-mono, monospace);
+}
+
+/* Results body */
+.gsearch-body {
+    flex: 1;
+    overflow-y: auto;
+    padding: 8px;
+}
+
+/* Empty & hint states */
+.gsearch-empty {
+    text-align: center;
+    padding: 32px 16px;
+    color: var(--text-secondary);
+    font-size: 13px;
+}
+.gsearch-empty-icon { font-size: 32px; margin-bottom: 8px; }
+.gsearch-hint {
+    padding: 12px 16px;
+    font-size: 12px;
+    color: var(--text-muted);
+}
+.gsearch-hint kbd {
+    font-size: 10px;
+    padding: 1px 5px;
+    border-radius: 3px;
+    background: rgba(255,255,255,0.06);
+    border: 1px solid rgba(255,255,255,0.1);
+    font-family: var(--font-mono, monospace);
+}
+
+/* Category label */
+.gsearch-cat {
+    padding: 8px 14px 4px;
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    color: var(--text-muted);
+}
+
+/* Result item */
+.gsearch-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 14px;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: background 0.12s;
+    border: none;
+    background: none;
+    width: 100%;
+    text-align: left;
+    font-family: inherit;
+    color: var(--text-primary);
+}
+.gsearch-item:hover,
+.gsearch-item.active {
+    background: rgba(139, 92, 246, 0.1);
+}
+.gsearch-item-icon {
+    width: 36px;
+    height: 36px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 16px;
+    flex-shrink: 0;
+}
+.gsearch-item-icon.video { background: rgba(139, 92, 246, 0.12); }
+.gsearch-item-icon.note  { background: rgba(16, 185, 129, 0.12); }
+.gsearch-item-icon.transcript { background: rgba(59, 130, 246, 0.12); }
+.gsearch-item-icon.bookmark { background: rgba(245, 158, 11, 0.12); }
+.gsearch-item-icon.summary { background: rgba(236, 72, 153, 0.12); }
+
+.gsearch-item-body {
+    flex: 1;
+    min-width: 0;
+}
+.gsearch-item-title {
+    font-size: 13px;
+    font-weight: 600;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    margin-bottom: 2px;
+}
+.gsearch-item-title mark {
+    background: rgba(139, 92, 246, 0.35);
+    color: inherit;
+    border-radius: 2px;
+    padding: 0 1px;
+}
+.gsearch-item-sub {
+    font-size: 11px;
+    color: var(--text-secondary);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.gsearch-item-sub mark {
+    background: rgba(139, 92, 246, 0.25);
+    color: inherit;
+    border-radius: 2px;
+    padding: 0 1px;
+}
+.gsearch-item-badge {
+    flex-shrink: 0;
+    font-size: 9px;
+    padding: 2px 7px;
+    border-radius: 4px;
+    font-weight: 600;
+}
+.gsearch-item-badge.video { background: rgba(139,92,246,0.15); color: var(--accent-light); }
+.gsearch-item-badge.note  { background: rgba(16,185,129,0.15); color: #34d399; }
+.gsearch-item-badge.transcript { background: rgba(59,130,246,0.15); color: #60a5fa; }
+.gsearch-item-badge.bookmark { background: rgba(245,158,11,0.15); color: #fbbf24; }
+.gsearch-item-badge.summary { background: rgba(236,72,153,0.15); color: #f472b6; }
+
+/* Footer */
+.gsearch-footer {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 8px 16px;
+    border-top: 1px solid rgba(255,255,255,0.04);
+    font-size: 11px;
+    color: var(--text-muted);
+}
+.gsearch-footer-item {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+/* Search trigger button */
+.gsearch-trigger {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    padding: 6px 12px;
+    border-radius: 20px;
+    border: 1px solid var(--border);
+    background: var(--bg-card);
+    color: var(--text-secondary);
+    font-size: 12px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+    font-family: inherit;
+}
+.gsearch-trigger:hover {
+    border-color: var(--accent);
+    color: var(--text-primary);
+    background: rgba(139, 92, 246, 0.08);
+}
+.gsearch-trigger svg { width: 14px; height: 14px; flex-shrink: 0; }
+.gsearch-trigger .gsearch-trigger-kbd {
+    font-size: 9px;
+    padding: 1px 5px;
+    border-radius: 3px;
+    background: rgba(139, 92, 246, 0.12);
+    color: var(--accent-light);
+    font-family: var(--font-mono, monospace);
+    font-weight: 600;
+}
+
+/* Light mode */
+[data-theme="light"] .gsearch-modal {
+    background: #fff;
+    border-color: rgba(0, 0, 0, 0.12);
+    box-shadow: 0 16px 48px rgba(0, 0, 0, 0.18);
+}
+[data-theme="light"] .gsearch-input { color: #1a1a2e; }
