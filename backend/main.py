@@ -47,12 +47,14 @@ from routes.analyze import router as analyze_router
 from routes.ai_tools import router as ai_tools_router
 from routes.sync import router as sync_router
 from routes.content import router as content_router
+from routes.folders import router as folders_router
 
 app.include_router(auth_router)
 app.include_router(analyze_router)
 app.include_router(ai_tools_router)
 app.include_router(sync_router)
 app.include_router(content_router)
+app.include_router(folders_router)
 
 
 # ═══════════════════════════════════════════════════════

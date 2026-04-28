@@ -1,0 +1,373 @@
+/* ════════════════════════════════════════════════
+   Folders — Video Organization
+   ════════════════════════════════════════════════ */
+
+/* ── Folder bar in history panel ── */
+.folder-bar {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 12px 2px;
+    overflow-x: auto;
+    flex-shrink: 0;
+    scrollbar-width: none;
+}
+.folder-bar::-webkit-scrollbar { display: none; }
+
+.folder-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 4px 10px;
+    border-radius: 16px;
+    border: 1px solid var(--border);
+    background: transparent;
+    color: var(--text-secondary);
+    font-size: 11px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+    white-space: nowrap;
+    font-family: inherit;
+    flex-shrink: 0;
+}
+.folder-chip:hover {
+    border-color: var(--accent);
+    color: var(--text-primary);
+    background: rgba(139, 92, 246, 0.08);
+}
+.folder-chip.active {
+    border-color: var(--accent);
+    background: rgba(139, 92, 246, 0.15);
+    color: var(--accent-light);
+    font-weight: 600;
+}
+.folder-chip .folder-icon {
+    font-size: 12px;
+    line-height: 1;
+}
+.folder-chip .folder-count {
+    font-size: 9px;
+    padding: 1px 5px;
+    border-radius: 8px;
+    background: rgba(139, 92, 246, 0.2);
+    color: var(--accent-light);
+    font-weight: 600;
+    min-width: 14px;
+    text-align: center;
+}
+
+/* "All" chip */
+.folder-chip-all { border-style: dashed; }
+.folder-chip-all.active { border-style: solid; }
+
+/* "+ New" button */
+.folder-chip-add {
+    border-style: dashed;
+    border-color: rgba(139, 92, 246, 0.3);
+    color: var(--accent-light);
+    opacity: 0.7;
+}
+.folder-chip-add:hover {
+    opacity: 1;
+    background: rgba(139, 92, 246, 0.1);
+    border-color: var(--accent);
+}
+
+/* ── Folder badge on history items ── */
+.hist-folder-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+    font-size: 9px;
+    padding: 1px 6px;
+    border-radius: 4px;
+    font-weight: 600;
+    margin-top: 2px;
+    max-width: 140px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+/* ── "Move to folder" button in history items ── */
+.hist-folder-btn {
+    flex-shrink: 0;
+    width: 26px;
+    height: 26px;
+    border-radius: 6px;
+    border: none;
+    background: transparent;
+    color: var(--text-secondary);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    transition: all 0.15s;
+}
+.hist-item:hover .hist-folder-btn { opacity: 1; }
+.hist-folder-btn:hover {
+    background: rgba(139, 92, 246, 0.15);
+    color: var(--accent-light);
+}
+.hist-folder-btn svg { width: 13px; height: 13px; }
+
+/* ── Folder picker dropdown ── */
+.folder-picker {
+    position: absolute;
+    z-index: 300;
+    min-width: 200px;
+    max-height: 280px;
+    background: #1a1a2e;
+    border: 1px solid rgba(139, 92, 246, 0.25);
+    border-radius: 12px;
+    box-shadow: 0 16px 48px rgba(0, 0, 0, 0.7);
+    padding: 6px;
+    overflow-y: auto;
+    animation: folderPickerIn 0.15s ease;
+}
+@keyframes folderPickerIn {
+    from { opacity: 0; transform: translateY(-4px) scale(0.97); }
+    to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+.folder-picker-title {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--text-secondary);
+    padding: 6px 10px 4px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.folder-picker-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 7px 10px;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: background 0.12s;
+    font-size: 12px;
+    color: var(--text-primary);
+    border: none;
+    background: none;
+    width: 100%;
+    font-family: inherit;
+    text-align: left;
+}
+.folder-picker-item:hover {
+    background: rgba(139, 92, 246, 0.1);
+}
+.folder-picker-item .fp-icon {
+    font-size: 14px;
+    width: 20px;
+    text-align: center;
+    flex-shrink: 0;
+}
+.folder-picker-item .fp-name {
+    flex: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+.folder-picker-item .fp-check {
+    color: var(--accent-light);
+    font-size: 14px;
+    font-weight: 700;
+    flex-shrink: 0;
+}
+.folder-picker-item.in-folder {
+    background: rgba(139, 92, 246, 0.08);
+}
+
+.folder-picker-divider {
+    height: 1px;
+    background: var(--border);
+    margin: 4px 0;
+}
+
+.folder-picker-new {
+    color: var(--accent-light);
+    font-weight: 600;
+}
+.folder-picker-new .fp-icon { opacity: 0.7; }
+
+/* ── Create/Edit folder modal ── */
+.folder-modal-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 1000;
+    background: rgba(0, 0, 0, 0.6);
+    backdrop-filter: blur(4px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    animation: fadeIn 0.15s ease;
+}
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to   { opacity: 1; }
+}
+
+.folder-modal {
+    background: #1a1a2e;
+    border: 1px solid rgba(139, 92, 246, 0.2);
+    border-radius: 16px;
+    padding: 24px;
+    width: 340px;
+    max-width: 90vw;
+    box-shadow: 0 24px 64px rgba(0, 0, 0, 0.8);
+    animation: modalSlideIn 0.2s ease;
+}
+@keyframes modalSlideIn {
+    from { opacity: 0; transform: translateY(16px) scale(0.97); }
+    to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+.folder-modal h3 {
+    margin: 0 0 16px;
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--text-primary);
+}
+
+.folder-modal-field {
+    margin-bottom: 14px;
+}
+.folder-modal-field label {
+    display: block;
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--text-secondary);
+    margin-bottom: 6px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+.folder-modal-field input[type="text"] {
+    width: 100%;
+    padding: 9px 12px;
+    border-radius: 10px;
+    border: 1px solid var(--border);
+    background: rgba(255, 255, 255, 0.04);
+    color: var(--text-primary);
+    font-size: 14px;
+    font-family: inherit;
+    outline: none;
+    transition: border-color 0.2s;
+    box-sizing: border-box;
+}
+.folder-modal-field input:focus {
+    border-color: var(--accent);
+}
+
+/* Icon picker grid */
+.folder-icon-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+}
+.folder-icon-option {
+    width: 34px;
+    height: 34px;
+    border-radius: 8px;
+    border: 2px solid transparent;
+    background: rgba(255, 255, 255, 0.04);
+    font-size: 16px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.15s;
+}
+.folder-icon-option:hover {
+    background: rgba(139, 92, 246, 0.1);
+    border-color: rgba(139, 92, 246, 0.3);
+}
+.folder-icon-option.selected {
+    border-color: var(--accent);
+    background: rgba(139, 92, 246, 0.15);
+}
+
+/* Color picker */
+.folder-color-grid {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+}
+.folder-color-option {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    border: 3px solid transparent;
+    cursor: pointer;
+    transition: all 0.15s;
+    position: relative;
+}
+.folder-color-option:hover {
+    transform: scale(1.15);
+}
+.folder-color-option.selected {
+    border-color: white;
+    box-shadow: 0 0 0 2px var(--accent);
+}
+
+/* Modal buttons */
+.folder-modal-actions {
+    display: flex;
+    gap: 8px;
+    justify-content: flex-end;
+    margin-top: 18px;
+}
+.folder-modal-actions button {
+    padding: 8px 18px;
+    border-radius: 10px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+    font-family: inherit;
+    border: none;
+}
+.folder-btn-cancel {
+    background: transparent;
+    color: var(--text-secondary);
+    border: 1px solid var(--border) !important;
+}
+.folder-btn-cancel:hover {
+    background: rgba(255, 255, 255, 0.05);
+}
+.folder-btn-save {
+    background: linear-gradient(135deg, #8b5cf6, #6d28d9);
+    color: white;
+}
+.folder-btn-save:hover {
+    filter: brightness(1.1);
+}
+.folder-btn-delete {
+    background: transparent;
+    color: #f87171;
+    border: 1px solid rgba(239, 68, 68, 0.3) !important;
+    margin-right: auto;
+}
+.folder-btn-delete:hover {
+    background: rgba(239, 68, 68, 0.12);
+}
+
+/* ── Light mode ── */
+[data-theme="light"] .folder-picker {
+    background: #fff;
+    border-color: rgba(0, 0, 0, 0.12);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
+}
+[data-theme="light"] .folder-modal {
+    background: #fff;
+    border-color: rgba(0, 0, 0, 0.1);
+}
+[data-theme="light"] .folder-modal-field input[type="text"] {
+    background: rgba(0, 0, 0, 0.03);
+}
+[data-theme="light"] .folder-icon-option {
+    background: rgba(0, 0, 0, 0.03);
+}

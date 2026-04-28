@@ -127,6 +127,14 @@ function renderHistoryPanel(filter) {
         });
     }
 
+    // Filter by folder
+    if (typeof _activeFolderId !== 'undefined' && _activeFolderId !== null) {
+        var folderVids = (typeof _folderVideos !== 'undefined' && _folderVideos[_activeFolderId]) || [];
+        filtered = filtered.filter(function(h) {
+            return folderVids.indexOf(h.video_id) >= 0;
+        });
+    }
+
     if (list.length === 0) {
         container.innerHTML = '';
         empty.classList.remove('hidden');
@@ -152,6 +160,7 @@ function renderHistoryPanel(filter) {
             '<div class="hist-info" onclick="loadFromHistory(\'' + (h.entry_id || h.video_id) + '\')" role="button" tabindex="0">' +
             '<div class="hist-title">' + titleText + '</div>' +
             (h.playlist_title ? '<div class="hist-playlist-badge">📋 ' + escHtml(h.playlist_title) + '</div>' : '') +
+            (typeof getVideoFolderBadges === 'function' ? getVideoFolderBadges(h.video_id) : '') +
             '<div class="hist-meta">' + escHtml(h.author || '') + ' &bull; ' + dateStr + ' ' + timeStr + '</div>' +
             '<div class="hist-lang">' + (h.lang || 'English') + '</div>' +
             '<div class="hist-tags">' + renderTagBadges(h.video_id) + '</div>' +
@@ -162,6 +171,9 @@ function renderHistoryPanel(filter) {
                     ? '<button class="hist-compare" onclick="event.stopPropagation();openCompareForVideo(\'' + h.video_id + '\')" title="So sanh"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><path d="M16 3h5v5M8 3H3v5M21 3l-7 7M3 3l7 7M16 21h5v-5M8 21H3v-5M21 21l-7-7M3 21l7-7"/></svg></button>'
                     : '';
             })() +
+            '<button class="hist-folder-btn" onclick="event.stopPropagation();showFolderPicker(\'' + h.video_id + '\', this)" title="Folder">' +
+            '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="13" height="13"><path d="M22 19a2 2 0 01-2 2H4a2 2 0 01-2-2V5a2 2 0 012-2h5l2 3h9a2 2 0 012 2z"/></svg>' +
+            '</button>' +
             '<button class="hist-tag-btn" onclick="event.stopPropagation();showTagPicker(\'' + h.video_id + '\', this)" title="Tag">' +
             '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><path d="M20.59 13.41l-7.17 7.17a2 2 0 01-2.83 0L2 12V2h10l8.59 8.59a2 2 0 010 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7"/></svg>' +
             '</button>' +

@@ -27,6 +27,7 @@
     <link rel="stylesheet" href="/css/results.css">
     <!-- Features -->
     <link rel="stylesheet" href="/css/history.css">
+    <link rel="stylesheet" href="/css/folders.css">
     <link rel="stylesheet" href="/css/highlights.css">
     <link rel="stylesheet" href="/css/quiz.css">
     <link rel="stylesheet" href="/css/flashcard.css">
@@ -146,6 +147,7 @@
                                    oninput="filterHistory(this.value)"
                                    aria-label="Tìm kiếm lịch sử">
                         </div>
+                        <div class="folder-bar" id="folderBar"></div>
                             <div class="tag-filter-bar" id="tagFilterBar">
                                 <button class="tag-filter-btn" data-tag="programming" onclick="filterHistoryByTag('programming')">💻 Lap trinh</button>
                                 <button class="tag-filter-btn" data-tag="math" onclick="filterHistoryByTag('math')">📊 Toan</button>
@@ -1192,6 +1194,8 @@
     <script src="/js/youtube.js"></script>
     <!-- History CRUD & panel -->
     <script src="/js/history.js"></script>
+    <!-- Folders organization -->
+    <script src="/js/folders.js"></script>
     <!-- Notes management -->
     <script src="/js/notes.js"></script>
     <!-- Video analysis flow & results rendering -->
