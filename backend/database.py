@@ -805,8 +805,8 @@ def db_delete_user(user_id: int):
         conn.execute("DELETE FROM history WHERE user_id = ?", (user_id,))
         conn.execute("DELETE FROM notes WHERE user_id = ?", (user_id,))
         conn.execute("DELETE FROM bookmarks WHERE user_id = ?", (user_id,))
-        conn.execute("DELETE FROM gamification WHERE user_id = ?", (user_id,))
-        conn.execute("DELETE FROM kv_store WHERE user_id = ?", (user_id,))
+        conn.execute("DELETE FROM user_gamification WHERE user_id = ?", (user_id,))
+        conn.execute("DELETE FROM user_kv_store WHERE user_id = ?", (user_id,))
         # Delete folders and their video associations
         folder_ids = [r["id"] for r in conn.execute("SELECT id FROM folders WHERE user_id = ?", (user_id,)).fetchall()]
         for fid in folder_ids:
@@ -850,11 +850,11 @@ def db_export_user_data(user_id: int) -> dict:
     result["bookmarks"] = [dict(r) for r in rows]
 
     # Gamification
-    row = conn.execute("SELECT * FROM gamification WHERE user_id = ?", (user_id,)).fetchone()
+    row = conn.execute("SELECT * FROM user_gamification WHERE user_id = ?", (user_id,)).fetchone()
     result["gamification"] = dict(row) if row else {}
 
     # KV store (SM2, custom cards, etc.)
-    rows = conn.execute("SELECT * FROM kv_store WHERE user_id = ?", (user_id,)).fetchall()
+    rows = conn.execute("SELECT * FROM user_kv_store WHERE user_id = ?", (user_id,)).fetchall()
     result["extra_data"] = [dict(r) for r in rows]
 
     # Folders

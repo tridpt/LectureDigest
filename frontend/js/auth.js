@@ -478,6 +478,15 @@ function openProfileModal() {
     if (errEl) { errEl.textContent = ''; errEl.classList.add('hidden'); }
     var successEl = document.getElementById('profileSuccess');
     if (successEl) successEl.classList.add('hidden');
+
+    // Hide delete account password field for Google-only users
+    var deletePwField = document.getElementById('deleteAccountPwField');
+    if (deletePwField) {
+        var isGoogleOnly = _authUser.google_id && !_authUser.password_hash;
+        deletePwField.style.display = isGoogleOnly ? 'none' : '';
+    }
+    var deleteErr = document.getElementById('deleteAccountError');
+    if (deleteErr) { deleteErr.textContent = ''; deleteErr.classList.add('hidden'); }
 }
 
 function closeProfileModal() {
