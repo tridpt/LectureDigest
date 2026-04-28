@@ -1,0 +1,271 @@
+"""
+AI tool routes — quiz regeneration, chat, translate, concept explainer.
+"""
+
+import os
+import re
+import json
+import time
+
+from fastapi import APIRouter, HTTPException
+from pydantic import BaseModel
+
+from gemini_client import call_gemini, get_genai_client
+from youtube import format_seconds
+
+router = APIRouter(prefix="/api", tags=["ai-tools"])
+
+
+# ═══════════════════════════════════════════════════════
+# REQUEST MODELS
+# ═══════════════════════════════════════════════════════
+
+class QuizRequest(BaseModel):
+    title: str = ''
+    output_language: str = 'English'
+    transcript: list        # [{text, start}, ...]
+    existing_questions: list = []
+
+class ChatMessage(BaseModel):
+    role: str
+    content: str
+
+class ChatRequest(BaseModel):
+    message: str
+    title: str = ''
+    transcript: list = []
+    history: list = []
+    output_language: str = 'Vietnamese'
+
+class TranslateRequest(BaseModel):
+    transcript: list
+    target_language: str = "Vietnamese"
+
+class ExplainRequest(BaseModel):
+    term:          str
+    context:       str = ""
+    video_title:   str = ""
+    language:      str = "vi"
+
+
+# ═══════════════════════════════════════════════════════
+# ROUTES
+# ═══════════════════════════════════════════════════════
+
+@router.post("/quiz")
+async def regenerate_quiz(request: QuizRequest):
+    """Generate additional quiz questions, avoiding duplicates with existing ones."""
+    if not os.getenv("GEMINI_API_KEY"):
+        raise HTTPException(status_code=500, detail="GEMINI_API_KEY not configured")
+
+    if not request.transcript:
+        raise HTTPException(status_code=400, detail="transcript is required")
+
+    lines = []
+    for entry in request.transcript:
+        time_str = format_seconds(entry["start"])
+        text = entry["text"].strip().replace("\n", " ")
+        lines.append(f"[{time_str}] {text}")
+    full_transcript = "\n".join(lines)
+    if len(full_transcript) > 40000:
+        full_transcript = full_transcript[:40000] + "\n...[truncated]..."
+
+    existing_count = len(request.existing_questions)
+    start_id = existing_count + 1
+    existing_block = ""
+    if request.existing_questions:
+        existing_list = "\n".join(
+            f"- {q.get('question', '')}" for q in request.existing_questions
+        )
+        existing_block = f"""
+
+ALREADY EXISTING QUESTIONS (DO NOT REPEAT these topics or rephrase these):
+{existing_list}
+"""
+
+    prompt = f"""You are an expert educational content analyzer adding MORE quiz questions.
+
+VIDEO TITLE: {request.title}
+TRANSCRIPT:
+{full_transcript}
+{existing_block}
+⚠️ Generate ALL text in **{request.output_language}**.
+
+Create 8-10 NEW multiple choice questions that:
+- Cover topics NOT already covered in the existing questions above
+- Use varied question styles (conceptual, application, recall, critical thinking)
+- IDs start from {start_id} (continuing from existing {existing_count} questions)
+
+Return ONLY a valid JSON array, no markdown, no extra text:
+[
+  {{
+    "id": {start_id},
+    "question": "A thoughtful question testing understanding",
+    "options": ["Option A", "Option B", "Option C", "Option D"],
+    "correct_index": 0,
+    "explanation": "Detailed explanation of the correct answer and why others are wrong",
+    "timestamp": <seconds as integer>,
+    "timestamp_str": "MM:SS",
+    "difficulty": "easy or medium or hard"
+  }}
+]
+
+correct_index is 0-based (0=A, 1=B, 2=C, 3=D)."""
+
+    try:
+        text = call_gemini(prompt)
+        text = text.strip()
+        if text.startswith('```'):
+            text = re.sub(r'^```(?:json)?\s*\n?', '', text)
+            text = re.sub(r'\n?\s*```$', '', text)
+        new_questions = json.loads(text)
+        return {"quiz": new_questions, "total": existing_count + len(new_questions)}
+    except json.JSONDecodeError as e:
+        raise HTTPException(status_code=500, detail=f"Failed to parse AI response: {e}")
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"AI quiz generation failed: {e}")
+
+
+@router.post("/chat")
+async def chat_with_lecture(request: ChatRequest):
+    """Answer questions about a video lecture using its transcript as context."""
+    if not os.getenv("GEMINI_API_KEY"):
+        raise HTTPException(status_code=500, detail="GEMINI_API_KEY not configured")
+    if not request.message.strip():
+        raise HTTPException(status_code=400, detail="message is required")
+
+    transcript_text = ""
+    if request.transcript:
+        lines = []
+        for entry in request.transcript:
+            time_str = format_seconds(entry["start"])
+            text = entry["text"].strip().replace("\n", " ")
+            lines.append(f"[{time_str}] {text}")
+        transcript_text = "\n".join(lines)
+        if len(transcript_text) > 50000:
+            transcript_text = transcript_text[:50000] + "\n...[truncated]..."
+
+    history_text = ""
+    if request.history:
+        turns = []
+        for msg in request.history[-10:]:
+            role = "User" if msg.get("role") == "user" else "Assistant"
+            turns.append(f"{role}: {msg.get('content', '')}")
+        history_text = "\n".join(turns)
+
+    prompt = f"""You are an AI teaching assistant for a YouTube lecture. Answer questions based ONLY on the video content.
+
+VIDEO TITLE: {request.title}
+
+TRANSCRIPT (with timestamps):
+{transcript_text if transcript_text else '(no transcript available)'}
+
+{f'CONVERSATION HISTORY:{chr(10)}{history_text}{chr(10)}' if history_text else ''}
+
+ANSWERING RULES:
+- Answer ONLY based on what is in the transcript above
+- If something isn't covered in the video, say so clearly
+- Reference specific timestamps [MM:SS] when relevant (e.g. "At [02:30], the speaker explains...")
+- Be concise but thorough
+- Use **bold** for key terms
+- Respond in **{request.output_language}**
+
+User question: {request.message}
+
+Answer:"""
+
+    try:
+        reply = call_gemini(prompt)
+        return {"reply": reply.strip()}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Chat failed: {str(e)}")
+
+
+@router.post("/translate-transcript")
+async def translate_transcript(req: TranslateRequest):
+    """Translate transcript segments in chunks of 40 to avoid Gemini overload."""
+    if not req.transcript:
+        raise HTTPException(status_code=400, detail="Transcript is empty")
+
+    client    = get_genai_client()
+    SEPARATOR = "|||"
+    CHUNK_SIZE = 40
+
+    def translate_chunk(segs: list) -> list[str]:
+        """Translate a chunk of segments, return list of translated strings."""
+        combined = f"\n{SEPARATOR}\n".join(
+            seg.get("text", "").strip().replace("\n", " ")
+            for seg in segs
+        )
+        prompt = (
+            f"You are a professional translator. Translate each segment to **{req.target_language}**.\n\n"
+            f"Rules:\n"
+            f"- Keep EXACTLY {len(segs)} segments — one translation per segment.\n"
+            f"- Separate each translated segment with a line containing only: {SEPARATOR}\n"
+            f"- No extra commentary, numbering, or headers.\n"
+            f"- Preserve meaning and tone naturally.\n\n"
+            f"Segments:\n{combined}"
+        )
+        last_err = None
+        for attempt in range(5):
+            try:
+                text = call_gemini(prompt)
+                parts = [p.strip() for p in text.strip().split(SEPARATOR)]
+                return parts
+            except Exception as e:
+                last_err = e
+                if any(code in str(e) for code in ["503", "overloaded"]):
+                    time.sleep(2 ** attempt)
+                    continue
+                raise HTTPException(status_code=500, detail=f"Translation error: {e}")
+        raise HTTPException(status_code=503, detail=f"Gemini overloaded after retries: {last_err}")
+
+    all_translations: list[str] = []
+    for chunk_start in range(0, len(req.transcript), CHUNK_SIZE):
+        chunk = req.transcript[chunk_start: chunk_start + CHUNK_SIZE]
+        translated = translate_chunk(chunk)
+        all_translations.extend(translated)
+        if chunk_start + CHUNK_SIZE < len(req.transcript):
+            time.sleep(0.5)
+
+    result = []
+    for i, seg in enumerate(req.transcript):
+        result.append({
+            "start":       seg.get("start", 0),
+            "text":        seg.get("text", ""),
+            "translation": all_translations[i] if i < len(all_translations) else ""
+        })
+
+    return {"translations": result, "target_language": req.target_language}
+
+
+@router.post("/explain-concept")
+def explain_concept(req: ExplainRequest):
+    term    = req.term.strip()[:120]
+    ctx     = req.context.strip()[:400]
+    title   = req.video_title.strip()[:120]
+    lang    = req.language or "vi"
+
+    lang_name = {"vi": "Tiếng Việt", "en": "English", "fr": "Français",
+                 "de": "Deutsch",   "ja": "日本語",    "ko": "한국어", "zh": "中文"}.get(lang, lang)
+
+    ctx_block = f'\n\nBối cảnh ngữ cảnh: "{ctx}"' if ctx else ""
+    vid_block = f"\nVideo đang học: {title}" if title else ""
+
+    prompt = f"""Bạn là một giáo viên giải thích khái niệm ngắn gọn và dễ hiểu.{vid_block}
+
+Hãy giải thích khái niệm / thuật ngữ: "{term}"{ctx_block}
+
+Yêu cầu:
+- Trả lời bằng {lang_name}
+- Ngắn gọn: 2-3 câu tối đa
+- Đầu tiên 1 câu định nghĩa rõ ràng
+- Nếu có thể, kết nối với chủ đề video
+- Không dùng markdown, không in đậm, chỉ văn xuôi thuần túy
+- Kết thúc bằng 1 emoji liên quan"""
+
+    try:
+        explanation = call_gemini(prompt)
+        return {"term": term, "explanation": explanation.strip()}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
