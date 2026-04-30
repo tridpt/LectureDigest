@@ -101,23 +101,23 @@
             </div>
             <div class="header-actions">
                 <!-- Theme toggle -->
-                <button class="theme-toggle-btn" id="themeToggleBtn" onclick="toggleTheme()" aria-label="Chuyển theme" title="Chuyển sáng/tối" aria-label="Chuyển sáng/tối">
+                <button type="button" class="theme-toggle-btn" id="themeToggleBtn" onclick="toggleTheme()" aria-label="Chuyển theme" title="Chuyển sáng/tối" aria-label="Chuyển sáng/tối">
                     <span class="theme-icon" id="themeIcon">🌙</span>
                 </button>
 
                 <!-- Global Search -->
-                <button class="gsearch-trigger" aria-label="Tìm kiếm" onclick="openGlobalSearch()" title="Tim kiem (Ctrl+K)" aria-label="Tim kiem (Ctrl+K)">
+                <button type="button" class="gsearch-trigger" aria-label="Tìm kiếm" onclick="openGlobalSearch()" title="Tim kiem (Ctrl+K)" aria-label="Tim kiem (Ctrl+K)">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35" stroke-linecap="round"/></svg>
                     <span class="gsearch-trigger-kbd">Ctrl+K</span>
                 </button>
 
                 <!-- Keyboard Shortcuts Help -->
-                <button class="dashboard-nav-btn" onclick="openShortcutsHelp()" title="Phím tắt (?)" aria-label="Phím tắt" style="padding:7px 10px;font-size:14px;font-weight:700;">
+                <button type="button" class="dashboard-nav-btn" onclick="openShortcutsHelp()" title="Phím tắt (?)" aria-label="Phím tắt" style="padding:7px 10px;font-size:14px;font-weight:700;">
                     ⌨️
                 </button>
 
                 <!-- Dashboard button -->
-                <button class="dashboard-nav-btn" onclick="try{openDashboard()}catch(e){var ds=document.getElementById('dashboardSection');if(ds){document.querySelectorAll('[id$=Section]').forEach(function(s){s.classList.add('hidden')});ds.classList.remove('hidden')}console.error('Dashboard error:',e)}" title="Dashboard học tập" aria-label="Mở dashboard">
+                <button type="button" class="dashboard-nav-btn" onclick="try{openDashboard()}catch(e){var ds=document.getElementById('dashboardSection');if(ds){document.querySelectorAll('[id$=Section]').forEach(function(s){s.classList.add('hidden')});ds.classList.remove('hidden')}console.error('Dashboard error:',e)}" title="Dashboard học tập" aria-label="Mở dashboard">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16">
                         <rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/>
                         <rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/>
@@ -126,7 +126,7 @@
                 </button>
 
                 <!-- Knowledge Graph button -->
-                <button class="dashboard-nav-btn" onclick="openKnowledgeGraph()" title="Knowledge Graph" aria-label="Knowledge Graph">
+                <button type="button" class="dashboard-nav-btn" onclick="openKnowledgeGraph()" title="Knowledge Graph" aria-label="Knowledge Graph">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16">
                         <circle cx="6" cy="6" r="2.5"/><circle cx="18" cy="6" r="2.5"/><circle cx="12" cy="18" r="2.5"/>
                         <path d="M8 7.5l3 7.5M16 7.5l-3 7.5M8.5 6h7" stroke-linecap="round"/>
@@ -135,7 +135,7 @@
                 </button>
 
                 <!-- Multi-Video Exam button -->
-                <button class="dashboard-nav-btn" onclick="openMexam()" title="Multi-Video Exam" aria-label="Multi-Video Exam">
+                <button type="button" class="dashboard-nav-btn" onclick="openMexam()" title="Multi-Video Exam" aria-label="Multi-Video Exam">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16">
                         <path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" stroke-linecap="round" stroke-linejoin="round"/>
                     </svg>
@@ -144,7 +144,7 @@
 
                 <!-- History button -->
                 <div class="history-wrapper">
-                    <button class="history-btn" id="historyToggle" aria-label="Lịch sử" onclick="toggleHistoryPanel()"
+                    <button type="button" class="history-btn" id="historyToggle" aria-label="Lịch sử" onclick="toggleHistoryPanel()"
                             aria-label="Lịch sử phân tích" aria-expanded="false" aria-controls="historyPanel">
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
                             <path d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" stroke-linecap="round" stroke-linejoin="round"/>
@@ -157,7 +157,7 @@
                     <div class="history-panel" id="historyPanel" role="dialog" aria-label="Lịch sử phân tích">
                         <div class="hist-panel-header">
                             <span class="hist-panel-title">📋 Lịch sử phân tích</span>
-                            <button class="hist-clear-btn" onclick="clearHistory()" title="Xóa tất cả" aria-label="Xóa tất cả">Xóa tất cả</button>
+                            <button type="button" class="hist-clear-btn" onclick="clearHistory()" title="Xóa tất cả" aria-label="Xóa tất cả">Xóa tất cả</button>
                         </div>
                         <div class="hist-search-wrap">
                             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="13" height="13" style="flex-shrink:0;opacity:.5"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35" stroke-linecap="round"/></svg>
@@ -168,15 +168,15 @@
                         </div>
                         <div class="folder-bar" id="folderBar"></div>
                             <div class="tag-filter-bar" id="tagFilterBar">
-                                <button class="tag-filter-btn" data-tag="programming" onclick="filterHistoryByTag('programming')">💻 Lap trinh</button>
-                                <button class="tag-filter-btn" data-tag="math" onclick="filterHistoryByTag('math')">📊 Toan</button>
-                                <button class="tag-filter-btn" data-tag="science" onclick="filterHistoryByTag('science')">🔬 Khoa hoc</button>
-                                <button class="tag-filter-btn" data-tag="language" onclick="filterHistoryByTag('language')">🌍 Ngon ngu</button>
-                                <button class="tag-filter-btn" data-tag="business" onclick="filterHistoryByTag('business')">💰 Kinh doanh</button>
-                                <button class="tag-filter-btn" data-tag="design" onclick="filterHistoryByTag('design')">🎨 Thiet ke</button>
-                                <button class="tag-filter-btn" data-tag="music" onclick="filterHistoryByTag('music')">🎵 Am nhac</button>
-                                <button class="tag-filter-btn" data-tag="health" onclick="filterHistoryByTag('health')">🏃 Suc khoe</button>
-                                <button class="tag-filter-btn" data-tag="other" onclick="filterHistoryByTag('other')">📌 Khac</button>
+                                <button type="button" class="tag-filter-btn" data-tag="programming" onclick="filterHistoryByTag('programming')">💻 Lap trinh</button>
+                                <button type="button" class="tag-filter-btn" data-tag="math" onclick="filterHistoryByTag('math')">📊 Toan</button>
+                                <button type="button" class="tag-filter-btn" data-tag="science" onclick="filterHistoryByTag('science')">🔬 Khoa hoc</button>
+                                <button type="button" class="tag-filter-btn" data-tag="language" onclick="filterHistoryByTag('language')">🌍 Ngon ngu</button>
+                                <button type="button" class="tag-filter-btn" data-tag="business" onclick="filterHistoryByTag('business')">💰 Kinh doanh</button>
+                                <button type="button" class="tag-filter-btn" data-tag="design" onclick="filterHistoryByTag('design')">🎨 Thiet ke</button>
+                                <button type="button" class="tag-filter-btn" data-tag="music" onclick="filterHistoryByTag('music')">🎵 Am nhac</button>
+                                <button type="button" class="tag-filter-btn" data-tag="health" onclick="filterHistoryByTag('health')">🏃 Suc khoe</button>
+                                <button type="button" class="tag-filter-btn" data-tag="other" onclick="filterHistoryByTag('other')">📌 Khac</button>
                             </div>
                         <div class="hist-panel-body">
                             <div class="hist-empty hidden" id="historyEmpty">
@@ -189,7 +189,7 @@
                 </div>
 
                 <!-- Auth: Login button / User avatar -->
-                <button class="auth-login-btn" id="authLoginBtn" aria-label="Đăng nhập" onclick="openAuthModal('login')" title="Đăng nhập" aria-label="Đăng nhập">
+                <button type="button" class="auth-login-btn" id="authLoginBtn" aria-label="Đăng nhập" onclick="openAuthModal('login')" title="Đăng nhập" aria-label="Đăng nhập">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <path d="M15 3h4a2 2 0 012 2v14a2 2 0 01-2 2h-4M10 17l5-5-5-5M15 12H3" stroke-linecap="round" stroke-linejoin="round"/>
                     </svg>
@@ -204,20 +204,20 @@
                         <div class="auth-menu-name" id="authMenuName"></div>
                         <div class="auth-menu-email" id="authMenuEmail"></div>
                     </div>
-                    <button class="auth-menu-item" onclick="openProfileModalaria-label="Hồ sơ" onclick="openProfileModal()">
+                    <button type="button" class="auth-menu-item" onclick="openProfileModalaria-label="Hồ sơ" onclick="openProfileModal()">
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2" stroke-linecap="round" stroke-linejoin="round"/><circle cx="12" cy="7" r="4"/></svg>
                         Hồ sơ cá nhân
                     </button>
-                    <button class="auth-menu-item" onclick="_authCloseUserMenu(); if(typeof openSrsReviewaria-label="Ôn tập SRS" onclick="_authCloseUserMenu(); if(typeof openSrsReview==='function') openSrsReview();">
+                    <button type="button" class="auth-menu-item" onclick="_authCloseUserMenu(); if(typeof openSrsReviewaria-label="Ôn tập SRS" onclick="_authCloseUserMenu(); if(typeof openSrsReview==='function') openSrsReview();">
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" stroke-linecap="round" stroke-linejoin="round"/></svg>
                         Ôn tập hàng ngày
                     </button>
-                    <button class="auth-menu-item" onclick="_authCloseUserMenu(); authExportDataaria-label="Xuất dữ liệu" onclick="_authCloseUserMenu(); authExportData();">
+                    <button type="button" class="auth-menu-item" onclick="_authCloseUserMenu(); authExportDataaria-label="Xuất dữ liệu" onclick="_authCloseUserMenu(); authExportData();">
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 15V3m0 12l-4-4m4 4l4-4M2 17l.621 2.485A2 2 0 004.561 21h14.878a2 2 0 001.94-1.515L22 17" stroke-linecap="round" stroke-linejoin="round"/></svg>
                         Tải dữ liệu
                     </button>
                     <div class="auth-menu-divider"></div>
-                    <button class="auth-menu-item logout" aria-label="Đăng xuất" onclick="authLogout()">
+                    <button type="button" class="auth-menu-item logout" aria-label="Đăng xuất" onclick="authLogout()">
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4M16 17l5-5-5-5M21 12H9" stroke-linecap="round" stroke-linejoin="round"/></svg>
                         Đăng xuất
                     </button>
@@ -241,11 +241,11 @@
             </p>
 
             <div class="input-mode-tabs" id="inputModeTabs">
-                <button class="input-tab active" data-mode="url" aria-label="Nhập URL" onclick="setInputMode('url')">
+                <button type="button" class="input-tab active" data-mode="url" aria-label="Nhập URL" onclick="setInputMode('url')">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><path d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"/><path d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
                     YouTube URL
                 </button>
-                <button class="input-tab" data-mode="upload" aria-label="Tải file" onclick="setInputMode('upload')">
+                <button type="button" class="input-tab" data-mode="upload" aria-label="Tải file" onclick="setInputMode('upload')">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M17 8l-5-5-5 5M12 3v12" stroke-linecap="round" stroke-linejoin="round"/></svg>
                     Upload File
                 </button>
@@ -266,7 +266,7 @@
                         autocomplete="off"
                         aria-label="YouTube video URL"
                     />
-                    <button class="search-btn" id="analyzeBtn" onclick="analyzeVideo()" aria-label="Analyze video">
+                    <button type="button" class="search-btn" id="analyzeBtn" onclick="analyzeVideo()" aria-label="Analyze video">
                         <span class="btn-text">Analyze</span>
                         <svg class="btn-icon" viewBox="0 0 24 24" fill="none" aria-hidden="true">
                             <path d="M13 7l5 5m0 0l-5 5m5-5H6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
@@ -282,13 +282,13 @@
                 <div class="lang-row" role="group" aria-label="Output language">
                     <span class="lang-label">📝 Output in:</span>
                     <div class="lang-options" id="langOptions">
-                        <button class="lang-btn" data-lang="English" onclick="setLang(this)">🇺🇸 English</button>
-                        <button class="lang-btn active" data-lang="Vietnamese" onclick="setLang(this)">🇻🇳 Tiếng Việt</button>
-                        <button class="lang-btn" data-lang="French" onclick="setLang(this)">🇫🇷 Français</button>
-                        <button class="lang-btn" data-lang="German" onclick="setLang(this)">🇩🇪 Deutsch</button>
-                        <button class="lang-btn" data-lang="Japanese" onclick="setLang(this)">🇯🇵 日本語</button>
-                        <button class="lang-btn" data-lang="Korean" onclick="setLang(this)">🇰🇷 한국어</button>
-                        <button class="lang-btn" data-lang="Chinese" onclick="setLang(this)">🇨🇳 中文</button>
+                        <button type="button" class="lang-btn" data-lang="English" onclick="setLang(this)">🇺🇸 English</button>
+                        <button type="button" class="lang-btn active" data-lang="Vietnamese" onclick="setLang(this)">🇻🇳 Tiếng Việt</button>
+                        <button type="button" class="lang-btn" data-lang="French" onclick="setLang(this)">🇫🇷 Français</button>
+                        <button type="button" class="lang-btn" data-lang="German" onclick="setLang(this)">🇩🇪 Deutsch</button>
+                        <button type="button" class="lang-btn" data-lang="Japanese" onclick="setLang(this)">🇯🇵 日本語</button>
+                        <button type="button" class="lang-btn" data-lang="Korean" onclick="setLang(this)">🇰🇷 한국어</button>
+                        <button type="button" class="lang-btn" data-lang="Chinese" onclick="setLang(this)">🇨🇳 中文</button>
                     </div>
                 </div>
             </div>
@@ -319,7 +319,7 @@
                             <div class="upload-file-name" id="uploadFileName"></div>
                             <div class="upload-file-size" id="uploadFileSize"></div>
                         </div>
-                        <button class="upload-file-remove" onclick="event.stopPropagation();removeUploadFile()" aria-label="Xóa file">✕</button>
+                        <button type="button" class="upload-file-remove" onclick="event.stopPropagation();removeUploadFile()" aria-label="Xóa file">✕</button>
                     </div>
                 </div>
                 <!-- Upload progress -->
@@ -334,17 +334,17 @@
                 <div class="lang-row upload-lang-row" role="group" aria-label="Output language" onclick="event.stopPropagation()">
                     <span class="lang-label">📝 Output in:</span>
                     <div class="lang-options" id="uploadLangOptions">
-                        <button class="lang-btn" data-lang="English" onclick="event.stopPropagation();setLang(this)">🇺🇸 English</button>
-                        <button class="lang-btn active" data-lang="Vietnamese" onclick="event.stopPropagation();setLang(this)">🇻🇳 Tiếng Việt</button>
-                        <button class="lang-btn" data-lang="French" onclick="event.stopPropagation();setLang(this)">🇫🇷 Français</button>
-                        <button class="lang-btn" data-lang="German" onclick="event.stopPropagation();setLang(this)">🇩🇪 Deutsch</button>
-                        <button class="lang-btn" data-lang="Japanese" onclick="event.stopPropagation();setLang(this)">🇯🇵 日本語</button>
-                        <button class="lang-btn" data-lang="Korean" onclick="event.stopPropagation();setLang(this)">🇰🇷 한국어</button>
-                        <button class="lang-btn" data-lang="Chinese" onclick="event.stopPropagation();setLang(this)">🇨🇳 中文</button>
+                        <button type="button" class="lang-btn" data-lang="English" onclick="event.stopPropagation();setLang(this)">🇺🇸 English</button>
+                        <button type="button" class="lang-btn active" data-lang="Vietnamese" onclick="event.stopPropagation();setLang(this)">🇻🇳 Tiếng Việt</button>
+                        <button type="button" class="lang-btn" data-lang="French" onclick="event.stopPropagation();setLang(this)">🇫🇷 Français</button>
+                        <button type="button" class="lang-btn" data-lang="German" onclick="event.stopPropagation();setLang(this)">🇩🇪 Deutsch</button>
+                        <button type="button" class="lang-btn" data-lang="Japanese" onclick="event.stopPropagation();setLang(this)">🇯🇵 日本語</button>
+                        <button type="button" class="lang-btn" data-lang="Korean" onclick="event.stopPropagation();setLang(this)">🇰🇷 한국어</button>
+                        <button type="button" class="lang-btn" data-lang="Chinese" onclick="event.stopPropagation();setLang(this)">🇨🇳 中文</button>
                     </div>
                 </div>
 
-                <button class="upload-analyze-btn hidden" id="uploadAnalyzeBtn"
+                <button type="button" class="upload-analyze-btn hidden" id="uploadAnalyzeBtn"
                         aria-label="Phân tích file" onclick="event.stopPropagation();analyzeUploadedFile()">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><path d="M13 7l5 5m0 0l-5 5m5-5H6" stroke-linecap="round" stroke-linejoin="round"/></svg>
                     Phân tích file
@@ -405,7 +405,7 @@
             <div class="error-icon" aria-hidden="true">⚠️</div>
             <h2 class="error-title">Analysis Failed</h2>
             <p class="error-message" id="errorMessage">Something went wrong. Please try again.</p>
-            <button class="action-btn" onclick="resetToHero()">Try Another Video</button>
+            <button type="button" class="action-btn" onclick="resetToHero()">Try Another Video</button>
         </div>
     </section>
 
@@ -413,7 +413,7 @@
     <section class="playlist-section hidden" id="playlistSection" aria-label="Playlist">
         <div class="pl-content">
             <div class="pl-header">
-                <button class="pl-back-btn" onclick="closePlaylist()" aria-label="Quay lại">
+                <button type="button" class="pl-back-btn" onclick="closePlaylist()" aria-label="Quay lại">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="18" height="18">
                         <path d="M19 12H5M12 5l-7 7 7 7" stroke-linecap="round" stroke-linejoin="round"/>
                     </svg>
@@ -458,15 +458,15 @@
     <section class="results-section hidden" id="resultsSection" aria-label="Analysis results">
         <!-- Playlist navigation bar (only visible in playlist mode) -->
         <div class="pl-nav-bar hidden" id="plNavBar">
-            <button class="pl-nav-btn" id="plNavPrevBtn" onclick="plNavPrev()" aria-label="Video trước">
+            <button type="button" class="pl-nav-btn" id="plNavPrevBtn" onclick="plNavPrev()" aria-label="Video trước">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><path d="M15 18l-6-6 6-6" stroke-linecap="round" stroke-linejoin="round"/></svg>
                 Video trước
             </button>
             <div class="pl-nav-info">
                 <span class="pl-nav-pos" id="plNavPos">Video 1/10</span>
-                <button class="pl-nav-list-btn" onclick="showPlaylistView()">📚 Xem playlist</button>
+                <button type="button" class="pl-nav-list-btn" onclick="showPlaylistView()">📚 Xem playlist</button>
             </div>
-            <button class="pl-nav-btn" id="plNavNextBtn" onclick="plNavNext()" aria-label="Video sau">
+            <button type="button" class="pl-nav-btn" id="plNavNextBtn" onclick="plNavNext()" aria-label="Video sau">
                 Video tiếp
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><path d="M9 18l6-6-6-6" stroke-linecap="round" stroke-linejoin="round"/></svg>
             </button>
@@ -481,32 +481,32 @@
                     <p class="video-author" id="videoAuthor"></p>
                 </div>
                 <div class="video-header-actions">
-                    <button class="export-pdf-btn" onclick="exportPDF()" id="exportPdfBtn" aria-label="Export study guide as PDF">
+                    <button type="button" class="export-pdf-btn" onclick="exportPDF()" id="exportPdfBtn" aria-label="Export study guide as PDF">
                         <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
                             <path d="M12 10v6m0 0l-3-3m3 3l3-3M3 17V7a2 2 0 012-2h6l2 2h4a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
                         </svg>
                         Export PDF
                     </button>
-                    <button class="mindmap-btn" onclick="openMindMap()" id="mindmapBtn" aria-label="Xem sơ đồ tư duy">
+                    <button type="button" class="mindmap-btn" onclick="openMindMap()" id="mindmapBtn" aria-label="Xem sơ đồ tư duy">
                         <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
                             <circle cx="12" cy="12" r="3" stroke="currentColor" stroke-width="2"/>
                             <path d="M12 9V4M12 15v5M9 12H4M15 12h5M10.17 10.17L6.34 6.34M13.83 13.83l3.83 3.83M13.83 10.17l3.83-3.83M10.17 13.83l-3.83 3.83" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
                         </svg>
                         Mind Map
                     </button>
-                    <button class="share-btn" onclick="openShareModal()" id="shareBtn" aria-label="Chia sẻ kết quả">
+                    <button type="button" class="share-btn" onclick="openShareModal()" id="shareBtn" aria-label="Chia sẻ kết quả">
                         <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
                             <path d="M4 12v8a2 2 0 002 2h12a2 2 0 002-2v-8M16 6l-4-4-4 4M12 2v13" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
                         </svg>
                         Chia sẻ
                     </button>
-                    <button class="new-video-btn" onclick="resetToHero()" aria-label="Phân tích video mới">
+                    <button type="button" class="new-video-btn" onclick="resetToHero()" aria-label="Phân tích video mới">
                         <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
                             <path d="M19 12H5M12 19l-7-7 7-7" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
                         </svg>
                         Video mới
                     </button>
-                    <button class="pomo-header-btn" id="pomoBtnHeader" title="Pomodoro Timer">
+                    <button type="button" class="pomo-header-btn" id="pomoBtnHeader" title="Pomodoro Timer">
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                             <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
                         </svg>
@@ -525,7 +525,7 @@
 
                 <!-- Bookmark bar under player -->
                 <div class="bookmark-bar" id="bookmarkBar">
-                    <button class="add-bookmark-btn" onclick="addBookmark()" id="addBookmarkBtn" title="Đánh dấu timestamp hiện tại" aria-label="Đánh dấu timestamp hiện tại">
+                    <button type="button" class="add-bookmark-btn" onclick="addBookmark()" id="addBookmarkBtn" title="Đánh dấu timestamp hiện tại" aria-label="Đánh dấu timestamp hiện tại">
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                             <path d="M19 21l-7-5-7 5V5a2 2 0 012-2h10a2 2 0 012 2z" stroke-linecap="round" stroke-linejoin="round"/>
                         </svg>
@@ -554,25 +554,25 @@
                         <h3 class="card-title">Ghi chú</h3>
                         <div class="notes-header-actions">
                             <span class="notes-word-count" id="notesWordCount">0 từ</span>
-                            <button class="notes-action-btn auto-notes-btn" id="autoNotesBtn" onclick="generateAutoNotes()" title="AI tạo ghi chú Cornell" aria-label="AI tạo ghi chú Cornell">
+                            <button type="button" class="notes-action-btn auto-notes-btn" id="autoNotesBtn" onclick="generateAutoNotes()" title="AI tạo ghi chú Cornell" aria-label="AI tạo ghi chú Cornell">
                                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                                     <path d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" stroke-linecap="round" stroke-linejoin="round"/>
                                 </svg>
                             </button>
-                            <button class="notes-action-btn" id="notesTimestampBtn" onclick="insertNoteTimestamp()" title="Chèn timestamp hiện tại" aria-label="Chèn timestamp hiện tại">
+                            <button type="button" class="notes-action-btn" id="notesTimestampBtn" onclick="insertNoteTimestamp()" title="Chèn timestamp hiện tại" aria-label="Chèn timestamp hiện tại">
                                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                                     <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
                                 </svg>
                             </button>
-                            <button class="notes-action-btn" id="notesExportBtn" onclick="exportNotesMarkdown()" title="Tải xuống Markdown (.md)" aria-label="Tải xuống Markdown (.md)">
+                            <button type="button" class="notes-action-btn" id="notesExportBtn" onclick="exportNotesMarkdown()" title="Tải xuống Markdown (.md)" aria-label="Tải xuống Markdown (.md)">
                                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 15V3m0 12l-4-4m4 4l4-4M2 17l.621 2.485A2 2 0 004.561 21h14.878a2 2 0 001.94-1.515L22 17" stroke-linecap="round" stroke-linejoin="round"/></svg>
                             </button>
-                            <button class="notes-action-btn" id="notesCopyBtn" onclick="copyNotes()" title="Copy ghi chú" aria-label="Copy ghi chú">
+                            <button type="button" class="notes-action-btn" id="notesCopyBtn" onclick="copyNotes()" title="Copy ghi chú" aria-label="Copy ghi chú">
                                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                                     <rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/>
                                 </svg>
                             </button>
-                            <button class="notes-action-btn notes-share-btn" id="notesShareBtn" onclick="openShareNotesModal()" title="Chia sẻ ghi chú" aria-label="Chia sẻ ghi chú">
+                            <button type="button" class="notes-action-btn notes-share-btn" id="notesShareBtn" onclick="openShareNotesModal()" title="Chia sẻ ghi chú" aria-label="Chia sẻ ghi chú">
                                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                                     <circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/>
                                 </svg>
@@ -599,7 +599,7 @@
                             <span class="streak-label">Chuỗi học hiện tại</span>
                             <span class="streak-best" id="streakBest">Kỷ lục: 0</span>
                         </div>
-                        <button class="badges-open-btn" id="badgesOpenBtn" onclick="openBadgesModal()" title="Xem huy hiệu" aria-label="Xem huy hiệu">
+                        <button type="button" class="badges-open-btn" id="badgesOpenBtn" onclick="openBadgesModal()" title="Xem huy hiệu" aria-label="Xem huy hiệu">
                             <span id="badgesEarnedCount">0</span>🏆
                         </button>
                     </div>
@@ -685,7 +685,7 @@
                         <div class="quiz-header-right">
                             <span class="quiz-score-badge hidden" id="scoreBadge" aria-live="polite">0/0</span>
                             <!-- Regenerate quiz button -->
-                            <button class="regen-quiz-btn" id="regenQuizBtn" onclick="regenerateQuiz()" title="Thêm câu hỏi mới vào bộ hiện tại" aria-label="Thêm câu hỏi">
+                            <button type="button" class="regen-quiz-btn" id="regenQuizBtn" onclick="regenerateQuiz()" title="Thêm câu hỏi mới vào bộ hiện tại" aria-label="Thêm câu hỏi">
                                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
                                     <path d="M12 4v16m8-8H4" stroke-linecap="round" stroke-linejoin="round"/>
                                 </svg>
@@ -693,7 +693,7 @@
                             </button>
 
                             <div class="fc-dropdown" id="fcDropdown">
-                                <button class="fc-export-btn" aria-label="Menu flashcard" onclick="toggleFcMenu()" aria-haspopup="true" aria-expanded="false" id="fcToggleBtn">
+                                <button type="button" class="fc-export-btn" aria-label="Menu flashcard" onclick="toggleFcMenu()" aria-haspopup="true" aria-expanded="false" id="fcToggleBtn">
                                     <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
                                         <rect x="2" y="4" width="20" height="14" rx="2" stroke="currentColor" stroke-width="1.8"/>
                                         <path d="M7 9h10M7 13h6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
@@ -704,7 +704,7 @@
                                     </svg>
                                 </button>
                                 <div class="fc-menu hidden" id="fcMenu" role="menu">
-                                    <button class="fc-menu-item fc-study-item" onclick="openFlashcardStudy()" role="menuitem">
+                                    <button type="button" class="fc-menu-item fc-study-item" onclick="openFlashcardStudy()" role="menuitem">
                                         <span class="fc-menu-icon">&#127956;</span>
                                         <div>
                                             <div class="fc-menu-title">Học ngay</div>
@@ -712,14 +712,14 @@
                                         </div>
                                     </button>
                                     <div class="fc-menu-divider"></div>
-                                    <button class="fc-menu-item" onclick="exportFlashcards('anki')" role="menuitem">
+                                    <button type="button" class="fc-menu-item" onclick="exportFlashcards('anki')" role="menuitem">
                                         <span class="fc-menu-icon">📦</span>
                                         <div>
                                             <div class="fc-menu-title">Anki (TSV)</div>
                                             <div class="fc-menu-sub">Import into Anki directly</div>
                                         </div>
                                     </button>
-                                    <button class="fc-menu-item" onclick="exportFlashcards('csv')" role="menuitem">
+                                    <button type="button" class="fc-menu-item" onclick="exportFlashcards('csv')" role="menuitem">
                                         <span class="fc-menu-icon">📋</span>
                                         <div>
                                             <div class="fc-menu-title">CSV</div>
@@ -727,7 +727,7 @@
                                         </div>
                                     </button>
                                     <div class="fc-menu-divider"></div>
-                                    <button class="fc-menu-item" onclick="openAddCardForm()" role="menuitem">
+                                    <button type="button" class="fc-menu-item" onclick="openAddCardForm()" role="menuitem">
                                         <span class="fc-menu-icon">✏️</span>
                                         <div>
                                             <div class="fc-menu-title">Tạo card</div>
@@ -750,8 +750,8 @@
 
                     <!-- Navigation buttons -->
                     <div class="quiz-nav" id="quizNav">
-                        <button class="quiz-btn quiz-btn-skip" id="skipBtn" onclick="skipQuestion()">Skip</button>
-                        <button class="quiz-btn quiz-btn-next hidden" id="nextBtn" aria-label="Câu tiếp theo" onclick="nextQuestion()">
+                        <button type="button" class="quiz-btn quiz-btn-skip" id="skipBtn" onclick="skipQuestion()">Skip</button>
+                        <button type="button" class="quiz-btn quiz-btn-next hidden" id="nextBtn" aria-label="Câu tiếp theo" onclick="nextQuestion()">
                             Next Question
                             <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
                                 <path d="M13 7l5 5m0 0l-5 5m5-5H6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
@@ -767,8 +767,8 @@
                         <p class="results-message" id="resultsMessage"></p>
                         <div class="results-breakdown" id="resultsBreakdown"></div>
                         <div class="quiz-results-actions">
-                            <button class="action-btn retry-quiz-btn" onclick="restartQuiz()">↺ Retry Quiz</button>
-                            <button class="action-btn analyze-quiz-btn" id="quizAnalyzeBtn" aria-label="Phân tích điểm yếu" onclick="analyzeQuizWeakAreas()">
+                            <button type="button" class="action-btn retry-quiz-btn" onclick="restartQuiz()">↺ Retry Quiz</button>
+                            <button type="button" class="action-btn analyze-quiz-btn" id="quizAnalyzeBtn" aria-label="Phân tích điểm yếu" onclick="analyzeQuizWeakAreas()">
                                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><path d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" stroke-linecap="round" stroke-linejoin="round"/></svg>
                                 🧠 Phân tích điểm yếu
                             </button>
@@ -784,7 +784,7 @@
                         <h3 class="card-title">Bài tập đa dạng</h3>
                         <div class="quiz-header-right">
                             <span class="ex-score-badge hidden" id="exScoreBadge" aria-live="polite">0/0</span>
-                            <button class="ex-gen-btn" id="exGenBtn" aria-label="Tạo bài tập" onclick="generateExercises()">
+                            <button type="button" class="ex-gen-btn" id="exGenBtn" aria-label="Tạo bài tập" onclick="generateExercises()">
                                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14">
                                     <path d="M12 4v16m8-8H4" stroke-linecap="round" stroke-linejoin="round"/>
                                 </svg>
@@ -795,16 +795,16 @@
 
                     <!-- Tab bar -->
                     <div class="ex-tab-bar hidden" id="exTabBar">
-                        <button class="ex-tab active" data-tab="fill_blank" aria-label="Điền từ" onclick="exSwitchTab('fill_blank')">
+                        <button type="button" class="ex-tab active" data-tab="fill_blank" aria-label="Điền từ" onclick="exSwitchTab('fill_blank')">
                             <span class="ex-tab-icon">✏️</span> Điền từ <span class="ex-tab-count">0</span>
                         </button>
-                        <button class="ex-tab" data-tab="true_false" aria-label="Đúng sai" onclick="exSwitchTab('true_false')">
+                        <button type="button" class="ex-tab" data-tab="true_false" aria-label="Đúng sai" onclick="exSwitchTab('true_false')">
                             <span class="ex-tab-icon">⚖️</span> Đúng/Sai <span class="ex-tab-count">0</span>
                         </button>
-                        <button class="ex-tab" data-tab="matching" aria-label="Ghép cặp" onclick="exSwitchTab('matching')">
+                        <button type="button" class="ex-tab" data-tab="matching" aria-label="Ghép cặp" onclick="exSwitchTab('matching')">
                             <span class="ex-tab-icon">🔗</span> Nối cặp <span class="ex-tab-count">0</span>
                         </button>
-                        <button class="ex-tab" data-tab="short_answer" aria-label="Trả lời ngắn" onclick="exSwitchTab('short_answer')">
+                        <button type="button" class="ex-tab" data-tab="short_answer" aria-label="Trả lời ngắn" onclick="exSwitchTab('short_answer')">
                             <span class="ex-tab-icon">📝</span> Tự luận <span class="ex-tab-count">0</span>
                         </button>
                     </div>
@@ -838,7 +838,7 @@
                                    placeholder="Tìm trong transcript..."
                                    oninput="searchTranscript(this.value)"
                                    aria-label="Tìm kiếm transcript">
-                            <button class="transcript-search-clear hidden" id="transcriptClearBtn"
+                            <button type="button" class="transcript-search-clear hidden" id="transcriptClearBtn"
                                     onclick="clearTranscriptSearch()" aria-label="Xóa tìm kiếm">
                                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                                     <path d="M18 6L6 18M6 6l12 12" stroke-linecap="round"/>
@@ -846,9 +846,9 @@
                             </button>
                         </div>
                         <div class="transcript-match-info hidden" id="transcriptMatchInfo">
-                            <button class="ts-nav-btn" onclick="navigateMatch(-1)" aria-label="Kết quả trước">‹</button>
+                            <button type="button" class="ts-nav-btn" onclick="navigateMatch(-1)" aria-label="Kết quả trước">‹</button>
                             <span id="transcriptMatchText">0/0</span>
-                            <button class="ts-nav-btn" onclick="navigateMatch(1)" aria-label="Kết quả tiếp">›</button>
+                            <button type="button" class="ts-nav-btn" onclick="navigateMatch(1)" aria-label="Kết quả tiếp">›</button>
                         </div>
                     </div>
 
@@ -865,9 +865,9 @@
                             <option value="Spanish">Español</option>
                             <option value="German">Deutsch</option>
                         </select>
-                        <button class="ts-translate-btn" id="tsTranslateBtn" onclick="translateTranscript()">Dịch</button>
-                        <button class="ts-translate-toggle hidden" id="tsTranslateToggle" onclick="toggleTranslation()">Ẩn dịch</button>
-                        <button class="ts-translate-clear hidden" id="tsTranslateClear" onclick="clearTranslation()" title="Xoá bản dịch" aria-label="Xoá bản dịch">✕</button>
+                        <button type="button" class="ts-translate-btn" id="tsTranslateBtn" onclick="translateTranscript()">Dịch</button>
+                        <button type="button" class="ts-translate-toggle hidden" id="tsTranslateToggle" onclick="toggleTranslation()">Ẩn dịch</button>
+                        <button type="button" class="ts-translate-clear hidden" id="tsTranslateClear" onclick="clearTranslation()" title="Xoá bản dịch" aria-label="Xoá bản dịch">✕</button>
                     </div>
 
                     <!-- Transcript lines -->
@@ -884,7 +884,7 @@
 
             <!-- Header -->
             <div class="db-header">
-                <button class="bp-back-btn" onclick="closeDashboard()" aria-label="Quay lại">
+                <button type="button" class="bp-back-btn" onclick="closeDashboard()" aria-label="Quay lại">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="18" height="18">
                         <path d="M19 12H5M12 5l-7 7 7 7" stroke-linecap="round" stroke-linejoin="round"/>
                     </svg>
@@ -895,10 +895,10 @@
                     <p class="db-date" id="dbDate"></p>
                 </div>
                 <div class="db-header-right" style="display:flex;gap:8px;">
-                    <button class="db-badges-shortcut" onclick="openLeaderboard()" aria-label="Xếp hạng">
+                    <button type="button" class="db-badges-shortcut" onclick="openLeaderboard()" aria-label="Xếp hạng">
                         🏅 Xếp hạng
                     </button>
-                    <button class="db-badges-shortcut" onclick="closeDashboard(); openBadgesPage aria-label="Huy hiệu" onclick="closeDashboard(); openBadgesPage();">
+                    <button type="button" class="db-badges-shortcut" onclick="closeDashboard(); openBadgesPage aria-label="Huy hiệu" onclick="closeDashboard(); openBadgesPage();">
                         🏆 Huy hiệu
                     </button>
                 </div>
@@ -965,7 +965,7 @@
     <section class="badges-page hidden" id="badgesSection" aria-label="Huy hiệu học tập">
         <div class="badges-page-inner">
             <div class="badges-page-header">
-                <button class="bp-back-btn" onclick="closeBadgesPage()" aria-label="Quay lại">
+                <button type="button" class="bp-back-btn" onclick="closeBadgesPage()" aria-label="Quay lại">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="18" height="18">
                         <path d="M19 12H5M12 5l-7 7 7 7" stroke-linecap="round" stroke-linejoin="round"/>
                     </svg>
@@ -986,7 +986,7 @@
     <section class="mexam-page hidden" id="mexamSection" aria-label="Multi-Video Exam">
         <div class="mexam-inner">
             <div class="mexam-header">
-                <button class="bp-back-btn" onclick="closeMexam()" aria-label="Quay lại">
+                <button type="button" class="bp-back-btn" onclick="closeMexam()" aria-label="Quay lại">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="18" height="18">
                         <path d="M19 12H5M12 5l-7 7 7 7" stroke-linecap="round" stroke-linejoin="round"/>
                     </svg>
@@ -1001,8 +1001,8 @@
 
             <!-- Tab bar -->
             <div class="mexam-tabs" id="mexamTabs">
-                <button class="mexam-tab active" onclick="_mexamSwitchTab('new')" id="mexamTabNew">⚡ Tạo mới</button>
-                <button class="mexam-tab" onclick="_mexamSwitchTab('history')" id="mexamTabHistory">📜 Lịch sử thi <span class="mexam-hist-count" id="mexamHistCount">0</span></button>
+                <button type="button" class="mexam-tab active" onclick="_mexamSwitchTab('new')" id="mexamTabNew">⚡ Tạo mới</button>
+                <button type="button" class="mexam-tab" onclick="_mexamSwitchTab('history')" id="mexamTabHistory">📜 Lịch sử thi <span class="mexam-hist-count" id="mexamHistCount">0</span></button>
             </div>
 
             <!-- Step 1: Video Selection -->
@@ -1018,7 +1018,7 @@
                         <input type="range" id="mexamNumQ" min="10" max="40" value="20" oninput="document.getElementById('mexamNumQVal').textContent=this.value">
                         <span id="mexamNumQVal" class="mexam-slider-val">20</span>
                     </div>
-                    <button class="mexam-generate-btn" id="mexamGenerateBtn" aria-label="Tạo đề thi" onclick="generateMexam()" disabled>
+                    <button type="button" class="mexam-generate-btn" id="mexamGenerateBtn" aria-label="Tạo đề thi" onclick="generateMexam()" disabled>
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18">
                             <path d="M13 10V3L4 14h7v7l9-11h-7z" stroke-linecap="round" stroke-linejoin="round"/>
                         </svg>
@@ -1055,9 +1055,9 @@
                 </div>
                 <div class="mexam-question-area" id="mexamQuestionArea"></div>
                 <div class="mexam-nav">
-                    <button class="mexam-nav-btn" id="mexamPrevBtn" onclick="mexamNav(-1)" disabled>← Trước</button>
-                    <button class="mexam-nav-btn mexam-primary" id="mexamNextBtn" onclick="mexamNav(1)">Tiếp →</button>
-                    <button class="mexam-nav-btn mexam-submit hidden" id="mexamSubmitBtn" onclick="mexamSubmit()">📊 Nộp bài</button>
+                    <button type="button" class="mexam-nav-btn" id="mexamPrevBtn" onclick="mexamNav(-1)" disabled>← Trước</button>
+                    <button type="button" class="mexam-nav-btn mexam-primary" id="mexamNextBtn" onclick="mexamNav(1)">Tiếp →</button>
+                    <button type="button" class="mexam-nav-btn mexam-submit hidden" id="mexamSubmitBtn" onclick="mexamSubmit()">📊 Nộp bài</button>
                 </div>
             </div>
 
@@ -1075,7 +1075,7 @@
     <section class="kg-page hidden" id="kgSection" aria-label="Knowledge Graph">
         <div class="kg-inner">
             <div class="kg-header">
-                <button class="bp-back-btn" onclick="closeKnowledgeGraph()" aria-label="Quay lại">
+                <button type="button" class="bp-back-btn" onclick="closeKnowledgeGraph()" aria-label="Quay lại">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="18" height="18">
                         <path d="M19 12H5M12 5l-7 7 7 7" stroke-linecap="round" stroke-linejoin="round"/>
                     </svg>
@@ -1086,8 +1086,8 @@
                     <p class="kg-subtitle" id="kgSubtitle">Bản đồ kiến thức từ các video đã phân tích</p>
                 </div>
                 <div class="kg-controls">
-                    <button class="kg-ctrl-btn" onclick="kgResetZoom()" title="Reset zoom" aria-label="Reset zoom">⊡ Reset</button>
-                    <button class="kg-ctrl-btn" onclick="kgToggleLabels()" title="Ẩn/hiện nhãn" aria-label="Ẩn/hiện nhãn" id="kgLabelBtn">🏷 Labels</button>
+                    <button type="button" class="kg-ctrl-btn" onclick="kgResetZoom()" title="Reset zoom" aria-label="Reset zoom">⊡ Reset</button>
+                    <button type="button" class="kg-ctrl-btn" onclick="kgToggleLabels()" title="Ẩn/hiện nhãn" aria-label="Ẩn/hiện nhãn" id="kgLabelBtn">🏷 Labels</button>
                 </div>
             </div>
             <div class="kg-body">
@@ -1100,7 +1100,7 @@
                     </div>
                 </div>
                 <div class="kg-detail-panel hidden" id="kgDetailPanel">
-                    <button class="kg-detail-close" onclick="closeKgDetail()" aria-label="Đóng">✕</button>
+                    <button type="button" class="kg-detail-close" onclick="closeKgDetail()" aria-label="Đóng">✕</button>
                     <div id="kgDetailContent"></div>
                 </div>
             </div>
@@ -1112,7 +1112,7 @@
     <section class="srs-page hidden" id="srsReviewSection" aria-label="Ôn tập hàng ngày">
         <div class="srs-inner">
             <div class="srs-header">
-                <button class="bp-back-btn" onclick="closeSrsReview()" aria-label="Quay lại">
+                <button type="button" class="bp-back-btn" onclick="closeSrsReview()" aria-label="Quay lại">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="18" height="18">
                         <path d="M19 12H5M12 5l-7 7 7 7" stroke-linecap="round" stroke-linejoin="round"/>
                     </svg>
@@ -1142,7 +1142,7 @@
                     <span class="fc-modal-badge" id="fcModeBadge">Tất cả</span>
                     <span class="fc-card-counter" id="fcCardCounter">1 / 10</span>
                 </div>
-                <button class="fc-modal-close" onclick="closeFcModalBtn()" aria-label="Đóng">✕</button>
+                <button type="button" class="fc-modal-close" onclick="closeFcModalBtn()" aria-label="Đóng">✕</button>
             </div>
 
             <!-- Progress bar -->
@@ -1171,27 +1171,27 @@
 
             <!-- Controls -->
             <div class="fc-controls">
-                <button class="fc-ctrl-btn" id="fcPrevBtn" onclick="fcNavigate(-1)" aria-label="Thẻ trước">
+                <button type="button" class="fc-ctrl-btn" id="fcPrevBtn" onclick="fcNavigate(-1)" aria-label="Thẻ trước">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 18l-6-6 6-6" stroke-linecap="round"/></svg>
                 </button>
 
                 <div class="fc-rate-btns" id="fcRateBtns">
-                    <button class="fc-rate-btn fc-rate-hard" onclick="rateCard('hard')" title="Khó — Ôn lại sau" aria-label="Khó — Ôn lại sau">😰 Khó</button>
-                    <button class="fc-rate-btn fc-rate-ok"   onclick="rateCard('ok')"   title="Ổn" aria-label="Ổn">🙂 Ổn</button>
-                    <button class="fc-rate-btn fc-rate-easy" onclick="rateCard('easy')"  title="Dễ — Đã thuộc" aria-label="Dễ — Đã thuộc">😊 Dễ</button>
+                    <button type="button" class="fc-rate-btn fc-rate-hard" onclick="rateCard('hard')" title="Khó — Ôn lại sau" aria-label="Khó — Ôn lại sau">😰 Khó</button>
+                    <button type="button" class="fc-rate-btn fc-rate-ok"   onclick="rateCard('ok')"   title="Ổn" aria-label="Ổn">🙂 Ổn</button>
+                    <button type="button" class="fc-rate-btn fc-rate-easy" onclick="rateCard('easy')"  title="Dễ — Đã thuộc" aria-label="Dễ — Đã thuộc">😊 Dễ</button>
                 </div>
 
-                <button class="fc-ctrl-btn" id="fcNextBtn" onclick="fcNavigate(1)" aria-label="Thẻ tiếp">
+                <button type="button" class="fc-ctrl-btn" id="fcNextBtn" onclick="fcNavigate(1)" aria-label="Thẻ tiếp">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6" stroke-linecap="round"/></svg>
                 </button>
             </div>
 
             <!-- Footer: shuffle + filter -->
             <div class="fc-modal-footer">
-                <button class="fc-footer-btn" onclick="shuffleFcCards()" title="Trộn thẻ" aria-label="Trộn thẻ">🔀 Trộn</button>
-                <button class="fc-footer-btn" onclick="fcFilterMode('all')"  id="fcFilterAll"  class="active">Tất cả</button>
-                <button class="fc-footer-btn" onclick="fcFilterMode('hard')" id="fcFilterHard">😰 Khó</button>
-                <button class="fc-footer-btn" onclick="fcRestart()">↺ Bắt đầu lại</button>
+                <button type="button" class="fc-footer-btn" onclick="shuffleFcCards()" title="Trộn thẻ" aria-label="Trộn thẻ">🔀 Trộn</button>
+                <button type="button" class="fc-footer-btn" onclick="fcFilterMode('all')"  id="fcFilterAll"  class="active">Tất cả</button>
+                <button type="button" class="fc-footer-btn" onclick="fcFilterMode('hard')" id="fcFilterHard">😰 Khó</button>
+                <button type="button" class="fc-footer-btn" onclick="fcRestart()">↺ Bắt đầu lại</button>
             </div>
         </div>
     </div>
@@ -1203,7 +1203,7 @@
 
     <!-- ═══════════════════════════ CHAT PANEL ═══════════════════════════ -->
     <!-- Floating chat button (only visible when results are showing) -->
-    <button class="chat-fab hidden" id="chatFab" onclick="toggleChat()" aria-label="Chat với bài giảng" title="Chat với bài giảng" aria-label="Chat với bài giảng">
+    <button type="button" class="chat-fab hidden" id="chatFab" onclick="toggleChat()" aria-label="Chat với bài giảng" title="Chat với bài giảng" aria-label="Chat với bài giảng">
         <svg class="chat-fab-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
             <path d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" stroke-linecap="round" stroke-linejoin="round"/>
         </svg>
@@ -1223,12 +1223,12 @@
                 </div>
             </div>
             <div class="chat-header-actions">
-                <button class="chat-clear-btn" onclick="clearChat()" aria-label="Xóa lịch sử chat" title="Xóa lịch sử chat" aria-label="Xóa lịch sử chat">
+                <button type="button" class="chat-clear-btn" onclick="clearChat()" aria-label="Xóa lịch sử chat" title="Xóa lịch sử chat" aria-label="Xóa lịch sử chat">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" stroke-linecap="round" stroke-linejoin="round"/>
                     </svg>
                 </button>
-                <button class="chat-close-btn" onclick="toggleChat()" aria-label="Đóng chat">
+                <button type="button" class="chat-close-btn" onclick="toggleChat()" aria-label="Đóng chat">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <path d="M18 6L6 18M6 6l12 12" stroke-linecap="round"/>
                     </svg>
@@ -1248,9 +1248,9 @@
 
         <!-- Suggested questions -->
         <div class="chat-suggestions" id="chatSuggestions">
-            <button class="chat-suggestion-btn" onclick="sendSuggestion(this)">📌 Tóm tắt nội dung chính</button>
-            <button class="chat-suggestion-btn" onclick="sendSuggestion(this)">🤔 Giải thích khái niệm khó nhất</button>
-            <button class="chat-suggestion-btn" onclick="sendSuggestion(this)">💡 Ví dụ thực tế từ bài giảng</button>
+            <button type="button" class="chat-suggestion-btn" onclick="sendSuggestion(this)">📌 Tóm tắt nội dung chính</button>
+            <button type="button" class="chat-suggestion-btn" onclick="sendSuggestion(this)">🤔 Giải thích khái niệm khó nhất</button>
+            <button type="button" class="chat-suggestion-btn" onclick="sendSuggestion(this)">💡 Ví dụ thực tế từ bài giảng</button>
         </div>
 
         <!-- Input area -->
@@ -1258,7 +1258,7 @@
             <textarea class="chat-input" id="chatInput" placeholder="Hỏi về bài giảng..." rows="1"
                       onkeydown="handleChatKey(event)" oninput="autoResizeChatInput(this)"
                       aria-label="Nhập câu hỏi"></textarea>
-            <button class="chat-send-btn" id="chatSendBtn" onclick="sendChatMessage()" aria-label="Gửi">
+            <button type="button" class="chat-send-btn" id="chatSendBtn" onclick="sendChatMessage()" aria-label="Gửi">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                     <path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z" stroke-linecap="round" stroke-linejoin="round"/>
                 </svg>
@@ -1344,7 +1344,7 @@
     <!-- ══════════════════════════════ SHARE NOTES MODAL ══════════════════════════════ -->
     <div class="share-notes-overlay hidden" id="shareNotesOverlay" role="dialog" onclick="if(event.target===this)closeShareNotesModal()">
         <div class="share-notes-modal">
-            <button class="share-notes-close" onclick="closeShareNotesModal()" aria-label="Đóng">✕</button>
+            <button type="button" class="share-notes-close" onclick="closeShareNotesModal()" aria-label="Đóng">✕</button>
             <div class="share-notes-icon">🔗</div>
             <h2 class="share-notes-title">Chia sẻ ghi chú</h2>
             <p class="share-notes-subtitle">Tạo link chia sẻ ghi chú & bookmarks cho bạn bè</p>
@@ -1365,7 +1365,7 @@
                     <input type="checkbox" id="shareIncludeOverview" checked>
                     <span>📋 Tóm tắt bài giảng</span>
                 </label>
-                <button class="share-notes-generate-btn" id="shareNotesGenerateBtn" aria-label="Tạo link chia sẻ" onclick="generateShareLink()">
+                <button type="button" class="share-notes-generate-btn" id="shareNotesGenerateBtn" aria-label="Tạo link chia sẻ" onclick="generateShareLink()">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
                     Tạo link chia sẻ
                 </button>
@@ -1376,13 +1376,13 @@
                 <div class="share-notes-success">✅ Link đã tạo thành công!</div>
                 <div class="share-notes-link-wrap">
                     <input type="text" class="share-notes-link" id="shareNotesLink" readonly autocomplete="off" aria-label="Link chia sẻ" onclick="this.select()">
-                    <button class="share-notes-copy-btn" id="shareNotesCopyBtn" aria-label="Copy link" onclick="copyShareNotesLink()">
+                    <button type="button" class="share-notes-copy-btn" id="shareNotesCopyBtn" aria-label="Copy link" onclick="copyShareNotesLink()">
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>
                         Copy
                     </button>
                 </div>
                 <div class="share-notes-hint">Bất kỳ ai có link đều có thể xem (chỉ đọc)</div>
-                <button class="share-notes-new-btn" onclick="resetShareNotesModal()">← Tạo link mới</button>
+                <button type="button" class="share-notes-new-btn" onclick="resetShareNotesModal()">← Tạo link mới</button>
             </div>
 
             <!-- Error -->
@@ -1393,7 +1393,7 @@
     <!-- ══════════════════════════════ AUTH MODAL ══════════════════════════════ -->
     <div class="auth-modal-overlay hidden" id="authModalOverlay" role="dialog" aria-modal="true" aria-label="Đăng nhập">
         <div class="auth-modal">
-            <button class="auth-modal-close" onclick="closeAuthModal()" aria-label="Đóng">✕</button>
+            <button type="button" class="auth-modal-close" onclick="closeAuthModal()" aria-label="Đóng">✕</button>
             <div class="auth-modal-icon">🔐</div>
             <h3 class="auth-modal-title" id="authModalTitle">Đăng nhập</h3>
             <p class="auth-modal-subtitle">Lưu tiến trình học tập của bạn</p>
@@ -1473,7 +1473,7 @@
     <!-- ══════════════════════════════ PROFILE MODAL ══════════════════════════════ -->
     <div class="profile-modal-overlay hidden" id="profileModalOverlay" role="dialog" aria-modal="true" aria-label="Hồ sơ cá nhân">
         <div class="profile-modal">
-            <button class="profile-modal-close" onclick="closeProfileModal()" aria-label="Đóng">✕</button>
+            <button type="button" class="profile-modal-close" onclick="closeProfileModal()" aria-label="Đóng">✕</button>
             <div class="profile-header">
                 <h3>👤 Hồ sơ cá nhân</h3>
                 <p>Cập nhật thông tin của bạn</p>
@@ -1577,7 +1577,7 @@
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18"><path d="M4 12v8a2 2 0 002 2h12a2 2 0 002-2v-8M16 6l-4-4-4 4M12 2v13" stroke-linecap="round" stroke-linejoin="round"/></svg>
                     Chia sẻ kết quả
                 </div>
-                <button class="share-modal-close" onclick="closeShareModalBtn()" aria-label="Đóng">✕</button>
+                <button type="button" class="share-modal-close" onclick="closeShareModalBtn()" aria-label="Đóng">✕</button>
             </div>
 
             <!-- Preview card -->
@@ -1595,19 +1595,19 @@
 
             <!-- Share action buttons -->
             <div class="share-actions">
-                <button class="share-action-btn share-action-native" id="shareNativeBtn" aria-label="Chia sẻ" onclick="shareNative()">
+                <button type="button" class="share-action-btn share-action-native" id="shareNativeBtn" aria-label="Chia sẻ" onclick="shareNative()">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 12v8a2 2 0 002 2h12a2 2 0 002-2v-8M16 6l-4-4-4 4M12 2v13" stroke-linecap="round" stroke-linejoin="round"/></svg>
                     Chia sẻ
                 </button>
-                <button class="share-action-btn share-action-copy" aria-label="Copy text" onclick="copyShareText()">
+                <button type="button" class="share-action-btn share-action-copy" aria-label="Copy text" onclick="copyShareText()">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>
                     Copy nội dung
                 </button>
-                <button class="share-action-btn share-action-link" aria-label="Copy link YouTube" onclick="copyYouTubeLink()">
+                <button type="button" class="share-action-btn share-action-link" aria-label="Copy link YouTube" onclick="copyYouTubeLink()">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10 13a5 5 0 007.54.54l3-3a5 5 0 00-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 00-7.54-.54l-3 3a5 5 0 007.07 7.07l1.71-1.71"/></svg>
                     Copy link video
                 </button>
-                <button class="share-action-btn share-action-result" aria-label="Copy link kết quả" onclick="copyResultLink()">
+                <button type="button" class="share-action-btn share-action-result" aria-label="Copy link kết quả" onclick="copyResultLink()">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 7h3a5 5 0 015 5 5 5 0 01-5 5h-3m-6 0H6a5 5 0 01-5-5 5 5 0 015-5h3"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
                     Copy link kết quả
                 </button>
@@ -1627,9 +1627,9 @@
                     <span id="mmTitle">Sơ đồ tư duy</span>
                 </div>
                 <div class="mm-header-actions">
-                    <button class="mm-ctrl-btn" onclick="mmResetZoom()" title="Reset view" aria-label="Reset view">⊡ Reset</button>
-                    <button class="mm-ctrl-btn mm-download-btn" onclick="mmDownload()" title="Tải xuống PNG" aria-label="Tải xuống PNG">⬇ PNG</button>
-                    <button class="mm-modal-close" onclick="closeMindMap()" aria-label="Đóng">✕</button>
+                    <button type="button" class="mm-ctrl-btn" onclick="mmResetZoom()" title="Reset view" aria-label="Reset view">⊡ Reset</button>
+                    <button type="button" class="mm-ctrl-btn mm-download-btn" onclick="mmDownload()" title="Tải xuống PNG" aria-label="Tải xuống PNG">⬇ PNG</button>
+                    <button type="button" class="mm-modal-close" onclick="closeMindMap()" aria-label="Đóng">✕</button>
                 </div>
             </div>
             <div class="mm-canvas-area" id="mmCanvasArea">
@@ -1654,8 +1654,8 @@
             <h3 class="vlen-title">Video dài — Có thể mất nhiều thời gian</h3>
             <p class="vlen-body" id="vlenBody"></p>
             <div class="vlen-actions">
-                <button class="vlen-btn vlen-cancel" onclick="closeVlenModal()">Huỷ</button>
-                <button class="vlen-btn vlen-confirm" onclick="confirmAnalyze()">Vẫn phân tích</button>
+                <button type="button" class="vlen-btn vlen-cancel" onclick="closeVlenModal()">Huỷ</button>
+                <button type="button" class="vlen-btn vlen-confirm" onclick="confirmAnalyze()">Vẫn phân tích</button>
             </div>
         </div>
     </div>
@@ -1666,8 +1666,8 @@
             <div class="confirm-icon">⚠️</div>
             <p class="confirm-msg" id="confirmMsg"></p>
             <div class="confirm-actions">
-                <button class="confirm-btn confirm-cancel" onclick="closeConfirmModal()">Hủy</button>
-                <button class="confirm-btn confirm-delete" onclick="doConfirmAction()">Xóa</button>
+                <button type="button" class="confirm-btn confirm-cancel" onclick="closeConfirmModal()">Hủy</button>
+                <button type="button" class="confirm-btn confirm-delete" onclick="doConfirmAction()">Xóa</button>
             </div>
         </div>
     </div>
@@ -1677,7 +1677,7 @@
         <div class="compare-modal">
             <div class="compare-header">
                 <h2>🔄 So sánh phân tích</h2>
-                <button class="compare-close" onclick="closeCompareModal()" aria-label="Close">&times;</button>
+                <button type="button" class="compare-close" onclick="closeCompareModal()" aria-label="Close">&times;</button>
             </div>
             <div class="compare-body" id="compareBody">
                 <!-- filled by JS -->
@@ -1695,7 +1695,7 @@
     <script src="/js/shortcuts-help.js"></script>
 
     <!-- ══════════════════════════════ BACK TO TOP ══════════════════════════════ -->
-    <button class="btt-btn" id="bttBtn" onclick="window.scrollTo({top:0,behavior:'smooth'})" aria-label="Lên đầu trang">
+    <button type="button" class="btt-btn" id="bttBtn" onclick="window.scrollTo({top:0,behavior:'smooth'})" aria-label="Lên đầu trang">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="20" height="20">
             <path d="M12 19V5M5 12l7-7 7 7" stroke-linecap="round" stroke-linejoin="round"/>
         </svg>
@@ -1703,7 +1703,7 @@
 
     <!-- ══════════════════════════════ PWA INSTALL BANNER ══════════════════════════════ -->
     <div class="pwa-install-banner hidden" id="pwaInstallBanner">
-        <button class="pwa-banner-close" id="pwaCloseBtn" aria-label="Đóng">✕</button>
+        <button type="button" class="pwa-banner-close" id="pwaCloseBtn" aria-label="Đóng">✕</button>
         <div class="pwa-banner-body">
             <div class="pwa-banner-icon">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -1716,11 +1716,11 @@
             </div>
         </div>
         <div class="pwa-banner-actions">
-            <button class="pwa-install-btn" id="pwaInstallBtn">
+            <button type="button" class="pwa-install-btn" id="pwaInstallBtn">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M7 10l5 5 5-5M12 15V3" stroke-linecap="round" stroke-linejoin="round"/></svg>
                 Cài đặt
             </button>
-            <button class="pwa-later-btn" id="pwaLaterBtn">Để sau</button>
+            <button type="button" class="pwa-later-btn" id="pwaLaterBtn">Để sau</button>
         </div>
     </div>
     <script>
@@ -1750,7 +1750,7 @@
         <div class="lb-modal">
             <div class="lb-header">
                 <span class="lb-title">🏅 Bảng xếp hạng học tập</span>
-                <button class="lb-close" onclick="closeLeaderboard()" aria-label="Đóng">✕</button>
+                <button type="button" class="lb-close" onclick="closeLeaderboard()" aria-label="Đóng">✕</button>
             </div>
             <div class="lb-body" id="lbBody"></div>
         </div>
@@ -1761,10 +1761,10 @@
         <div class="gs-modal">
             <div class="gs-header">
                 <span class="gs-title">🎯 Chỉnh mục tiêu tuần</span>
-                <button class="gs-close" onclick="closeGoalsSettings()" aria-label="Đóng">✕</button>
+                <button type="button" class="gs-close" onclick="closeGoalsSettings()" aria-label="Đóng">✕</button>
             </div>
             <div id="goalsSettingsForm"></div>
-            <button class="gs-save-btn" onclick="saveGoalsSettings()">💾 Lưu mục tiêu</button>
+            <button type="button" class="gs-save-btn" onclick="saveGoalsSettings()">💾 Lưu mục tiêu</button>
         </div>
     </div>
 
@@ -1772,7 +1772,7 @@
     <div class="pomo-panel hidden" id="pomoPanel">
         <div class="pomo-header">
             <div class="pomo-title">🍅 Pomodoro Timer</div>
-            <button class="pomo-close" onclick="closePomodoro()" aria-label="Đóng">✕</button>
+            <button type="button" class="pomo-close" onclick="closePomodoro()" aria-label="Đóng">✕</button>
         </div>
         <div class="pomo-timer-wrap">
             <svg class="pomo-ring-svg" viewBox="0 0 120 120">
@@ -1792,9 +1792,9 @@
             <span class="pomo-settings-unit">phút</span>
         </div>
         <div class="pomo-controls">
-            <button class="pomo-ctrl-btn pomo-start-btn" id="pomoStartBtn" onclick="pomoStart()">▶ Bắt đầu</button>
-            <button class="pomo-ctrl-btn pomo-pause-btn hidden" id="pomoPauseBtn" onclick="pomoPause()">⏸ Tạm dừng</button>
-            <button class="pomo-ctrl-btn pomo-reset-btn hidden" id="pomoResetBtn" onclick="pomoReset()">↺ Reset</button>
+            <button type="button" class="pomo-ctrl-btn pomo-start-btn" id="pomoStartBtn" onclick="pomoStart()">▶ Bắt đầu</button>
+            <button type="button" class="pomo-ctrl-btn pomo-pause-btn hidden" id="pomoPauseBtn" onclick="pomoPause()">⏸ Tạm dừng</button>
+            <button type="button" class="pomo-ctrl-btn pomo-reset-btn hidden" id="pomoResetBtn" onclick="pomoReset()">↺ Reset</button>
         </div>
         <div class="pomo-stats">
             <div class="pomo-stat">
@@ -1811,23 +1811,23 @@
     <!-- ═══════ MOBILE BOTTOM NAV ═══════ -->
     <nav class="mobile-bottom-nav" id="mobileBottomNav" aria-label="Mobile navigation">
         <div class="mob-nav-inner">
-            <button class="mob-nav-btn" onclick="resetToHero()" aria-label="Trang chủ">
+            <button type="button" class="mob-nav-btn" onclick="resetToHero()" aria-label="Trang chủ">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-4 0a1 1 0 01-1-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 01-1 1" stroke-linecap="round" stroke-linejoin="round"/></svg>
                 Home
             </button>
-            <button class="mob-nav-btn" onclick="mobScrollTo('quizCard')" aria-label="Quiz">
+            <button type="button" class="mob-nav-btn" onclick="mobScrollTo('quizCard')" aria-label="Quiz">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" stroke-linecap="round" stroke-linejoin="round"/></svg>
                 Quiz
             </button>
-            <button class="mob-nav-btn" onclick="mobScrollTo('flashcardsCard')" aria-label="Flashcards">
+            <button type="button" class="mob-nav-btn" onclick="mobScrollTo('flashcardsCard')" aria-label="Flashcards">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" stroke-linecap="round" stroke-linejoin="round"/></svg>
                 Cards
             </button>
-            <button class="mob-nav-btn" onclick="mobScrollTo('notesCard')" aria-label="Ghi chú">
+            <button type="button" class="mob-nav-btn" onclick="mobScrollTo('notesCard')" aria-label="Ghi chú">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" stroke-linecap="round" stroke-linejoin="round"/></svg>
                 Notes
             </button>
-            <button class="mob-nav-btn" onclick="toggleChat()" aria-label="Chat AI">
+            <button type="button" class="mob-nav-btn" onclick="toggleChat()" aria-label="Chat AI">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" stroke-linecap="round" stroke-linejoin="round"/></svg>
                 Chat
             </button>
