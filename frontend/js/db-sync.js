@@ -182,11 +182,19 @@ function doDbSync(showOverlay) {
 
         if (!result) {
             _dbLog('No result from server');
+            if (showOverlay && typeof showToast === 'function') {
+                showToast('⚠️ Không thể đồng bộ dữ liệu', 3000);
+            }
             return;
         }
+
+        // Track sync counts for notification
+        var _syncCounts = { history: 0, notes: 0, bookmarks: 0, extra: 0 };
+
         // Always update localStorage from server (server is source of truth)
         if (result.history !== undefined) {
             safeLsSet('lectureDigest_history', JSON.stringify(result.history));
+            _syncCounts.history = result.history.length;
             _dbLog('History synced:', result.history.length, 'entries');
         }
         if (result.gamification !== undefined) {
@@ -199,6 +207,7 @@ function doDbSync(showOverlay) {
             for (var n = 0; n < noteVids.length; n++) {
                 safeLsSet('lectureDigest_note_' + noteVids[n], result.notes[noteVids[n]]);
             }
+            _syncCounts.notes = noteVids.length;
             _dbLog('Notes synced:', noteVids.length, 'videos');
         }
         // Restore bookmarks from server
@@ -207,6 +216,7 @@ function doDbSync(showOverlay) {
             for (var b = 0; b < bmVids.length; b++) {
                 safeLsSet('lectureDigest_bookmarks_' + bmVids[b], JSON.stringify(result.bookmarks[bmVids[b]]));
             }
+            _syncCounts.bookmarks = bmVids.length;
             _dbLog('Bookmarks synced:', bmVids.length, 'videos');
         }
         // Restore extra data from server
@@ -215,6 +225,7 @@ function doDbSync(showOverlay) {
             for (var k = 0; k < extraKeys.length; k++) {
                 safeLsSet(extraKeys[k], result.extra_data[extraKeys[k]]);
             }
+            _syncCounts.extra = extraKeys.length;
             _dbLog('Extra data synced:', extraKeys.length, 'keys');
         }
         // Always re-render UI after sync
@@ -225,9 +236,24 @@ function doDbSync(showOverlay) {
             var ds = document.getElementById('dashboardSection');
             if (ds && !ds.classList.contains('hidden')) renderDashboard();
         }
+
+        // Show sync notification (only for logged-in users)
+        if (typeof showToast === 'function' && localStorage.getItem('ld_auth_token')) {
+            var parts = [];
+            if (_syncCounts.history > 0) parts.push(_syncCounts.history + ' video');
+            if (_syncCounts.notes > 0) parts.push(_syncCounts.notes + ' ghi chú');
+            if (_syncCounts.bookmarks > 0) parts.push(_syncCounts.bookmarks + ' bookmark');
+            var msg = parts.length > 0
+                ? '✅ Đồng bộ xong: ' + parts.join(', ')
+                : '✅ Dữ liệu đã đồng bộ';
+            showToast(msg, 2500);
+        }
     }).catch(function() {
         _dbSyncInProgress = false;
         if (showOverlay) _hideSyncOverlay();
+        if (typeof showToast === 'function' && localStorage.getItem('ld_auth_token')) {
+            showToast('⚠️ Đồng bộ thất bại — sẽ thử lại sau', 3000);
+        }
     });
 }
 
