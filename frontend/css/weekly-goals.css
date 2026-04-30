@@ -1,0 +1,281 @@
+/* ════════════════════════════════════════════════
+   Weekly Learning Goals
+   ════════════════════════════════════════════════ */
+
+/* ── Goal Card (Dashboard) ── */
+.wg-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 14px;
+}
+.wg-week-label {
+    font-size: 12px;
+    color: var(--text-secondary, #94a3b8);
+    font-weight: 500;
+}
+.wg-edit-btn {
+    width: 28px; height: 28px;
+    border-radius: 7px;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    background: rgba(255, 255, 255, 0.04);
+    cursor: pointer;
+    font-size: 13px;
+    display: flex; align-items: center; justify-content: center;
+    transition: all 0.15s;
+}
+.wg-edit-btn:hover {
+    background: rgba(139, 92, 246, 0.15);
+    border-color: rgba(139, 92, 246, 0.3);
+}
+
+/* Goal rows */
+.wg-goal-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 0;
+    position: relative;
+}
+.wg-goal-info {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    min-width: 0;
+    flex: 1;
+}
+.wg-goal-icon { font-size: 15px; flex-shrink: 0; }
+.wg-goal-name {
+    font-size: 12px;
+    color: var(--text-secondary, #94a3b8);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.wg-goal-count {
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--text-primary, #f1f5f9);
+    font-family: 'JetBrains Mono', monospace;
+    flex-shrink: 0;
+    margin-left: auto;
+}
+
+/* Progress bar */
+.wg-goal-bar-track {
+    width: 80px;
+    height: 6px;
+    border-radius: 99px;
+    background: rgba(255, 255, 255, 0.06);
+    overflow: hidden;
+    flex-shrink: 0;
+}
+.wg-goal-bar-fill {
+    height: 100%;
+    border-radius: 99px;
+    transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Done state */
+.wg-goal-done .wg-goal-name { color: var(--text-primary, #f1f5f9); }
+.wg-goal-done .wg-goal-bar-fill {
+    box-shadow: 0 0 8px rgba(16, 185, 129, 0.3);
+}
+.wg-check {
+    width: 18px; height: 18px;
+    border-radius: 50%;
+    background: rgba(16, 185, 129, 0.2);
+    color: #34d399;
+    font-size: 10px;
+    font-weight: 700;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+    animation: wgCheckPop 0.3s ease;
+}
+
+@keyframes wgCheckPop {
+    from { transform: scale(0); }
+    50%  { transform: scale(1.2); }
+    to   { transform: scale(1); }
+}
+
+/* Overall progress */
+.wg-overall {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-top: 12px;
+    padding-top: 12px;
+    border-top: 1px solid rgba(255, 255, 255, 0.06);
+}
+.wg-overall-bar-track {
+    flex: 1;
+    height: 8px;
+    border-radius: 99px;
+    background: rgba(255, 255, 255, 0.06);
+    overflow: hidden;
+}
+.wg-overall-bar-fill {
+    height: 100%;
+    border-radius: 99px;
+    background: linear-gradient(90deg, #7c3aed, #a855f7, #c084fc);
+    transition: width 0.6s ease;
+}
+.wg-overall-label {
+    font-size: 11px;
+    font-weight: 600;
+    color: #a78bfa;
+    white-space: nowrap;
+}
+.wg-trophy {
+    font-size: 11px;
+    color: #fbbf24;
+    font-weight: 600;
+    white-space: nowrap;
+    animation: wgTrophyGlow 2s ease-in-out infinite;
+}
+@keyframes wgTrophyGlow {
+    0%, 100% { opacity: 1; }
+    50%      { opacity: 0.6; }
+}
+
+/* ── Goals Settings Modal ── */
+.gs-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 950;
+    background: rgba(0, 0, 0, 0.6);
+    backdrop-filter: blur(6px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.gs-modal {
+    background: rgba(15, 15, 35, 0.97);
+    border: 1px solid rgba(139, 92, 246, 0.2);
+    border-radius: 20px;
+    width: 90%;
+    max-width: 380px;
+    padding: 24px;
+    box-shadow: 0 16px 64px rgba(0, 0, 0, 0.6);
+}
+.gs-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+}
+.gs-title {
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--text-primary, #f1f5f9);
+}
+.gs-close {
+    width: 28px; height: 28px;
+    border-radius: 8px;
+    border: none;
+    background: rgba(255, 255, 255, 0.06);
+    color: var(--text-muted, #64748b);
+    cursor: pointer;
+    font-size: 14px;
+    display: flex; align-items: center; justify-content: center;
+    transition: all 0.15s;
+}
+.gs-close:hover { background: rgba(239, 68, 68, 0.2); color: #ef4444; }
+
+/* Fields */
+.gs-field {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 0;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+.gs-field:last-child { border-bottom: none; }
+.gs-label {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 13px;
+    color: var(--text-secondary, #94a3b8);
+}
+.gs-icon { font-size: 16px; }
+.gs-input-wrap {
+    display: flex;
+    align-items: center;
+    gap: 0;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 10px;
+    overflow: hidden;
+}
+.gs-input {
+    width: 48px;
+    text-align: center;
+    background: rgba(255, 255, 255, 0.04);
+    border: none;
+    color: var(--text-primary, #f1f5f9);
+    font-size: 14px;
+    font-weight: 700;
+    font-family: 'JetBrains Mono', monospace;
+    padding: 6px 0;
+    outline: none;
+    -moz-appearance: textfield;
+}
+.gs-input::-webkit-inner-spin-button,
+.gs-input::-webkit-outer-spin-button { -webkit-appearance: none; }
+.gs-minus, .gs-plus {
+    width: 32px; height: 32px;
+    border: none;
+    background: rgba(255, 255, 255, 0.06);
+    color: var(--text-secondary, #94a3b8);
+    font-size: 16px;
+    cursor: pointer;
+    transition: all 0.15s;
+    display: flex; align-items: center; justify-content: center;
+}
+.gs-minus:hover, .gs-plus:hover {
+    background: rgba(139, 92, 246, 0.2);
+    color: #c4b5fd;
+}
+
+/* Save button */
+.gs-save-btn {
+    width: 100%;
+    padding: 10px;
+    margin-top: 16px;
+    border-radius: 12px;
+    border: none;
+    background: linear-gradient(135deg, #7c3aed, #6d28d9);
+    color: #fff;
+    font-size: 13px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+.gs-save-btn:hover {
+    background: linear-gradient(135deg, #8b5cf6, #7c3aed);
+    transform: translateY(-1px);
+    box-shadow: 0 6px 20px rgba(124, 58, 237, 0.3);
+}
+
+/* ═══ LIGHT MODE ═══ */
+html.light-mode .wg-edit-btn {
+    background: rgba(0, 0, 0, 0.04);
+    border-color: rgba(0, 0, 0, 0.08);
+}
+html.light-mode .wg-edit-btn:hover { background: rgba(109, 40, 217, 0.08); }
+html.light-mode .wg-goal-bar-track { background: rgba(0, 0, 0, 0.06); }
+html.light-mode .wg-overall { border-top-color: rgba(0, 0, 0, 0.06); }
+html.light-mode .wg-overall-bar-track { background: rgba(0, 0, 0, 0.06); }
+html.light-mode .gs-modal {
+    background: rgba(255, 255, 255, 0.98);
+    border-color: rgba(109, 40, 217, 0.15);
+}
+html.light-mode .gs-close { background: rgba(0, 0, 0, 0.05); color: #6b7280; }
+html.light-mode .gs-field { border-bottom-color: rgba(0, 0, 0, 0.05); }
+html.light-mode .gs-input-wrap { border-color: rgba(0, 0, 0, 0.1); }
+html.light-mode .gs-input { background: rgba(0, 0, 0, 0.03); }
+html.light-mode .gs-minus, html.light-mode .gs-plus {
+    background: rgba(0, 0, 0, 0.05);
+    color: #6b7280;
+}

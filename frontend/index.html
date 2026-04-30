@@ -59,6 +59,7 @@
     <link rel="stylesheet" href="/css/search.css">
     <link rel="stylesheet" href="/css/srs-review.css">
     <link rel="stylesheet" href="/css/pomodoro.css">
+    <link rel="stylesheet" href="/css/weekly-goals.css">
     <!-- Utilities & Responsive -->
     <link rel="stylesheet" href="/css/utilities.css">
     <link rel="stylesheet" href="/css/mobile.css">
@@ -897,6 +898,12 @@
             <!-- Stat cards row -->
             <div class="db-stat-grid" id="dbStatGrid"></div>
 
+            <!-- Weekly Learning Goals -->
+            <div class="db-card db-goals-panel">
+                <h3 class="db-card-title">🎯 Mục tiêu tuần</h3>
+                <div id="dbWeeklyGoals"></div>
+            </div>
+
             <!-- Middle row: Streak calendar + Quiz performance -->
             <div class="db-mid-row">
                 <div class="db-card db-streak-panel">
@@ -1317,6 +1324,8 @@
     <script src="/js/auto-notes.js"></script>
     <!-- Pomodoro Study Timer -->
     <script src="/js/pomodoro.js"></script>
+    <!-- Weekly Learning Goals -->
+    <script src="/js/weekly-goals.js"></script>
 
     <!-- ══════════════════════════════ SHARE NOTES MODAL ══════════════════════════════ -->
     <div class="share-notes-overlay hidden" id="shareNotesOverlay" onclick="if(event.target===this)closeShareNotesModal()">
@@ -1697,6 +1706,18 @@
         });
     }
     </script>
+    <!-- ═══════ WEEKLY GOALS SETTINGS ═══════ -->
+    <div class="gs-overlay hidden" id="goalsSettingsOverlay" onclick="if(event.target===this)closeGoalsSettings()">
+        <div class="gs-modal">
+            <div class="gs-header">
+                <span class="gs-title">🎯 Chỉnh mục tiêu tuần</span>
+                <button class="gs-close" onclick="closeGoalsSettings()">✕</button>
+            </div>
+            <div id="goalsSettingsForm"></div>
+            <button class="gs-save-btn" onclick="saveGoalsSettings()">💾 Lưu mục tiêu</button>
+        </div>
+    </div>
+
     <!-- ═══════ POMODORO TIMER PANEL ═══════ -->
     <div class="pomo-panel hidden" id="pomoPanel">
         <div class="pomo-header">

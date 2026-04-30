@@ -49,6 +49,7 @@ function renderDashboard() {
     }
 
     renderDbStats(g, history);
+    if (typeof renderWeeklyGoals === 'function') renderWeeklyGoals();
     renderDbStreak(g);
     renderDbQuizChart(history);
     renderDbPomodoro(g);

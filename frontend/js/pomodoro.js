@@ -166,6 +166,9 @@ function pomoTimerComplete() {
         // Log to gamification
         _pomoLogStudyTime(pomoState.focusMin);
 
+        // Log to weekly goals
+        if (typeof incrementWeeklyPomo === 'function') incrementWeeklyPomo(pomoState.focusMin);
+
         // Switch to break
         const isLongBreak = pomoState.sessions % POMO_LONG_AFTER === 0;
         const breakMin = isLongBreak ? pomoState.longBreakMin : pomoState.breakMin;
