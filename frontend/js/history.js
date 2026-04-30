@@ -3,7 +3,7 @@
    ════════════════════════════════════════════════ */
 
 const HISTORY_KEY = 'lectureDigest_history';
-const HISTORY_MAX = 30;
+const HISTORY_MAX = 100; // Must match server limit (sync.py db_get_history)
 
 function loadHistory() {
     try { return JSON.parse(localStorage.getItem(HISTORY_KEY) || '[]'); }
@@ -41,7 +41,21 @@ function saveToHistory(data) {
         list.unshift(entry);
     }
     list.splice(HISTORY_MAX);
-    localStorage.setItem(HISTORY_KEY, JSON.stringify(list));
+
+    // Save to localStorage with quota handling
+    try {
+        localStorage.setItem(HISTORY_KEY, JSON.stringify(list));
+    } catch (e) {
+        // localStorage quota exceeded — trim older entries and retry
+        console.warn('[History] localStorage quota exceeded, trimming old entries');
+        while (list.length > 10) {
+            list.pop();
+            try {
+                localStorage.setItem(HISTORY_KEY, JSON.stringify(list));
+                break;
+            } catch (e2) { /* keep trimming */ }
+        }
+    }
     renderHistoryPanel();
 
     // Push updated history entry to server immediately
