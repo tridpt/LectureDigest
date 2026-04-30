@@ -9,18 +9,38 @@
             </div>
             <h2 class="loading-title">Analyzing Your Lecture</h2>
             <p class="loading-subtitle" id="loadingStatus">Fetching video transcript...</p>
+
+            <!-- Progress bar -->
+            <div class="loading-progress-wrap">
+                <div class="loading-progress-track">
+                    <div class="loading-progress-fill" id="loadingProgressFill"></div>
+                </div>
+                <div class="loading-progress-info">
+                    <span class="loading-pct" id="loadingPct">0%</span>
+                    <span class="loading-eta" id="loadingEta"></span>
+                </div>
+            </div>
+
             <div class="loading-steps" role="status">
                 <div class="loading-step active" id="step1">
                     <div class="step-dot"></div>
                     <span>Getting transcript</span>
+                    <span class="step-check">✓</span>
                 </div>
                 <div class="loading-step" id="step2">
                     <div class="step-dot"></div>
                     <span>Analyzing with Gemini AI</span>
+                    <span class="step-check">✓</span>
                 </div>
                 <div class="loading-step" id="step3">
                     <div class="step-dot"></div>
                     <span>Generating quiz questions</span>
+                    <span class="step-check">✓</span>
+                </div>
+                <div class="loading-step" id="step4">
+                    <div class="step-dot"></div>
+                    <span>Building results</span>
+                    <span class="step-check">✓</span>
                 </div>
             </div>
         </div>

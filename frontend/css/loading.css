@@ -2,9 +2,6 @@
    Loading Section
    ════════════════════════════════════════════════ */
 
-/* ═══════════════════════════════════════════════
-   LOADING SECTION
-   ═══════════════════════════════════════════════ */
 .loading-section {
     display: flex;
     align-items: center;
@@ -53,8 +50,58 @@
 }
 
 .loading-title { font-size: 26px; font-weight: 800; letter-spacing: -0.5px; margin-bottom: 8px; }
-.loading-subtitle { color: var(--text-secondary); font-size: 14px; margin-bottom: 36px; }
+.loading-subtitle { color: var(--text-secondary); font-size: 14px; margin-bottom: 24px; }
 
+/* ── Progress Bar ── */
+.loading-progress-wrap {
+    margin-bottom: 28px;
+}
+
+.loading-progress-track {
+    position: relative;
+    width: 100%;
+    height: 8px;
+    background: rgba(139, 92, 246, 0.08);
+    border-radius: 100px;
+    overflow: hidden;
+    border: 1px solid rgba(139, 92, 246, 0.12);
+}
+
+.loading-progress-fill {
+    height: 100%;
+    width: 0%;
+    border-radius: 100px;
+    background: linear-gradient(90deg, #8b5cf6, #a78bfa, #c4b5fd);
+    background-size: 200% 100%;
+    animation: progressShimmer 2s ease-in-out infinite;
+    box-shadow: 0 0 12px rgba(139, 92, 246, 0.4);
+    transition: width 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+
+@keyframes progressShimmer {
+    0%   { background-position: 200% 0; }
+    100% { background-position: -200% 0; }
+}
+
+.loading-progress-info {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 8px;
+    font-size: 12px;
+}
+
+.loading-pct {
+    font-weight: 700;
+    color: var(--accent);
+    font-variant-numeric: tabular-nums;
+}
+
+.loading-eta {
+    color: var(--text-muted);
+}
+
+/* ── Steps ── */
 .loading-steps { display: flex; flex-direction: column; gap: 10px; text-align: left; }
 .loading-step {
     display: flex;
@@ -87,3 +134,21 @@
 }
 .loading-step.done .step-dot { background: var(--success); box-shadow: none; }
 
+/* Checkmark for done steps */
+.step-check {
+    margin-left: auto;
+    opacity: 0;
+    color: var(--success);
+    font-weight: 700;
+    transform: scale(0);
+    transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+.loading-step.done .step-check {
+    opacity: 1;
+    transform: scale(1);
+}
+
+@keyframes pulseDot {
+    0%, 100% { box-shadow: 0 0 6px var(--accent); }
+    50%      { box-shadow: 0 0 14px var(--accent); }
+}

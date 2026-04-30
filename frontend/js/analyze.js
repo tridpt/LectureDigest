@@ -4,33 +4,77 @@
    ════════════════════════════════════════════════ */
 
 // ──────────────────────────────────────
-// LOADING ANIMATION
+// LOADING PROGRESS
 // ──────────────────────────────────────
-function startLoadingAnimation() {
-    const statusTexts = [
-        'Fetching video transcript...',
-        'Analyzing content with Gemini AI...',
-        'Generating quiz questions...',
-    ];
+var _loadProgress = { pct: 0, tick: null, startTime: 0, targetPct: 0 };
 
-    function setStep(index) {
-        ['step1', 'step2', 'step3'].forEach((id, i) => {
-            const el = document.getElementById(id);
-            if (!el) return;
-            el.classList.remove('active', 'done');
-            if (i < index) el.classList.add('done');
-            else if (i === index) el.classList.add('active');
-        });
-        const statusEl = document.getElementById('loadingStatus');
-        if (statusEl) statusEl.textContent = statusTexts[index] ?? 'Processing...';
+function setLoadingProgress(pct, stepIndex, statusText) {
+    _loadProgress.pct = pct;
+    _loadProgress.targetPct = pct;
+
+    // Update progress bar
+    var fill = document.getElementById('loadingProgressFill');
+    var pctEl = document.getElementById('loadingPct');
+    var etaEl = document.getElementById('loadingEta');
+    if (fill) fill.style.width = pct + '%';
+    if (pctEl) pctEl.textContent = Math.round(pct) + '%';
+
+    // ETA calculation
+    if (etaEl && pct > 5 && pct < 100) {
+        var elapsed = (Date.now() - _loadProgress.startTime) / 1000;
+        var remaining = (elapsed / pct) * (100 - pct);
+        if (remaining > 60) {
+            etaEl.textContent = '~' + Math.ceil(remaining / 60) + ' phút còn lại';
+        } else {
+            etaEl.textContent = '~' + Math.ceil(remaining) + 's còn lại';
+        }
+    } else if (etaEl) {
+        etaEl.textContent = pct >= 100 ? '' : 'Đang ước tính...';
     }
 
-    setStep(0);
-    const t1 = setTimeout(() => setStep(1), 2200);
-    const t2 = setTimeout(() => setStep(2), 5500);
+    // Update steps
+    var stepIds = ['step1', 'step2', 'step3', 'step4'];
+    stepIds.forEach(function(id, i) {
+        var el = document.getElementById(id);
+        if (!el) return;
+        el.classList.remove('active', 'done');
+        if (i < stepIndex) el.classList.add('done');
+        else if (i === stepIndex) el.classList.add('active');
+    });
 
-    // Return cleanup function
-    return () => { clearTimeout(t1); clearTimeout(t2); };
+    // Update status text
+    var statusEl = document.getElementById('loadingStatus');
+    if (statusEl && statusText) statusEl.textContent = statusText;
+}
+
+function _startProgressTick(fromPct, toPct, durationMs) {
+    // Slowly tick from fromPct toward toPct over durationMs
+    clearInterval(_loadProgress.tick);
+    var step = (toPct - fromPct) / (durationMs / 800);
+    _loadProgress.tick = setInterval(function() {
+        if (_loadProgress.pct >= toPct - 1) {
+            clearInterval(_loadProgress.tick);
+            return;
+        }
+        var next = Math.min(_loadProgress.pct + step, toPct - 1);
+        setLoadingProgress(next, _getStepForPct(next), null);
+    }, 800);
+}
+
+function _getStepForPct(pct) {
+    if (pct < 15) return 0;
+    if (pct < 75) return 1;
+    if (pct < 90) return 2;
+    return 3;
+}
+
+function startLoadingAnimation() {
+    _loadProgress.startTime = Date.now();
+    _loadProgress.pct = 0;
+    setLoadingProgress(0, 0, 'Fetching video transcript...');
+    return function() {
+        clearInterval(_loadProgress.tick);
+    };
 }
 
 // -- Video Length Warning --
@@ -107,6 +151,9 @@ async function _doAnalyze() {
     try {
         var clientTranscript = window._cachedTranscript || null;
         window._cachedTranscript = null;
+
+        // Step 1: Get transcript (0→15%)
+        setLoadingProgress(5, 0, 'Fetching video transcript...');
         if (!clientTranscript) {
             try {
                 var videoId2 = (url.match(/(?:v=|youtu\.be\/)([a-zA-Z0-9_-]{11})/) || [])[1];
@@ -115,6 +162,11 @@ async function _doAnalyze() {
                 console.warn('[LectureDigest] Client transcript failed, server will try:', e.message);
             }
         }
+        setLoadingProgress(15, 1, 'Analyzing content with Gemini AI...');
+
+        // Step 2: AI Analysis (15→75%) — slow tick during server call
+        _startProgressTick(15, 74, 60000);
+
         var reqBody = { url: url, language: 'en', output_language: selectedLang };
         if (clientTranscript && clientTranscript.length) reqBody.transcript = clientTranscript;
         var res = await fetchWithTimeout(API_BASE + '/api/analyze', {
@@ -123,6 +175,9 @@ async function _doAnalyze() {
             body: JSON.stringify(reqBody),
         }, 120000);
         stopAnimation();
+
+        // Step 3: Parse response (75→90%)
+        setLoadingProgress(75, 2, 'Generating quiz questions...');
         if (!res.ok) {
             var err = await res.json().catch(function() { return { detail: 'Unknown server error' }; });
             throw new Error(err.detail || ('Server error ' + res.status));
@@ -132,6 +187,9 @@ async function _doAnalyze() {
         if ((!analysisData.transcript || !analysisData.transcript.length) && clientTranscript && clientTranscript.length) {
             analysisData.transcript = clientTranscript;
         }
+        setLoadingProgress(90, 3, 'Building results...');
+
+        // Step 4: Render results (90→100%)
         clearChat();
         renderResults(analysisData);
         saveToHistory(analysisData);
@@ -141,6 +199,7 @@ async function _doAnalyze() {
         initBookmarks(analysisData.video_id);
         recordStudySession();
         window._spaVideoId = analysisData.video_id;
+        setLoadingProgress(100, 4, 'Done!');
         showSection('resultsSection');
     } catch(err) {
         stopAnimation();
