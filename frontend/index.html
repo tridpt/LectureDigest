@@ -1524,6 +1524,20 @@
                 <button type="submit" class="profile-save-btn" id="profileSaveBtn">Lưu thay đổi</button>
             </form>
 
+            <!-- Export Data (GDPR) -->
+            <div class="profile-export-zone">
+                <div class="profile-export-title">📦 Xuất dữ liệu</div>
+                <p class="profile-export-desc">Tải toàn bộ dữ liệu tài khoản của bạn (lịch sử, ghi chú, bookmarks, gamification) dưới dạng JSON.</p>
+                <button type="button" class="profile-export-btn" id="exportDataBtn" onclick="authExportData()">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14">
+                        <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4" stroke-linecap="round" stroke-linejoin="round"/>
+                        <polyline points="7 10 12 15 17 10" stroke-linecap="round" stroke-linejoin="round"/>
+                        <line x1="12" y1="15" x2="12" y2="3" stroke-linecap="round"/>
+                    </svg>
+                    Tải dữ liệu (JSON)
+                </button>
+            </div>
+
             <!-- Danger Zone -->
             <div class="profile-danger-zone">
                 <div class="profile-danger-title">⚠️ Vùng nguy hiểm</div>
