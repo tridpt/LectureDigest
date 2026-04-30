@@ -96,8 +96,13 @@ function recordStudySession() {
     const g = loadGamif();
     const today = todayISO();
 
+    // Always count each video analysis
+    g.totalVideos = (g.totalVideos || 0) + 1;
+
     if (g.lastStudyDate === today) {
-        // Already recorded today — just render, no change
+        // Already recorded today — save updated video count, but no streak change
+        saveGamif(g);
+        checkAndAwardBadges(g);
         renderStreakCard(g);
         return;
     }
@@ -112,7 +117,6 @@ function recordStudySession() {
     g.longestStreak  = Math.max(g.longestStreak, g.currentStreak);
     g.lastStudyDate  = today;
     g.totalStudyDays += 1;
-    g.totalVideos   += 1;
 
     // Update last-28-days list
     if (!g.studyDates) g.studyDates = [];
