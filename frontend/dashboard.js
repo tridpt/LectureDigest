@@ -63,21 +63,48 @@ function renderDashboard() {
     } catch (e) { console.error('[Dashboard] date error:', e); }
 
     var renders = [
-        ['renderDbStats',     function() { renderDbStats(g, history); }],
-        ['renderWeeklyGoals', function() { if (typeof renderWeeklyGoals === 'function') renderWeeklyGoals(); }],
-        ['renderDbStreak',    function() { renderDbStreak(g); }],
-        ['renderDbQuizChart', function() { renderDbQuizChart(history); }],
-        ['renderDbPomodoro',  function() { renderDbPomodoro(g); }],
-        ['renderStudyStats',  function() { renderStudyStats(g, history); }],
-        ['renderDbVideos',    function() { renderDbVideos(history); }],
-        ['renderDbBadgeCats', function() { renderDbBadgeCats(g); }],
-        ['renderSrsBanner',   function() { if (typeof renderSrsBanner === 'function') renderSrsBanner('srsBannerWrap'); }],
+        ['renderDbStats',     'dbStatGrid',      function() { renderDbStats(g, history); }],
+        ['renderWeeklyGoals', null,               function() { if (typeof renderWeeklyGoals === 'function') renderWeeklyGoals(); }],
+        ['renderDbStreak',    'dbCalendar',       function() { renderDbStreak(g); }],
+        ['renderDbQuizChart', 'dbQuizChart',      function() { renderDbQuizChart(history); }],
+        ['renderDbPomodoro',  'dbPomoStats',      function() { renderDbPomodoro(g); }],
+        ['renderStudyStats',  'dbStudyStats',     function() { renderStudyStats(g, history); }],
+        ['renderDbVideos',    'dbVideoList',      function() { renderDbVideos(history); }],
+        ['renderDbBadgeCats', 'dbBadgeCats',      function() { renderDbBadgeCats(g); }],
+        ['renderSrsBanner',   'srsBannerWrap',    function() { if (typeof renderSrsBanner === 'function') renderSrsBanner('srsBannerWrap'); }],
     ];
 
     renders.forEach(function(entry) {
-        try { entry[1](); }
-        catch (e) { console.error('[Dashboard] ' + entry[0] + ' error:', e); }
+        var name = entry[0], containerId = entry[1], fn = entry[2];
+        try {
+            fn();
+        } catch (e) {
+            console.error('[Dashboard] ' + name + ' error:', e);
+            // Show inline error UI inside the failed card's container
+            _dashShowCardError(containerId, name, e);
+        }
     });
+}
+
+/**
+ * Show a styled error message inside a dashboard card that failed to render.
+ * Includes a retry button that re-runs the full dashboard render.
+ */
+function _dashShowCardError(containerId, renderName, error) {
+    var container = containerId ? document.getElementById(containerId) : null;
+    if (!container) return;
+
+    container.innerHTML =
+        '<div class="db-card-error">' +
+            '<div class="db-card-error-icon">⚠️</div>' +
+            '<div class="db-card-error-text">' +
+                '<span>Không thể tải phần này</span>' +
+                '<small>' + escHtml(renderName + ': ' + (error.message || error)) + '</small>' +
+            '</div>' +
+            '<button class="db-card-error-retry" onclick="try{renderDashboard()}catch(e){}" title="Thử lại">' +
+                '↻ Thử lại' +
+            '</button>' +
+        '</div>';
 }
 
 // ── Stat cards ──────────────────────────────────────────
@@ -353,11 +380,31 @@ function _dbPomoStatItem(icon, value, label, color) {
 function renderStudyStats(g, history) {
     var container = document.getElementById('dbStudyStats');
     if (!container) return;
+
+    var sections = [
+        ['📊 Hoat dong 7 ngay qua', 'stats-week-chart', function() { return buildWeekChart(g); }],
+        ['🏷️ Phan loai video',      'stats-categories', function() { return buildCategoryChart(history); }],
+        ['🧠 Spaced Repetition',    'stats-sm2',        function() { return buildSm2Stats(); }],
+        ['📈 Tien do hoc tap',      'stats-timeline',   function() { return buildLearningTimeline(history); }, true],
+    ];
+
     var html = '';
-    html += '<div class="stats-card"><div class="stats-card-title">\ud83d\udcca Hoat dong 7 ngay qua</div><div class="stats-week-chart">' + buildWeekChart(g) + '</div></div>';
-    html += '<div class="stats-card"><div class="stats-card-title">\ud83c\udff7\ufe0f Phan loai video</div><div class="stats-categories">' + buildCategoryChart(history) + '</div></div>';
-    html += '<div class="stats-card"><div class="stats-card-title">\ud83e\udde0 Spaced Repetition</div><div class="stats-sm2">' + buildSm2Stats() + '</div></div>';
-    html += '<div class="stats-card stats-card-wide"><div class="stats-card-title">\ud83d\udcc8 Tien do hoc tap</div><div class="stats-timeline">' + buildLearningTimeline(history) + '</div></div>';
+    sections.forEach(function(s) {
+        var title = s[0], cls = s[1], builder = s[2], isWide = s[3];
+        var content;
+        try {
+            content = builder();
+        } catch (e) {
+            console.error('[Dashboard] ' + cls + ' error:', e);
+            content = '<div class="db-card-error" style="padding:12px">' +
+                '<span>⚠️</span> <small>' + escHtml(e.message || String(e)) + '</small>' +
+                '</div>';
+        }
+        html += '<div class="stats-card' + (isWide ? ' stats-card-wide' : '') + '">' +
+            '<div class="stats-card-title">' + title + '</div>' +
+            '<div class="' + cls + '">' + content + '</div>' +
+            '</div>';
+    });
     container.innerHTML = html;
 }
 

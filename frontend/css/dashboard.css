@@ -332,3 +332,65 @@ html.light-mode .db-pomo-msg {
     color: #7c3aed;
 }
 
+/* ── Card Error Boundary ── */
+.db-card-error {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 16px;
+    border-radius: 12px;
+    background: rgba(239, 68, 68, 0.06);
+    border: 1px solid rgba(239, 68, 68, 0.15);
+}
+.db-card-error-icon {
+    font-size: 24px;
+    flex-shrink: 0;
+}
+.db-card-error-text {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+.db-card-error-text span {
+    font-size: 13px;
+    font-weight: 600;
+    color: #fca5a5;
+}
+.db-card-error-text small {
+    font-size: 11px;
+    color: #666;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.db-card-error-retry {
+    padding: 6px 14px;
+    border-radius: 8px;
+    border: 1px solid rgba(239, 68, 68, 0.25);
+    background: rgba(239, 68, 68, 0.1);
+    color: #fca5a5;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    flex-shrink: 0;
+    transition: all 0.15s;
+}
+.db-card-error-retry:hover {
+    background: rgba(239, 68, 68, 0.2);
+    border-color: rgba(239, 68, 68, 0.4);
+}
+
+/* Light mode */
+html.light-mode .db-card-error {
+    background: rgba(239, 68, 68, 0.05);
+    border-color: rgba(239, 68, 68, 0.12);
+}
+html.light-mode .db-card-error-text span { color: #dc2626; }
+html.light-mode .db-card-error-text small { color: #9ca3af; }
+html.light-mode .db-card-error-retry {
+    background: rgba(239, 68, 68, 0.08);
+    border-color: rgba(239, 68, 68, 0.2);
+    color: #dc2626;
+}
