@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -161,7 +161,7 @@
                         </div>
                         <div class="hist-search-wrap">
                             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="13" height="13" style="flex-shrink:0;opacity:.5"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35" stroke-linecap="round"/></svg>
-                            <input type="text" id="histSearchInput" class="hist-search-input"
+                            <input type="text" id="histSearchInput" class="hist-search-input" autocomplete="off"
                                    placeholder="Tìm video..."
                                    oninput="filterHistory(this.value)"
                                    aria-label="Tìm kiếm lịch sử">
@@ -834,7 +834,7 @@
                             <svg class="transcript-search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                                 <circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35" stroke-linecap="round"/>
                             </svg>
-                            <input type="text" class="transcript-search-input" id="transcriptSearchInput"
+                            <input type="text" class="transcript-search-input" id="transcriptSearchInput" autocomplete="off"
                                    placeholder="Tìm trong transcript..."
                                    oninput="searchTranscript(this.value)"
                                    aria-label="Tìm kiếm transcript">
@@ -1375,7 +1375,7 @@
             <div class="share-notes-result hidden" id="shareNotesResult">
                 <div class="share-notes-success">✅ Link đã tạo thành công!</div>
                 <div class="share-notes-link-wrap">
-                    <input type="text" class="share-notes-link" id="shareNotesLink" readonly aria-label="Link chia sẻ" onclick="this.select()">
+                    <input type="text" class="share-notes-link" id="shareNotesLink" readonly autocomplete="off" aria-label="Link chia sẻ" onclick="this.select()">
                     <button class="share-notes-copy-btn" id="shareNotesCopyBtn" aria-label="Copy link" onclick="copyShareNotesLink()">
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>
                         Copy
@@ -1485,7 +1485,7 @@
                     <label for="profileName">Tên hiển thị</label>
                     <div class="auth-input-wrapper">
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2" stroke-linecap="round" stroke-linejoin="round"/><circle cx="12" cy="7" r="4"/></svg>
-                        <input type="text" id="profileName" placeholder="Tên hiển thị" required>
+                        <input type="text" autocomplete="name" id="profileName" placeholder="Tên hiển thị" required>
                     </div>
                 </div>
 
@@ -1494,7 +1494,7 @@
                     <label for="profileEmail">Email</label>
                     <div class="auth-input-wrapper">
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
-                        <input type="email" id="profileEmail" disabled style="opacity:0.5;cursor:not-allowed">
+                        <input type="email" autocomplete="email" id="profileEmail" disabled style="opacity:0.5;cursor:not-allowed">
                     </div>
                 </div>
 

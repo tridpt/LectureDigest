@@ -228,11 +228,11 @@
         positionPopup(popup, anchorRect);
 
         try {
-            const res = await fetch('/api/explain-concept', {
+            const res = await fetchWithTimeout('/api/explain-concept', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ term, context: ctx, video_title: videoTitle, language })
-            });
+            }, 90000);
             if (!res.ok) throw new Error('HTTP ' + res.status);
             const data = await res.json();
 
