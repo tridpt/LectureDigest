@@ -109,7 +109,7 @@
                 </button>
 
                 <!-- Dashboard button -->
-                <button class="dashboard-nav-btn" onclick="openDashboard()" title="Dashboard học tập" aria-label="Mở dashboard">
+                <button class="dashboard-nav-btn" onclick="try{openDashboard()}catch(e){var ds=document.getElementById('dashboardSection');if(ds){document.querySelectorAll('[id$=Section]').forEach(function(s){s.classList.add('hidden')});ds.classList.remove('hidden')}console.error('Dashboard error:',e)}" title="Dashboard học tập" aria-label="Mở dashboard">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16">
                         <rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/>
                         <rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/>
