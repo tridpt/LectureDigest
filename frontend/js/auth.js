@@ -20,6 +20,10 @@ var _googleClientId = null;
 
 // ── Google Sign-In ──────────────────────────────────────
 function _loadGoogleSignIn() {
+    // Skip GSI on localhost — origin won't be in Google's allowed list
+    var host = window.location.hostname;
+    if (host === 'localhost' || host === '127.0.0.1') return;
+
     // 1. Fetch client ID from backend
     fetchWithTimeout(API_BASE + '/api/auth/google-client-id', 10000)
         .then(function(r) { return r.json(); })
