@@ -23,7 +23,7 @@ from database import (
     db_save_reset_token, db_get_reset_token, db_delete_reset_token,
     db_delete_reset_tokens_for_email, db_cleanup_expired_tokens,
     db_check_rate_limit, db_reset_rate_limit,
-    db_delete_user, db_export_user_data,
+    db_delete_user, db_export_user_data, db_get_leaderboard,
 )
 
 router = APIRouter(prefix="/api/auth", tags=["auth"])
@@ -484,3 +484,17 @@ async def export_data(request: Request):
     data = db_export_user_data(user["id"])
     data["exported_at"] = int(time.time())
     return data
+
+
+@router.get("/leaderboard")
+async def get_leaderboard(request: Request):
+    """Get the study leaderboard — ranked users by composite score."""
+    user = get_current_user(request)
+    current_user_id = user["id"] if user else None
+
+    entries = db_get_leaderboard(limit=50)
+
+    return {
+        "entries": entries,
+        "current_user_id": current_user_id
+    }

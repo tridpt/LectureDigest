@@ -60,6 +60,7 @@
     <link rel="stylesheet" href="/css/srs-review.css">
     <link rel="stylesheet" href="/css/pomodoro.css">
     <link rel="stylesheet" href="/css/weekly-goals.css">
+    <link rel="stylesheet" href="/css/leaderboard.css">
     <!-- Utilities & Responsive -->
     <link rel="stylesheet" href="/css/utilities.css">
     <link rel="stylesheet" href="/css/mobile.css">
@@ -885,7 +886,10 @@
                     <h1 class="db-title">📊 Dashboard học tập</h1>
                     <p class="db-date" id="dbDate"></p>
                 </div>
-                <div class="db-header-right">
+                <div class="db-header-right" style="display:flex;gap:8px;">
+                    <button class="db-badges-shortcut" onclick="openLeaderboard()">
+                        🏅 Xếp hạng
+                    </button>
                     <button class="db-badges-shortcut" onclick="closeDashboard(); openBadgesPage();">
                         🏆 Huy hiệu
                     </button>
@@ -1326,6 +1330,8 @@
     <script src="/js/pomodoro.js"></script>
     <!-- Weekly Learning Goals -->
     <script src="/js/weekly-goals.js"></script>
+    <!-- Leaderboard -->
+    <script src="/js/leaderboard.js"></script>
 
     <!-- ══════════════════════════════ SHARE NOTES MODAL ══════════════════════════════ -->
     <div class="share-notes-overlay hidden" id="shareNotesOverlay" onclick="if(event.target===this)closeShareNotesModal()">
@@ -1720,6 +1726,17 @@
         });
     }
     </script>
+    <!-- ═══════ LEADERBOARD MODAL ═══════ -->
+    <div class="lb-overlay hidden" id="leaderboardOverlay" onclick="if(event.target===this)closeLeaderboard()">
+        <div class="lb-modal">
+            <div class="lb-header">
+                <span class="lb-title">🏅 Bảng xếp hạng học tập</span>
+                <button class="lb-close" onclick="closeLeaderboard()">✕</button>
+            </div>
+            <div class="lb-body" id="lbBody"></div>
+        </div>
+    </div>
+
     <!-- ═══════ WEEKLY GOALS SETTINGS ═══════ -->
     <div class="gs-overlay hidden" id="goalsSettingsOverlay" onclick="if(event.target===this)closeGoalsSettings()">
         <div class="gs-modal">
