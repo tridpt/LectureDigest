@@ -750,9 +750,11 @@ function renderCustomCardList(videoId) {
     }
 
     list.innerHTML = cards.map(function(c) {
+        var frontText = escHtml(c.front.substring(0, 60)) + (c.front.length > 60 ? '...' : '');
+        var backText = escHtml(c.back.substring(0, 60)) + (c.back.length > 60 ? '...' : '');
         return '<div class="custom-fc-item">'
-            + '<div class="custom-fc-item-front">' + c.front.substring(0, 60) + (c.front.length > 60 ? '...' : '') + '</div>'
-            + '<div class="custom-fc-item-back">' + c.back.substring(0, 60) + (c.back.length > 60 ? '...' : '') + '</div>'
+            + '<div class="custom-fc-item-front">' + frontText + '</div>'
+            + '<div class="custom-fc-item-back">' + backText + '</div>'
             + '<button class="custom-fc-item-del" onclick="deleteCustomCard(' + c.id + ')" title="Xoa">&times;</button>'
             + '</div>';
     }).join('');

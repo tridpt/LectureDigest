@@ -97,7 +97,7 @@ async function sendChatMessage() {
 
     } catch (err) {
         document.getElementById(typingId)?.remove();
-        appendChatMessage('assistant', `❌ Lỗi: ${err.message}`);
+        appendChatMessage('assistant', '❌ Lỗi: ' + (typeof escapeHtml === 'function' ? escapeHtml(err.message) : err.message));
     } finally {
         chatState.isLoading = false;
         document.getElementById('chatSendBtn').disabled = false;
@@ -151,7 +151,8 @@ function showTypingIndicator() {
 }
 
 function markdownToHtml(text) {
-    return text
+    // SECURITY: escape HTML first to prevent XSS, then apply markdown transforms
+    return escapeHtml(text)
         // Bold
         .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
         // Timestamps like [02:30] — make them clickable
