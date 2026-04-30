@@ -1,0 +1,80 @@
+    <!-- ══════════════════════════════ AUTH MODAL ══════════════════════════════ -->
+    <div class="auth-modal-overlay hidden" id="authModalOverlay" role="dialog" aria-modal="true" aria-label="Đăng nhập">
+        <div class="auth-modal">
+            <button type="button" class="auth-modal-close" onclick="closeAuthModal()" aria-label="Đóng">✕</button>
+            <div class="auth-modal-icon">🔐</div>
+            <h3 class="auth-modal-title" id="authModalTitle">Đăng nhập</h3>
+            <p class="auth-modal-subtitle">Lưu tiến trình học tập của bạn</p>
+
+            <!-- Google Sign-In Button -->
+            <div class="auth-google-wrap" id="authGoogleWrap">
+                <div id="googleSignInBtn"></div>
+            </div>
+            <div class="auth-divider"><span>hoặc</span></div>
+
+            <form id="authForm" data-mode="login" onsubmit="submitAuthForm(event)">
+                <!-- Display name (register only) -->
+                <div class="auth-field hidden" id="authNameRow">
+                    <label for="authDisplayName">Tên hiển thị</label>
+                    <div class="auth-input-wrapper">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2" stroke-linecap="round" stroke-linejoin="round"/><circle cx="12" cy="7" r="4"/></svg>
+                        <input type="text" id="authDisplayName" placeholder="Nguyễn Văn A" autocomplete="name">
+                    </div>
+                </div>
+
+                <!-- Email -->
+                <div class="auth-field">
+                    <label for="authEmail">Email</label>
+                    <div class="auth-input-wrapper">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+                        <input type="email" id="authEmail" placeholder="email@example.com" autocomplete="email" required>
+                    </div>
+                </div>
+
+                <!-- Password -->
+                <div class="auth-field" id="authPasswordRow">
+                    <label for="authPassword">Mật khẩu</label>
+                    <div class="auth-input-wrapper">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>
+                        <input type="password" id="authPassword" placeholder="Tối thiểu 6 ký tự" autocomplete="current-password" required>
+                    </div>
+                    <!-- Forgot password link (login mode only) -->
+                    <div class="auth-forgot-link" id="authForgotLink">
+                        <a href="#" onclick="event.preventDefault();_authSetMode('forgot')">Quên mật khẩu?</a>
+                    </div>
+                </div>
+
+                <!-- Error message -->
+                <div class="auth-error hidden" id="authError"></div>
+
+                <!-- Success message (for forgot password) -->
+                <div class="auth-success hidden" id="authSuccess"></div>
+
+                <!-- Submit -->
+                <button type="submit" class="auth-submit-btn" id="authSubmitBtn">Đăng nhập</button>
+
+                <!-- Switch mode -->
+                <div class="auth-switch" id="authSwitchText">
+                    Chưa có tài khoản? <a href="#" onclick="event.preventDefault();_authSetMode('register')">Đăng ký ngay</a>
+                </div>
+            </form>
+
+            <!-- Forgot Password Form (separate from login/register) -->
+            <div class="auth-forgot-form hidden" id="authForgotForm">
+                <div class="auth-field">
+                    <label for="authForgotEmail">Email đăng ký</label>
+                    <div class="auth-input-wrapper">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+                        <input type="email" id="authForgotEmail" placeholder="email@example.com" autocomplete="email">
+                    </div>
+                </div>
+                <div class="auth-error hidden" id="authForgotError"></div>
+                <div class="auth-success hidden" id="authForgotSuccess"></div>
+                <button type="button" class="auth-submit-btn" id="authForgotSubmitBtn" onclick="submitForgotPassword()">Gửi link đặt lại</button>
+                <div class="auth-switch">
+                    <a href="#" onclick="event.preventDefault();_authSetMode('login')">← Quay lại đăng nhập</a>
+                </div>
+            </div>
+        </div>
+    </div>
+

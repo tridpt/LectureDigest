@@ -124,6 +124,28 @@ app.include_router(folders_router)
 
 _FRONTEND_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "frontend"))
 
+# ── Jinja2 Template Engine for index.html partials ──
+from jinja2 import Environment, FileSystemLoader
+import time as _time2
+
+_jinja_env = Environment(
+    loader=FileSystemLoader(_FRONTEND_DIR),
+    auto_reload=True,  # safe for dev; in production, set False
+)
+
+_index_cache = {"html": None, "ts": 0}
+
+def _render_index():
+    """Render index.html with Jinja2 includes. Cached for 60s in dev."""
+    now = _time2.time()
+    if _index_cache["html"] and now - _index_cache["ts"] < 60:
+        return _index_cache["html"]
+    template = _jinja_env.get_template("index.html")
+    _index_cache["html"] = template.render()
+    _index_cache["ts"] = now
+    return _index_cache["html"]
+
+
 # ── Dynamic Service Worker with auto-versioned cache ──
 import hashlib
 import time as _time
@@ -221,8 +243,10 @@ if os.path.isdir(_FRONTEND_DIR):
             if os.path.isfile(shared_page):
                 return FileResponse(shared_page, media_type="text/html")
 
-        # Fallback: serve index.html for all SPA routes
-        index = os.path.join(_FRONTEND_DIR, "index.html")
-        if os.path.isfile(index):
-            return FileResponse(index)
-        raise HTTPException(status_code=404, detail="Not found")
+        # Fallback: render index.html with Jinja2 partials
+        from fastapi.responses import HTMLResponse
+        try:
+            html = _render_index()
+            return HTMLResponse(content=html)
+        except Exception:
+            raise HTTPException(status_code=404, detail="Not found")

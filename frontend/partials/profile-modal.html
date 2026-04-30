@@ -1,0 +1,99 @@
+    <!-- ══════════════════════════════ PROFILE MODAL ══════════════════════════════ -->
+    <div class="profile-modal-overlay hidden" id="profileModalOverlay" role="dialog" aria-modal="true" aria-label="Hồ sơ cá nhân">
+        <div class="profile-modal">
+            <button type="button" class="profile-modal-close" onclick="closeProfileModal()" aria-label="Đóng">✕</button>
+            <div class="profile-header">
+                <h3>👤 Hồ sơ cá nhân</h3>
+                <p>Cập nhật thông tin của bạn</p>
+            </div>
+
+            <form onsubmit="saveProfile(event)">
+                <!-- Display Name -->
+                <div class="auth-field">
+                    <label for="profileName">Tên hiển thị</label>
+                    <div class="auth-input-wrapper">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2" stroke-linecap="round" stroke-linejoin="round"/><circle cx="12" cy="7" r="4"/></svg>
+                        <input type="text" autocomplete="name" id="profileName" placeholder="Tên hiển thị" required>
+                    </div>
+                </div>
+
+                <!-- Email (read-only) -->
+                <div class="auth-field">
+                    <label for="profileEmail">Email</label>
+                    <div class="auth-input-wrapper">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+                        <input type="email" autocomplete="email" id="profileEmail" disabled style="opacity:0.5;cursor:not-allowed">
+                    </div>
+                </div>
+
+                <!-- Avatar Color -->
+                <div class="profile-color-label">Màu avatar</div>
+                <div class="profile-color-grid">
+                    <div class="profile-color-option" data-color="#8b5cf6" style="background:#8b5cf6" role="button" aria-label="Chọn màu" onclick="selectProfileColor(this)"></div>
+                    <div class="profile-color-option" data-color="#6366f1" style="background:#6366f1" role="button" aria-label="Chọn màu" onclick="selectProfileColor(this)"></div>
+                    <div class="profile-color-option" data-color="#3b82f6" style="background:#3b82f6" role="button" aria-label="Chọn màu" onclick="selectProfileColor(this)"></div>
+                    <div class="profile-color-option" data-color="#0ea5e9" style="background:#0ea5e9" role="button" aria-label="Chọn màu" onclick="selectProfileColor(this)"></div>
+                    <div class="profile-color-option" data-color="#14b8a6" style="background:#14b8a6" role="button" aria-label="Chọn màu" onclick="selectProfileColor(this)"></div>
+                    <div class="profile-color-option" data-color="#10b981" style="background:#10b981" role="button" aria-label="Chọn màu" onclick="selectProfileColor(this)"></div>
+                    <div class="profile-color-option" data-color="#f59e0b" style="background:#f59e0b" role="button" aria-label="Chọn màu" onclick="selectProfileColor(this)"></div>
+                    <div class="profile-color-option" data-color="#ef4444" style="background:#ef4444" role="button" aria-label="Chọn màu" onclick="selectProfileColor(this)"></div>
+                    <div class="profile-color-option" data-color="#ec4899" style="background:#ec4899" role="button" aria-label="Chọn màu" onclick="selectProfileColor(this)"></div>
+                    <div class="profile-color-option" data-color="#a855f7" style="background:#a855f7" role="button" aria-label="Chọn màu" onclick="selectProfileColor(this)"></div>
+                </div>
+
+                <!-- Change Password (optional) -->
+                <div class="profile-section-title">Đổi mật khẩu (tùy chọn)</div>
+                <div class="auth-field">
+                    <label for="profileCurrentPw">Mật khẩu hiện tại</label>
+                    <div class="auth-input-wrapper">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>
+                        <input type="password" id="profileCurrentPw" placeholder="Nhập nếu muốn đổi" autocomplete="current-password">
+                    </div>
+                </div>
+                <div class="auth-field">
+                    <label for="profileNewPw">Mật khẩu mới</label>
+                    <div class="auth-input-wrapper">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>
+                        <input type="password" id="profileNewPw" placeholder="Tối thiểu 6 ký tự" autocomplete="new-password">
+                    </div>
+                </div>
+
+                <!-- Error/Success messages -->
+                <div class="profile-error hidden" id="profileError"></div>
+                <div class="profile-success hidden" id="profileSuccess"></div>
+
+                <!-- Save button -->
+                <button type="submit" class="profile-save-btn" id="profileSaveBtn">Lưu thay đổi</button>
+            </form>
+
+            <!-- Export Data (GDPR) -->
+            <div class="profile-export-zone">
+                <div class="profile-export-title">📦 Xuất dữ liệu</div>
+                <p class="profile-export-desc">Tải toàn bộ dữ liệu tài khoản của bạn (lịch sử, ghi chú, bookmarks, gamification) dưới dạng JSON.</p>
+                <button type="button" class="profile-export-btn" id="exportDataBtn" aria-label="Xuất dữ liệu" onclick="authExportData()">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14">
+                        <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4" stroke-linecap="round" stroke-linejoin="round"/>
+                        <polyline points="7 10 12 15 17 10" stroke-linecap="round" stroke-linejoin="round"/>
+                        <line x1="12" y1="15" x2="12" y2="3" stroke-linecap="round"/>
+                    </svg>
+                    Tải dữ liệu (JSON)
+                </button>
+            </div>
+
+            <!-- Danger Zone -->
+            <div class="profile-danger-zone">
+                <div class="profile-danger-title">⚠️ Vùng nguy hiểm</div>
+                <p class="profile-danger-desc">Xóa tài khoản sẽ xóa vĩnh viễn tất cả dữ liệu của bạn (lịch sử, ghi chú, bookmarks, tiến độ học tập). Hành động này không thể hoàn tác.</p>
+                <div class="auth-field" id="deleteAccountPwField">
+                    <label for="deleteAccountPw">Nhập mật khẩu để xác nhận</label>
+                    <div class="auth-input-wrapper">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>
+                        <input type="password" id="deleteAccountPw" placeholder="Mật khẩu hiện tại" autocomplete="current-password">
+                    </div>
+                </div>
+                <div class="profile-error hidden" id="deleteAccountError"></div>
+                <button type="button" class="profile-delete-btn" id="deleteAccountBtn" onclick="authDeleteAccount()">🗑️ Xóa tài khoản vĩnh viễn</button>
+            </div>
+        </div>
+    </div>
+

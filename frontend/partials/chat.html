@@ -1,0 +1,68 @@
+    <!-- ═══════════════════════════ CHAT PANEL ═══════════════════════════ -->
+    <!-- Floating chat button (only visible when results are showing) -->
+    <button type="button" class="chat-fab hidden" id="chatFab" onclick="toggleChat()" aria-label="Chat với bài giảng" title="Chat với bài giảng" aria-label="Chat với bài giảng">
+        <svg class="chat-fab-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+            <path d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+        <span class="chat-fab-label">Chat với bài giảng</span>
+        <span class="chat-unread hidden" id="chatUnread">1</span>
+    </button>
+
+    <!-- Chat panel -->
+    <div class="chat-panel hidden" id="chatPanel" role="dialog" aria-label="Chat với bài giảng">
+        <!-- Panel header -->
+        <div class="chat-panel-header">
+            <div class="chat-header-info">
+                <div class="chat-avatar">🤖</div>
+                <div>
+                    <div class="chat-header-title">AI Tutor</div>
+                    <div class="chat-header-sub">Hỏi bất cứ điều gì về bài giảng</div>
+                </div>
+            </div>
+            <div class="chat-header-actions">
+                <button type="button" class="chat-clear-btn" onclick="clearChat()" aria-label="Xóa lịch sử chat" title="Xóa lịch sử chat" aria-label="Xóa lịch sử chat">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                </button>
+                <button type="button" class="chat-close-btn" onclick="toggleChat()" aria-label="Đóng chat">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M18 6L6 18M6 6l12 12" stroke-linecap="round"/>
+                    </svg>
+                </button>
+            </div>
+        </div>
+
+        <!-- Messages area -->
+        <div class="chat-messages" id="chatMessages" role="log" aria-live="polite">
+            <!-- Welcome message -->
+            <div class="chat-msg assistant">
+                <div class="chat-bubble">
+                    👋 Xin chào! Tôi đã đọc toàn bộ nội dung bài giảng này. Bạn có thể hỏi tôi bất cứ điều gì về video — nội dung, khái niệm, ví dụ, hay bất kỳ phần nào bạn chưa hiểu rõ!
+                </div>
+            </div>
+        </div>
+
+        <!-- Suggested questions -->
+        <div class="chat-suggestions" id="chatSuggestions">
+            <button type="button" class="chat-suggestion-btn" onclick="sendSuggestion(this)">📌 Tóm tắt nội dung chính</button>
+            <button type="button" class="chat-suggestion-btn" onclick="sendSuggestion(this)">🤔 Giải thích khái niệm khó nhất</button>
+            <button type="button" class="chat-suggestion-btn" onclick="sendSuggestion(this)">💡 Ví dụ thực tế từ bài giảng</button>
+        </div>
+
+        <!-- Input area -->
+        <div class="chat-input-area">
+            <textarea class="chat-input" id="chatInput" placeholder="Hỏi về bài giảng..." rows="1"
+                      onkeydown="handleChatKey(event)" oninput="autoResizeChatInput(this)"
+                      aria-label="Nhập câu hỏi"></textarea>
+            <button type="button" class="chat-send-btn" id="chatSendBtn" onclick="sendChatMessage()" aria-label="Gửi">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+            </button>
+        </div>
+    </div>
+
+    <!-- YouTube IFrame API (must come before app modules) -->
+    <script src="https://www.youtube.com/iframe_api"></script>
+

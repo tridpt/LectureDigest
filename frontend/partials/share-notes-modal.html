@@ -1,0 +1,49 @@
+    <!-- ══════════════════════════════ SHARE NOTES MODAL ══════════════════════════════ -->
+    <div class="share-notes-overlay hidden" id="shareNotesOverlay" role="dialog" onclick="if(event.target===this)closeShareNotesModal()">
+        <div class="share-notes-modal">
+            <button type="button" class="share-notes-close" onclick="closeShareNotesModal()" aria-label="Đóng">✕</button>
+            <div class="share-notes-icon">🔗</div>
+            <h2 class="share-notes-title">Chia sẻ ghi chú</h2>
+            <p class="share-notes-subtitle">Tạo link chia sẻ ghi chú & bookmarks cho bạn bè</p>
+
+            <!-- Config -->
+            <div class="share-notes-config" id="shareNotesConfig">
+                <label class="share-notes-check">
+                    <input type="checkbox" id="shareIncludeNotes" checked>
+                    <span>📝 Ghi chú</span>
+                    <span class="share-notes-count" id="shareNotesWordCount"></span>
+                </label>
+                <label class="share-notes-check">
+                    <input type="checkbox" id="shareIncludeBookmarks" checked>
+                    <span>🔖 Bookmarks</span>
+                    <span class="share-notes-count" id="shareBookmarkCount"></span>
+                </label>
+                <label class="share-notes-check">
+                    <input type="checkbox" id="shareIncludeOverview" checked>
+                    <span>📋 Tóm tắt bài giảng</span>
+                </label>
+                <button type="button" class="share-notes-generate-btn" id="shareNotesGenerateBtn" aria-label="Tạo link chia sẻ" onclick="generateShareLink()">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
+                    Tạo link chia sẻ
+                </button>
+            </div>
+
+            <!-- Result -->
+            <div class="share-notes-result hidden" id="shareNotesResult">
+                <div class="share-notes-success">✅ Link đã tạo thành công!</div>
+                <div class="share-notes-link-wrap">
+                    <input type="text" class="share-notes-link" id="shareNotesLink" readonly autocomplete="off" aria-label="Link chia sẻ" onclick="this.select()">
+                    <button type="button" class="share-notes-copy-btn" id="shareNotesCopyBtn" aria-label="Copy link" onclick="copyShareNotesLink()">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>
+                        Copy
+                    </button>
+                </div>
+                <div class="share-notes-hint">Bất kỳ ai có link đều có thể xem (chỉ đọc)</div>
+                <button type="button" class="share-notes-new-btn" onclick="resetShareNotesModal()">← Tạo link mới</button>
+            </div>
+
+            <!-- Error -->
+            <div class="share-notes-error hidden" id="shareNotesError"></div>
+        </div>
+    </div>
+

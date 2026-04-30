@@ -1,0 +1,78 @@
+    <!-- ══════════════════════════════ MIND MAP MODAL ══════════════════════════════ -->
+    <div class="mm-modal-overlay hidden" id="mmModalOverlay" role="dialog" aria-modal="true" aria-label="Sơ đồ tư duy">
+        <div class="mm-modal">
+            <div class="mm-modal-header">
+                <div class="mm-modal-title">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18">
+                        <circle cx="12" cy="12" r="3"/><path d="M12 9V4M12 15v5M9 12H4M15 12h5M10.17 10.17L6.34 6.34M13.83 13.83l3.83 3.83M13.83 10.17l3.83-3.83M10.17 13.83l-3.83 3.83" stroke-linecap="round"/>
+                    </svg>
+                    <span id="mmTitle">Sơ đồ tư duy</span>
+                </div>
+                <div class="mm-header-actions">
+                    <button type="button" class="mm-ctrl-btn" onclick="mmResetZoom()" title="Reset view" aria-label="Reset view">⊡ Reset</button>
+                    <button type="button" class="mm-ctrl-btn mm-download-btn" onclick="mmDownload()" title="Tải xuống PNG" aria-label="Tải xuống PNG">⬇ PNG</button>
+                    <button type="button" class="mm-modal-close" onclick="closeMindMap()" aria-label="Đóng">✕</button>
+                </div>
+            </div>
+            <div class="mm-canvas-area" id="mmCanvasArea">
+                <svg id="mmSvg" width="100%" height="100%"></svg>
+                <div class="mm-tooltip hidden" id="mmTooltip"></div>
+            </div>
+            <div class="mm-legend">
+                <span class="mm-legend-item"><span class="mm-dot" style="background:#7c3aed"></span>Chủ đề</span>
+                <span class="mm-legend-item"><span class="mm-dot" style="background:#4f46e5"></span>Chapters</span>
+                <span class="mm-legend-item"><span class="mm-dot" style="background:#0891b2"></span>Takeaways</span>
+                <span class="mm-legend-item"><span class="mm-dot" style="background:#b45309"></span>Highlights</span>
+                <span class="mm-legend-hint">🖱 Scroll để zoom · Kéo để di chuyển</span>
+            </div>
+        </div>
+    </div>
+
+
+    <!-- VIDEO LENGTH WARNING MODAL -->
+    <div class="vlen-overlay hidden" id="vlenOverlay" role="dialog" aria-modal="true" aria-label="Canh bao video dai">
+        <div class="vlen-modal">
+            <div class="vlen-icon">⏱️</div>
+            <h3 class="vlen-title">Video dài — Có thể mất nhiều thời gian</h3>
+            <p class="vlen-body" id="vlenBody"></p>
+            <div class="vlen-actions">
+                <button type="button" class="vlen-btn vlen-cancel" onclick="closeVlenModal()">Huỷ</button>
+                <button type="button" class="vlen-btn vlen-confirm" onclick="confirmAnalyze()">Vẫn phân tích</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- CONFIRM DELETE MODAL -->
+    <div class="confirm-overlay hidden" id="confirmOverlay" role="dialog" aria-modal="true">
+        <div class="confirm-modal">
+            <div class="confirm-icon">⚠️</div>
+            <p class="confirm-msg" id="confirmMsg"></p>
+            <div class="confirm-actions">
+                <button type="button" class="confirm-btn confirm-cancel" onclick="closeConfirmModal()">Hủy</button>
+                <button type="button" class="confirm-btn confirm-delete" onclick="doConfirmAction()">Xóa</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- COMPARE MODAL -->
+    <div class="compare-overlay hidden" id="compareOverlay" role="dialog" aria-modal="true">
+        <div class="compare-modal">
+            <div class="compare-header">
+                <h2>🔄 So sánh phân tích</h2>
+                <button type="button" class="compare-close" onclick="closeCompareModal()" aria-label="Close">&times;</button>
+            </div>
+            <div class="compare-body" id="compareBody">
+                <!-- filled by JS -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Global Search -->
+    <script src="/js/search.js"></script>
+    <!-- PWA Install Prompt -->
+    <script src="/js/pwa-install.js"></script>
+    <!-- Offline / Online Indicator -->
+    <script src="/js/offline-indicator.js"></script>
+    <!-- Keyboard Shortcuts Help -->
+    <script src="/js/shortcuts-help.js"></script>
+

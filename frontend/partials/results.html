@@ -1,0 +1,424 @@
+    <!-- ═══════════════════════════ RESULTS ═══════════════════════════ -->
+    <section class="results-section hidden" id="resultsSection" aria-label="Analysis results">
+        <!-- Playlist navigation bar (only visible in playlist mode) -->
+        <div class="pl-nav-bar hidden" id="plNavBar">
+            <button type="button" class="pl-nav-btn" id="plNavPrevBtn" onclick="plNavPrev()" aria-label="Video trước">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><path d="M15 18l-6-6 6-6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                Video trước
+            </button>
+            <div class="pl-nav-info">
+                <span class="pl-nav-pos" id="plNavPos">Video 1/10</span>
+                <button type="button" class="pl-nav-list-btn" onclick="showPlaylistView()">📚 Xem playlist</button>
+            </div>
+            <button type="button" class="pl-nav-btn" id="plNavNextBtn" onclick="plNavNext()" aria-label="Video sau">
+                Video tiếp
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><path d="M9 18l6-6-6-6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </button>
+        </div>
+
+        <!-- Video Header Bar -->
+        <div class="video-header">
+            <div class="video-header-inner">
+                <div class="video-meta">
+                    <span class="video-difficulty-badge" id="videoDifficulty"></span>
+                    <h2 class="video-title" id="videoTitle">Video Title</h2>
+                    <p class="video-author" id="videoAuthor"></p>
+                </div>
+                <div class="video-header-actions">
+                    <button type="button" class="export-pdf-btn" onclick="exportPDF()" id="exportPdfBtn" aria-label="Export study guide as PDF">
+                        <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                            <path d="M12 10v6m0 0l-3-3m3 3l3-3M3 17V7a2 2 0 012-2h6l2 2h4a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                        Export PDF
+                    </button>
+                    <button type="button" class="mindmap-btn" onclick="openMindMap()" id="mindmapBtn" aria-label="Xem sơ đồ tư duy">
+                        <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                            <circle cx="12" cy="12" r="3" stroke="currentColor" stroke-width="2"/>
+                            <path d="M12 9V4M12 15v5M9 12H4M15 12h5M10.17 10.17L6.34 6.34M13.83 13.83l3.83 3.83M13.83 10.17l3.83-3.83M10.17 13.83l-3.83 3.83" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                        </svg>
+                        Mind Map
+                    </button>
+                    <button type="button" class="share-btn" onclick="openShareModal()" id="shareBtn" aria-label="Chia sẻ kết quả">
+                        <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                            <path d="M4 12v8a2 2 0 002 2h12a2 2 0 002-2v-8M16 6l-4-4-4 4M12 2v13" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                        Chia sẻ
+                    </button>
+                    <button type="button" class="new-video-btn" onclick="resetToHero()" aria-label="Phân tích video mới">
+                        <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                            <path d="M19 12H5M12 19l-7-7 7-7" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                        Video mới
+                    </button>
+                    <button type="button" class="pomo-header-btn" id="pomoBtnHeader" title="Pomodoro Timer">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
+                        </svg>
+                        <span>Pomodoro</span>
+                        <span class="pomo-mini-time" id="pomoMiniTime"></span>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <div class="results-grid">
+            <!-- ── Left Column: Video + Overview ── -->
+            <aside class="video-column">
+                <!-- YouTube Embed -->
+                <div class="video-player-wrapper" id="youtubePlayer" aria-label="YouTube video player"></div>
+
+                <!-- Bookmark bar under player -->
+                <div class="bookmark-bar" id="bookmarkBar">
+                    <button type="button" class="add-bookmark-btn" onclick="addBookmark()" id="addBookmarkBtn" title="Đánh dấu timestamp hiện tại" aria-label="Đánh dấu timestamp hiện tại">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M19 21l-7-5-7 5V5a2 2 0 012-2h10a2 2 0 012 2z" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                        Bookmark
+                    </button>
+                    <span class="bookmark-current-time" id="bookmarkCurrentTime">00:00</span>
+                </div>
+
+                <!-- Overview Card -->
+                <div class="card overview-card">
+                    <div class="card-header">
+                        <span class="card-icon" aria-hidden="true">📋</span>
+                        <h3 class="card-title">Overview</h3>
+                    </div>
+                    <p class="overview-text" id="overviewText"></p>
+                    <div class="takeaways-section">
+                        <h4 class="takeaways-title">Key Takeaways</h4>
+                        <ul class="takeaways-list" id="takeawaysList" aria-label="Key takeaways"></ul>
+                    </div>
+                </div>
+
+                <!-- Notes Card -->
+                <div class="card notes-card" id="notesCard">
+                    <div class="card-header">
+                        <span class="card-icon" aria-hidden="true">📝</span>
+                        <h3 class="card-title">Ghi chú</h3>
+                        <div class="notes-header-actions">
+                            <span class="notes-word-count" id="notesWordCount">0 từ</span>
+                            <button type="button" class="notes-action-btn auto-notes-btn" id="autoNotesBtn" onclick="generateAutoNotes()" title="AI tạo ghi chú Cornell" aria-label="AI tạo ghi chú Cornell">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" stroke-linecap="round" stroke-linejoin="round"/>
+                                </svg>
+                            </button>
+                            <button type="button" class="notes-action-btn" id="notesTimestampBtn" onclick="insertNoteTimestamp()" title="Chèn timestamp hiện tại" aria-label="Chèn timestamp hiện tại">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
+                                </svg>
+                            </button>
+                            <button type="button" class="notes-action-btn" id="notesExportBtn" onclick="exportNotesMarkdown()" title="Tải xuống Markdown (.md)" aria-label="Tải xuống Markdown (.md)">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 15V3m0 12l-4-4m4 4l4-4M2 17l.621 2.485A2 2 0 004.561 21h14.878a2 2 0 001.94-1.515L22 17" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                            </button>
+                            <button type="button" class="notes-action-btn" id="notesCopyBtn" onclick="copyNotes()" title="Copy ghi chú" aria-label="Copy ghi chú">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/>
+                                </svg>
+                            </button>
+                            <button type="button" class="notes-action-btn notes-share-btn" id="notesShareBtn" onclick="openShareNotesModal()" title="Chia sẻ ghi chú" aria-label="Chia sẻ ghi chú">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/>
+                                </svg>
+                            </button>
+                        </div>
+                    </div>
+                    <textarea class="notes-textarea" id="notesTextarea"
+                              placeholder="Ghi chú của bạn về bài giảng này...&#10;&#10;💡 Tip: Bấm ⏱ để chèn timestamp video đang phát"
+                              aria-label="Ghi chú cá nhân"></textarea>
+                    <div class="notes-footer">
+                        <span class="notes-save-status" id="notesSaveStatus">✓ Đã lưu</span>
+                    </div>
+                </div>
+
+                <!-- Streak Card -->
+                <div class="card streak-card" id="streakCard">
+                    <div class="streak-main">
+                        <div class="streak-flame-wrap">
+                            <span class="streak-flame" id="streakFlame">🔥</span>
+                            <span class="streak-num" id="streakNum">0</span>
+                            <span class="streak-unit">ngày</span>
+                        </div>
+                        <div class="streak-meta">
+                            <span class="streak-label">Chuỗi học hiện tại</span>
+                            <span class="streak-best" id="streakBest">Kỷ lục: 0</span>
+                        </div>
+                        <button type="button" class="badges-open-btn" id="badgesOpenBtn" onclick="openBadgesModal()" title="Xem huy hiệu" aria-label="Xem huy hiệu">
+                            <span id="badgesEarnedCount">0</span>🏆
+                        </button>
+                    </div>
+                    <div class="streak-week" id="streakWeek"></div>
+                </div>
+
+                <!-- Progress Card -->
+                <div class="card progress-card" id="progressCard">
+                    <div class="card-header">
+                        <span class="card-icon" aria-hidden="true">📊</span>
+                        <h3 class="card-title">Tiến độ học</h3>
+                        <span class="progress-last-studied" id="progressLastStudied"></span>
+                    </div>
+
+                    <!-- Video watch progress -->
+                    <div class="progress-section">
+                        <div class="progress-label-row">
+                            <span class="progress-label">🎬 Đã xem video</span>
+                            <span class="progress-pct" id="watchPct">0%</span>
+                        </div>
+                        <div class="progress-track" role="progressbar" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100" id="watchTrack">
+                            <div class="progress-fill watch-fill" id="watchFill"></div>
+                        </div>
+                    </div>
+
+                    <!-- Quiz history -->
+                    <div class="progress-section" id="quizHistorySection">
+                        <div class="progress-label-row">
+                            <span class="progress-label">🧠 Lịch sử Quiz</span>
+                            <span class="progress-pct" id="quizAvgPct"></span>
+                        </div>
+                        <div class="quiz-history-chart" id="quizHistoryChart">
+                            <div class="quiz-history-empty" id="quizHistoryEmpty">Chưa có lần làm quiz nào</div>
+                        </div>
+                        <div class="quiz-history-labels" id="quizHistoryLabels"></div>
+                    </div>
+                </div>
+
+                <!-- Bookmarks Card -->
+                <div class="card bookmarks-card" id="bookmarksCard">
+                    <div class="card-header">
+                        <span class="card-icon" aria-hidden="true">🔖</span>
+                        <h3 class="card-title">Bookmarks</h3>
+                        <span class="bookmarks-count" id="bookmarksCount"></span>
+                    </div>
+                    <div class="bookmarks-list" id="bookmarksList">
+                        <div class="bookmarks-empty" id="bookmarksEmpty">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" width="28" height="28" opacity="0.3">
+                                <path d="M19 21l-7-5-7 5V5a2 2 0 012-2h10a2 2 0 012 2z" stroke-linecap="round"/>
+                            </svg>
+                            <span>Chưa có bookmark nào<br>Nhấn Bookmark khi video đang chạy</span>
+                        </div>
+                    </div>
+                </div>
+            </aside>
+
+            <!-- ── Right Column: Chapters + Quiz ── -->
+            <main class="content-column">
+                <!-- Chapter Timeline -->
+                <div class="card topics-card">
+                    <div class="card-header">
+                        <span class="card-icon" aria-hidden="true">🗺️</span>
+                        <h3 class="card-title">Chapter Timeline</h3>
+                        <span class="chapter-count" id="chapterCount" aria-live="polite">0 chapters</span>
+                    </div>
+                    <div class="topics-list" id="topicsList" role="list"></div>
+                </div>
+                <!-- Key Moments / Highlights -->
+                <div class="card highlights-card" id="highlightsCard">
+                    <div class="card-header">
+                        <span class="card-icon" aria-hidden="true">🔥</span>
+                        <h3 class="card-title">Key Moments</h3>
+                        <span class="chapter-count" id="highlightsCount">0 moments</span>
+                    </div>
+                    <div class="highlights-strip" id="highlightsList" role="list"></div>
+                </div>
+
+                <!-- Quiz Card -->
+                <div class="card quiz-card" id="quizCard">
+                    <div class="card-header">
+                        <span class="card-icon" aria-hidden="true">🧠</span>
+                        <h3 class="card-title">Knowledge Quiz</h3>
+                        <div class="quiz-header-right">
+                            <span class="quiz-score-badge hidden" id="scoreBadge" aria-live="polite">0/0</span>
+                            <!-- Regenerate quiz button -->
+                            <button type="button" class="regen-quiz-btn" id="regenQuizBtn" onclick="regenerateQuiz()" title="Thêm câu hỏi mới vào bộ hiện tại" aria-label="Thêm câu hỏi">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                                    <path d="M12 4v16m8-8H4" stroke-linecap="round" stroke-linejoin="round"/>
+                                </svg>
+                                Thêm câu hỏi
+                            </button>
+
+                            <div class="fc-dropdown" id="fcDropdown">
+                                <button type="button" class="fc-export-btn" aria-label="Menu flashcard" onclick="toggleFcMenu()" aria-haspopup="true" aria-expanded="false" id="fcToggleBtn">
+                                    <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                                        <rect x="2" y="4" width="20" height="14" rx="2" stroke="currentColor" stroke-width="1.8"/>
+                                        <path d="M7 9h10M7 13h6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+                                    </svg>
+                                    Flashcards
+                                    <svg class="fc-chevron" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                                        <path d="M6 9l6 6 6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                    </svg>
+                                </button>
+                                <div class="fc-menu hidden" id="fcMenu" role="menu">
+                                    <button type="button" class="fc-menu-item fc-study-item" onclick="openFlashcardStudy()" role="menuitem">
+                                        <span class="fc-menu-icon">&#127956;</span>
+                                        <div>
+                                            <div class="fc-menu-title">Học ngay</div>
+                                            <div class="fc-menu-sub">Ôn tập trực tiếp trong app</div>
+                                        </div>
+                                    </button>
+                                    <div class="fc-menu-divider"></div>
+                                    <button type="button" class="fc-menu-item" onclick="exportFlashcards('anki')" role="menuitem">
+                                        <span class="fc-menu-icon">📦</span>
+                                        <div>
+                                            <div class="fc-menu-title">Anki (TSV)</div>
+                                            <div class="fc-menu-sub">Import into Anki directly</div>
+                                        </div>
+                                    </button>
+                                    <button type="button" class="fc-menu-item" onclick="exportFlashcards('csv')" role="menuitem">
+                                        <span class="fc-menu-icon">📋</span>
+                                        <div>
+                                            <div class="fc-menu-title">CSV</div>
+                                            <div class="fc-menu-sub">Quizlet, Brainscape & others</div>
+                                        </div>
+                                    </button>
+                                    <div class="fc-menu-divider"></div>
+                                    <button type="button" class="fc-menu-item" onclick="openAddCardForm()" role="menuitem">
+                                        <span class="fc-menu-icon">✏️</span>
+                                        <div>
+                                            <div class="fc-menu-title">Tạo card</div>
+                                            <div class="fc-menu-sub">Tự tạo flashcard riêng</div>
+                                        </div>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Progress bar -->
+                    <div class="quiz-progress-bar" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" id="quizProgressBar">
+                        <div class="quiz-progress-fill" id="quizProgressFill"></div>
+                    </div>
+                    <p class="quiz-progress-text" id="quizProgressText">Question 1 of 10</p>
+
+                    <!-- Active question -->
+                    <div class="quiz-container" id="quizContainer"></div>
+
+                    <!-- Navigation buttons -->
+                    <div class="quiz-nav" id="quizNav">
+                        <button type="button" class="quiz-btn quiz-btn-skip" id="skipBtn" onclick="skipQuestion()">Skip</button>
+                        <button type="button" class="quiz-btn quiz-btn-next hidden" id="nextBtn" aria-label="Câu tiếp theo" onclick="nextQuestion()">
+                            Next Question
+                            <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                                <path d="M13 7l5 5m0 0l-5 5m5-5H6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                            </svg>
+                        </button>
+                    </div>
+
+                    <!-- Results screen -->
+                    <div class="quiz-results hidden" id="quizResults" aria-live="assertive">
+                        <div class="results-emoji" id="resultsEmoji" aria-hidden="true">🎯</div>
+                        <h3 class="results-title" id="resultsTitle">Quiz Complete!</h3>
+                        <div class="results-score" id="resultsScore">0/0</div>
+                        <p class="results-message" id="resultsMessage"></p>
+                        <div class="results-breakdown" id="resultsBreakdown"></div>
+                        <div class="quiz-results-actions">
+                            <button type="button" class="action-btn retry-quiz-btn" onclick="restartQuiz()">↺ Retry Quiz</button>
+                            <button type="button" class="action-btn analyze-quiz-btn" id="quizAnalyzeBtn" aria-label="Phân tích điểm yếu" onclick="analyzeQuizWeakAreas()">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><path d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                                🧠 Phân tích điểm yếu
+                            </button>
+                        </div>
+                        <div class="quiz-analysis-result hidden" id="quizAnalysisResult"></div>
+                    </div>
+                </div>
+
+                <!-- Exercises Card (Fill-in-the-Blank, True/False, Matching, Short Answer) -->
+                <div class="card exercises-card" id="exercisesCard">
+                    <div class="card-header">
+                        <span class="card-icon" aria-hidden="true">📝</span>
+                        <h3 class="card-title">Bài tập đa dạng</h3>
+                        <div class="quiz-header-right">
+                            <span class="ex-score-badge hidden" id="exScoreBadge" aria-live="polite">0/0</span>
+                            <button type="button" class="ex-gen-btn" id="exGenBtn" aria-label="Tạo bài tập" onclick="generateExercises()">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14">
+                                    <path d="M12 4v16m8-8H4" stroke-linecap="round" stroke-linejoin="round"/>
+                                </svg>
+                                Tạo bài tập
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Tab bar -->
+                    <div class="ex-tab-bar hidden" id="exTabBar">
+                        <button type="button" class="ex-tab active" data-tab="fill_blank" aria-label="Điền từ" onclick="exSwitchTab('fill_blank')">
+                            <span class="ex-tab-icon">✏️</span> Điền từ <span class="ex-tab-count">0</span>
+                        </button>
+                        <button type="button" class="ex-tab" data-tab="true_false" aria-label="Đúng sai" onclick="exSwitchTab('true_false')">
+                            <span class="ex-tab-icon">⚖️</span> Đúng/Sai <span class="ex-tab-count">0</span>
+                        </button>
+                        <button type="button" class="ex-tab" data-tab="matching" aria-label="Ghép cặp" onclick="exSwitchTab('matching')">
+                            <span class="ex-tab-icon">🔗</span> Nối cặp <span class="ex-tab-count">0</span>
+                        </button>
+                        <button type="button" class="ex-tab" data-tab="short_answer" aria-label="Trả lời ngắn" onclick="exSwitchTab('short_answer')">
+                            <span class="ex-tab-icon">📝</span> Tự luận <span class="ex-tab-count">0</span>
+                        </button>
+                    </div>
+
+                    <!-- Exercise content -->
+                    <div id="exContent">
+                        <div class="ex-empty">
+                            <div style="font-size:2.5rem;margin-bottom:12px">🎯</div>
+                            <p style="margin:0 0 4px;font-weight:600;color:var(--text-primary)">Luyện tập đa dạng hơn!</p>
+                            <p style="margin:0;font-size:13px">Bấm "Tạo bài tập" để AI tạo các dạng bài tập khác nhau:<br>
+                            <strong>Điền từ</strong> · <strong>Đúng/Sai</strong> · <strong>Nối cặp</strong> · <strong>Tự luận ngắn</strong></p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Transcript Search Card -->
+                <div class="card transcript-card" id="transcriptCard">
+                    <div class="card-header">
+                        <span class="card-icon" aria-hidden="true">📜</span>
+                        <h3 class="card-title">Transcript</h3>
+                        <span class="transcript-count" id="transcriptCount"></span>
+                    </div>
+
+                    <!-- Search bar -->
+                    <div class="transcript-search-bar">
+                        <div class="transcript-search-wrap">
+                            <svg class="transcript-search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35" stroke-linecap="round"/>
+                            </svg>
+                            <input type="text" class="transcript-search-input" id="transcriptSearchInput" autocomplete="off"
+                                   placeholder="Tìm trong transcript..."
+                                   oninput="searchTranscript(this.value)"
+                                   aria-label="Tìm kiếm transcript">
+                            <button type="button" class="transcript-search-clear hidden" id="transcriptClearBtn"
+                                    onclick="clearTranscriptSearch()" aria-label="Xóa tìm kiếm">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M18 6L6 18M6 6l12 12" stroke-linecap="round"/>
+                                </svg>
+                            </button>
+                        </div>
+                        <div class="transcript-match-info hidden" id="transcriptMatchInfo">
+                            <button type="button" class="ts-nav-btn" onclick="navigateMatch(-1)" aria-label="Kết quả trước">‹</button>
+                            <span id="transcriptMatchText">0/0</span>
+                            <button type="button" class="ts-nav-btn" onclick="navigateMatch(1)" aria-label="Kết quả tiếp">›</button>
+                        </div>
+                    </div>
+
+                    <!-- Translate bar -->
+                    <div class="ts-translate-bar" id="tsTranslateBar">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14" style="flex-shrink:0;color:#888"><path d="M3 5h12M9 3v2m1.048 9.5A18.022 18.022 0 016.412 9m6.088 9h7M11 21l5-10 5 10M12.751 5C11.783 10.77 8.07 15.61 3 18.129" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                        <select class="ts-lang-select" id="tsLangSelect">
+                            <option value="Vietnamese">Tiếng Việt</option>
+                            <option value="English">English</option>
+                            <option value="Japanese">日本語</option>
+                            <option value="Korean">한국어</option>
+                            <option value="Chinese Simplified">中文简体</option>
+                            <option value="French">Français</option>
+                            <option value="Spanish">Español</option>
+                            <option value="German">Deutsch</option>
+                        </select>
+                        <button type="button" class="ts-translate-btn" id="tsTranslateBtn" onclick="translateTranscript()">Dịch</button>
+                        <button type="button" class="ts-translate-toggle hidden" id="tsTranslateToggle" onclick="toggleTranslation()">Ẩn dịch</button>
+                        <button type="button" class="ts-translate-clear hidden" id="tsTranslateClear" onclick="clearTranslation()" title="Xoá bản dịch" aria-label="Xoá bản dịch">✕</button>
+                    </div>
+
+                    <!-- Transcript lines -->
+                    <div class="transcript-list" id="transcriptList" role="list"></div>
+                </div>
+
+            </main>
+        </div>
+    </section>
+

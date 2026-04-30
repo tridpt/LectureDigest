@@ -1,0 +1,38 @@
+    <!-- ═══════════════════════════ LOADING ═══════════════════════════ -->
+    <section class="loading-section hidden" id="loadingSection" aria-live="polite" aria-label="Loading">
+        <div class="loading-content">
+            <div class="loading-animation" aria-hidden="true">
+                <div class="loading-ring"></div>
+                <div class="loading-ring loading-ring-2"></div>
+                <div class="loading-ring loading-ring-3"></div>
+                <div class="loading-brain">🤖</div>
+            </div>
+            <h2 class="loading-title">Analyzing Your Lecture</h2>
+            <p class="loading-subtitle" id="loadingStatus">Fetching video transcript...</p>
+            <div class="loading-steps" role="status">
+                <div class="loading-step active" id="step1">
+                    <div class="step-dot"></div>
+                    <span>Getting transcript</span>
+                </div>
+                <div class="loading-step" id="step2">
+                    <div class="step-dot"></div>
+                    <span>Analyzing with Gemini AI</span>
+                </div>
+                <div class="loading-step" id="step3">
+                    <div class="step-dot"></div>
+                    <span>Generating quiz questions</span>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ═══════════════════════════ ERROR ═══════════════════════════ -->
+    <section class="error-section hidden" id="errorSection" role="alert" aria-label="Error">
+        <div class="error-content">
+            <div class="error-icon" aria-hidden="true">⚠️</div>
+            <h2 class="error-title">Analysis Failed</h2>
+            <p class="error-message" id="errorMessage">Something went wrong. Please try again.</p>
+            <button type="button" class="action-btn" onclick="resetToHero()">Try Another Video</button>
+        </div>
+    </section>
+

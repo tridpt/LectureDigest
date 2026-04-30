@@ -1,0 +1,40 @@
+    <!-- ═══════ POMODORO TIMER PANEL ═══════ -->
+    <div class="pomo-panel hidden" id="pomoPanel">
+        <div class="pomo-header">
+            <div class="pomo-title">🍅 Pomodoro Timer</div>
+            <button type="button" class="pomo-close" onclick="closePomodoro()" aria-label="Đóng">✕</button>
+        </div>
+        <div class="pomo-timer-wrap">
+            <svg class="pomo-ring-svg" viewBox="0 0 120 120">
+                <circle class="pomo-ring-bg" cx="60" cy="60" r="54"/>
+                <circle class="pomo-ring-progress" id="pomoRing" cx="60" cy="60" r="54"/>
+            </svg>
+            <div class="pomo-timer-text">
+                <div class="pomo-time" id="pomoTimer">25:00</div>
+                <div class="pomo-status" id="pomoStatus">Sẵn sàng</div>
+            </div>
+        </div>
+        <div class="pomo-settings-row" id="pomoSettingsRow">
+            <span class="pomo-settings-label">⏱ Focus:</span>
+            <div class="pomo-presets" id="pomoPresets">
+                <!-- Filled by JS -->
+            </div>
+            <span class="pomo-settings-unit">phút</span>
+        </div>
+        <div class="pomo-controls">
+            <button type="button" class="pomo-ctrl-btn pomo-start-btn" id="pomoStartBtn" onclick="pomoStart()">▶ Bắt đầu</button>
+            <button type="button" class="pomo-ctrl-btn pomo-pause-btn hidden" id="pomoPauseBtn" onclick="pomoPause()">⏸ Tạm dừng</button>
+            <button type="button" class="pomo-ctrl-btn pomo-reset-btn hidden" id="pomoResetBtn" onclick="pomoReset()">↺ Reset</button>
+        </div>
+        <div class="pomo-stats">
+            <div class="pomo-stat">
+                <div class="pomo-stat-value" id="pomoSessions">0</div>
+                <div class="pomo-stat-label">Phiên</div>
+            </div>
+            <div class="pomo-stat">
+                <div class="pomo-stat-value" id="pomoTotal">0 phút</div>
+                <div class="pomo-stat-label">Tổng focus</div>
+            </div>
+        </div>
+    </div>
+

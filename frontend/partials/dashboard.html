@@ -1,0 +1,83 @@
+    <!-- ═══════════════════════════ DASHBOARD PAGE ════════════════════════════ -->
+    <section class="db-page hidden" id="dashboardSection" aria-label="Dashboard học tập">
+        <div class="db-inner">
+
+            <!-- Header -->
+            <div class="db-header">
+                <button type="button" class="bp-back-btn" onclick="closeDashboard()" aria-label="Quay lại">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="18" height="18">
+                        <path d="M19 12H5M12 5l-7 7 7 7" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                    Quay lại
+                </button>
+                <div class="db-header-center">
+                    <h1 class="db-title">📊 Dashboard học tập</h1>
+                    <p class="db-date" id="dbDate"></p>
+                </div>
+                <div class="db-header-right" style="display:flex;gap:8px;">
+                    <button type="button" class="db-badges-shortcut" onclick="openLeaderboard()" aria-label="Xếp hạng">
+                        🏅 Xếp hạng
+                    </button>
+                    <button type="button" class="db-badges-shortcut" onclick="closeDashboard(); openBadgesPage aria-label="Huy hiệu" onclick="closeDashboard(); openBadgesPage();">
+                        🏆 Huy hiệu
+                    </button>
+                </div>
+            </div>
+
+            <!-- SRS Review Banner -->
+            <div id="srsBannerWrap" class="hidden"></div>
+
+            <!-- Stat cards row -->
+            <div class="db-stat-grid" id="dbStatGrid"></div>
+
+            <!-- Weekly Learning Goals -->
+            <div class="db-card db-goals-panel">
+                <h3 class="db-card-title">🎯 Mục tiêu tuần</h3>
+                <div id="dbWeeklyGoals"></div>
+            </div>
+
+            <!-- Middle row: Streak calendar + Quiz performance -->
+            <div class="db-mid-row">
+                <div class="db-card db-streak-panel">
+                    <h3 class="db-card-title">🔥 Streak học tập</h3>
+                    <div class="db-streak-nums" id="dbStreakNums"></div>
+                    <div class="db-cal-label-row" id="dbCalLabels"></div>
+                    <div class="db-calendar" id="dbCalendar"></div>
+                </div>
+                <div class="db-card db-quiz-panel">
+                    <h3 class="db-card-title">🧠 Kết quả quiz gần đây</h3>
+                    <div class="db-quiz-chart" id="dbQuizChart"></div>
+                    <p class="db-quiz-avg" id="dbQuizAvg"></p>
+                </div>
+            </div>
+
+            <!-- Pomodoro Focus Stats -->
+            <div class="db-card db-pomo-panel">
+                <h3 class="db-card-title">🍅 Pomodoro Focus</h3>
+                <div class="db-pomo-stats" id="dbPomoStats"></div>
+            </div>
+
+                    <!-- Study Statistics -->
+                    <div class="db-card db-card-full">
+                        <div class="db-card-header">
+                            <h3 class="db-card-title">📊 Thống kê học tập</h3>
+                        </div>
+                        <div id="dbStudyStats" class="db-study-stats"></div>
+                    </div>
+
+
+            <!-- Recent videos -->
+            <div class="db-card db-recent-panel">
+                <h3 class="db-card-title">🎬 Video đã phân tích gần đây</h3>
+                <div class="db-video-list" id="dbVideoList"></div>
+            </div>
+
+            <!-- Badge progress -->
+            <div class="db-card db-badge-panel">
+                <h3 class="db-card-title">🏆 Tiến độ huy hiệu</h3>
+                <div class="db-badge-cats" id="dbBadgeCats"></div>
+            </div>
+
+        </div>
+    </section>
+

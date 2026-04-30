@@ -1,0 +1,37 @@
+    <!-- ═══════════════════════════════ KNOWLEDGE GRAPH ══════════════════════════════ -->
+    <section class="kg-page hidden" id="kgSection" aria-label="Knowledge Graph">
+        <div class="kg-inner">
+            <div class="kg-header">
+                <button type="button" class="bp-back-btn" onclick="closeKnowledgeGraph()" aria-label="Quay lại">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="18" height="18">
+                        <path d="M19 12H5M12 5l-7 7 7 7" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                    Quay lại
+                </button>
+                <div class="kg-header-center">
+                    <h1 class="kg-title">🧠 Knowledge Graph</h1>
+                    <p class="kg-subtitle" id="kgSubtitle">Bản đồ kiến thức từ các video đã phân tích</p>
+                </div>
+                <div class="kg-controls">
+                    <button type="button" class="kg-ctrl-btn" onclick="kgResetZoom()" title="Reset zoom" aria-label="Reset zoom">⊡ Reset</button>
+                    <button type="button" class="kg-ctrl-btn" onclick="kgToggleLabels()" title="Ẩn/hiện nhãn" aria-label="Ẩn/hiện nhãn" id="kgLabelBtn">🏷 Labels</button>
+                </div>
+            </div>
+            <div class="kg-body">
+                <div class="kg-canvas-wrap" id="kgCanvasWrap">
+                    <svg id="kgSvg" width="100%" height="100%"></svg>
+                    <div class="kg-empty hidden" id="kgEmpty">
+                        <div style="font-size:48px;margin-bottom:12px">🧠</div>
+                        <h3>Chưa có dữ liệu</h3>
+                        <p>Phân tích ít nhất 2 video để xem Knowledge Graph hiển thị các mối liên hệ giữa các chủ đề.</p>
+                    </div>
+                </div>
+                <div class="kg-detail-panel hidden" id="kgDetailPanel">
+                    <button type="button" class="kg-detail-close" onclick="closeKgDetail()" aria-label="Đóng">✕</button>
+                    <div id="kgDetailContent"></div>
+                </div>
+            </div>
+            <div class="kg-legend" id="kgLegend"></div>
+        </div>
+    </section>
+

@@ -1,0 +1,141 @@
+    <!-- ═══════════════════════════ HEADER ═══════════════════════════ -->
+    <header class="header" role="banner">
+        <div class="header-inner">
+            <div class="logo" id="logoBtn" onclick="goHome()" role="button" tabindex="0"
+                 aria-label="Về trang chủ" title="Về trang chủ"
+                 onkeydown="if(event.key==='Enter') goHome()" style="cursor:pointer">
+                <div class="logo-icon" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" fill="none">
+                        <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                </div>
+                <span class="logo-text">Lecture<span class="accent">Digest</span></span>
+            </div>
+            <div class="header-actions">
+                <!-- Theme toggle -->
+                <button type="button" class="theme-toggle-btn" id="themeToggleBtn" onclick="toggleTheme()" aria-label="Chuyển theme" title="Chuyển sáng/tối" aria-label="Chuyển sáng/tối">
+                    <span class="theme-icon" id="themeIcon">🌙</span>
+                </button>
+
+                <!-- Global Search -->
+                <button type="button" class="gsearch-trigger" aria-label="Tìm kiếm" onclick="openGlobalSearch()" title="Tim kiem (Ctrl+K)" aria-label="Tim kiem (Ctrl+K)">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35" stroke-linecap="round"/></svg>
+                    <span class="gsearch-trigger-kbd">Ctrl+K</span>
+                </button>
+
+                <!-- Keyboard Shortcuts Help -->
+                <button type="button" class="dashboard-nav-btn" onclick="openShortcutsHelp()" title="Phím tắt (?)" aria-label="Phím tắt" style="padding:7px 10px;font-size:14px;font-weight:700;">
+                    ⌨️
+                </button>
+
+                <!-- Dashboard button -->
+                <button type="button" class="dashboard-nav-btn" onclick="try{openDashboard()}catch(e){var ds=document.getElementById('dashboardSection');if(ds){document.querySelectorAll('[id$=Section]').forEach(function(s){s.classList.add('hidden')});ds.classList.remove('hidden')}console.error('Dashboard error:',e)}" title="Dashboard học tập" aria-label="Mở dashboard">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16">
+                        <rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/>
+                        <rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/>
+                    </svg>
+                    Dashboard
+                </button>
+
+                <!-- Knowledge Graph button -->
+                <button type="button" class="dashboard-nav-btn" onclick="openKnowledgeGraph()" title="Knowledge Graph" aria-label="Knowledge Graph">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16">
+                        <circle cx="6" cy="6" r="2.5"/><circle cx="18" cy="6" r="2.5"/><circle cx="12" cy="18" r="2.5"/>
+                        <path d="M8 7.5l3 7.5M16 7.5l-3 7.5M8.5 6h7" stroke-linecap="round"/>
+                    </svg>
+                    Knowledge Graph
+                </button>
+
+                <!-- Multi-Video Exam button -->
+                <button type="button" class="dashboard-nav-btn" onclick="openMexam()" title="Multi-Video Exam" aria-label="Multi-Video Exam">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16">
+                        <path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                    Exam
+                </button>
+
+                <!-- History button -->
+                <div class="history-wrapper">
+                    <button type="button" class="history-btn" id="historyToggle" aria-label="Lịch sử" onclick="toggleHistoryPanel()"
+                            aria-label="Lịch sử phân tích" aria-expanded="false" aria-controls="historyPanel">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                            <path d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                        Lịch sử
+                        <span class="hist-badge" id="historyCount">0</span>
+                    </button>
+
+                    <!-- History dropdown panel -->
+                    <div class="history-panel" id="historyPanel" role="dialog" aria-label="Lịch sử phân tích">
+                        <div class="hist-panel-header">
+                            <span class="hist-panel-title">📋 Lịch sử phân tích</span>
+                            <button type="button" class="hist-clear-btn" onclick="clearHistory()" title="Xóa tất cả" aria-label="Xóa tất cả">Xóa tất cả</button>
+                        </div>
+                        <div class="hist-search-wrap">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="13" height="13" style="flex-shrink:0;opacity:.5"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35" stroke-linecap="round"/></svg>
+                            <input type="text" id="histSearchInput" class="hist-search-input" autocomplete="off"
+                                   placeholder="Tìm video..."
+                                   oninput="filterHistory(this.value)"
+                                   aria-label="Tìm kiếm lịch sử">
+                        </div>
+                        <div class="folder-bar" id="folderBar"></div>
+                            <div class="tag-filter-bar" id="tagFilterBar">
+                                <button type="button" class="tag-filter-btn" data-tag="programming" onclick="filterHistoryByTag('programming')">💻 Lap trinh</button>
+                                <button type="button" class="tag-filter-btn" data-tag="math" onclick="filterHistoryByTag('math')">📊 Toan</button>
+                                <button type="button" class="tag-filter-btn" data-tag="science" onclick="filterHistoryByTag('science')">🔬 Khoa hoc</button>
+                                <button type="button" class="tag-filter-btn" data-tag="language" onclick="filterHistoryByTag('language')">🌍 Ngon ngu</button>
+                                <button type="button" class="tag-filter-btn" data-tag="business" onclick="filterHistoryByTag('business')">💰 Kinh doanh</button>
+                                <button type="button" class="tag-filter-btn" data-tag="design" onclick="filterHistoryByTag('design')">🎨 Thiet ke</button>
+                                <button type="button" class="tag-filter-btn" data-tag="music" onclick="filterHistoryByTag('music')">🎵 Am nhac</button>
+                                <button type="button" class="tag-filter-btn" data-tag="health" onclick="filterHistoryByTag('health')">🏃 Suc khoe</button>
+                                <button type="button" class="tag-filter-btn" data-tag="other" onclick="filterHistoryByTag('other')">📌 Khac</button>
+                            </div>
+                        <div class="hist-panel-body">
+                            <div class="hist-empty hidden" id="historyEmpty">
+                                <div style="font-size:2rem">📭</div>
+                                <p>Chưa có video nào được lưu.<br>Phân tích video đầu tiên của bạn!</p>
+                            </div>
+                            <div class="hist-list" id="historyList"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Auth: Login button / User avatar -->
+                <button type="button" class="auth-login-btn" id="authLoginBtn" aria-label="Đăng nhập" onclick="openAuthModal('login')" title="Đăng nhập" aria-label="Đăng nhập">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M15 3h4a2 2 0 012 2v14a2 2 0 01-2 2h-4M10 17l5-5-5-5M15 12H3" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                    Đăng nhập
+                </button>
+                <div class="auth-user-avatar hidden" id="authUserAvatar" role="button" aria-label="Menu tài khoản" onclick="toggleAuthUserMenu()">
+                    <!-- Filled by JS -->
+                </div>
+                <!-- User dropdown menu -->
+                <div class="auth-user-menu hidden" id="authUserMenu">
+                    <div class="auth-menu-header">
+                        <div class="auth-menu-name" id="authMenuName"></div>
+                        <div class="auth-menu-email" id="authMenuEmail"></div>
+                    </div>
+                    <button type="button" class="auth-menu-item" onclick="openProfileModalaria-label="Hồ sơ" onclick="openProfileModal()">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2" stroke-linecap="round" stroke-linejoin="round"/><circle cx="12" cy="7" r="4"/></svg>
+                        Hồ sơ cá nhân
+                    </button>
+                    <button type="button" class="auth-menu-item" onclick="_authCloseUserMenu(); if(typeof openSrsReviewaria-label="Ôn tập SRS" onclick="_authCloseUserMenu(); if(typeof openSrsReview==='function') openSrsReview();">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                        Ôn tập hàng ngày
+                    </button>
+                    <button type="button" class="auth-menu-item" onclick="_authCloseUserMenu(); authExportDataaria-label="Xuất dữ liệu" onclick="_authCloseUserMenu(); authExportData();">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 15V3m0 12l-4-4m4 4l4-4M2 17l.621 2.485A2 2 0 004.561 21h14.878a2 2 0 001.94-1.515L22 17" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                        Tải dữ liệu
+                    </button>
+                    <div class="auth-menu-divider"></div>
+                    <button type="button" class="auth-menu-item logout" aria-label="Đăng xuất" onclick="authLogout()">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4M16 17l5-5-5-5M21 12H9" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                        Đăng xuất
+                    </button>
+                </div>
+
+            </div>
+        </div>
+    </header>
+

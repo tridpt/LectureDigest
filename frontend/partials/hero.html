@@ -1,0 +1,144 @@
+    <!-- ═══════════════════════════ HERO ═══════════════════════════ -->
+    <section class="hero" id="hero" aria-label="Search section">
+        <div class="hero-content">
+            <div class="hero-tag">✨ AI-Powered Learning Tool</div>
+            <h1 class="hero-title">
+                Transform YouTube Lectures<br>
+                <span class="gradient-text">into Smart Study Guides</span>
+            </h1>
+            <p class="hero-subtitle">
+                Paste any YouTube lecture URL and get instant AI summaries, interactive chapter timelines,
+                and quiz questions — all linked to exact timestamps.
+            </p>
+
+            <div class="input-mode-tabs" id="inputModeTabs">
+                <button type="button" class="input-tab active" data-mode="url" aria-label="Nhập URL" onclick="setInputMode('url')">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><path d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"/><path d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                    YouTube URL
+                </button>
+                <button type="button" class="input-tab" data-mode="upload" aria-label="Tải file" onclick="setInputMode('upload')">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M17 8l-5-5-5 5M12 3v12" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                    Upload File
+                </button>
+            </div>
+
+            <!-- URL Input Mode -->
+            <div class="search-box" id="searchBox" role="search">
+                <div class="search-input-wrapper">
+                    <svg class="search-icon" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                        <path d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" fill="currentColor"/>
+                        <path d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" stroke="currentColor" stroke-width="1.5"/>
+                    </svg>
+                    <input
+                        type="url"
+                        id="urlInput"
+                        class="search-input"
+                        placeholder="Paste YouTube URL... (e.g. https://youtube.com/watch?v=...)"
+                        autocomplete="off"
+                        aria-label="YouTube video URL"
+                    />
+                    <button type="button" class="search-btn" id="analyzeBtn" onclick="analyzeVideo()" aria-label="Analyze video">
+                        <span class="btn-text">Analyze</span>
+                        <svg class="btn-icon" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                            <path d="M13 7l5 5m0 0l-5 5m5-5H6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                    </button>
+                </div>
+                <div class="search-hint">
+                    Try: CS lectures, TED Talks, coding tutorials, science lessons, history documentaries...
+                </div>
+
+
+                <!-- Language selector -->
+                <div class="lang-row" role="group" aria-label="Output language">
+                    <span class="lang-label">📝 Output in:</span>
+                    <div class="lang-options" id="langOptions">
+                        <button type="button" class="lang-btn" data-lang="English" onclick="setLang(this)">🇺🇸 English</button>
+                        <button type="button" class="lang-btn active" data-lang="Vietnamese" onclick="setLang(this)">🇻🇳 Tiếng Việt</button>
+                        <button type="button" class="lang-btn" data-lang="French" onclick="setLang(this)">🇫🇷 Français</button>
+                        <button type="button" class="lang-btn" data-lang="German" onclick="setLang(this)">🇩🇪 Deutsch</button>
+                        <button type="button" class="lang-btn" data-lang="Japanese" onclick="setLang(this)">🇯🇵 日本語</button>
+                        <button type="button" class="lang-btn" data-lang="Korean" onclick="setLang(this)">🇰🇷 한국어</button>
+                        <button type="button" class="lang-btn" data-lang="Chinese" onclick="setLang(this)">🇨🇳 中文</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Upload Mode -->
+            <div class="upload-zone hidden" id="uploadZone"
+                 ondragover="handleUploadDragOver(event)"
+                 ondragleave="handleUploadDragLeave(event)"
+                 ondrop="handleUploadDrop(event)"
+                 aria-label="Chọn file" onclick="triggerFileUpload()">
+                <input type="file" id="uploadFileInput" class="upload-file-input"
+                       accept=".mp3,.mp4,.wav,.m4a,.webm,.ogg,.flac,.aac,.mov,.mkv,.mpeg"
+                       onchange="handleFileSelected(event)">
+                <div class="upload-zone-content" id="uploadZoneContent">
+                    <div class="upload-icon-wrap">
+                        <svg class="upload-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                            <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M17 8l-5-5-5 5M12 3v12" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                    </div>
+                    <div class="upload-text-primary">Kéo thả file hoặc click để chọn</div>
+                    <div class="upload-text-secondary">MP3, MP4, WAV, M4A, WebM, OGG, FLAC, AAC, MOV • Tối đa 200MB</div>
+                </div>
+                <!-- File selected preview -->
+                <div class="upload-file-preview hidden" id="uploadFilePreview">
+                    <div class="upload-file-info">
+                        <div class="upload-file-icon">🎵</div>
+                        <div class="upload-file-details">
+                            <div class="upload-file-name" id="uploadFileName"></div>
+                            <div class="upload-file-size" id="uploadFileSize"></div>
+                        </div>
+                        <button type="button" class="upload-file-remove" onclick="event.stopPropagation();removeUploadFile()" aria-label="Xóa file">✕</button>
+                    </div>
+                </div>
+                <!-- Upload progress -->
+                <div class="upload-progress hidden" id="uploadProgress">
+                    <div class="upload-progress-bar">
+                        <div class="upload-progress-fill" id="uploadProgressFill"></div>
+                    </div>
+                    <div class="upload-progress-text" id="uploadProgressText">Đang upload...</div>
+                </div>
+
+                <!-- Language selector for upload -->
+                <div class="lang-row upload-lang-row" role="group" aria-label="Output language" onclick="event.stopPropagation()">
+                    <span class="lang-label">📝 Output in:</span>
+                    <div class="lang-options" id="uploadLangOptions">
+                        <button type="button" class="lang-btn" data-lang="English" onclick="event.stopPropagation();setLang(this)">🇺🇸 English</button>
+                        <button type="button" class="lang-btn active" data-lang="Vietnamese" onclick="event.stopPropagation();setLang(this)">🇻🇳 Tiếng Việt</button>
+                        <button type="button" class="lang-btn" data-lang="French" onclick="event.stopPropagation();setLang(this)">🇫🇷 Français</button>
+                        <button type="button" class="lang-btn" data-lang="German" onclick="event.stopPropagation();setLang(this)">🇩🇪 Deutsch</button>
+                        <button type="button" class="lang-btn" data-lang="Japanese" onclick="event.stopPropagation();setLang(this)">🇯🇵 日本語</button>
+                        <button type="button" class="lang-btn" data-lang="Korean" onclick="event.stopPropagation();setLang(this)">🇰🇷 한국어</button>
+                        <button type="button" class="lang-btn" data-lang="Chinese" onclick="event.stopPropagation();setLang(this)">🇨🇳 中文</button>
+                    </div>
+                </div>
+
+                <button type="button" class="upload-analyze-btn hidden" id="uploadAnalyzeBtn"
+                        aria-label="Phân tích file" onclick="event.stopPropagation();analyzeUploadedFile()">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><path d="M13 7l5 5m0 0l-5 5m5-5H6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                    Phân tích file
+                </button>
+            </div>
+
+        <!-- Feature cards -->
+        <div class="features" role="list">
+            <div class="feature-card" role="listitem">
+                <div class="feature-icon" aria-hidden="true">📖</div>
+                <div class="feature-title">Smart Summary</div>
+                <div class="feature-desc">AI extracts key concepts and generates a comprehensive overview of the entire lecture</div>
+            </div>
+            <div class="feature-card" role="listitem">
+                <div class="feature-icon" aria-hidden="true">🗺️</div>
+                <div class="feature-title">Chapter Timeline</div>
+                <div class="feature-desc">Navigate any section of the lecture instantly with clickable AI-generated timestamps</div>
+            </div>
+            <div class="feature-card" role="listitem">
+                <div class="feature-icon" aria-hidden="true">🧠</div>
+                <div class="feature-title">Interactive Quiz</div>
+                <div class="feature-desc">Test your knowledge with AI-generated questions linked to specific video moments</div>
+            </div>
+        </div>
+    </section>
+
