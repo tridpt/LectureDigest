@@ -18,6 +18,7 @@ import os
 from dotenv import load_dotenv
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.middleware.gzip import GZipMiddleware
 from fastapi.responses import FileResponse
 from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.requests import Request
@@ -85,10 +86,17 @@ class SecurityHeadersMiddleware(BaseHTTPMiddleware):
             response.headers["Cache-Control"] = "no-store"
             response.headers["Pragma"] = "no-cache"
 
+        # Cache static assets (CSS/JS/images) for performance
+        if path.endswith(('.css', '.js')):
+            response.headers["Cache-Control"] = "public, max-age=604800"  # 7 days
+        elif path.endswith(('.png', '.jpg', '.svg', '.ico', '.webp', '.woff2')):
+            response.headers["Cache-Control"] = "public, max-age=2592000"  # 30 days
+
         return response
 
 
 app.add_middleware(SecurityHeadersMiddleware)
+app.add_middleware(GZipMiddleware, minimum_size=500)
 
 
 # ═══════════════════════════════════════════════════════
