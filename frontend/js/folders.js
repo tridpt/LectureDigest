@@ -160,7 +160,8 @@ function toggleVideoInFolder(folderId, videoId, isCurrentlyIn) {
     closeFolderPicker();
     if (isCurrentlyIn) {
         // Remove
-        _folderFetch('/' + folderId + '/videos/' + encodeURIComponent(videoId), { method: 'DELETE' });
+        _folderFetch('/' + folderId + '/videos/' + encodeURIComponent(videoId), { method: 'DELETE' })
+            .catch(function(e) { console.warn('[Folders] remove video error:', e); });
         var arr = _folderVideos[folderId] || [];
         _folderVideos[folderId] = arr.filter(function(v) { return v !== videoId; });
     } else {
@@ -168,7 +169,7 @@ function toggleVideoInFolder(folderId, videoId, isCurrentlyIn) {
         _folderFetch('/' + folderId + '/videos', {
             method: 'POST',
             body: JSON.stringify({ video_id: videoId })
-        });
+        }).catch(function(e) { console.warn('[Folders] add video error:', e); });
         if (!_folderVideos[folderId]) _folderVideos[folderId] = [];
         _folderVideos[folderId].push(videoId);
     }
@@ -251,6 +252,13 @@ function closeFolderModal() {
     if (ov) ov.remove();
 }
 
+function _folderReload() {
+    return loadFolders().then(function() {
+        renderFolderBar();
+        renderHistoryPanel();
+    });
+}
+
 function saveFolder(folderId) {
     var name = (document.getElementById('folderNameInput').value || '').trim();
     if (!name) {
@@ -271,22 +279,18 @@ function saveFolder(folderId) {
         _folderFetch('/' + folderId, {
             method: 'PUT',
             body: JSON.stringify({ name: name, icon: icon, color: color })
-        }).then(function() {
-            loadFolders().then(function() {
-                renderFolderBar();
-                renderHistoryPanel();
-            });
+        }).then(_folderReload).catch(function(e) {
+            console.warn('[Folders] update error:', e);
+            if (typeof showToast === 'function') showToast('❌ Lỗi cập nhật folder');
         });
     } else {
         // Create
         _folderFetch('', {
             method: 'POST',
             body: JSON.stringify({ name: name, icon: icon, color: color })
-        }).then(function() {
-            loadFolders().then(function() {
-                renderFolderBar();
-                renderHistoryPanel();
-            });
+        }).then(_folderReload).catch(function(e) {
+            console.warn('[Folders] create error:', e);
+            if (typeof showToast === 'function') showToast('❌ Lỗi tạo folder');
         });
     }
     if (typeof showToast === 'function') showToast(folderId ? 'Đã cập nhật folder' : 'Đã tạo folder "' + name + '"');
@@ -294,35 +298,36 @@ function saveFolder(folderId) {
 
 function deleteFolder(folderId) {
     closeFolderModal();
-    if (typeof showConfirmModal === 'function') {
-        showConfirmModal('Xóa folder này? (Video trong folder không bị xóa)', function() {
-            _folderFetch('/' + folderId, { method: 'DELETE' }).then(function() {
-                if (_activeFolderId === folderId) _activeFolderId = null;
-                loadFolders().then(function() {
-                    renderFolderBar();
-                    renderHistoryPanel();
-                });
-            });
-            if (typeof showToast === 'function') showToast('Đã xóa folder');
-        });
-    } else {
+    var _doDelete = function() {
         _folderFetch('/' + folderId, { method: 'DELETE' }).then(function() {
             if (_activeFolderId === folderId) _activeFolderId = null;
-            loadFolders().then(function() {
-                renderFolderBar();
-                renderHistoryPanel();
-            });
+            return _folderReload();
+        }).catch(function(e) {
+            console.warn('[Folders] delete error:', e);
+            if (typeof showToast === 'function') showToast('❌ Lỗi xóa folder');
         });
+        if (typeof showToast === 'function') showToast('Đã xóa folder');
+    };
+
+    if (typeof showConfirmModal === 'function') {
+        showConfirmModal('Xóa folder này? (Video trong folder không bị xóa)', _doDelete);
+    } else {
+        _doDelete();
     }
 }
 
 // ── Init: load folders on page load ───────────────────
 (function initFolders() {
+    function _initLoad() {
+        loadFolders().then(renderFolderBar).catch(function(e) {
+            console.warn('[Folders] init load error:', e);
+        });
+    }
     if (document.readyState === 'complete' || document.readyState === 'interactive') {
-        setTimeout(function() { loadFolders().then(renderFolderBar); }, 800);
+        setTimeout(_initLoad, 800);
     } else {
         window.addEventListener('DOMContentLoaded', function() {
-            setTimeout(function() { loadFolders().then(renderFolderBar); }, 800);
+            setTimeout(_initLoad, 800);
         });
     }
 })();
