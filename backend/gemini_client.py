@@ -1,6 +1,6 @@
 """
 Gemini AI client — singleton with hot-reload of API key from .env.
-Provides call_gemini() with automatic model fallback and retry logic.
+Provides call_gemini() and call_gemini_multi() with automatic model fallback and retry logic.
 """
 
 import os
@@ -13,9 +13,12 @@ load_dotenv(override=True)
 _genai_client: genai.Client | None = None
 
 # Primary model + fallback for free-tier quota
-# gemini-1.5-flash deprecated; gemini-2.0-flash-lite is the lightest available fallback
 PRIMARY_MODEL  = "gemini-2.5-flash"
 FALLBACK_MODEL = "gemini-2.5-flash-lite"
+
+# Retryable error patterns
+_QUOTA_PATTERNS  = ["429", "free_tier", "RESOURCE_EXHAUSTED"]
+_RETRY_PATTERNS  = ["503", "overloaded", "500", "INTERNAL", "UNAVAILABLE", "capacity"]
 
 
 def get_genai_client() -> genai.Client:
@@ -28,13 +31,35 @@ def get_genai_client() -> genai.Client:
     return _genai_client
 
 
-def call_gemini(prompt: str, retries: int = 4) -> str:
+def _is_quota_error(err_str: str) -> bool:
+    """Check if the error indicates quota exhaustion (switch model)."""
+    return "429" in err_str and any(p in err_str for p in ["free_tier", "RESOURCE_EXHAUSTED"])
+
+
+def _is_retryable(err_str: str) -> bool:
+    """Check if the error is retryable (server overloaded, transient)."""
+    lower = err_str.lower()
+    if _is_quota_error(err_str):
+        return False  # quota errors are handled by model fallback, not retry
+    return any(p.lower() in lower for p in _RETRY_PATTERNS) or (
+        "429" in err_str  # generic rate limit (not free tier)
+    )
+
+
+def _parse_retry_after(err_str: str) -> int | None:
+    """Try to extract retry-after seconds from error message."""
+    import re
+    match = re.search(r'(\d+)s', err_str)
+    if match:
+        return min(int(match.group(1)), 60)
+    return None
+
+
+def _call_with_retry(generate_fn, retries: int = 4) -> str:
     """
-    Call Gemini with automatic fallback:
-      1. Try PRIMARY_MODEL (gemini-2.5-flash) — higher quality
-      2. If 429 quota exhausted → fallback to FALLBACK_MODEL (gemini-2.0-flash)
-      3. Retry on 503/overload with exponential backoff
-    Returns the response text.
+    Core retry logic shared by call_gemini and call_gemini_multi.
+    generate_fn(model: str) should call client.models.generate_content
+    and return resp.text.
     """
     client = get_genai_client()
     models = [PRIMARY_MODEL, FALLBACK_MODEL]
@@ -43,30 +68,56 @@ def call_gemini(prompt: str, retries: int = 4) -> str:
         last_err = None
         for attempt in range(retries):
             try:
-                resp = client.models.generate_content(model=model, contents=prompt)
+                text = generate_fn(client, model)
                 if model != PRIMARY_MODEL:
                     print(f"[LectureDigest] ⚠ Used fallback model: {model}")
-                return resp.text
+                return text
             except Exception as e:
                 last_err = e
                 err_str = str(e)
-                is_quota  = "429" in err_str and "free_tier" in err_str
-                is_retry  = "503" in err_str or "overloaded" in err_str.lower() or (
-                    "429" in err_str and "free_tier" not in err_str
-                )
-                if is_quota:
+
+                if _is_quota_error(err_str):
                     print(f"[LectureDigest] Quota exhausted for {model}, trying fallback...")
-                    break   # break inner loop → try next model
-                if is_retry:
-                    wait = 2 ** attempt
-                    print(f"[LectureDigest] {model} retry {attempt+1} in {wait}s: {err_str[:60]}")
+                    break  # → try next model
+
+                if _is_retryable(err_str):
+                    retry_after = _parse_retry_after(err_str)
+                    wait = retry_after if retry_after else (2 ** attempt)
+                    print(f"[LectureDigest] {model} retry {attempt+1}/{retries} in {wait}s: {err_str[:80]}")
                     time.sleep(wait)
                     continue
-                raise   # non-retryable error → propagate immediately
+
+                # Non-retryable error → propagate immediately
+                raise
         else:
             # Exhausted all retries for this model
             if model == FALLBACK_MODEL:
-                raise Exception(f"All models exhausted. Last error: {last_err}")
+                raise Exception(f"All models exhausted after {retries} retries. Last error: {last_err}")
             # else continue to fallback model
 
     raise Exception("Gemini call failed across all models")
+
+
+def call_gemini(prompt: str, retries: int = 4) -> str:
+    """
+    Call Gemini with a text prompt.
+    Automatic model fallback + exponential backoff retry.
+    """
+    def _gen(client, model):
+        resp = client.models.generate_content(model=model, contents=prompt)
+        return resp.text
+
+    return _call_with_retry(_gen, retries=retries)
+
+
+def call_gemini_multi(contents: list, retries: int = 4) -> str:
+    """
+    Call Gemini with multi-part contents (e.g. [prompt_text, gemini_file]).
+    Same retry + fallback logic as call_gemini.
+    """
+    def _gen(client, model):
+        resp = client.models.generate_content(model=model, contents=contents)
+        return resp.text
+
+    return _call_with_retry(_gen, retries=retries)
+

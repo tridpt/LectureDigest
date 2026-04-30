@@ -258,19 +258,13 @@ async def translate_transcript(req: TranslateRequest):
             f"- Preserve meaning and tone naturally.\n\n"
             f"Segments:\n{combined}"
         )
-        last_err = None
-        for attempt in range(5):
-            try:
-                text = call_gemini(prompt)
-                parts = [p.strip() for p in text.strip().split(SEPARATOR)]
-                return parts
-            except Exception as e:
-                last_err = e
-                if any(code in str(e) for code in ["503", "overloaded"]):
-                    time.sleep(2 ** attempt)
-                    continue
-                raise HTTPException(status_code=500, detail=f"Translation error: {e}")
-        raise HTTPException(status_code=503, detail=f"Gemini overloaded after retries: {last_err}")
+        # call_gemini already handles retry + model fallback internally
+        try:
+            text = call_gemini(prompt)
+            parts = [p.strip() for p in text.strip().split(SEPARATOR)]
+            return parts
+        except Exception as e:
+            raise HTTPException(status_code=500, detail=f"Translation error: {e}")
 
     all_translations: list[str] = []
     for chunk_start in range(0, len(req.transcript), CHUNK_SIZE):

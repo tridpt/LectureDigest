@@ -12,7 +12,7 @@ import secrets
 from fastapi import APIRouter, HTTPException, UploadFile, File, Form, Request, Depends
 from pydantic import BaseModel
 
-from gemini_client import get_genai_client, call_gemini, PRIMARY_MODEL
+from gemini_client import get_genai_client, call_gemini, call_gemini_multi, PRIMARY_MODEL
 from youtube import extract_video_id, get_video_info, get_transcript, format_seconds
 from database import db_check_rate_limit
 
@@ -258,11 +258,10 @@ RULES:
 - If there's silence or music, skip those sections
 - Return ONLY the JSON array, no other text"""
 
-        transcript_resp = client.models.generate_content(
-            model=PRIMARY_MODEL,
-            contents=[transcribe_prompt, gemini_file],
-        )
-        transcript_text = transcript_resp.text.strip()
+        transcript_text = call_gemini_multi(
+            [transcribe_prompt, gemini_file],
+            retries=4,
+        ).strip()
 
         # Parse transcript
         transcript_text = _strip_code_fences(transcript_text)
