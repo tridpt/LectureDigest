@@ -18,7 +18,7 @@ function loadProgress(videoId) {
 
 var _progSyncTimer = null;
 function saveProgress(videoId, data) {
-    try { localStorage.setItem(progKey(videoId), JSON.stringify(data)); } catch {}
+    safeLsSet(progKey(videoId), JSON.stringify(data));
     // Debounce push progress to server via extra_data
     clearTimeout(_progSyncTimer);
     _progSyncTimer = setTimeout(function() {
@@ -166,7 +166,7 @@ function loadBookmarks(videoId) {
 
 var _bmSyncTimer = null;
 function saveBookmarks(videoId, list) {
-    try { localStorage.setItem(bmKey(videoId), JSON.stringify(list)); } catch {}
+    safeLsSet(bmKey(videoId), JSON.stringify(list));
     // Debounce push bookmarks to server
     clearTimeout(_bmSyncTimer);
     _bmSyncTimer = setTimeout(function() {

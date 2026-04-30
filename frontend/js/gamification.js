@@ -72,7 +72,7 @@ function loadGamif() {
 }
 var _gamifSyncTimer = null;
 function saveGamif(g) {
-    try { localStorage.setItem(GAMIF_KEY, JSON.stringify(g)); } catch {}
+    safeLsSet(GAMIF_KEY, JSON.stringify(g));
     // Debounce push to server
     clearTimeout(_gamifSyncTimer);
     _gamifSyncTimer = setTimeout(function() {

@@ -27,7 +27,7 @@ function loadAllTags() {
 
 var _tagSyncTimer = null;
 function saveAllTags(data) {
-    try { localStorage.setItem(TAG_KEY, JSON.stringify(data)); } catch(e) {}
+    safeLsSet(TAG_KEY, JSON.stringify(data));
     // Debounce push to server
     clearTimeout(_tagSyncTimer);
     _tagSyncTimer = setTimeout(function() {

@@ -23,7 +23,7 @@ function applyTheme(theme) {
 function toggleTheme() {
     const current = localStorage.getItem(THEME_KEY) || 'dark';
     const next = current === 'dark' ? 'light' : 'dark';
-    localStorage.setItem(THEME_KEY, next);
+    safeLsSet(THEME_KEY, next);
     applyTheme(next);
 }
 
@@ -257,7 +257,7 @@ document.addEventListener('keydown', function(e) {
         var cur = localStorage.getItem('lectureDigest_theme') ||
             (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
         var next = cur === 'dark' ? 'light' : 'dark';
-        localStorage.setItem('lectureDigest_theme', next);
+        safeLsSet('lectureDigest_theme', next);
         applyTheme(next);
     };
 })();

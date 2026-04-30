@@ -62,7 +62,7 @@ function hidePwaInstallBanner() {
 function dismissPwaInstall() {
     _pwaInstallDismissed = true;
     try {
-        localStorage.setItem('pwa_install_dismissed', Date.now().toString());
+        safeLsSet('pwa_install_dismissed', Date.now().toString());
     } catch(err) {}
     hidePwaInstallBanner();
 }

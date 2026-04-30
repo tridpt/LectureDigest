@@ -127,6 +127,75 @@ function escapeRegex(str) {
     return str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }
 
+// ── Safe localStorage wrappers ────────────────────────
+/**
+ * Safely write to localStorage with QuotaExceededError handling.
+ * On quota overflow: attempts to free space by pruning old history entries,
+ * then retries once. Shows a toast if storage is truly full.
+ * @param {string} key
+ * @param {string} value
+ * @returns {boolean} true if write succeeded
+ */
+function safeLsSet(key, value) {
+    try {
+        localStorage.setItem(key, value);
+        return true;
+    } catch (e) {
+        if (e.name === 'QuotaExceededError' || e.code === 22 || e.code === 1014) {
+            console.warn('[Storage] Quota exceeded, attempting cleanup for key:', key);
+            // Try to free space: remove oldest history entries
+            _lsFreeSpace();
+            try {
+                localStorage.setItem(key, value);
+                return true;
+            } catch (e2) {
+                console.error('[Storage] Still full after cleanup:', e2);
+                if (typeof showToast === 'function') {
+                    showToast('⚠️ Bộ nhớ trình duyệt đầy! Hãy xóa bớt lịch sử.', 5000);
+                }
+                return false;
+            }
+        }
+        console.error('[Storage] setItem error:', e);
+        return false;
+    }
+}
+
+/**
+ * Safely read from localStorage with error handling.
+ * @param {string} key
+ * @param {*} fallback - value to return on error (default: null)
+ * @returns {string|null}
+ */
+function safeLsGet(key, fallback) {
+    try {
+        return localStorage.getItem(key);
+    } catch (e) {
+        console.error('[Storage] getItem error:', e);
+        return arguments.length > 1 ? fallback : null;
+    }
+}
+
+/**
+ * Free localStorage space by trimming the oldest history entries.
+ * Removes up to 20 oldest entries from the history array.
+ */
+function _lsFreeSpace() {
+    try {
+        var raw = localStorage.getItem('lectureDigest_history');
+        if (!raw) return;
+        var history = JSON.parse(raw);
+        if (!Array.isArray(history) || history.length <= 10) return;
+        // Keep only newest 80% (remove oldest 20%)
+        var keep = Math.max(10, Math.floor(history.length * 0.8));
+        history = history.slice(0, keep);
+        localStorage.setItem('lectureDigest_history', JSON.stringify(history));
+        console.info('[Storage] Freed space: trimmed history to', keep, 'entries');
+    } catch (e) {
+        console.error('[Storage] _lsFreeSpace error:', e);
+    }
+}
+
 function fmtSecs(secs) {
     const h = Math.floor(secs / 3600);
     const m = Math.floor((secs % 3600) / 60);

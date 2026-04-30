@@ -361,7 +361,7 @@ function loadSm2(videoId) {
 
 function saveSm2(videoId, data) {
     try {
-        localStorage.setItem(sm2Key(videoId), JSON.stringify(data));
+        safeLsSet(sm2Key(videoId), JSON.stringify(data));
         // Sync to backend via KV store (not notes!)
         if (typeof dbFetch === 'function') {
             var extra = {};
@@ -637,7 +637,7 @@ function loadCustomCards(videoId) {
 }
 
 function saveCustomCards(videoId, cards) {
-    try { localStorage.setItem(customFcKey(videoId), JSON.stringify(cards)); } catch(e) {}
+    safeLsSet(customFcKey(videoId), JSON.stringify(cards));
     // Sync to backend via KV store
     if (typeof dbFetch === 'function') {
         var extra = {};

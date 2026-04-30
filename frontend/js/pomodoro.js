@@ -80,7 +80,7 @@ function pomoSelectPreset(focusMin) {
     pomoState.totalSeconds = pomoState.focusMin * 60;
 
     // Save preference
-    try { localStorage.setItem('lectureDigest_pomoFocus', String(pomoState.focusMin)); } catch (_) {}
+    safeLsSet('lectureDigest_pomoFocus', String(pomoState.focusMin));
 
     renderPomodoro();
     _pomoRenderPresets();

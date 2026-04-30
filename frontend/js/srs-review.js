@@ -354,7 +354,7 @@ function srsRateCard(rating) {
         if (typeof saveSm2 === 'function') {
             saveSm2(card.videoId, sm2Data);
         } else {
-            localStorage.setItem('lectureDigest_sm2_' + card.videoId, JSON.stringify(sm2Data));
+            safeLsSet('lectureDigest_sm2_' + card.videoId, JSON.stringify(sm2Data));
         }
     }
 

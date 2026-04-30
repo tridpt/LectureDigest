@@ -15,7 +15,7 @@ function loadNote(videoId) {
 var _noteSyncTimer = null;
 function saveNote(videoId, text) {
     try {
-        localStorage.setItem(notesKey(videoId), text);
+        safeLsSet(notesKey(videoId), text);
         if (text.trim().length > 0) recordGamifFeature('usedNotes');
     } catch {}
     // Debounce push note to server

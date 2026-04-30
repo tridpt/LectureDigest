@@ -23,7 +23,7 @@ function loadPlProgress(playlistId) {
 
 function savePlProgress(playlistId, analyzed) {
     try {
-        localStorage.setItem(plProgressKey(playlistId), JSON.stringify({ analyzed: analyzed }));
+        safeLsSet(plProgressKey(playlistId), JSON.stringify({ analyzed: analyzed }));
     } catch(e) {}
 }
 

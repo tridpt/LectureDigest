@@ -73,7 +73,7 @@ async function _handleGoogleCallback(response) {
 
         _authToken = data.token;
         _authUser = data.user;
-        localStorage.setItem('ld_auth_token', data.token);
+        safeLsSet('ld_auth_token', data.token);
         _authUpdateUI();
         closeAuthModal();
 
@@ -359,7 +359,7 @@ async function submitAuthForm(event) {
         // Success
         _authToken = data.token;
         _authUser = data.user;
-        localStorage.setItem('ld_auth_token', data.token);
+        safeLsSet('ld_auth_token', data.token);
         _authUpdateUI();
         closeAuthModal();
 

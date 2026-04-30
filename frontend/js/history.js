@@ -42,20 +42,7 @@ function saveToHistory(data) {
     }
     list.splice(HISTORY_MAX);
 
-    // Save to localStorage with quota handling
-    try {
-        localStorage.setItem(HISTORY_KEY, JSON.stringify(list));
-    } catch (e) {
-        // localStorage quota exceeded — trim older entries and retry
-        console.warn('[History] localStorage quota exceeded, trimming old entries');
-        while (list.length > 10) {
-            list.pop();
-            try {
-                localStorage.setItem(HISTORY_KEY, JSON.stringify(list));
-                break;
-            } catch (e2) { /* keep trimming */ }
-        }
-    }
+    safeLsSet(HISTORY_KEY, JSON.stringify(list));
     renderHistoryPanel();
 
     // Push updated history entry to server immediately
@@ -72,7 +59,7 @@ function deleteFromHistory(idOrEntryId) {
         var list = loadHistory().filter(function(h) {
             return h.entry_id ? h.entry_id !== idOrEntryId : h.video_id !== idOrEntryId;
         });
-        localStorage.setItem(HISTORY_KEY, JSON.stringify(list));
+        safeLsSet(HISTORY_KEY, JSON.stringify(list));
         renderHistoryPanel();
     });
 }

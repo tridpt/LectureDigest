@@ -413,7 +413,7 @@ function _mexamSaveToHistory() {
     var list = _mexamLoadExamHistory();
     list.unshift(entry);
     list.splice(MEXAM_HISTORY_MAX);
-    localStorage.setItem(MEXAM_HISTORY_KEY, JSON.stringify(list));
+    safeLsSet(MEXAM_HISTORY_KEY, JSON.stringify(list));
     _mexamUpdateHistCount();
 }
 
@@ -473,7 +473,7 @@ function _mexamDeleteFromHistory(idx) {
     var list = _mexamLoadExamHistory();
     if (idx >= 0 && idx < list.length) {
         list.splice(idx, 1);
-        localStorage.setItem(MEXAM_HISTORY_KEY, JSON.stringify(list));
+        safeLsSet(MEXAM_HISTORY_KEY, JSON.stringify(list));
         _mexamUpdateHistCount();
         _mexamRenderHistory();
         showToast('Đã xóa đề thi', 'info');

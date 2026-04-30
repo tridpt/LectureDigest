@@ -28,7 +28,7 @@ function loadWeeklyGoals() {
 }
 
 function saveWeeklyGoals(data) {
-    try { localStorage.setItem(WEEKLY_GOALS_KEY, JSON.stringify(data)); } catch (e) {}
+    safeLsSet(WEEKLY_GOALS_KEY, JSON.stringify(data));
     // Sync to cloud
     if (typeof dbFetch === 'function') {
         var extra = {};
