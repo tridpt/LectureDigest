@@ -285,3 +285,20 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 // copyResultLink → defined in tags.js
+
+// ── Back to top button ────────────────────────────────
+(function initBtt() {
+    var btn = document.getElementById('bttBtn');
+    if (!btn) return;
+    var _bttTimer = null;
+    window.addEventListener('scroll', function() {
+        clearTimeout(_bttTimer);
+        _bttTimer = setTimeout(function() {
+            if (window.scrollY > 400) {
+                btn.classList.add('btt-visible');
+            } else {
+                btn.classList.remove('btt-visible');
+            }
+        }, 150);
+    }, { passive: true });
+})();
