@@ -17,9 +17,15 @@ function openDashboard() {
         const el = document.getElementById(id);
         return el && !el.classList.contains('hidden');
     }) || 'hero';
-    renderDashboard();
+    _dashShowSkeleton();
     showSection('dashboardSection');
     window.scrollTo({ top: 0, behavior: 'instant' });
+    // Render real data on next frame so skeleton is visible first
+    requestAnimationFrame(function() {
+        requestAnimationFrame(function() {
+            renderDashboard();
+        });
+    });
 }
 
 function closeDashboard() {
@@ -492,4 +498,128 @@ function buildLearningTimeline(history) {
     var uniqueDays = dates.length;
     html += '<div class="stats-tl-summary"><span>'+totalVideos+' video</span><span>'+uniqueDays+' ngay hoc</span><span>TB '+(totalVideos/Math.max(uniqueDays,1)).toFixed(1)+' video/ngay</span></div>';
     return html;
+}
+
+// ══════════════════════════════════════════════════════
+// SKELETON LOADING
+// ══════════════════════════════════════════════════════
+
+function _skl(w, h, r) {
+    r = r || '8px';
+    return '<div class="db-skel" style="width:' + w + ';height:' + h + ';border-radius:' + r + '"></div>';
+}
+
+function _dashShowSkeleton() {
+    // Date
+    var dateEl = document.getElementById('dbDate');
+    if (dateEl) dateEl.innerHTML = _skl('180px', '14px');
+
+    // Stat grid — 5 skeleton stat cards
+    var statGrid = document.getElementById('dbStatGrid');
+    if (statGrid) {
+        var cards = '';
+        for (var i = 0; i < 5; i++) {
+            cards += '<div class="db-stat-card">' +
+                _skl('32px', '32px', '10px') +
+                '<div style="flex:1;display:flex;flex-direction:column;gap:6px">' +
+                _skl('50px', '22px') +
+                _skl('70px', '12px') +
+                '</div></div>';
+        }
+        statGrid.innerHTML = cards;
+    }
+
+    // Weekly goals
+    var goalsEl = document.getElementById('dbWeeklyGoals');
+    if (goalsEl) {
+        goalsEl.innerHTML = '<div style="display:flex;flex-direction:column;gap:10px;padding:4px 0">' +
+            _skl('100%', '40px', '10px') +
+            _skl('100%', '40px', '10px') +
+            _skl('60%', '40px', '10px') +
+            '</div>';
+    }
+
+    // Streak — numbers + calendar grid
+    var streakNums = document.getElementById('dbStreakNums');
+    if (streakNums) {
+        streakNums.innerHTML = '<div style="display:flex;gap:16px;align-items:center">' +
+            _skl('60px', '36px', '10px') +
+            '<div style="width:1px;height:40px;background:rgba(255,255,255,0.06)"></div>' +
+            _skl('60px', '36px', '10px') +
+            '</div>';
+    }
+    var calendar = document.getElementById('dbCalendar');
+    if (calendar) {
+        var cells = '';
+        for (var c = 0; c < 28; c++) {
+            cells += '<div class="db-skel" style="aspect-ratio:1;border-radius:6px"></div>';
+        }
+        calendar.innerHTML = cells;
+    }
+
+    // Quiz chart
+    var quiz = document.getElementById('dbQuizChart');
+    if (quiz) {
+        var bars = '';
+        for (var b = 0; b < 5; b++) {
+            bars += '<div style="display:flex;align-items:center;gap:10px;margin-bottom:8px">' +
+                _skl((30 + Math.random() * 60) + '%', '12px', '99px') +
+                _skl('30px', '12px') +
+                '</div>';
+        }
+        quiz.innerHTML = bars;
+    }
+
+    // Pomodoro
+    var pomo = document.getElementById('dbPomoStats');
+    if (pomo) {
+        pomo.innerHTML = '<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px">' +
+            _skl('100%', '70px', '12px') +
+            _skl('100%', '70px', '12px') +
+            _skl('100%', '70px', '12px') +
+            _skl('100%', '70px', '12px') +
+            '</div>';
+    }
+
+    // Study stats
+    var stats = document.getElementById('dbStudyStats');
+    if (stats) {
+        stats.innerHTML = '<div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">' +
+            _skl('100%', '150px', '14px') +
+            _skl('100%', '150px', '14px') +
+            '</div>';
+    }
+
+    // Video list — 4 skeleton video items
+    var vids = document.getElementById('dbVideoList');
+    if (vids) {
+        var items = '';
+        for (var v = 0; v < 4; v++) {
+            items += '<div style="display:flex;align-items:center;gap:14px;padding:10px 0">' +
+                _skl('80px', '52px', '8px') +
+                '<div style="flex:1;display:flex;flex-direction:column;gap:6px">' +
+                _skl((60 + Math.random() * 30) + '%', '13px') +
+                '<div style="display:flex;gap:10px">' +
+                _skl('50px', '11px') + _skl('40px', '11px') +
+                '</div></div></div>';
+        }
+        vids.innerHTML = items;
+    }
+
+    // Badges
+    var badges = document.getElementById('dbBadgeCats');
+    if (badges) {
+        var cats = '';
+        for (var bg = 0; bg < 3; bg++) {
+            cats += '<div style="margin-bottom:14px">' +
+                _skl('80px', '13px') +
+                '<div style="display:flex;gap:6px;margin:8px 0">' +
+                _skl('28px', '28px', '6px') + _skl('28px', '28px', '6px') +
+                _skl('28px', '28px', '6px') + _skl('28px', '28px', '6px') +
+                '</div>' +
+                _skl('100%', '6px', '99px') +
+                '</div>';
+        }
+        badges.innerHTML = cats;
+    }
 }

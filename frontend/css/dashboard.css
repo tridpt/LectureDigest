@@ -394,3 +394,31 @@ html.light-mode .db-card-error-retry {
     border-color: rgba(239, 68, 68, 0.2);
     color: #dc2626;
 }
+
+/* ── Skeleton shimmer ── */
+.db-skel {
+    background: linear-gradient(
+        90deg,
+        rgba(255, 255, 255, 0.04) 0%,
+        rgba(255, 255, 255, 0.08) 40%,
+        rgba(255, 255, 255, 0.04) 80%
+    );
+    background-size: 200% 100%;
+    animation: dbSkelShimmer 1.5s ease-in-out infinite;
+}
+@keyframes dbSkelShimmer {
+    0%   { background-position: 200% 0; }
+    100% { background-position: -200% 0; }
+}
+
+/* Light mode */
+html.light-mode .db-skel {
+    background: linear-gradient(
+        90deg,
+        rgba(0, 0, 0, 0.05) 0%,
+        rgba(0, 0, 0, 0.09) 40%,
+        rgba(0, 0, 0, 0.05) 80%
+    );
+    background-size: 200% 100%;
+    animation: dbSkelShimmer 1.5s ease-in-out infinite;
+}
