@@ -58,6 +58,7 @@
     <link rel="stylesheet" href="/css/pwa-install.css">
     <link rel="stylesheet" href="/css/search.css">
     <link rel="stylesheet" href="/css/srs-review.css">
+    <link rel="stylesheet" href="/css/pomodoro.css">
     <!-- Utilities & Responsive -->
     <link rel="stylesheet" href="/css/utilities.css">
     <link rel="stylesheet" href="/css/mobile.css">
@@ -495,6 +496,13 @@
                         </svg>
                         Video mới
                     </button>
+                    <button class="pomo-header-btn" id="pomoBtnHeader" title="Pomodoro Timer">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
+                        </svg>
+                        <span>Pomodoro</span>
+                        <span class="pomo-mini-time" id="pomoMiniTime"></span>
+                    </button>
                 </div>
             </div>
         </div>
@@ -536,6 +544,11 @@
                         <h3 class="card-title">Ghi chú</h3>
                         <div class="notes-header-actions">
                             <span class="notes-word-count" id="notesWordCount">0 từ</span>
+                            <button class="notes-action-btn auto-notes-btn" id="autoNotesBtn" onclick="generateAutoNotes()" title="AI tạo ghi chú Cornell">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" stroke-linecap="round" stroke-linejoin="round"/>
+                                </svg>
+                            </button>
                             <button class="notes-action-btn" id="notesTimestampBtn" onclick="insertNoteTimestamp()" title="Chèn timestamp hiện tại">
                                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                                     <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
@@ -1294,6 +1307,10 @@
     <script src="/js/upload.js"></script>
     <!-- Share Notes -->
     <script src="/js/share-notes.js"></script>
+    <!-- AI Auto-Notes (Cornell format) -->
+    <script src="/js/auto-notes.js"></script>
+    <!-- Pomodoro Study Timer -->
+    <script src="/js/pomodoro.js"></script>
 
     <!-- ══════════════════════════════ SHARE NOTES MODAL ══════════════════════════════ -->
     <div class="share-notes-overlay hidden" id="shareNotesOverlay" onclick="if(event.target===this)closeShareNotesModal()">
@@ -1674,6 +1691,39 @@
         });
     }
     </script>
+    <!-- ═══════ POMODORO TIMER PANEL ═══════ -->
+    <div class="pomo-panel hidden" id="pomoPanel">
+        <div class="pomo-header">
+            <div class="pomo-title">🍅 Pomodoro Timer</div>
+            <button class="pomo-close" onclick="closePomodoro()" aria-label="Đóng">✕</button>
+        </div>
+        <div class="pomo-timer-wrap">
+            <svg class="pomo-ring-svg" viewBox="0 0 120 120">
+                <circle class="pomo-ring-bg" cx="60" cy="60" r="54"/>
+                <circle class="pomo-ring-progress" id="pomoRing" cx="60" cy="60" r="54"/>
+            </svg>
+            <div class="pomo-timer-text">
+                <div class="pomo-time" id="pomoTimer">25:00</div>
+                <div class="pomo-status" id="pomoStatus">Sẵn sàng</div>
+            </div>
+        </div>
+        <div class="pomo-controls">
+            <button class="pomo-ctrl-btn pomo-start-btn" id="pomoStartBtn" onclick="pomoStart()">▶ Bắt đầu</button>
+            <button class="pomo-ctrl-btn pomo-pause-btn hidden" id="pomoPauseBtn" onclick="pomoPause()">⏸ Tạm dừng</button>
+            <button class="pomo-ctrl-btn pomo-reset-btn hidden" id="pomoResetBtn" onclick="pomoReset()">↺ Reset</button>
+        </div>
+        <div class="pomo-stats">
+            <div class="pomo-stat">
+                <div class="pomo-stat-value" id="pomoSessions">0</div>
+                <div class="pomo-stat-label">Phiên</div>
+            </div>
+            <div class="pomo-stat">
+                <div class="pomo-stat-value" id="pomoTotal">0 phút</div>
+                <div class="pomo-stat-label">Tổng focus</div>
+            </div>
+        </div>
+    </div>
+
     <!-- ═══════ MOBILE BOTTOM NAV ═══════ -->
     <nav class="mobile-bottom-nav" id="mobileBottomNav" aria-label="Mobile navigation">
         <div class="mob-nav-inner">

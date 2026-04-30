@@ -47,6 +47,14 @@ class ExplainRequest(BaseModel):
     video_title:   str = ""
     language:      str = "vi"
 
+class AutoNotesRequest(BaseModel):
+    title:           str = ''
+    overview:        str = ''
+    topics:          list = []    # [{title, summary, timestamp_str}, ...]
+    key_takeaways:   list = []
+    transcript:      list = []    # [{text, start}, ...]
+    output_language: str = 'Vietnamese'
+
 
 # ═══════════════════════════════════════════════════════
 # ROUTES
@@ -269,6 +277,110 @@ Yêu cầu:
         return {"term": term, "explanation": explanation.strip()}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+
+# ═══════════════════════════════════════════════════════
+# AI AUTO-NOTES (CORNELL FORMAT)
+# ═══════════════════════════════════════════════════════
+
+@router.post("/auto-notes")
+async def generate_auto_notes(request: AutoNotesRequest):
+    """Generate structured study notes in Cornell format from video analysis data."""
+    if not os.getenv("GEMINI_API_KEY"):
+        raise HTTPException(status_code=500, detail="GEMINI_API_KEY not configured")
+
+    # Build content context
+    content_parts = []
+    content_parts.append(f"VIDEO TITLE: {request.title}")
+
+    if request.overview:
+        content_parts.append(f"\nOVERVIEW:\n{request.overview}")
+
+    if request.topics:
+        topics_text = "\n".join(
+            f"  [{t.get('timestamp_str', '')}] {t.get('title', '')}: {t.get('summary', '')}"
+            for t in request.topics[:12]
+        )
+        content_parts.append(f"\nCHAPTERS/TOPICS:\n{topics_text}")
+
+    if request.key_takeaways:
+        kt_text = "\n".join(f"  - {kt}" for kt in request.key_takeaways[:8])
+        content_parts.append(f"\nKEY TAKEAWAYS:\n{kt_text}")
+
+    if request.transcript:
+        lines = []
+        for entry in request.transcript[:150]:
+            ts = entry.get("start", 0)
+            m = int(ts) // 60
+            s = int(ts) % 60
+            text = entry.get("text", "").strip().replace("\n", " ")
+            lines.append(f"[{m:02d}:{s:02d}] {text}")
+        transcript_text = "\n".join(lines)
+        if len(transcript_text) > 25000:
+            transcript_text = transcript_text[:25000] + "\n...[truncated]..."
+        content_parts.append(f"\nTRANSCRIPT (excerpts):\n{transcript_text}")
+
+    full_content = "\n".join(content_parts)
+
+    prompt = f"""You are an expert note-taking assistant. Create comprehensive study notes in the **Cornell Note-Taking Method** format from this video lecture.
+
+{full_content}
+
+⚠️ Generate ALL text in **{request.output_language}**.
+
+Create notes using this EXACT format (use the headers and separators exactly as shown):
+
+═══════════════════════════════════════
+📚 CORNELL NOTES: [Video title]
+═══════════════════════════════════════
+
+📅 Date: [today's date]
+🎬 Source: [video title]
+
+───────────────────────────────────────
+📝 MAIN NOTES
+───────────────────────────────────────
+
+[For each major topic/chapter in the video, write detailed notes with:]
+- Clear section headers using ## for each topic
+- Bullet points for key concepts
+- Include relevant timestamps [MM:SS] when possible
+- Use indentation for sub-points
+- Bold **key terms** naturally in the text
+
+───────────────────────────────────────
+❓ CUE COLUMN (Questions & Keywords)
+───────────────────────────────────────
+
+[Generate 5-8 study questions or keywords that test understanding of the main notes. Format:]
+• Question or keyword → Brief trigger/hint
+
+───────────────────────────────────────
+📋 SUMMARY (2-3 sentences)
+───────────────────────────────────────
+
+[Write a concise 2-3 sentence summary that captures the essence of the entire lecture]
+
+───────────────────────────────────────
+🔑 KEY VOCABULARY
+───────────────────────────────────────
+
+[List 5-8 key terms with brief definitions, format:]
+• **Term** — Definition
+
+RULES:
+- Be thorough but concise — capture ALL important concepts
+- Main notes should be detailed enough to study from without rewatching
+- Cue column questions should promote active recall
+- Use the exact separator format shown above
+- Include timestamps [MM:SS] in main notes where relevant
+- DO NOT use markdown code fences — output plain text only"""
+
+    try:
+        notes_text = call_gemini(prompt)
+        return {"notes": notes_text.strip()}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Auto-notes generation failed: {e}")
 
 
 # ═══════════════════════════════════════════════════════

@@ -1,0 +1,315 @@
+/* ════════════════════════════════════════════════
+   LectureDigest — Pomodoro Timer
+   ════════════════════════════════════════════════ */
+
+/* ── Floating Pomodoro Widget ── */
+.pomo-panel {
+    position: fixed;
+    bottom: 90px;
+    right: 24px;
+    width: 280px;
+    background: rgba(15, 15, 35, 0.95);
+    border: 1px solid rgba(139, 92, 246, 0.25);
+    border-radius: 20px;
+    padding: 20px;
+    z-index: 900;
+    backdrop-filter: blur(20px);
+    box-shadow: 0 12px 48px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(139, 92, 246, 0.1) inset;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.pomo-panel.pomo-enter {
+    animation: pomoSlideIn 0.3s ease forwards;
+}
+
+@keyframes pomoSlideIn {
+    from { opacity: 0; transform: translateY(20px) scale(0.95); }
+    to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+.pomo-panel.pomo-break-mode {
+    border-color: rgba(16, 185, 129, 0.35);
+    box-shadow: 0 12px 48px rgba(0, 0, 0, 0.5), 0 0 20px rgba(16, 185, 129, 0.1);
+}
+
+/* Header */
+.pomo-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 16px;
+}
+
+.pomo-title {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text-primary, #f1f5f9);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.pomo-close {
+    width: 24px; height: 24px;
+    border-radius: 6px;
+    border: none;
+    background: rgba(255, 255, 255, 0.06);
+    color: var(--text-muted, #64748b);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+    transition: all 0.15s;
+}
+.pomo-close:hover { background: rgba(239, 68, 68, 0.2); color: #ef4444; }
+
+/* Timer Circle */
+.pomo-timer-wrap {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin-bottom: 16px;
+    position: relative;
+}
+
+.pomo-ring-svg {
+    width: 140px;
+    height: 140px;
+    transform: rotate(-90deg);
+}
+
+.pomo-ring-bg {
+    fill: none;
+    stroke: rgba(255, 255, 255, 0.06);
+    stroke-width: 6;
+}
+
+.pomo-ring-progress {
+    fill: none;
+    stroke: var(--accent-primary, #8b5cf6);
+    stroke-width: 6;
+    stroke-linecap: round;
+    transition: stroke-dashoffset 0.5s ease, stroke 0.3s;
+}
+
+.pomo-timer-text {
+    position: absolute;
+    text-align: center;
+}
+
+.pomo-time {
+    font-size: 32px;
+    font-weight: 700;
+    color: var(--text-primary, #f1f5f9);
+    font-family: 'JetBrains Mono', monospace;
+    letter-spacing: 2px;
+    line-height: 1.2;
+}
+
+.pomo-status {
+    font-size: 11px;
+    color: var(--text-muted, #64748b);
+    font-weight: 500;
+    margin-top: 2px;
+    transition: color 0.3s;
+}
+
+.pomo-status-focus { color: #a78bfa; }
+.pomo-status-break { color: #34d399; }
+.pomo-status-paused { color: #fbbf24; }
+
+/* Controls */
+.pomo-controls {
+    display: flex;
+    justify-content: center;
+    gap: 8px;
+    margin-bottom: 14px;
+}
+
+.pomo-ctrl-btn {
+    padding: 8px 18px;
+    border-radius: 10px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    background: rgba(255, 255, 255, 0.06);
+    color: var(--text-primary, #f1f5f9);
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.pomo-ctrl-btn:hover {
+    background: rgba(139, 92, 246, 0.2);
+    border-color: rgba(139, 92, 246, 0.4);
+}
+
+.pomo-ctrl-btn.pomo-start-btn {
+    background: linear-gradient(135deg, rgba(139, 92, 246, 0.3), rgba(79, 70, 229, 0.3));
+    border-color: rgba(139, 92, 246, 0.5);
+}
+.pomo-ctrl-btn.pomo-start-btn:hover {
+    background: linear-gradient(135deg, rgba(139, 92, 246, 0.5), rgba(79, 70, 229, 0.5));
+}
+
+.pomo-ctrl-btn.pomo-pause-btn { border-color: rgba(251, 191, 36, 0.3); }
+.pomo-ctrl-btn.pomo-pause-btn:hover { background: rgba(251, 191, 36, 0.15); }
+
+.pomo-ctrl-btn.pomo-reset-btn { border-color: rgba(239, 68, 68, 0.2); }
+.pomo-ctrl-btn.pomo-reset-btn:hover { background: rgba(239, 68, 68, 0.15); color: #fca5a5; }
+
+/* Stats Row */
+.pomo-stats {
+    display: flex;
+    justify-content: center;
+    gap: 20px;
+    padding-top: 12px;
+    border-top: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.pomo-stat {
+    text-align: center;
+}
+
+.pomo-stat-value {
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--text-primary, #f1f5f9);
+    font-family: 'JetBrains Mono', monospace;
+}
+
+.pomo-stat-label {
+    font-size: 10px;
+    color: var(--text-muted, #64748b);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-top: 2px;
+}
+
+/* ── Auto-Notes Button ── */
+.auto-notes-btn {
+    width: 28px; height: 28px;
+    border-radius: 7px;
+    border: none;
+    background: linear-gradient(135deg, rgba(139, 92, 246, 0.15), rgba(79, 70, 229, 0.15));
+    color: #a78bfa;
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    transition: all 0.2s;
+    flex-shrink: 0;
+    position: relative;
+}
+.auto-notes-btn:hover {
+    background: linear-gradient(135deg, rgba(139, 92, 246, 0.3), rgba(79, 70, 229, 0.3));
+    color: #c4b5fd;
+    transform: scale(1.05);
+}
+.auto-notes-btn svg { width: 14px; height: 14px; }
+
+.auto-notes-btn.auto-notes-loading {
+    pointer-events: none;
+    opacity: 0.7;
+}
+.auto-notes-btn.auto-notes-loading svg {
+    animation: autoNotesSpin 1s linear infinite;
+}
+
+@keyframes autoNotesSpin {
+    from { transform: rotate(0deg); }
+    to   { transform: rotate(360deg); }
+}
+
+/* ── Pomodoro Header Button ── */
+.pomo-header-btn {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    padding: 4px 10px;
+    border-radius: 8px;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    background: rgba(255, 255, 255, 0.04);
+    color: var(--text-secondary, #94a3b8);
+    font-size: 11px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+    white-space: nowrap;
+}
+.pomo-header-btn:hover {
+    background: rgba(139, 92, 246, 0.15);
+    border-color: rgba(139, 92, 246, 0.3);
+    color: #a78bfa;
+}
+.pomo-header-btn svg { width: 12px; height: 12px; }
+.pomo-header-btn .pomo-mini-time {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: #a78bfa;
+    font-weight: 600;
+}
+.pomo-header-btn.pomo-active {
+    border-color: rgba(139, 92, 246, 0.4);
+    background: rgba(139, 92, 246, 0.12);
+}
+.pomo-header-btn.pomo-active .pomo-mini-time {
+    animation: pomoPulse 2s ease-in-out infinite;
+}
+
+@keyframes pomoPulse {
+    0%, 100% { opacity: 1; }
+    50%      { opacity: 0.5; }
+}
+
+/* ═══ LIGHT MODE ═══ */
+html.light-mode .pomo-panel {
+    background: rgba(255, 255, 255, 0.97);
+    border-color: rgba(109, 40, 217, 0.15);
+    box-shadow: 0 12px 48px rgba(0, 0, 0, 0.12);
+}
+html.light-mode .pomo-panel.pomo-break-mode {
+    border-color: rgba(16, 185, 129, 0.3);
+}
+html.light-mode .pomo-close {
+    background: rgba(0, 0, 0, 0.05);
+    color: #6b7280;
+}
+html.light-mode .pomo-close:hover { background: rgba(239, 68, 68, 0.1); color: #ef4444; }
+html.light-mode .pomo-ring-bg { stroke: rgba(0, 0, 0, 0.06); }
+html.light-mode .pomo-ctrl-btn {
+    background: rgba(0, 0, 0, 0.04);
+    border-color: rgba(0, 0, 0, 0.1);
+    color: #374151;
+}
+html.light-mode .pomo-ctrl-btn:hover { background: rgba(109, 40, 217, 0.1); }
+html.light-mode .pomo-ctrl-btn.pomo-start-btn {
+    background: rgba(109, 40, 217, 0.1);
+    border-color: rgba(109, 40, 217, 0.3);
+    color: #6d28d9;
+}
+html.light-mode .pomo-stats { border-top-color: rgba(0, 0, 0, 0.06); }
+html.light-mode .auto-notes-btn { background: rgba(109, 40, 217, 0.08); color: #7c3aed; }
+html.light-mode .auto-notes-btn:hover { background: rgba(109, 40, 217, 0.15); }
+html.light-mode .pomo-header-btn {
+    background: rgba(0, 0, 0, 0.04);
+    border-color: rgba(0, 0, 0, 0.08);
+    color: #6b7280;
+}
+html.light-mode .pomo-header-btn:hover {
+    background: rgba(109, 40, 217, 0.08);
+    border-color: rgba(109, 40, 217, 0.2);
+    color: #6d28d9;
+}
+html.light-mode .pomo-header-btn .pomo-mini-time { color: #7c3aed; }
+
+/* ═══ RESPONSIVE ═══ */
+@media (max-width: 768px) {
+    .pomo-panel {
+        right: 12px;
+        bottom: 80px;
+        width: calc(100vw - 24px);
+        max-width: 300px;
+    }
+}
