@@ -115,6 +115,7 @@ function renderQuizChart(sessions) {
     if (!chart) return;
 
     if (!sessions.length) {
+        chart.innerHTML = '';
         if (empty)  empty.style.display = 'flex';
         if (labels) labels.innerHTML = '';
         if (avgEl)  avgEl.textContent = '';
