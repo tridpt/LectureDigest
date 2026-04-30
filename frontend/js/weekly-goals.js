@@ -84,10 +84,17 @@ function getWeeklyProgress() {
     // Videos analyzed this week
     var weekVideos = 0;
     history.forEach(function(h) {
-        if (h.analyzedAt || h.savedAt) {
-            var date = (h.analyzedAt || h.savedAt).slice(0, 10);
-            if (date >= weekStart && date <= weekEnd) weekVideos++;
+        var raw = h.analyzedAt || h.savedAt;
+        if (!raw) return;
+        var date;
+        if (typeof raw === 'number') {
+            // Unix timestamp (seconds or ms)
+            var ts = raw > 1e12 ? raw : raw * 1000;
+            date = new Date(ts).toISOString().slice(0, 10);
+        } else {
+            date = String(raw).slice(0, 10);
         }
+        if (date >= weekStart && date <= weekEnd) weekVideos++;
     });
 
     // Quizzes this week — from progress storage
