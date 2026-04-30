@@ -30,35 +30,54 @@ function closeDashboard() {
 }
 
 function getDashboardData() {
-    const g   = loadGamif();
-    const raw = localStorage.getItem('lectureDigest_history');
-    const history = raw ? JSON.parse(raw) : [];
-    return { g, history };
+    var g = {};
+    try { g = loadGamif(); } catch (e) { console.error('[Dashboard] loadGamif error:', e); }
+    var history = [];
+    try {
+        var raw = localStorage.getItem('lectureDigest_history');
+        history = raw ? JSON.parse(raw) : [];
+    } catch (e) { console.error('[Dashboard] history parse error:', e); }
+    return { g: g, history: history };
 }
 
 function renderDashboard() {
-    const { g, history } = getDashboardData();
-
-    // Date
-    const dateEl = document.getElementById('dbDate');
-    if (dateEl) {
-        const now = new Date();
-        dateEl.textContent = now.toLocaleDateString('vi-VN', {
-            weekday: 'long', day: 'numeric', month: 'long', year: 'numeric'
-        });
+    var g, history;
+    try {
+        var data = getDashboardData();
+        g = data.g;
+        history = data.history;
+    } catch (e) {
+        console.error('[Dashboard] getDashboardData error:', e);
+        g = {}; history = [];
     }
 
-    renderDbStats(g, history);
-    if (typeof renderWeeklyGoals === 'function') renderWeeklyGoals();
-    renderDbStreak(g);
-    renderDbQuizChart(history);
-    renderDbPomodoro(g);
-    renderStudyStats(g, history);
-    renderDbVideos(history);
-    renderDbBadgeCats(g);
+    // Date
+    try {
+        const dateEl = document.getElementById('dbDate');
+        if (dateEl) {
+            const now = new Date();
+            dateEl.textContent = now.toLocaleDateString('vi-VN', {
+                weekday: 'long', day: 'numeric', month: 'long', year: 'numeric'
+            });
+        }
+    } catch (e) { console.error('[Dashboard] date error:', e); }
 
-    // SRS Daily Review banner
-    if (typeof renderSrsBanner === 'function') renderSrsBanner('srsBannerWrap');
+    var renders = [
+        ['renderDbStats',     function() { renderDbStats(g, history); }],
+        ['renderWeeklyGoals', function() { if (typeof renderWeeklyGoals === 'function') renderWeeklyGoals(); }],
+        ['renderDbStreak',    function() { renderDbStreak(g); }],
+        ['renderDbQuizChart', function() { renderDbQuizChart(history); }],
+        ['renderDbPomodoro',  function() { renderDbPomodoro(g); }],
+        ['renderStudyStats',  function() { renderStudyStats(g, history); }],
+        ['renderDbVideos',    function() { renderDbVideos(history); }],
+        ['renderDbBadgeCats', function() { renderDbBadgeCats(g); }],
+        ['renderSrsBanner',   function() { if (typeof renderSrsBanner === 'function') renderSrsBanner('srsBannerWrap'); }],
+    ];
+
+    renders.forEach(function(entry) {
+        try { entry[1](); }
+        catch (e) { console.error('[Dashboard] ' + entry[0] + ' error:', e); }
+    });
 }
 
 // ── Stat cards ──────────────────────────────────────────
