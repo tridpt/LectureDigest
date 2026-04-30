@@ -211,10 +211,17 @@
 
 .auto-notes-btn.auto-notes-loading {
     pointer-events: none;
-    opacity: 0.7;
 }
 .auto-notes-btn.auto-notes-loading svg {
-    animation: autoNotesSpin 1s linear infinite;
+    display: none;
+}
+.auto-notes-btn.auto-notes-loading::after {
+    content: '';
+    width: 14px; height: 14px;
+    border: 2px solid rgba(139, 92, 246, 0.2);
+    border-top-color: #a78bfa;
+    border-radius: 50%;
+    animation: autoNotesSpin 0.7s linear infinite;
 }
 
 @keyframes autoNotesSpin {
