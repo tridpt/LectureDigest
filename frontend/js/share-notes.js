@@ -100,7 +100,7 @@ async function generateShareLink() {
     } catch(e) {}
 
     try {
-        var res = await fetch(API_BASE + '/api/share-notes', {
+        var res = await fetchWithTimeout(API_BASE + '/api/share-notes', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({

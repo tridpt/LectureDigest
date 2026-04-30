@@ -16,7 +16,7 @@ function _folderFetch(endpoint, opts) {
     var token = localStorage.getItem('ld_auth_token');
     if (token) headers['Authorization'] = 'Bearer ' + token;
     var base = (window.API_BASE || '') + '/api/folders';
-    return fetch(base + endpoint, Object.assign({ headers: headers }, opts || {}))
+    return fetchWithTimeout(base + endpoint, Object.assign({ headers: headers }, opts || {}), 15000)
         .then(function(r) { return r.json(); })
         .catch(function(e) { console.warn('[Folders]', e); return null; });
 }

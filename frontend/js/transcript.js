@@ -226,11 +226,11 @@ async function translateTranscript() {
     showToast('🌐 Đang dịch transcript' + plural + '...', 0);
 
     try {
-        const res = await fetch('/api/translate-transcript', {
+        const res = await fetchWithTimeout('/api/translate-transcript', {
             method:  'POST',
             headers: { 'Content-Type': 'application/json' },
             body:    JSON.stringify({ transcript: transcriptData, target_language: lang })
-        });
+        }, 90000);
 
         if (!res.ok) {
             const errText = await res.text();

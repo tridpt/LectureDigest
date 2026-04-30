@@ -127,6 +127,46 @@ function escapeRegex(str) {
     return str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }
 
+// ── Fetch with timeout ────────────────────────────────
+/**
+ * Drop-in replacement for fetch() that adds an AbortController timeout.
+ * Prevents requests from hanging forever if the server doesn't respond.
+ *
+ * @param {string} url
+ * @param {Object} [opts] - Standard fetch options
+ * @param {number} [timeoutMs=30000] - Timeout in milliseconds (default 30s)
+ * @returns {Promise<Response>}
+ */
+function fetchWithTimeout(url, opts, timeoutMs) {
+    if (typeof opts === 'number') { timeoutMs = opts; opts = undefined; }
+    timeoutMs = timeoutMs || 30000;
+    opts = opts || {};
+
+    var controller = new AbortController();
+    // If caller already set a signal, chain them
+    var originalSignal = opts.signal;
+    opts.signal = controller.signal;
+
+    var timer = setTimeout(function() {
+        controller.abort();
+    }, timeoutMs);
+
+    return fetch(url, opts)
+        .then(function(response) {
+            clearTimeout(timer);
+            return response;
+        })
+        .catch(function(err) {
+            clearTimeout(timer);
+            if (err.name === 'AbortError') {
+                // Check if it was our timeout or the caller's abort
+                if (originalSignal && originalSignal.aborted) throw err;
+                throw new Error('Request timed out after ' + (timeoutMs / 1000) + 's: ' + url);
+            }
+            throw err;
+        });
+}
+
 // ── Safe localStorage wrappers ────────────────────────
 /**
  * Safely write to localStorage with QuotaExceededError handling.

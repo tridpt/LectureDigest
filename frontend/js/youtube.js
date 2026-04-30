@@ -123,7 +123,7 @@ const CF_WORKER = 'https://delicate-disk-ef3f.tranductrist.workers.dev';
 
 async function fetchTranscriptClientSide(videoId) {
     // Call our Cloudflare Worker which handles YouTube API internally
-    const res = await fetch(`${CF_WORKER}/?videoId=${videoId}`);
+    const res = await fetchWithTimeout(`${CF_WORKER}/?videoId=${videoId}`, 15000);
     let data;
     try {
         data = await res.json();

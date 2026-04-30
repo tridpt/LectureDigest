@@ -69,7 +69,7 @@ async function sendChatMessage() {
     document.getElementById('chatSendBtn').disabled = true;
 
     try {
-        const res = await fetch(`${API_BASE}/api/chat`, {
+        const res = await fetchWithTimeout(`${API_BASE}/api/chat`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
@@ -79,7 +79,7 @@ async function sendChatMessage() {
                 history: chatState.history.slice(-10),
                 output_language: selectedLang,
             }),
-        });
+        }, 90000);
 
         // Remove typing indicator
         document.getElementById(typingId)?.remove();

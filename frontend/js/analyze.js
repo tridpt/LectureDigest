@@ -117,11 +117,11 @@ async function _doAnalyze() {
         }
         var reqBody = { url: url, language: 'en', output_language: selectedLang };
         if (clientTranscript && clientTranscript.length) reqBody.transcript = clientTranscript;
-        var res = await fetch(API_BASE + '/api/analyze', {
+        var res = await fetchWithTimeout(API_BASE + '/api/analyze', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(reqBody),
-        });
+        }, 120000);
         stopAnimation();
         if (!res.ok) {
             var err = await res.json().catch(function() { return { detail: 'Unknown server error' }; });

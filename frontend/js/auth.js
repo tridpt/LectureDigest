@@ -21,7 +21,7 @@ var _googleClientId = null;
 // ── Google Sign-In ──────────────────────────────────────
 function _loadGoogleSignIn() {
     // 1. Fetch client ID from backend
-    fetch(API_BASE + '/api/auth/google-client-id')
+    fetchWithTimeout(API_BASE + '/api/auth/google-client-id', 10000)
         .then(function(r) { return r.json(); })
         .then(function(data) {
             _googleClientId = data.client_id;
@@ -63,7 +63,7 @@ async function _handleGoogleCallback(response) {
     if (!response || !response.credential) return;
     var errEl = document.getElementById('authError');
     try {
-        var res = await fetch(API_BASE + '/api/auth/google', {
+        var res = await fetchWithTimeout(API_BASE + '/api/auth/google', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ credential: response.credential })
@@ -113,7 +113,7 @@ function _authClearLocalData() {
 async function _authFetchMe() {
     if (!_authToken) { _authUpdateUI(); return; }
     try {
-        var res = await fetch(API_BASE + '/api/auth/me', {
+        var res = await fetchWithTimeout(API_BASE + '/api/auth/me', {
             headers: { 'Authorization': 'Bearer ' + _authToken }
         });
         if (!res.ok) throw new Error('Token expired');
@@ -286,7 +286,7 @@ async function submitForgotPassword() {
     if (btn) { btn.disabled = true; btn.textContent = 'Đang gửi...'; }
 
     try {
-        var res = await fetch(API_BASE + '/api/auth/forgot-password', {
+        var res = await fetchWithTimeout(API_BASE + '/api/auth/forgot-password', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ email: email })
@@ -345,7 +345,7 @@ async function submitAuthForm(event) {
         var body = { email: email, password: password };
         if (mode === 'register') body.display_name = displayName;
 
-        var res = await fetch(API_BASE + endpoint, {
+        var res = await fetchWithTimeout(API_BASE + endpoint, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(body)
@@ -530,7 +530,7 @@ async function saveProfile(event) {
     if (successEl) successEl.classList.add('hidden');
 
     try {
-        var res = await fetch(API_BASE + '/api/auth/profile', {
+        var res = await fetchWithTimeout(API_BASE + '/api/auth/profile', {
             method: 'PUT',
             headers: {
                 'Content-Type': 'application/json',
@@ -569,7 +569,7 @@ async function authDeleteAccount() {
     if (btn) { btn.disabled = true; btn.textContent = 'Đang xóa...'; }
 
     try {
-        var res = await fetch(API_BASE + '/api/auth/delete-account', {
+        var res = await fetchWithTimeout(API_BASE + '/api/auth/delete-account', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -606,7 +606,7 @@ async function authExportData() {
     showToast('📦 Đang chuẩn bị dữ liệu...', 2000);
 
     try {
-        var res = await fetch(API_BASE + '/api/auth/export-data', {
+        var res = await fetchWithTimeout(API_BASE + '/api/auth/export-data', {
             headers: { 'Authorization': 'Bearer ' + _authToken }
         });
         if (!res.ok) throw new Error('Không thể tải dữ liệu');

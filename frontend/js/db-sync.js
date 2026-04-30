@@ -17,7 +17,7 @@ function _dbAuthHeaders() {
 
 function dbFetch(endpoint, opts) {
     var finalOpts = Object.assign({ headers: _dbAuthHeaders() }, opts || {});
-    return fetch(DB_SYNC_BASE + endpoint, finalOpts).then(function(r) {
+    return fetchWithTimeout(DB_SYNC_BASE + endpoint, finalOpts, 15000).then(function(r) {
         if (!r.ok) throw new Error('DB sync failed: ' + r.status);
         return r.json();
     }).catch(function(e) {

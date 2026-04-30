@@ -28,7 +28,7 @@ async function fetchLeaderboard() {
         const headers = {};
         if (_authToken) headers['Authorization'] = 'Bearer ' + _authToken;
 
-        const res = await fetch(API_BASE + '/api/auth/leaderboard', { headers });
+        const res = await fetchWithTimeout(API_BASE + '/api/auth/leaderboard', { headers }, 15000);
         if (!res.ok) throw new Error('Failed');
         _lbData = await res.json();
 

@@ -46,11 +46,11 @@ async function generateAutoNotes() {
             output_language: selectedLang || 'Vietnamese'
         };
 
-        const resp = await fetch(API_BASE + '/api/auto-notes', {
+        const resp = await fetchWithTimeout(API_BASE + '/api/auto-notes', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(body)
-        });
+        }, 90000);
 
         if (!resp.ok) {
             const err = await resp.json().catch(() => ({}));

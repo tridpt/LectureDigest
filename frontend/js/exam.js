@@ -134,7 +134,7 @@ async function generateMexam() {
     _mexamShowStep(2);
 
     try {
-        var res = await fetch('/api/multi-exam', {
+        var res = await fetchWithTimeout('/api/multi-exam', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
@@ -142,7 +142,7 @@ async function generateMexam() {
                 num_questions: numQ,
                 output_language: lang
             })
-        });
+        }, 120000);
 
         if (!res.ok) {
             var err = await res.json().catch(function() { return { detail: 'Server error' }; });

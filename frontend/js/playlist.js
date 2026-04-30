@@ -33,7 +33,7 @@ async function loadPlaylist(url) {
     if (statusEl) statusEl.textContent = 'Dang tai playlist...';
 
     try {
-        var res = await fetch(API_BASE + '/api/playlist', {
+        var res = await fetchWithTimeout(API_BASE + '/api/playlist', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ url: url })

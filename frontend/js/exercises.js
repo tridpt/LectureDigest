@@ -52,7 +52,7 @@ async function generateExercises() {
     if (tabBar) tabBar.classList.add('hidden');
 
     try {
-        var res = await fetch(API_BASE + '/api/exercises', {
+        var res = await fetchWithTimeout(API_BASE + '/api/exercises', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
@@ -62,7 +62,7 @@ async function generateExercises() {
                 key_takeaways: analysisData.key_takeaways || [],
                 output_language: selectedLang || 'Vietnamese'
             })
-        });
+        }, 90000);
 
         if (!res.ok) {
             var err = await res.json().catch(function() { return { detail: 'Server error' }; });

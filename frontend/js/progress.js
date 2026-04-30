@@ -348,7 +348,7 @@ async function _bmFetchSmartSummary(videoId, bmId, secs) {
     }
 
     try {
-        const resp = await fetch(API_BASE + '/api/smart-bookmark', {
+        const resp = await fetchWithTimeout(API_BASE + '/api/smart-bookmark', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
@@ -360,7 +360,7 @@ async function _bmFetchSmartSummary(videoId, bmId, secs) {
                 })),
                 output_language: selectedLang || 'Vietnamese'
             })
-        });
+        }, 30000);
 
         if (!resp.ok) return;
         const data = await resp.json();

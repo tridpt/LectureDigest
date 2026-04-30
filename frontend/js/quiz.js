@@ -199,7 +199,7 @@ async function analyzeQuizWeakAreas() {
     const totalAnswered = questions.length - skipped;
 
     try {
-        const res = await fetch(`${API_BASE}/api/quiz-analysis`, {
+        const res = await fetchWithTimeout(`${API_BASE}/api/quiz-analysis`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
@@ -210,7 +210,7 @@ async function analyzeQuizWeakAreas() {
                 total_answered: totalAnswered,
                 output_language: selectedLang || 'Vietnamese',
             }),
-        });
+        }, 90000);
         if (!res.ok) throw new Error((await res.json().catch(() => ({}))).detail || 'Server error');
         const data = await res.json();
         renderQuizAnalysis(data);
@@ -343,7 +343,7 @@ async function regenerateQuiz() {
     try {
         const existingQuestions = analysisData.quiz || [];
 
-        const res = await fetch(`${API_BASE}/api/quiz`, {
+        const res = await fetchWithTimeout(`${API_BASE}/api/quiz`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
@@ -352,7 +352,7 @@ async function regenerateQuiz() {
                 transcript,
                 existing_questions: existingQuestions,
             }),
-        });
+        }, 90000);
         if (!res.ok) {
             const err = await res.json().catch(() => ({ detail: 'Unknown error' }));
             throw new Error(err.detail || `Server error ${res.status}`);
