@@ -236,4 +236,99 @@ html.light-mode .dashboard-nav-btn     { border-color: rgba(0,0,0,0.12); backgro
 html.light-mode .dashboard-nav-btn:hover { background: rgba(109,40,217,0.08); color: #6d28d9; }
 html.light-mode .db-badges-shortcut    { background: rgba(109,40,217,0.07); border-color: rgba(109,40,217,0.18); color: #7c3aed; }
 
+/* ── Pomodoro Focus Card ── */
+.db-pomo-panel { }
+.db-pomo-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 10px;
+    margin-bottom: 14px;
+}
+@media (max-width: 480px) { .db-pomo-grid { grid-template-columns: repeat(2, 1fr); } }
+
+.db-pomo-stat-item {
+    text-align: center;
+    padding: 12px 6px;
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    border-radius: 12px;
+    transition: all 0.15s;
+}
+.db-pomo-stat-item:hover {
+    background: rgba(255, 255, 255, 0.06);
+    transform: translateY(-1px);
+}
+.db-pomo-stat-icon { font-size: 18px; margin-bottom: 4px; }
+.db-pomo-stat-val {
+    font-size: 20px;
+    font-weight: 800;
+    font-family: 'JetBrains Mono', monospace;
+    line-height: 1.2;
+}
+.db-pomo-stat-lbl {
+    font-size: 10px;
+    color: var(--text-muted, #64748b);
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+    margin-top: 2px;
+}
+.db-pomo-msg {
+    font-size: 12px;
+    color: #a78bfa;
+    text-align: center;
+    padding: 8px 12px;
+    background: rgba(139, 92, 246, 0.06);
+    border: 1px solid rgba(139, 92, 246, 0.12);
+    border-radius: 10px;
+    margin-bottom: 12px;
+}
+.db-pomo-tomatoes {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+    justify-content: center;
+    padding: 6px 0;
+}
+.db-pomo-tomato {
+    font-size: 16px;
+    display: inline-block;
+    animation: pomoTomatoPop 0.3s ease backwards;
+}
+@keyframes pomoTomatoPop {
+    from { transform: scale(0); opacity: 0; }
+    to   { transform: scale(1); opacity: 1; }
+}
+.db-pomo-more {
+    font-size: 11px;
+    color: var(--text-muted, #64748b);
+    align-self: center;
+    font-weight: 600;
+}
+.db-pomo-empty {
+    text-align: center;
+    padding: 20px 10px;
+    color: var(--text-muted, #64748b);
+    font-size: 13px;
+}
+.db-pomo-empty-icon {
+    font-size: 32px;
+    margin-bottom: 8px;
+    opacity: 0.5;
+}
+.db-pomo-empty-hint {
+    font-size: 11px;
+    color: #555;
+    margin-top: 4px;
+}
+
+/* Light mode */
+html.light-mode .db-pomo-stat-item {
+    background: rgba(0, 0, 0, 0.03);
+    border-color: rgba(0, 0, 0, 0.06);
+}
+html.light-mode .db-pomo-msg {
+    background: rgba(109, 40, 217, 0.06);
+    border-color: rgba(109, 40, 217, 0.12);
+    color: #7c3aed;
+}
 

@@ -51,6 +51,7 @@ function renderDashboard() {
     renderDbStats(g, history);
     renderDbStreak(g);
     renderDbQuizChart(history);
+    renderDbPomodoro(g);
     renderStudyStats(g, history);
     renderDbVideos(history);
     renderDbBadgeCats(g);
@@ -87,6 +88,7 @@ function renderDbStats(g, history) {
         { icon: '⭐', label: 'Điểm quiz TB',    value: avgScore != null ? avgScore + '%' : 'N/A', sub: 'trung bình', color: '#60a5fa' },
         { icon: '🏆', label: 'Huy hiệu',        value: earnedCount + '/' + (typeof BADGES !== 'undefined' ? BADGES.length : 0), sub: 'đã mở khoá', color: '#f472b6' },
         { icon: '📅', label: 'Ngày học',        value: g.totalStudyDays || 0, sub: 'tổng cộng',       color: '#34d399' },
+        { icon: '🍅', label: 'Pomodoro',        value: g.pomoSessions || 0, sub: (g.pomoTotalMin || 0) + ' phút focus', color: '#ef4444' },
     ];
 
     grid.innerHTML = cards.map(c =>
@@ -263,6 +265,64 @@ function renderDbBadgeCats(g) {
             '<div class="db-bcat-track"><div class="db-bcat-fill" style="width:' + pct + '%"></div></div>' +
             '</div>';
     }).join('');
+}
+
+// ── Pomodoro Focus Stats ────────────────────────────────
+function renderDbPomodoro(g) {
+    var el = document.getElementById('dbPomoStats');
+    if (!el) return;
+
+    var sessions   = g.pomoSessions || 0;
+    var totalMin   = g.pomoTotalMin || 0;
+    var avgPerSess = sessions > 0 ? Math.round(totalMin / sessions) : 0;
+    var totalHours = (totalMin / 60).toFixed(1);
+
+    if (!sessions) {
+        el.innerHTML = '<div class="db-pomo-empty">' +
+            '<div class="db-pomo-empty-icon">🍅</div>' +
+            '<p>Chưa có phiên Pomodoro nào.</p>' +
+            '<p class="db-pomo-empty-hint">Bấm nút Pomodoro khi xem video để bắt đầu!</p>' +
+            '</div>';
+        return;
+    }
+
+    // Build the stats grid
+    var html = '<div class="db-pomo-grid">';
+    html += _dbPomoStatItem('🎯', sessions, 'Phiên focus', '#8b5cf6');
+    html += _dbPomoStatItem('⏱️', totalMin + ' ph', 'Tổng focus', '#f59e0b');
+    html += _dbPomoStatItem('📊', avgPerSess + ' ph', 'TB / phiên', '#10b981');
+    html += _dbPomoStatItem('🕐', totalHours + 'h', 'Giờ tập trung', '#60a5fa');
+    html += '</div>';
+
+    // Productivity message
+    var msg = '';
+    if (totalMin >= 300) msg = '🏆 Xuất sắc! Bạn đã tập trung hơn 5 giờ!';
+    else if (totalMin >= 120) msg = '🔥 Tuyệt vời! Hơn 2 giờ tập trung!';
+    else if (totalMin >= 60)  msg = '💪 Tiếp tục phát huy! Đã focus 1 giờ+';
+    else if (sessions >= 1)   msg = '🌱 Khởi đầu tốt! Hãy tiếp tục!';
+
+    if (msg) {
+        html += '<div class="db-pomo-msg">' + msg + '</div>';
+    }
+
+    // Visual progress bar (how many pomodoro sessions = how many 🍅)
+    var tomatoCount = Math.min(sessions, 20);
+    var tomatoes = '';
+    for (var i = 0; i < tomatoCount; i++) {
+        tomatoes += '<span class="db-pomo-tomato" style="animation-delay:' + (i * 0.05) + 's">🍅</span>';
+    }
+    if (sessions > 20) tomatoes += '<span class="db-pomo-more">+' + (sessions - 20) + '</span>';
+    html += '<div class="db-pomo-tomatoes">' + tomatoes + '</div>';
+
+    el.innerHTML = html;
+}
+
+function _dbPomoStatItem(icon, value, label, color) {
+    return '<div class="db-pomo-stat-item">' +
+        '<div class="db-pomo-stat-icon">' + icon + '</div>' +
+        '<div class="db-pomo-stat-val" style="color:' + color + '">' + value + '</div>' +
+        '<div class="db-pomo-stat-lbl">' + label + '</div>' +
+        '</div>';
 }
 
 
