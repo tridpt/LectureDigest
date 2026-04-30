@@ -248,11 +248,13 @@ function confirmBookmark(secs) {
     const label = input ? input.value.trim() : '';
     cancelBookmarkForm();
 
+    const bmId = Date.now();
     const bms = loadBookmarks(bmCurrentVideoId);
     bms.push({
-        id:        Date.now(),
+        id:        bmId,
         time:      secs,
         label:     label || fmtSecs(secs),
+        summary:   '',
         createdAt: new Date().toISOString()
     });
     // Sort by time
@@ -260,6 +262,9 @@ function confirmBookmark(secs) {
     saveBookmarks(bmCurrentVideoId, bms);
     renderBookmarks(bmCurrentVideoId);
     showToast('🔖 Đã bookmark ' + fmtSecs(secs));
+
+    // Smart Bookmark: AI auto-summarize transcript context
+    _bmFetchSmartSummary(bmCurrentVideoId, bmId, secs);
 }
 
 function cancelBookmarkForm() {
@@ -296,14 +301,87 @@ function renderBookmarks(videoId) {
 
     bms.slice().reverse().forEach(bm => {
         const item = document.createElement('div');
-        item.className = 'bm-item';
+        item.className = 'bm-item' + (bm.summary ? ' bm-item-smart' : '');
         item.dataset.id = bm.id;
+
+        let summaryHtml = '';
+        if (bm.summary) {
+            summaryHtml = '<div class="bm-smart-summary">' + escapeHtml(bm.summary) + '</div>';
+        }
+
         item.innerHTML =
+            '<div class="bm-item-top">' +
             '<button class="bm-ts-badge" onclick="seekToBookmark(' + bm.time + ')" title="Nhảy đến ' + fmtSecs(bm.time) + '">' + fmtSecs(bm.time) + '</button>' +
             '<span class="bm-label" contenteditable="true" onblur="saveBookmarkLabel(\'' + videoId + '\', ' + bm.id + ', this.textContent)" title="Click để sửa">' + escapeHtml(bm.label) + '</span>' +
-            '<button class="bm-delete-btn" onclick="deleteBookmark(\'' + videoId + '\', ' + bm.id + ')" title="Xoá bookmark">✕</button>';
+            '<button class="bm-delete-btn" onclick="deleteBookmark(\'' + videoId + '\', ' + bm.id + ')" title="Xoá bookmark">✕</button>' +
+            '</div>' +
+            summaryHtml;
         list.appendChild(item);
     });
+}
+
+// ── Smart Bookmark: AI summary of transcript context ──
+async function _bmFetchSmartSummary(videoId, bmId, secs) {
+    if (!analysisData || !analysisData.transcript || !analysisData.transcript.length) return;
+
+    // Extract ~40 seconds of transcript around the bookmark
+    const transcript = analysisData.transcript;
+    const windowSec = 20; // ±20 seconds
+    const nearby = transcript.filter(t => {
+        const ts = t.start || 0;
+        return ts >= (secs - windowSec) && ts <= (secs + windowSec);
+    });
+
+    if (!nearby.length) return;
+
+    // Show loading indicator on this bookmark
+    const itemEl = document.querySelector('.bm-item[data-id="' + bmId + '"]');
+    if (itemEl) {
+        let summaryEl = itemEl.querySelector('.bm-smart-summary');
+        if (!summaryEl) {
+            summaryEl = document.createElement('div');
+            summaryEl.className = 'bm-smart-summary bm-summary-loading';
+            itemEl.appendChild(summaryEl);
+        }
+        summaryEl.innerHTML = '<span class="bm-summary-spinner"></span> Đang tóm tắt...';
+    }
+
+    try {
+        const resp = await fetch(API_BASE + '/api/smart-bookmark', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                title: analysisData.title || '',
+                timestamp: secs,
+                transcript_context: nearby.map(t => ({
+                    text: t.text || '',
+                    start: t.start || 0
+                })),
+                output_language: selectedLang || 'Vietnamese'
+            })
+        });
+
+        if (!resp.ok) return;
+        const data = await resp.json();
+
+        if (data.summary) {
+            // Save summary to bookmark
+            const bms = loadBookmarks(videoId);
+            const bm = bms.find(b => b.id === bmId);
+            if (bm) {
+                bm.summary = data.summary;
+                saveBookmarks(videoId, bms);
+            }
+            renderBookmarks(videoId);
+        }
+    } catch (e) {
+        console.warn('[SmartBookmark] AI summary failed:', e);
+        // Remove loading state
+        if (itemEl) {
+            const loadingEl = itemEl.querySelector('.bm-summary-loading');
+            if (loadingEl) loadingEl.remove();
+        }
+    }
 }
 
 // ── Inline edit label ──

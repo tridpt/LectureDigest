@@ -55,6 +55,12 @@ class AutoNotesRequest(BaseModel):
     transcript:      list = []    # [{text, start}, ...]
     output_language: str = 'Vietnamese'
 
+class SmartBookmarkRequest(BaseModel):
+    title:              str = ''
+    timestamp:          int = 0
+    transcript_context: list = []    # [{text, start}, ...]
+    output_language:    str = 'Vietnamese'
+
 
 # ═══════════════════════════════════════════════════════
 # ROUTES
@@ -381,6 +387,58 @@ RULES:
         return {"notes": notes_text.strip()}
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Auto-notes generation failed: {e}")
+
+
+# ═══════════════════════════════════════════════════════
+# SMART BOOKMARK (AI CONTEXT SUMMARY)
+# ═══════════════════════════════════════════════════════
+
+@router.post("/smart-bookmark")
+async def smart_bookmark_summary(request: SmartBookmarkRequest):
+    """Generate a concise AI summary of transcript context around a bookmarked timestamp."""
+    if not os.getenv("GEMINI_API_KEY"):
+        raise HTTPException(status_code=500, detail="GEMINI_API_KEY not configured")
+
+    if not request.transcript_context:
+        raise HTTPException(status_code=400, detail="transcript_context is required")
+
+    # Format the context
+    context_lines = []
+    for entry in request.transcript_context:
+        ts = entry.get("start", 0)
+        m = int(ts) // 60
+        s = int(ts) % 60
+        text = entry.get("text", "").strip().replace("\n", " ")
+        context_lines.append(f"[{m:02d}:{s:02d}] {text}")
+    context_text = "\n".join(context_lines)
+
+    bm_m = request.timestamp // 60
+    bm_s = request.timestamp % 60
+    bm_ts = f"{bm_m:02d}:{bm_s:02d}"
+
+    prompt = f"""You are a study assistant. A student bookmarked timestamp [{bm_ts}] in this video lecture.
+
+VIDEO: {request.title}
+
+TRANSCRIPT CONTEXT (around the bookmarked moment):
+{context_text}
+
+Write a concise summary (1-2 sentences MAX, under 120 characters if possible) of what is being discussed at this moment. This will be shown as a bookmark description.
+
+⚠️ Respond in **{request.output_language}**.
+
+RULES:
+- Be extremely concise — this is a bookmark label, not a paragraph
+- Focus on the KEY concept or idea being discussed
+- Do NOT start with "At this point" or "The speaker"
+- Just state the concept directly
+- No quotes, no markdown, plain text only"""
+
+    try:
+        summary = call_gemini(prompt)
+        return {"summary": summary.strip()[:200]}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Smart bookmark failed: {e}")
 
 
 # ═══════════════════════════════════════════════════════
