@@ -9,13 +9,34 @@ import time
 import hashlib
 import secrets
 
-from fastapi import APIRouter, HTTPException, UploadFile, File, Form
+from fastapi import APIRouter, HTTPException, UploadFile, File, Form, Request, Depends
 from pydantic import BaseModel
 
 from gemini_client import get_genai_client, call_gemini, PRIMARY_MODEL
 from youtube import extract_video_id, get_video_info, get_transcript, format_seconds
+from database import db_check_rate_limit
 
 router = APIRouter(prefix="/api", tags=["analyze"])
+
+
+# ── Rate limiting ──
+def _get_client_ip(request: Request) -> str:
+    forwarded = request.headers.get("X-Forwarded-For", "")
+    if forwarded:
+        return forwarded.split(",")[0].strip()
+    return request.client.host if request.client else "unknown"
+
+def _make_rl(name: str, max_req: int, window: int = 300, block: int = 300):
+    async def _check(request: Request):
+        ip = _get_client_ip(request)
+        key = f"ai:{name}:{ip}"
+        allowed, retry = db_check_rate_limit(key, max_attempts=max_req, window_secs=window, block_secs=block)
+        if not allowed:
+            raise HTTPException(status_code=429, detail=f"Quá nhiều yêu cầu. Thử lại sau {retry} giây.")
+    return _check
+
+_rl_analyze = Depends(_make_rl("analyze", max_req=10))
+_rl_upload  = Depends(_make_rl("upload",  max_req=5))
 
 
 class VideoRequest(BaseModel):
@@ -147,7 +168,7 @@ def _format_transcript_lines(transcript_data: list) -> str:
     return "\n".join(lines)
 
 
-@router.post("/upload-analyze")
+@router.post("/upload-analyze", dependencies=[_rl_upload])
 async def upload_analyze(
     file: UploadFile = File(...),
     output_language: str = Form("Vietnamese"),
@@ -316,7 +337,7 @@ RULES:
                 pass
 
 
-@router.post("/analyze")
+@router.post("/analyze", dependencies=[_rl_analyze])
 async def analyze_video(request: VideoRequest):
     """Analyze a YouTube video: return summary, chapters, key takeaways, and quiz."""
 

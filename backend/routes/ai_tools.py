@@ -1,5 +1,6 @@
 """
 AI tool routes — quiz regeneration, chat, translate, concept explainer.
+Rate-limited to prevent Gemini API abuse.
 """
 
 import os
@@ -7,13 +8,50 @@ import re
 import json
 import time
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Request, Depends
 from pydantic import BaseModel
 
 from gemini_client import call_gemini, get_genai_client
 from youtube import format_seconds
+from database import db_check_rate_limit
 
 router = APIRouter(prefix="/api", tags=["ai-tools"])
+
+
+# ═══════════════════════════════════════════════════════
+# RATE LIMITING DEPENDENCY
+# ═══════════════════════════════════════════════════════
+
+def _get_client_ip(request: Request) -> str:
+    """Extract client IP, respecting X-Forwarded-For for proxies."""
+    forwarded = request.headers.get("X-Forwarded-For", "")
+    if forwarded:
+        return forwarded.split(",")[0].strip()
+    return request.client.host if request.client else "unknown"
+
+
+def _make_ai_rate_limiter(endpoint_name: str, max_requests: int = 20, window_secs: int = 300, block_secs: int = 300):
+    """Factory: creates a rate-limit dependency for a specific AI endpoint."""
+    async def _check(request: Request):
+        ip = _get_client_ip(request)
+        key = f"ai:{endpoint_name}:{ip}"
+        allowed, retry_after = db_check_rate_limit(key, max_attempts=max_requests, window_secs=window_secs, block_secs=block_secs)
+        if not allowed:
+            raise HTTPException(
+                status_code=429,
+                detail=f"Quá nhiều yêu cầu. Vui lòng thử lại sau {retry_after} giây."
+            )
+    return _check
+
+
+# Per-endpoint rate limits (requests / 5 minutes)
+_rl_quiz       = Depends(_make_ai_rate_limiter("quiz",       max_requests=20))
+_rl_chat       = Depends(_make_ai_rate_limiter("chat",       max_requests=30))
+_rl_translate  = Depends(_make_ai_rate_limiter("translate",  max_requests=10))
+_rl_explain    = Depends(_make_ai_rate_limiter("explain",    max_requests=40))
+_rl_notes      = Depends(_make_ai_rate_limiter("notes",      max_requests=15))
+_rl_bookmark   = Depends(_make_ai_rate_limiter("bookmark",   max_requests=30))
+_rl_analysis   = Depends(_make_ai_rate_limiter("quiz-analysis", max_requests=15))
 
 
 # ═══════════════════════════════════════════════════════
@@ -66,7 +104,7 @@ class SmartBookmarkRequest(BaseModel):
 # ROUTES
 # ═══════════════════════════════════════════════════════
 
-@router.post("/quiz")
+@router.post("/quiz", dependencies=[_rl_quiz])
 async def regenerate_quiz(request: QuizRequest):
     """Generate additional quiz questions, avoiding duplicates with existing ones."""
     if not os.getenv("GEMINI_API_KEY"):
@@ -140,7 +178,7 @@ correct_index is 0-based (0=A, 1=B, 2=C, 3=D)."""
         raise HTTPException(status_code=500, detail=f"AI quiz generation failed: {e}")
 
 
-@router.post("/chat")
+@router.post("/chat", dependencies=[_rl_chat])
 async def chat_with_lecture(request: ChatRequest):
     """Answer questions about a video lecture using its transcript as context."""
     if not os.getenv("GEMINI_API_KEY"):
@@ -195,7 +233,7 @@ Answer:"""
         raise HTTPException(status_code=500, detail=f"Chat failed: {str(e)}")
 
 
-@router.post("/translate-transcript")
+@router.post("/translate-transcript", dependencies=[_rl_translate])
 async def translate_transcript(req: TranslateRequest):
     """Translate transcript segments in chunks of 40 to avoid Gemini overload."""
     if not req.transcript:
@@ -253,7 +291,7 @@ async def translate_transcript(req: TranslateRequest):
     return {"translations": result, "target_language": req.target_language}
 
 
-@router.post("/explain-concept")
+@router.post("/explain-concept", dependencies=[_rl_explain])
 def explain_concept(req: ExplainRequest):
     term    = req.term.strip()[:120]
     ctx     = req.context.strip()[:400]
@@ -289,7 +327,7 @@ Yêu cầu:
 # AI AUTO-NOTES (CORNELL FORMAT)
 # ═══════════════════════════════════════════════════════
 
-@router.post("/auto-notes")
+@router.post("/auto-notes", dependencies=[_rl_notes])
 async def generate_auto_notes(request: AutoNotesRequest):
     """Generate structured study notes in Cornell format from video analysis data."""
     if not os.getenv("GEMINI_API_KEY"):
@@ -393,7 +431,7 @@ RULES:
 # SMART BOOKMARK (AI CONTEXT SUMMARY)
 # ═══════════════════════════════════════════════════════
 
-@router.post("/smart-bookmark")
+@router.post("/smart-bookmark", dependencies=[_rl_bookmark])
 async def smart_bookmark_summary(request: SmartBookmarkRequest):
     """Generate a concise AI summary of transcript context around a bookmarked timestamp."""
     if not os.getenv("GEMINI_API_KEY"):
@@ -454,7 +492,7 @@ class QuizAnalysisRequest(BaseModel):
     output_language: str = 'Vietnamese'
 
 
-@router.post("/quiz-analysis")
+@router.post("/quiz-analysis", dependencies=[_rl_analysis])
 async def analyze_quiz_results(request: QuizAnalysisRequest):
     """Analyze quiz results to identify weak areas and provide study recommendations."""
     if not os.getenv("GEMINI_API_KEY"):
