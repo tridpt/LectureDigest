@@ -2,7 +2,7 @@
 // LectureDigest Service Worker — Offline-first caching
 // ══════════════════════════════════════════════════════
 
-const CACHE_NAME = 'lecturedigest-v6';
+const CACHE_NAME = '%%CACHE_VERSION%%';
 const STATIC_ASSETS = [
   '/',
   '/index.html',

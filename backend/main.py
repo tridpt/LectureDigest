@@ -75,6 +75,57 @@ app.include_router(folders_router)
 
 _FRONTEND_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "frontend"))
 
+# ── Dynamic Service Worker with auto-versioned cache ──
+import hashlib
+import time as _time
+
+_sw_cache = {"hash": None, "content": None, "ts": 0}
+
+def _compute_frontend_hash():
+    """Compute a short hash from all CSS/JS file modification times."""
+    mtimes = []
+    for root, dirs, files in os.walk(_FRONTEND_DIR):
+        for f in sorted(files):
+            if f.endswith((".css", ".js", ".html")):
+                fpath = os.path.join(root, f)
+                try:
+                    mtimes.append(f"{f}:{os.path.getmtime(fpath):.0f}")
+                except OSError:
+                    pass
+    combined = "|".join(mtimes)
+    return hashlib.md5(combined.encode()).hexdigest()[:10]
+
+
+@app.get("/sw.js", include_in_schema=False)
+async def serve_service_worker():
+    """Serve sw.js with auto-computed cache version based on file hashes."""
+    now = _time.time()
+    # Recompute hash at most every 60 seconds
+    if now - _sw_cache["ts"] > 60 or _sw_cache["content"] is None:
+        version_hash = _compute_frontend_hash()
+        cache_name = f"lecturedigest-{version_hash}"
+        sw_path = os.path.join(_FRONTEND_DIR, "sw.js")
+        try:
+            with open(sw_path, "r", encoding="utf-8") as f:
+                sw_template = f.read()
+            _sw_cache["content"] = sw_template.replace("%%CACHE_VERSION%%", cache_name)
+            _sw_cache["hash"] = version_hash
+            _sw_cache["ts"] = now
+        except FileNotFoundError:
+            from fastapi.responses import PlainTextResponse
+            return PlainTextResponse("// sw.js not found", status_code=404)
+
+    from fastapi.responses import Response
+    return Response(
+        content=_sw_cache["content"],
+        media_type="application/javascript",
+        headers={
+            "Cache-Control": "no-cache, no-store, must-revalidate",
+            "Service-Worker-Allowed": "/",
+        },
+    )
+
+
 # MIME type map for static assets
 _MIME_TYPES = {
     ".css": "text/css",
