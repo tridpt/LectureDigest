@@ -2,21 +2,49 @@
    LectureDigest — Pomodoro Study Timer
    ════════════════════════════════════════════════ */
 
-const POMO_FOCUS_MIN    = 25;
-const POMO_BREAK_MIN    = 5;
-const POMO_LONG_BREAK   = 15;
-const POMO_LONG_AFTER   = 4; // long break after every N sessions
+/* ── Default presets (user-adjustable) ─────── */
+const POMO_PRESETS = [
+    { label: '15',  focus: 15, break: 3,  longBreak: 10 },
+    { label: '25',  focus: 25, break: 5,  longBreak: 15 },
+    { label: '30',  focus: 30, break: 5,  longBreak: 15 },
+    { label: '45',  focus: 45, break: 10, longBreak: 20 },
+    { label: '60',  focus: 60, break: 15, longBreak: 25 },
+];
+const POMO_LONG_AFTER = 4; // long break after every N sessions
 
 const pomoState = {
     running:       false,
     paused:        false,
     mode:          'focus',   // 'focus' | 'break'
-    secondsLeft:   POMO_FOCUS_MIN * 60,
-    totalSeconds:  POMO_FOCUS_MIN * 60,
+    secondsLeft:   25 * 60,
+    totalSeconds:  25 * 60,
     sessions:      0,
     totalFocusMin: 0,
     intervalId:    null,
+    focusMin:      25,
+    breakMin:      5,
+    longBreakMin:  15,
 };
+
+/* ── Load saved preference ───────────────────── */
+function _pomoLoadPreference() {
+    try {
+        const saved = localStorage.getItem('lectureDigest_pomoFocus');
+        if (saved) {
+            const min = parseInt(saved, 10);
+            const preset = POMO_PRESETS.find(p => p.focus === min);
+            if (preset) {
+                pomoState.focusMin = preset.focus;
+                pomoState.breakMin = preset.break;
+                pomoState.longBreakMin = preset.longBreak;
+            } else if (min >= 5 && min <= 90) {
+                pomoState.focusMin = min;
+            }
+        }
+    } catch (_) {}
+    pomoState.secondsLeft = pomoState.focusMin * 60;
+    pomoState.totalSeconds = pomoState.focusMin * 60;
+}
 
 /* ── Open / Close ────────────────────────────── */
 function openPomodoro() {
@@ -27,11 +55,51 @@ function openPomodoro() {
         setTimeout(() => panel.classList.remove('pomo-enter'), 300);
     }
     renderPomodoro();
+    _pomoRenderPresets();
 }
 
 function closePomodoro() {
     const panel = document.getElementById('pomoPanel');
     if (panel) panel.classList.add('hidden');
+}
+
+/* ── Preset selection ────────────────────────── */
+function pomoSelectPreset(focusMin) {
+    if (pomoState.running) return; // can't change while running
+
+    const preset = POMO_PRESETS.find(p => p.focus === focusMin);
+    if (preset) {
+        pomoState.focusMin = preset.focus;
+        pomoState.breakMin = preset.break;
+        pomoState.longBreakMin = preset.longBreak;
+    } else {
+        pomoState.focusMin = focusMin;
+    }
+
+    pomoState.secondsLeft = pomoState.focusMin * 60;
+    pomoState.totalSeconds = pomoState.focusMin * 60;
+
+    // Save preference
+    try { localStorage.setItem('lectureDigest_pomoFocus', String(pomoState.focusMin)); } catch (_) {}
+
+    renderPomodoro();
+    _pomoRenderPresets();
+}
+
+function _pomoRenderPresets() {
+    const wrap = document.getElementById('pomoPresets');
+    if (!wrap) return;
+
+    // Hide presets when timer is running
+    const settingsRow = document.getElementById('pomoSettingsRow');
+    if (settingsRow) {
+        settingsRow.classList.toggle('hidden', pomoState.running);
+    }
+
+    wrap.innerHTML = POMO_PRESETS.map(p => {
+        const active = p.focus === pomoState.focusMin ? ' pomo-preset-active' : '';
+        return `<button class="pomo-preset-btn${active}" onclick="pomoSelectPreset(${p.focus})" ${pomoState.running ? 'disabled' : ''}>${p.label}</button>`;
+    }).join('');
 }
 
 /* ── Start / Pause / Reset ───────────────────── */
@@ -41,8 +109,8 @@ function pomoStart() {
     if (!pomoState.running) {
         // Fresh start
         pomoState.mode = 'focus';
-        pomoState.secondsLeft = POMO_FOCUS_MIN * 60;
-        pomoState.totalSeconds = POMO_FOCUS_MIN * 60;
+        pomoState.secondsLeft = pomoState.focusMin * 60;
+        pomoState.totalSeconds = pomoState.focusMin * 60;
         pomoState.running = true;
         pomoState.paused = false;
     } else if (pomoState.paused) {
@@ -52,6 +120,7 @@ function pomoStart() {
     clearInterval(pomoState.intervalId);
     pomoState.intervalId = setInterval(pomoTick, 1000);
     renderPomodoro();
+    _pomoRenderPresets();
 
     // Resume video if in focus mode
     if (pomoState.mode === 'focus' && ytPlayer && typeof ytPlayer.playVideo === 'function') {
@@ -71,9 +140,10 @@ function pomoReset() {
     pomoState.running = false;
     pomoState.paused = false;
     pomoState.mode = 'focus';
-    pomoState.secondsLeft = POMO_FOCUS_MIN * 60;
-    pomoState.totalSeconds = POMO_FOCUS_MIN * 60;
+    pomoState.secondsLeft = pomoState.focusMin * 60;
+    pomoState.totalSeconds = pomoState.focusMin * 60;
     renderPomodoro();
+    _pomoRenderPresets();
 }
 
 /* ── Timer Tick ───────────────────────────────── */
@@ -91,14 +161,14 @@ function pomoTimerComplete() {
     if (pomoState.mode === 'focus') {
         // Focus session completed
         pomoState.sessions++;
-        pomoState.totalFocusMin += POMO_FOCUS_MIN;
+        pomoState.totalFocusMin += pomoState.focusMin;
 
         // Log to gamification
-        _pomoLogStudyTime(POMO_FOCUS_MIN);
+        _pomoLogStudyTime(pomoState.focusMin);
 
         // Switch to break
         const isLongBreak = pomoState.sessions % POMO_LONG_AFTER === 0;
-        const breakMin = isLongBreak ? POMO_LONG_BREAK : POMO_BREAK_MIN;
+        const breakMin = isLongBreak ? pomoState.longBreakMin : pomoState.breakMin;
         pomoState.mode = 'break';
         pomoState.secondsLeft = breakMin * 60;
         pomoState.totalSeconds = breakMin * 60;
@@ -109,28 +179,29 @@ function pomoTimerComplete() {
         }
 
         _pomoNotify('⏸️ Nghỉ giải lao!', isLongBreak
-            ? `Nghỉ dài ${POMO_LONG_BREAK} phút — bạn đã hoàn thành ${pomoState.sessions} phiên!`
-            : `Nghỉ ${POMO_BREAK_MIN} phút rồi tiếp tục nhé!`);
+            ? `Nghỉ dài ${pomoState.longBreakMin} phút — bạn đã hoàn thành ${pomoState.sessions} phiên!`
+            : `Nghỉ ${pomoState.breakMin} phút rồi tiếp tục nhé!`);
         showToast(`☕ Nghỉ giải lao ${breakMin} phút! (Phiên ${pomoState.sessions} hoàn thành)`);
 
     } else {
         // Break completed → start new focus
         pomoState.mode = 'focus';
-        pomoState.secondsLeft = POMO_FOCUS_MIN * 60;
-        pomoState.totalSeconds = POMO_FOCUS_MIN * 60;
+        pomoState.secondsLeft = pomoState.focusMin * 60;
+        pomoState.totalSeconds = pomoState.focusMin * 60;
 
         // Resume video
         if (ytPlayer && typeof ytPlayer.playVideo === 'function') {
             try { ytPlayer.playVideo(); } catch (_) {}
         }
 
-        _pomoNotify('🔥 Bắt đầu học tiếp!', 'Focus session mới — 25 phút tập trung!');
-        showToast('🔥 Focus time! 25 phút tập trung');
+        _pomoNotify('🔥 Bắt đầu học tiếp!', `Focus session mới — ${pomoState.focusMin} phút tập trung!`);
+        showToast(`🔥 Focus time! ${pomoState.focusMin} phút tập trung`);
     }
 
     // Auto-continue
     pomoState.intervalId = setInterval(pomoTick, 1000);
     renderPomodoro();
+    _pomoRenderPresets();
 }
 
 /* ── Render ───────────────────────────────────── */
@@ -258,6 +329,8 @@ function pomoRequestNotification() {
 
 /* ── Initialize on DOMContentLoaded ──────────── */
 document.addEventListener('DOMContentLoaded', function() {
+    _pomoLoadPreference();
+
     // Request notification permission when user first opens pomodoro
     const pomoBtn = document.getElementById('pomoBtnHeader');
     if (pomoBtn) {

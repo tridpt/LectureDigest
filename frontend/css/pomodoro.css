@@ -119,6 +119,62 @@
 .pomo-status-break { color: #34d399; }
 .pomo-status-paused { color: #fbbf24; }
 
+/* Settings Row (Presets) */
+.pomo-settings-row {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    margin-bottom: 12px;
+    transition: all 0.3s;
+}
+
+.pomo-settings-label {
+    font-size: 11px;
+    color: var(--text-muted, #64748b);
+    font-weight: 500;
+    white-space: nowrap;
+}
+
+.pomo-settings-unit {
+    font-size: 10px;
+    color: var(--text-muted, #64748b);
+}
+
+.pomo-presets {
+    display: flex;
+    gap: 4px;
+}
+
+.pomo-preset-btn {
+    width: 32px; height: 26px;
+    border-radius: 7px;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    background: rgba(255, 255, 255, 0.04);
+    color: var(--text-secondary, #94a3b8);
+    font-size: 11px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+    font-family: 'JetBrains Mono', monospace;
+    padding: 0;
+}
+.pomo-preset-btn:hover {
+    background: rgba(139, 92, 246, 0.15);
+    border-color: rgba(139, 92, 246, 0.3);
+    color: #c4b5fd;
+}
+.pomo-preset-btn.pomo-preset-active {
+    background: linear-gradient(135deg, rgba(139, 92, 246, 0.25), rgba(79, 70, 229, 0.25));
+    border-color: rgba(139, 92, 246, 0.5);
+    color: #e9d5ff;
+    box-shadow: 0 0 8px rgba(139, 92, 246, 0.15);
+}
+.pomo-preset-btn:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+}
+
 /* Controls */
 .pomo-controls {
     display: flex;
@@ -297,6 +353,17 @@ html.light-mode .pomo-ctrl-btn.pomo-start-btn {
     color: #6d28d9;
 }
 html.light-mode .pomo-stats { border-top-color: rgba(0, 0, 0, 0.06); }
+html.light-mode .pomo-preset-btn {
+    background: rgba(0, 0, 0, 0.04);
+    border-color: rgba(0, 0, 0, 0.08);
+    color: #6b7280;
+}
+html.light-mode .pomo-preset-btn:hover { background: rgba(109, 40, 217, 0.08); color: #6d28d9; }
+html.light-mode .pomo-preset-btn.pomo-preset-active {
+    background: rgba(109, 40, 217, 0.12);
+    border-color: rgba(109, 40, 217, 0.35);
+    color: #5b21b6;
+}
 html.light-mode .auto-notes-btn { background: rgba(109, 40, 217, 0.08); color: #7c3aed; }
 html.light-mode .auto-notes-btn:hover { background: rgba(109, 40, 217, 0.15); }
 html.light-mode .pomo-header-btn {
