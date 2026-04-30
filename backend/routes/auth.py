@@ -5,6 +5,7 @@ Authentication routes — register, login, Google OAuth, password reset.
 import os
 import time
 import hashlib
+import logging
 import secrets
 import asyncio
 import smtplib
@@ -27,6 +28,7 @@ from database import (
 )
 
 router = APIRouter(prefix="/api/auth", tags=["auth"])
+logger = logging.getLogger("auth")
 
 
 # ═══════════════════════════════════════════════════════
@@ -192,101 +194,125 @@ def _send_reset_email(to_email: str, reset_url: str, display_name: str = ""):
 @router.post("/register")
 async def register(req: RegisterRequest, request: Request):
     """Register a new user account."""
-    email = req.email.lower().strip()
-    if not email or "@" not in email:
-        raise HTTPException(status_code=400, detail="Email không hợp lệ")
+    try:
+        email = req.email.lower().strip()
+        if not email or "@" not in email:
+            raise HTTPException(status_code=400, detail="Email không hợp lệ")
 
-    # Rate limiting: prevent mass account creation
-    client_ip = request.client.host if request.client else "unknown"
-    allowed, retry_after = db_check_rate_limit(f"register:{client_ip}", max_attempts=5, window_secs=600, block_secs=1800)
-    if not allowed:
-        raise HTTPException(status_code=429, detail=f"Quá nhiều yêu cầu đăng ký. Vui lòng thử lại sau {retry_after // 60} phút.")
+        # Rate limiting: prevent mass account creation
+        client_ip = request.client.host if request.client else "unknown"
+        allowed, retry_after = db_check_rate_limit(f"register:{client_ip}", max_attempts=5, window_secs=600, block_secs=1800)
+        if not allowed:
+            raise HTTPException(status_code=429, detail=f"Quá nhiều yêu cầu đăng ký. Vui lòng thử lại sau {retry_after // 60} phút.")
 
-    if db_get_user_by_email(email):
-        raise HTTPException(status_code=409, detail="Email này đã được đăng ký")
+        if db_get_user_by_email(email):
+            raise HTTPException(status_code=409, detail="Email này đã được đăng ký")
 
-    loop = asyncio.get_event_loop()
-    pw_hash = await loop.run_in_executor(None, lambda: bcrypt.hashpw(req.password.encode("utf-8"), bcrypt.gensalt()).decode("utf-8"))
+        loop = asyncio.get_event_loop()
+        pw_hash = await loop.run_in_executor(None, lambda: bcrypt.hashpw(req.password.encode("utf-8"), bcrypt.gensalt()).decode("utf-8"))
 
-    color_idx = int(hashlib.md5(email.encode()).hexdigest(), 16) % len(_AVATAR_COLORS)
-    avatar_color = _AVATAR_COLORS[color_idx]
+        color_idx = int(hashlib.md5(email.encode()).hexdigest(), 16) % len(_AVATAR_COLORS)
+        avatar_color = _AVATAR_COLORS[color_idx]
 
-    user_id = db_create_user(email, req.display_name, pw_hash, avatar_color)
-    if not user_id:
-        raise HTTPException(status_code=409, detail="Email này đã được đăng ký")
+        user_id = db_create_user(email, req.display_name, pw_hash, avatar_color)
+        if not user_id:
+            raise HTTPException(status_code=409, detail="Email này đã được đăng ký")
 
-    token = _create_jwt(user_id)
-    user = db_get_user_by_id(user_id)
+        token = _create_jwt(user_id)
+        user = db_get_user_by_id(user_id)
 
-    return {"token": token, "user": user}
+        return {"token": token, "user": user}
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"register error: {e}")
+        raise HTTPException(status_code=500, detail="Lỗi đăng ký tài khoản")
 
 
 @router.post("/login")
 async def login(req: LoginRequest, request: Request):
     """Login with email and password."""
-    email = req.email.lower().strip()
+    try:
+        email = req.email.lower().strip()
 
-    # Rate limiting: 5 failed attempts per email → block 15 min
-    allowed, retry_after = db_check_rate_limit(f"login:{email}", max_attempts=5, window_secs=300, block_secs=900)
-    if not allowed:
-        raise HTTPException(status_code=429, detail=f"Quá nhiều lần đăng nhập thất bại. Vui lòng thử lại sau {retry_after // 60} phút.")
+        # Rate limiting: 5 failed attempts per email → block 15 min
+        allowed, retry_after = db_check_rate_limit(f"login:{email}", max_attempts=5, window_secs=300, block_secs=900)
+        if not allowed:
+            raise HTTPException(status_code=429, detail=f"Quá nhiều lần đăng nhập thất bại. Vui lòng thử lại sau {retry_after // 60} phút.")
 
-    user = db_get_user_by_email(email)
-    if not user:
-        raise HTTPException(status_code=401, detail="Email hoặc mật khẩu không đúng")
+        user = db_get_user_by_email(email)
+        if not user:
+            raise HTTPException(status_code=401, detail="Email hoặc mật khẩu không đúng")
 
-    loop = asyncio.get_event_loop()
-    pw_ok = await loop.run_in_executor(None, lambda: bcrypt.checkpw(req.password.encode("utf-8"), user["password_hash"].encode("utf-8")))
-    if not pw_ok:
-        raise HTTPException(status_code=401, detail="Email hoặc mật khẩu không đúng")
+        loop = asyncio.get_event_loop()
+        pw_ok = await loop.run_in_executor(None, lambda: bcrypt.checkpw(req.password.encode("utf-8"), user["password_hash"].encode("utf-8")))
+        if not pw_ok:
+            raise HTTPException(status_code=401, detail="Email hoặc mật khẩu không đúng")
 
-    # Successful login → reset rate limit counter
-    db_reset_rate_limit(f"login:{email}")
+        # Successful login → reset rate limit counter
+        db_reset_rate_limit(f"login:{email}")
 
-    token = _create_jwt(user["id"])
-    safe_user = {k: v for k, v in user.items() if k != "password_hash"}
+        token = _create_jwt(user["id"])
+        safe_user = {k: v for k, v in user.items() if k != "password_hash"}
 
-    return {"token": token, "user": safe_user}
+        return {"token": token, "user": safe_user}
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"login error: {e}")
+        raise HTTPException(status_code=500, detail="Lỗi đăng nhập")
 
 
 @router.get("/me")
 async def get_me(request: Request):
     """Get current user info from JWT token."""
-    user = get_current_user(request)
-    if not user:
-        raise HTTPException(status_code=401, detail="Chưa đăng nhập")
-    return {"user": user}
+    try:
+        user = get_current_user(request)
+        if not user:
+            raise HTTPException(status_code=401, detail="Chưa đăng nhập")
+        return {"user": user}
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"get_me error: {e}")
+        raise HTTPException(status_code=500, detail="Lỗi lấy thông tin người dùng")
 
 
 @router.put("/profile")
 async def update_profile(req: UpdateProfileRequest, request: Request):
     """Update current user's profile."""
-    user = get_current_user(request)
-    if not user:
-        raise HTTPException(status_code=401, detail="Chưa đăng nhập")
+    try:
+        user = get_current_user(request)
+        if not user:
+            raise HTTPException(status_code=401, detail="Chưa đăng nhập")
 
-    new_hash = None
-    if req.new_password:
-        if not req.current_password:
-            raise HTTPException(status_code=400, detail="Vui lòng nhập mật khẩu hiện tại")
-        full_user = db_get_user_by_email(user["email"])
-        loop = asyncio.get_event_loop()
-        pw_ok = await loop.run_in_executor(None, lambda: bcrypt.checkpw(req.current_password.encode("utf-8"), full_user["password_hash"].encode("utf-8")))
-        if not pw_ok:
-            raise HTTPException(status_code=403, detail="Mật khẩu hiện tại không đúng")
-        if len(req.new_password) < 6:
-            raise HTTPException(status_code=400, detail="Mật khẩu mới tối thiểu 6 ký tự")
-        new_hash = await loop.run_in_executor(None, lambda: bcrypt.hashpw(req.new_password.encode("utf-8"), bcrypt.gensalt()).decode("utf-8"))
+        new_hash = None
+        if req.new_password:
+            if not req.current_password:
+                raise HTTPException(status_code=400, detail="Vui lòng nhập mật khẩu hiện tại")
+            full_user = db_get_user_by_email(user["email"])
+            loop = asyncio.get_event_loop()
+            pw_ok = await loop.run_in_executor(None, lambda: bcrypt.checkpw(req.current_password.encode("utf-8"), full_user["password_hash"].encode("utf-8")))
+            if not pw_ok:
+                raise HTTPException(status_code=403, detail="Mật khẩu hiện tại không đúng")
+            if len(req.new_password) < 6:
+                raise HTTPException(status_code=400, detail="Mật khẩu mới tối thiểu 6 ký tự")
+            new_hash = await loop.run_in_executor(None, lambda: bcrypt.hashpw(req.new_password.encode("utf-8"), bcrypt.gensalt()).decode("utf-8"))
 
-    db_update_user(
-        user["id"],
-        display_name=req.display_name,
-        avatar_color=req.avatar_color,
-        password_hash=new_hash
-    )
+        db_update_user(
+            user["id"],
+            display_name=req.display_name,
+            avatar_color=req.avatar_color,
+            password_hash=new_hash
+        )
 
-    updated = db_get_user_by_id(user["id"])
-    return {"user": updated}
+        updated = db_get_user_by_id(user["id"])
+        return {"user": updated}
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"update_profile error: {e}")
+        raise HTTPException(status_code=500, detail="Lỗi cập nhật hồ sơ")
 
 
 @router.post("/google")
@@ -397,41 +423,51 @@ async def forgot_password(req: ForgotPasswordRequest):
 @router.post("/reset-password")
 async def reset_password(req: ResetPasswordRequest):
     """Reset password using a valid token."""
-    db_cleanup_expired_tokens()
+    try:
+        db_cleanup_expired_tokens()
 
-    token_data = db_get_reset_token(req.token)
-    if not token_data:
-        raise HTTPException(status_code=400, detail="Link đặt lại mật khẩu không hợp lệ hoặc đã hết hạn")
+        token_data = db_get_reset_token(req.token)
+        if not token_data:
+            raise HTTPException(status_code=400, detail="Link đặt lại mật khẩu không hợp lệ hoặc đã hết hạn")
 
-    email = token_data["email"]
-    user = db_get_user_by_email(email)
-    if not user:
-        db_delete_reset_token(req.token)
-        raise HTTPException(status_code=400, detail="Tài khoản không tồn tại")
+        email = token_data["email"]
+        user = db_get_user_by_email(email)
+        if not user:
+            db_delete_reset_token(req.token)
+            raise HTTPException(status_code=400, detail="Tài khoản không tồn tại")
 
-    loop = asyncio.get_event_loop()
-    new_hash = await loop.run_in_executor(
-        None,
-        lambda: bcrypt.hashpw(req.new_password.encode("utf-8"), bcrypt.gensalt()).decode("utf-8")
-    )
+        loop = asyncio.get_event_loop()
+        new_hash = await loop.run_in_executor(
+            None,
+            lambda: bcrypt.hashpw(req.new_password.encode("utf-8"), bcrypt.gensalt()).decode("utf-8")
+        )
 
-    db_update_user(user["id"], password_hash=new_hash)
+        db_update_user(user["id"], password_hash=new_hash)
 
-    # Delete this token and all other tokens for the same email
-    db_delete_reset_tokens_for_email(email)
+        # Delete this token and all other tokens for the same email
+        db_delete_reset_tokens_for_email(email)
 
-    print(f"[Auth] Password reset successful for {email}")
-    return {"ok": True, "message": "Mật khẩu đã được đặt lại thành công!"}
+        logger.info(f"Password reset successful for {email}")
+        return {"ok": True, "message": "Mật khẩu đã được đặt lại thành công!"}
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"reset_password error: {e}")
+        raise HTTPException(status_code=500, detail="Lỗi đặt lại mật khẩu")
 
 
 @router.get("/verify-reset-token")
 async def verify_reset_token(token: str):
     """Verify if a reset token is still valid."""
-    db_cleanup_expired_tokens()
-    token_data = db_get_reset_token(token)
-    if not token_data:
+    try:
+        db_cleanup_expired_tokens()
+        token_data = db_get_reset_token(token)
+        if not token_data:
+            return {"valid": False}
+        return {"valid": True, "email": token_data["email"]}
+    except Exception as e:
+        logger.error(f"verify_reset_token error: {e}")
         return {"valid": False}
-    return {"valid": True, "email": token_data["email"]}
 
 
 class DeleteAccountRequest(BaseModel):
@@ -477,24 +513,34 @@ async def delete_account(req: DeleteAccountRequest, request: Request):
 @router.get("/export-data")
 async def export_data(request: Request):
     """Export all user data as JSON. GDPR data portability."""
-    user = get_current_user(request)
-    if not user:
-        raise HTTPException(status_code=401, detail="Chưa đăng nhập")
+    try:
+        user = get_current_user(request)
+        if not user:
+            raise HTTPException(status_code=401, detail="Chưa đăng nhập")
 
-    data = db_export_user_data(user["id"])
-    data["exported_at"] = int(time.time())
-    return data
+        data = db_export_user_data(user["id"])
+        data["exported_at"] = int(time.time())
+        return data
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"export_data error: {e}")
+        raise HTTPException(status_code=500, detail="Lỗi xuất dữ liệu")
 
 
 @router.get("/leaderboard")
 async def get_leaderboard(request: Request):
     """Get the study leaderboard — ranked users by composite score."""
-    user = get_current_user(request)
-    current_user_id = user["id"] if user else None
+    try:
+        user = get_current_user(request)
+        current_user_id = user["id"] if user else None
 
-    entries = db_get_leaderboard(limit=50)
+        entries = db_get_leaderboard(limit=50)
 
-    return {
-        "entries": entries,
-        "current_user_id": current_user_id
-    }
+        return {
+            "entries": entries,
+            "current_user_id": current_user_id
+        }
+    except Exception as e:
+        logger.error(f"get_leaderboard error: {e}")
+        raise HTTPException(status_code=500, detail="Lỗi tải bảng xếp hạng")
