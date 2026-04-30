@@ -19,6 +19,8 @@ from dotenv import load_dotenv
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
+from starlette.middleware.base import BaseHTTPMiddleware
+from starlette.requests import Request
 
 from database import init_db
 
@@ -45,9 +47,48 @@ app.add_middleware(
     CORSMiddleware,
     allow_origins=_allowed_origins,
     allow_credentials=True,
-    allow_methods=["*"],
+    allow_methods=["GET", "POST", "OPTIONS"],
     allow_headers=["*"],
 )
+
+
+# ── Security Headers Middleware ──────────────────────────
+class SecurityHeadersMiddleware(BaseHTTPMiddleware):
+    """
+    Injects standard HTTP security headers on every response to mitigate
+    clickjacking, MIME sniffing, and other common web vulnerabilities.
+    """
+
+    async def dispatch(self, request: Request, call_next):
+        response = await call_next(request)
+
+        # Prevent MIME type sniffing
+        response.headers["X-Content-Type-Options"] = "nosniff"
+
+        # Clickjacking protection — allow YouTube iframes via SAMEORIGIN
+        response.headers["X-Frame-Options"] = "SAMEORIGIN"
+
+        # Control referrer information sent with requests
+        response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
+
+        # Disable unused browser features/APIs
+        response.headers["Permissions-Policy"] = (
+            "camera=(), microphone=(), geolocation=(), payment=()"
+        )
+
+        # Legacy XSS protection for older browsers
+        response.headers["X-XSS-Protection"] = "1; mode=block"
+
+        # Prevent caching of API responses (HTML/static assets are fine)
+        path = request.url.path
+        if path.startswith("/api/"):
+            response.headers["Cache-Control"] = "no-store"
+            response.headers["Pragma"] = "no-cache"
+
+        return response
+
+
+app.add_middleware(SecurityHeadersMiddleware)
 
 
 # ═══════════════════════════════════════════════════════
