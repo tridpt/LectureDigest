@@ -8,6 +8,11 @@
 var DB_SYNC_BASE = (window.API_BASE || '') + '/api/db';
 var _dbSyncInProgress = false;
 
+// Debug logging — enable with: localStorage.setItem('ld_debug','1')
+function _dbLog() {
+    if (localStorage.getItem('ld_debug')) console.log.apply(console, ['[DB Sync]'].concat(Array.prototype.slice.call(arguments)));
+}
+
 function _dbAuthHeaders() {
     var headers = { 'Content-Type': 'application/json' };
     var token = localStorage.getItem('ld_auth_token');
@@ -21,7 +26,7 @@ function dbFetch(endpoint, opts) {
         if (!r.ok) throw new Error('DB sync failed: ' + r.status);
         return r.json();
     }).catch(function(e) {
-        console.warn('[DB Sync]', e.message);
+        _dbLog('fetch error:', e.message);
         return null;
     });
 }
@@ -160,7 +165,7 @@ function doDbSync(showOverlay) {
         }
     }
 
-    console.log('[DB Sync] Sending', localHist.length, 'history,', Object.keys(extraData).length, 'extra keys');
+    _dbLog('Sending', localHist.length, 'history,', Object.keys(extraData).length, 'extra keys');
 
     dbFetch('/sync', {
         method: 'POST',
@@ -176,17 +181,17 @@ function doDbSync(showOverlay) {
         if (showOverlay) _hideSyncOverlay();
 
         if (!result) {
-            console.warn('[DB Sync] No result from server');
+            _dbLog('No result from server');
             return;
         }
         // Always update localStorage from server (server is source of truth)
         if (result.history !== undefined) {
             safeLsSet('lectureDigest_history', JSON.stringify(result.history));
-            console.log('[DB Sync] History synced:', result.history.length, 'entries');
+            _dbLog('History synced:', result.history.length, 'entries');
         }
         if (result.gamification !== undefined) {
             safeLsSet('lectureDigest_gamification', JSON.stringify(result.gamification));
-            console.log('[DB Sync] Gamification synced');
+            _dbLog('Gamification synced');
         }
         // Restore notes from server
         if (result.notes) {
@@ -194,7 +199,7 @@ function doDbSync(showOverlay) {
             for (var n = 0; n < noteVids.length; n++) {
                 safeLsSet('lectureDigest_note_' + noteVids[n], result.notes[noteVids[n]]);
             }
-            console.log('[DB Sync] Notes synced:', noteVids.length, 'videos');
+            _dbLog('Notes synced:', noteVids.length, 'videos');
         }
         // Restore bookmarks from server
         if (result.bookmarks) {
@@ -202,7 +207,7 @@ function doDbSync(showOverlay) {
             for (var b = 0; b < bmVids.length; b++) {
                 safeLsSet('lectureDigest_bookmarks_' + bmVids[b], JSON.stringify(result.bookmarks[bmVids[b]]));
             }
-            console.log('[DB Sync] Bookmarks synced:', bmVids.length, 'videos');
+            _dbLog('Bookmarks synced:', bmVids.length, 'videos');
         }
         // Restore extra data from server
         if (result.extra_data) {
@@ -210,7 +215,7 @@ function doDbSync(showOverlay) {
             for (var k = 0; k < extraKeys.length; k++) {
                 safeLsSet(extraKeys[k], result.extra_data[extraKeys[k]]);
             }
-            console.log('[DB Sync] Extra data synced:', extraKeys.length, 'keys');
+            _dbLog('Extra data synced:', extraKeys.length, 'keys');
         }
         // Always re-render UI after sync
         if (typeof renderHistoryPanel === 'function') renderHistoryPanel();
