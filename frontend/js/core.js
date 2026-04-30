@@ -46,22 +46,59 @@ function showSection(id) {
     if (typeof pushSpaRoute === 'function') pushSpaRoute(id);
 }
 
-function showToast(message, duration = 3000) {
-    const existing = document.getElementById('toastNotif');
-    if (existing) existing.remove();
-    const toast = document.createElement('div');
-    toast.id = 'toastNotif';
-    toast.style.cssText = `
-        position:fixed; bottom:24px; left:50%; transform:translateX(-50%);
-        background:#1e1e3a; border:1px solid rgba(139,92,246,0.4);
-        color:#f1f5f9; padding:12px 20px; border-radius:12px;
-        font-size:14px; font-weight:500; z-index:9999;
-        box-shadow:0 8px 32px rgba(0,0,0,0.5);
-        animation:slideUp 0.3s ease;
-    `;
+var _toastLastMsg = '';
+var _toastLastTime = 0;
+var _TOAST_MAX = 5;
+
+function _getToastContainer() {
+    var c = document.getElementById('toastContainer');
+    if (!c) {
+        c = document.createElement('div');
+        c.id = 'toastContainer';
+        c.style.cssText = 'position:fixed;bottom:24px;left:50%;transform:translateX(-50%);' +
+            'z-index:9999;display:flex;flex-direction:column-reverse;align-items:center;gap:8px;' +
+            'pointer-events:none;';
+        document.body.appendChild(c);
+    }
+    return c;
+}
+
+function showToast(message, duration) {
+    if (!duration) duration = 3000;
+
+    // Deduplicate rapid identical toasts (within 500ms)
+    var now = Date.now();
+    if (message === _toastLastMsg && now - _toastLastTime < 500) return;
+    _toastLastMsg = message;
+    _toastLastTime = now;
+
+    var container = _getToastContainer();
+
+    // Cap max visible toasts
+    var existing = container.children;
+    if (existing.length >= _TOAST_MAX) {
+        existing[existing.length - 1].remove();
+    }
+
+    var toast = document.createElement('div');
+    toast.className = 'toast-item';
+    toast.style.cssText = 'background:#1e1e3a;border:1px solid rgba(139,92,246,0.4);' +
+        'color:#f1f5f9;padding:12px 20px;border-radius:12px;font-size:14px;font-weight:500;' +
+        'box-shadow:0 8px 32px rgba(0,0,0,0.5);pointer-events:auto;cursor:pointer;' +
+        'max-width:400px;text-align:center;word-break:break-word;' +
+        'animation:toastIn 0.3s ease forwards;';
     toast.textContent = message;
-    document.body.appendChild(toast);
-    setTimeout(() => toast.remove(), duration);
+    toast.onclick = function() { _dismissToast(toast); };
+
+    container.insertBefore(toast, container.firstChild);
+
+    setTimeout(function() { _dismissToast(toast); }, duration);
+}
+
+function _dismissToast(el) {
+    if (!el || !el.parentNode) return;
+    el.style.animation = 'toastOut 0.25s ease forwards';
+    setTimeout(function() { if (el.parentNode) el.remove(); }, 250);
 }
 
 function goHome() {
