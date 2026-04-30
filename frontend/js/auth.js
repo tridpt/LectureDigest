@@ -79,7 +79,7 @@ async function _handleGoogleCallback(response) {
 
         // Clear stale localStorage & sync
         _authClearLocalData();
-        if (typeof doDbSync === 'function') setTimeout(doDbSync, 300);
+        if (typeof doDbSync === 'function') setTimeout(function() { doDbSync(true); }, 300);
 
         showToast('👋 Xin chào, ' + _authUser.display_name + '!', 3000);
     } catch (err) {
@@ -365,7 +365,7 @@ async function submitAuthForm(event) {
 
         // Clear stale data & sync
         _authClearLocalData();
-        if (typeof doDbSync === 'function') setTimeout(doDbSync, 300);
+        if (typeof doDbSync === 'function') setTimeout(function() { doDbSync(true); }, 300);
 
         showToast('👋 Xin chào, ' + _authUser.display_name + '!', 3000);
 

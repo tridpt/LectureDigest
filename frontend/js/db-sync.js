@@ -6,6 +6,7 @@
 // DATABASE SYNC LAYER
 // ══════════════════════════════════════════════════════
 var DB_SYNC_BASE = (window.API_BASE || '') + '/api/db';
+var _dbSyncInProgress = false;
 
 function _dbAuthHeaders() {
     var headers = { 'Content-Type': 'application/json' };
@@ -28,10 +29,6 @@ function dbFetch(endpoint, opts) {
 // ── Sync wrappers ──────────────────────────────
 
 // History: sync after save
-var _origSaveToHistory = window.saveToHistory;
-if (typeof _origSaveToHistory === 'undefined') {
-    // saveToHistory is defined with function keyword, so we patch differently
-}
 (function patchHistorySync() {
     var _origSave = saveToHistory;
     saveToHistory = function(data) {
@@ -47,62 +44,47 @@ if (typeof _origSaveToHistory === 'undefined') {
         }
     };
 
+    // Patch deleteFromHistory: the original uses showConfirmModal,
+    // so we must hook into the CONFIRMATION callback, not call dbFetch immediately.
     var _origDelete = deleteFromHistory;
     deleteFromHistory = function(idOrEntryId) {
+        var _origShowConfirm = showConfirmModal;
+        showConfirmModal = function(message, onConfirm) {
+            _origShowConfirm(message, function() {
+                if (typeof onConfirm === 'function') onConfirm();
+                // Sync the delete to server AFTER user confirmed
+                dbFetch('/history/' + encodeURIComponent(idOrEntryId), { method: 'DELETE' });
+            });
+        };
         _origDelete(idOrEntryId);
-        dbFetch('/history/' + encodeURIComponent(idOrEntryId), { method: 'DELETE' });
+        showConfirmModal = _origShowConfirm;
     };
 
+    // Patch clearHistory: same pattern — sync after confirmation
     var _origClear = clearHistory;
     clearHistory = function() {
+        var _origShowConfirm = showConfirmModal;
+        showConfirmModal = function(message, onConfirm) {
+            _origShowConfirm(message, function() {
+                if (typeof onConfirm === 'function') onConfirm();
+                dbFetch('/history', { method: 'DELETE' });
+            });
+        };
         _origClear();
-        dbFetch('/history', { method: 'DELETE' });
+        showConfirmModal = _origShowConfirm;
     };
 })();
 
-// Notes: sync on save (debounced)
-var _notesSyncTimer = null;
-(function patchNotesSync() {
-    // Watch for note changes via the textarea
-    document.addEventListener('input', function(e) {
-        if (e.target && e.target.id === 'notesTextarea') {
-            var videoId = window._spaVideoId || (window.analysisData && window.analysisData.video_id);
-            if (!videoId) return;
-            clearTimeout(_notesSyncTimer);
-            _notesSyncTimer = setTimeout(function() {
-                var content = e.target.value || '';
-                dbFetch('/notes/' + videoId, {
-                    method: 'PUT',
-                    body: JSON.stringify({ content: content })
-                });
-            }, 2000); // debounce 2s
-        }
-    });
-})();
+// Notes: saveNote() in notes.js already debounces and calls dbFetch('/sync').
+// No additional patch needed here.
 
-// Bookmarks: sync after save
-(function patchBookmarksSync() {
-    var _origSaveBm = saveBookmarks;
-    saveBookmarks = function(videoId, list) {
-        _origSaveBm(videoId, list);
-        dbFetch('/bookmarks/' + videoId, {
-            method: 'PUT',
-            body: JSON.stringify(list)
-        });
-    };
-})();
+// Bookmarks: saveBookmarks() in progress.js already debounces and calls dbFetch('/sync').
+// No additional patch needed here.
+// (Previously patched to ALSO call /bookmarks/ endpoint — removed to avoid duplicate requests.)
 
-// Gamification: sync after save
-(function patchGamifSync() {
-    var _origSaveGamif = saveGamif;
-    saveGamif = function(data) {
-        _origSaveGamif(data);
-        dbFetch('/gamification', {
-            method: 'PUT',
-            body: JSON.stringify(data)
-        });
-    };
-})();
+// Gamification: saveGamif() in gamification.js already debounces and calls dbFetch('/sync').
+// No additional patch needed here.
+// (Previously patched to ALSO call /gamification endpoint — removed to avoid duplicate requests.)
 
 // ── Extra data keys to sync per-user ──
 var _EXTRA_SYNC_PREFIXES = [
@@ -122,8 +104,38 @@ function _isExtraSyncKey(key) {
     return false;
 }
 
+// ── Sync loading overlay (shown during login/logout sync) ──
+function _showSyncOverlay() {
+    if (document.getElementById('dbSyncOverlay')) return;
+    var overlay = document.createElement('div');
+    overlay.id = 'dbSyncOverlay';
+    overlay.style.cssText = 'position:fixed;inset:0;z-index:10000;display:flex;align-items:center;' +
+        'justify-content:center;background:rgba(15,15,35,0.85);backdrop-filter:blur(6px);' +
+        'transition:opacity 0.3s ease;';
+    overlay.innerHTML = '<div style="text-align:center;color:#e2e8f0;">' +
+        '<div style="width:40px;height:40px;margin:0 auto 16px;border:3px solid rgba(139,92,246,0.3);' +
+        'border-top-color:#8b5cf6;border-radius:50%;animation:spin 0.8s linear infinite;"></div>' +
+        '<div style="font-size:16px;font-weight:600;margin-bottom:6px;">Đang đồng bộ dữ liệu...</div>' +
+        '<div style="font-size:13px;opacity:0.6;">Vui lòng đợi trong giây lát</div>' +
+        '</div>';
+    document.body.appendChild(overlay);
+}
+
+function _hideSyncOverlay() {
+    var overlay = document.getElementById('dbSyncOverlay');
+    if (overlay) {
+        overlay.style.opacity = '0';
+        setTimeout(function() { if (overlay.parentNode) overlay.remove(); }, 300);
+    }
+}
+
 // ── Initial sync: pull from backend on page load ──
-function doDbSync() {
+function doDbSync(showOverlay) {
+    if (_dbSyncInProgress) return;
+    _dbSyncInProgress = true;
+
+    if (showOverlay) _showSyncOverlay();
+
     // Push localStorage to backend (in case backend is empty)
     var localHist = [];
     try { localHist = JSON.parse(localStorage.getItem('lectureDigest_history') || '[]'); } catch(e) {}
@@ -160,6 +172,9 @@ function doDbSync() {
             extra_data: extraData
         })
     }).then(function(result) {
+        _dbSyncInProgress = false;
+        if (showOverlay) _hideSyncOverlay();
+
         if (!result) {
             console.warn('[DB Sync] No result from server');
             return;
@@ -205,6 +220,9 @@ function doDbSync() {
             var ds = document.getElementById('dashboardSection');
             if (ds && !ds.classList.contains('hidden')) renderDashboard();
         }
+    }).catch(function() {
+        _dbSyncInProgress = false;
+        if (showOverlay) _hideSyncOverlay();
     });
 }
 
