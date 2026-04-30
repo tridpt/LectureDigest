@@ -48,7 +48,8 @@ def init_db():
             video_id   TEXT NOT NULL,
             time_secs  INTEGER NOT NULL,
             label      TEXT,
-            created_at TEXT
+            created_at TEXT,
+            summary    TEXT DEFAULT ''
         );
         CREATE INDEX IF NOT EXISTS idx_bm_video ON bookmarks(video_id);
 
@@ -165,6 +166,13 @@ def _migrate_add_user_id(conn):
             print(f"[DB Migration] Added {col_name} to users")
         except sqlite3.OperationalError:
             pass  # Column already exists
+
+    # Add summary column to bookmarks table
+    try:
+        conn.execute("ALTER TABLE bookmarks ADD COLUMN summary TEXT DEFAULT ''")
+        print("[DB Migration] Added summary to bookmarks")
+    except sqlite3.OperationalError:
+        pass  # Column already exists
 
     # Fix notes table: need composite PK (video_id, user_id) instead of just video_id
     _migrate_notes_composite_pk(conn)
@@ -363,14 +371,22 @@ def db_get_bookmarks(video_id: str, user_id=None):
             "SELECT * FROM bookmarks WHERE video_id = ? AND user_id IS NULL ORDER BY time_secs ASC", (video_id,)
         ).fetchall()
     conn.close()
-    return [{"id": r["id"], "time": r["time_secs"], "label": r["label"], "createdAt": r["created_at"]} for r in rows]
+    result = []
+    for r in rows:
+        bm = {"id": r["id"], "time": r["time_secs"], "label": r["label"], "createdAt": r["created_at"]}
+        try:
+            bm["summary"] = r["summary"] or ""
+        except (IndexError, KeyError):
+            bm["summary"] = ""
+        result.append(bm)
+    return result
 
-def db_save_bookmark(video_id: str, time_secs: int, label: str, created_at: str = None, user_id=None):
+def db_save_bookmark(video_id: str, time_secs: int, label: str, created_at: str = None, user_id=None, summary: str = ""):
     conn = get_db()
     conn.execute("""
-        INSERT INTO bookmarks (video_id, time_secs, label, created_at, user_id)
-        VALUES (?, ?, ?, ?, ?)
-    """, (video_id, time_secs, label, created_at or "", user_id))
+        INSERT INTO bookmarks (video_id, time_secs, label, created_at, user_id, summary)
+        VALUES (?, ?, ?, ?, ?, ?)
+    """, (video_id, time_secs, label, created_at or "", user_id, summary))
     conn.commit()
     conn.close()
 
@@ -389,9 +405,9 @@ def db_sync_bookmarks(video_id: str, bookmarks: list, user_id=None):
         conn.execute("DELETE FROM bookmarks WHERE video_id = ? AND user_id IS NULL", (video_id,))
     for bm in bookmarks:
         conn.execute("""
-            INSERT INTO bookmarks (video_id, time_secs, label, created_at, user_id)
-            VALUES (?, ?, ?, ?, ?)
-        """, (video_id, bm.get("time", 0), bm.get("label", ""), bm.get("createdAt", ""), user_id))
+            INSERT INTO bookmarks (video_id, time_secs, label, created_at, user_id, summary)
+            VALUES (?, ?, ?, ?, ?, ?)
+        """, (video_id, bm.get("time", 0), bm.get("label", ""), bm.get("createdAt", ""), user_id, bm.get("summary", "")))
     conn.commit()
     conn.close()
 
@@ -412,7 +428,12 @@ def db_get_all_bookmarks(user_id=None):
         vid = r["video_id"]
         if vid not in result:
             result[vid] = []
-        result[vid].append({"time": r["time_secs"], "label": r["label"], "createdAt": r["created_at"]})
+        bm = {"time": r["time_secs"], "label": r["label"], "createdAt": r["created_at"]}
+        try:
+            bm["summary"] = r["summary"] or ""
+        except (IndexError, KeyError):
+            bm["summary"] = ""
+        result[vid].append(bm)
     return result
 
 # ══════════════════════════════════════════
@@ -600,8 +621,8 @@ def db_full_sync(user_id, local_history, local_notes, local_bookmarks, local_gam
                 else:
                     conn.execute("DELETE FROM bookmarks WHERE video_id=? AND user_id IS NULL", (video_id,))
                 for bm in bms:
-                    conn.execute("INSERT INTO bookmarks (video_id, time_secs, label, created_at, user_id) VALUES (?,?,?,?,?)",
-                                 (video_id, bm.get("time",0), bm.get("label",""), bm.get("createdAt",""), user_id))
+                    conn.execute("INSERT INTO bookmarks (video_id, time_secs, label, created_at, user_id, summary) VALUES (?,?,?,?,?,?)",
+                                 (video_id, bm.get("time",0), bm.get("label",""), bm.get("createdAt",""), user_id, bm.get("summary","")))
             except Exception as e:
                 print(f"[Sync] Skip bookmarks {video_id}: {e}")
 
@@ -687,7 +708,12 @@ def db_full_sync(user_id, local_history, local_notes, local_bookmarks, local_gam
         for r in brows:
             vid = r["video_id"]
             if vid not in result_bookmarks: result_bookmarks[vid] = []
-            result_bookmarks[vid].append({"time": r["time_secs"], "label": r["label"], "createdAt": r["created_at"]})
+            bm = {"time": r["time_secs"], "label": r["label"], "createdAt": r["created_at"]}
+            try:
+                bm["summary"] = r["summary"] or ""
+            except (IndexError, KeyError):
+                bm["summary"] = ""
+            result_bookmarks[vid].append(bm)
 
         # Extra data
         result_extra = {}

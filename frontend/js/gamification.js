@@ -198,7 +198,7 @@ function renderStreakCard(g) {
         const days = [];
         for (let i = 6; i >= 0; i--) {
             const d = dayOffsetISO(-i);
-            const active = g.studyDatesLast7?.includes(d);
+            const active = (g.studyDates || []).includes(d);
             const dow = new Date(d).toLocaleDateString('vi-VN', { weekday: 'narrow' });
             days.push('<div class="streak-day' + (active ? ' streak-day-active' : '') + '" title="' + d + '">'
                 + '<span class="streak-dot"></span>'

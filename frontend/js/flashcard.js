@@ -362,11 +362,13 @@ function loadSm2(videoId) {
 function saveSm2(videoId, data) {
     try {
         localStorage.setItem(sm2Key(videoId), JSON.stringify(data));
-        // Sync to backend
+        // Sync to backend via KV store (not notes!)
         if (typeof dbFetch === 'function') {
-            dbFetch('/notes/' + videoId + '_sm2', {
-                method: 'PUT',
-                body: JSON.stringify({ content: JSON.stringify(data) })
+            var extra = {};
+            extra[sm2Key(videoId)] = JSON.stringify(data);
+            dbFetch('/sync', {
+                method: 'POST',
+                body: JSON.stringify({ history: [], notes: {}, bookmarks: {}, gamification: {}, extra_data: extra })
             });
         }
     } catch(e) {}
@@ -636,6 +638,15 @@ function loadCustomCards(videoId) {
 
 function saveCustomCards(videoId, cards) {
     try { localStorage.setItem(customFcKey(videoId), JSON.stringify(cards)); } catch(e) {}
+    // Sync to backend via KV store
+    if (typeof dbFetch === 'function') {
+        var extra = {};
+        extra[customFcKey(videoId)] = JSON.stringify(cards);
+        dbFetch('/sync', {
+            method: 'POST',
+            body: JSON.stringify({ history: [], notes: {}, bookmarks: {}, gamification: {}, extra_data: extra })
+        });
+    }
 }
 
 function openAddCardForm() {
