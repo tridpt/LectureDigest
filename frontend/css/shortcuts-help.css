@@ -1,0 +1,194 @@
+/* ════════════════════════════════════════════════
+   Keyboard Shortcuts Help Modal
+   ════════════════════════════════════════════════ */
+
+/* Overlay */
+.kbhelp-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 10000;
+    background: rgba(0, 0, 0, 0.6);
+    backdrop-filter: blur(6px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    transition: opacity 0.2s ease;
+}
+.kbhelp-overlay.kbhelp-visible {
+    opacity: 1;
+}
+
+/* Modal */
+.kbhelp-modal {
+    background: #12122a;
+    border: 1px solid rgba(139, 92, 246, 0.2);
+    border-radius: 20px;
+    width: 90%;
+    max-width: 560px;
+    max-height: 80vh;
+    display: flex;
+    flex-direction: column;
+    box-shadow: 0 24px 64px rgba(0, 0, 0, 0.6), 0 0 0 1px rgba(139, 92, 246, 0.1);
+    transform: scale(0.95) translateY(10px);
+    transition: transform 0.2s ease;
+}
+.kbhelp-visible .kbhelp-modal {
+    transform: scale(1) translateY(0);
+}
+
+/* Header */
+.kbhelp-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 20px 24px 16px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+.kbhelp-title {
+    font-size: 18px;
+    font-weight: 700;
+    color: #f1f1f1;
+    margin: 0;
+}
+.kbhelp-close {
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    background: rgba(255, 255, 255, 0.04);
+    color: #888;
+    font-size: 18px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.15s;
+}
+.kbhelp-close:hover {
+    background: rgba(255, 255, 255, 0.08);
+    color: #fff;
+}
+
+/* Body */
+.kbhelp-body {
+    padding: 16px 24px;
+    overflow-y: auto;
+    flex: 1;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(139, 92, 246, 0.3) transparent;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 18px;
+}
+@media (max-width: 500px) {
+    .kbhelp-body { grid-template-columns: 1fr; }
+}
+
+/* Section */
+.kbhelp-section {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+.kbhelp-section-title {
+    font-size: 12px;
+    font-weight: 700;
+    color: #a78bfa;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin: 0 0 4px;
+}
+
+/* Shortcut rows */
+.kbhelp-list {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+.kbhelp-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 5px 0;
+}
+.kbhelp-keys {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    flex-shrink: 0;
+}
+.kbhelp-kbd {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 24px;
+    height: 24px;
+    padding: 0 7px;
+    border-radius: 6px;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    background: rgba(255, 255, 255, 0.06);
+    color: #e2e8f0;
+    font-size: 11px;
+    font-weight: 600;
+    font-family: 'JetBrains Mono', 'SF Mono', monospace;
+    white-space: nowrap;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+}
+.kbhelp-plus {
+    font-size: 10px;
+    color: #555;
+    margin: 0 1px;
+}
+.kbhelp-desc {
+    font-size: 12px;
+    color: #999;
+    text-align: right;
+    line-height: 1.3;
+}
+
+/* Footer */
+.kbhelp-footer {
+    padding: 12px 24px;
+    border-top: 1px solid rgba(255, 255, 255, 0.06);
+    text-align: center;
+    font-size: 12px;
+    color: #555;
+}
+.kbhelp-footer .kbhelp-kbd {
+    font-size: 10px;
+    height: 20px;
+    min-width: 20px;
+    padding: 0 5px;
+}
+
+/* ── Light mode ── */
+html.light-mode .kbhelp-overlay {
+    background: rgba(0, 0, 0, 0.3);
+}
+html.light-mode .kbhelp-modal {
+    background: #fff;
+    border-color: rgba(109, 40, 217, 0.15);
+    box-shadow: 0 24px 64px rgba(0, 0, 0, 0.15), 0 0 0 1px rgba(109, 40, 217, 0.08);
+}
+html.light-mode .kbhelp-title { color: #1e1b4b; }
+html.light-mode .kbhelp-header { border-bottom-color: rgba(0, 0, 0, 0.06); }
+html.light-mode .kbhelp-close {
+    border-color: rgba(0, 0, 0, 0.08);
+    background: rgba(0, 0, 0, 0.03);
+    color: #9ca3af;
+}
+html.light-mode .kbhelp-close:hover {
+    background: rgba(0, 0, 0, 0.06);
+    color: #374151;
+}
+html.light-mode .kbhelp-section-title { color: #7c3aed; }
+html.light-mode .kbhelp-kbd {
+    border-color: rgba(0, 0, 0, 0.12);
+    background: rgba(0, 0, 0, 0.04);
+    color: #374151;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.06);
+}
+html.light-mode .kbhelp-desc { color: #6b7280; }
+html.light-mode .kbhelp-footer { border-top-color: rgba(0, 0, 0, 0.06); color: #9ca3af; }

@@ -62,6 +62,7 @@
     <link rel="stylesheet" href="/css/weekly-goals.css">
     <link rel="stylesheet" href="/css/leaderboard.css">
     <link rel="stylesheet" href="/css/offline.css">
+    <link rel="stylesheet" href="/css/shortcuts-help.css">
     <!-- Utilities & Responsive -->
     <link rel="stylesheet" href="/css/utilities.css">
     <link rel="stylesheet" href="/css/mobile.css">
@@ -107,6 +108,11 @@
                 <button class="gsearch-trigger" onclick="openGlobalSearch()" title="Tim kiem (Ctrl+K)">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35" stroke-linecap="round"/></svg>
                     <span class="gsearch-trigger-kbd">Ctrl+K</span>
+                </button>
+
+                <!-- Keyboard Shortcuts Help -->
+                <button class="dashboard-nav-btn" onclick="openShortcutsHelp()" title="Phím tắt (?)" aria-label="Phím tắt" style="padding:7px 10px;font-size:14px;font-weight:700;">
+                    ⌨️
                 </button>
 
                 <!-- Dashboard button -->
@@ -1684,7 +1690,8 @@
     <script src="/js/pwa-install.js"></script>
     <!-- Offline / Online Indicator -->
     <script src="/js/offline-indicator.js"></script>
-
+    <!-- Keyboard Shortcuts Help -->
+    <script src="/js/shortcuts-help.js"></script>
     <!-- ══════════════════════════════ PWA INSTALL BANNER ══════════════════════════════ -->
     <div class="pwa-install-banner hidden" id="pwaInstallBanner">
         <button class="pwa-banner-close" id="pwaCloseBtn" aria-label="Đóng">✕</button>
