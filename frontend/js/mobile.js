@@ -36,7 +36,11 @@ function mobScrollTo(elementId) {
         updateMobileNav();
     }
 
-    window.addEventListener('resize', updateMobileNav);
+    var _resizeNavTimer = null;
+    window.addEventListener('resize', function() {
+        clearTimeout(_resizeNavTimer);
+        _resizeNavTimer = setTimeout(updateMobileNav, 150);
+    });
     if (document.readyState === 'loading') {
         document.addEventListener('DOMContentLoaded', setupObserver);
     } else {
@@ -46,10 +50,14 @@ function mobScrollTo(elementId) {
 
 // Fix 100vh on mobile browsers (address bar issue)
 (function fixMobileVh() {
+    var _resizeVhTimer = null;
     function setVh() {
         document.documentElement.style.setProperty('--vh', (window.innerHeight * 0.01) + 'px');
     }
     setVh();
-    window.addEventListener('resize', setVh);
+    window.addEventListener('resize', function() {
+        clearTimeout(_resizeVhTimer);
+        _resizeVhTimer = setTimeout(setVh, 150);
+    });
 })();
 

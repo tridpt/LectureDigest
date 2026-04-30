@@ -41,9 +41,13 @@ function openGlobalSearch() {
     var input = document.getElementById('gsearchInput');
     setTimeout(function() { input && input.focus(); }, 50);
 
-    // Live search
+    // Live search (debounced to avoid re-rendering on every keystroke)
+    var _gsearchTimer = null;
     input.addEventListener('input', function() {
-        _gsearchQuery(input.value);
+        clearTimeout(_gsearchTimer);
+        _gsearchTimer = setTimeout(function() {
+            _gsearchQuery(input.value);
+        }, 200);
     });
 
     // Keyboard nav
