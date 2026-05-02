@@ -262,3 +262,57 @@ document.addEventListener('keydown', function(e) {
     };
 })();
 
+// ══════════════════════════════════════════════════════════
+// ACCENT COLOR CUSTOMIZATION
+// ══════════════════════════════════════════════════════════
+
+var ACCENT_PRESETS = [
+    { name: 'Violet',  hex: '#8b5cf6', light: '#a78bfa', dark: '#6d28d9', glow: 'rgba(139,92,246,0.25)' },
+    { name: 'Indigo',  hex: '#6366f1', light: '#818cf8', dark: '#4f46e5', glow: 'rgba(99,102,241,0.25)' },
+    { name: 'Blue',    hex: '#3b82f6', light: '#60a5fa', dark: '#2563eb', glow: 'rgba(59,130,246,0.25)' },
+    { name: 'Cyan',    hex: '#06b6d4', light: '#22d3ee', dark: '#0891b2', glow: 'rgba(6,182,212,0.25)' },
+    { name: 'Emerald', hex: '#10b981', light: '#34d399', dark: '#059669', glow: 'rgba(16,185,129,0.25)' },
+    { name: 'Amber',   hex: '#f59e0b', light: '#fbbf24', dark: '#d97706', glow: 'rgba(245,158,11,0.25)' },
+    { name: 'Rose',    hex: '#f43f5e', light: '#fb7185', dark: '#e11d48', glow: 'rgba(244,63,94,0.25)' },
+    { name: 'Pink',    hex: '#ec4899', light: '#f472b6', dark: '#db2777', glow: 'rgba(236,72,153,0.25)' },
+];
+
+var ACCENT_KEY = 'lectureDigest_accent';
+
+function applyAccentColor(hex) {
+    var preset = null;
+    for (var i = 0; i < ACCENT_PRESETS.length; i++) {
+        if (ACCENT_PRESETS[i].hex === hex) { preset = ACCENT_PRESETS[i]; break; }
+    }
+    if (!preset) return;
+
+    var root = document.documentElement;
+    root.style.setProperty('--accent', preset.hex);
+    root.style.setProperty('--accent-light', preset.light);
+    root.style.setProperty('--accent-dark', preset.dark);
+    root.style.setProperty('--accent-glow', preset.glow);
+    root.style.setProperty('--border-accent', preset.glow.replace('0.25', '0.4'));
+    root.style.setProperty('--shadow-glow', '0 0 60px ' + preset.glow.replace('0.25', '0.15'));
+
+    // Update theme-color meta tag
+    var meta = document.querySelector('meta[name="theme-color"]');
+    if (meta) meta.setAttribute('content', preset.hex);
+}
+
+function setAccentColor(hex) {
+    safeLsSet(ACCENT_KEY, hex);
+    applyAccentColor(hex);
+}
+
+function getAccentColor() {
+    return localStorage.getItem(ACCENT_KEY) || '#8b5cf6';
+}
+
+// Apply saved accent on load
+(function initAccent() {
+    var saved = localStorage.getItem(ACCENT_KEY);
+    if (saved && saved !== '#8b5cf6') {
+        applyAccentColor(saved);
+    }
+})();
+

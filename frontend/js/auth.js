@@ -491,6 +491,12 @@ function openProfileModal() {
     }
     var deleteErr = document.getElementById('deleteAccountError');
     if (deleteErr) { deleteErr.textContent = ''; deleteErr.classList.add('hidden'); }
+
+    // Set active accent color swatch
+    var currentAccent = typeof getAccentColor === 'function' ? getAccentColor() : '#8b5cf6';
+    document.querySelectorAll('.profile-accent-option').forEach(function(el) {
+        el.classList.toggle('active', el.dataset.accent === currentAccent);
+    });
 }
 
 function closeProfileModal() {
@@ -501,6 +507,15 @@ function closeProfileModal() {
 function selectProfileColor(el) {
     document.querySelectorAll('.profile-color-option').forEach(function(o) { o.classList.remove('active'); });
     el.classList.add('active');
+}
+
+function selectAccentColor(el) {
+    document.querySelectorAll('.profile-accent-option').forEach(function(o) { o.classList.remove('active'); });
+    el.classList.add('active');
+    var hex = el.dataset.accent;
+    if (hex && typeof setAccentColor === 'function') {
+        setAccentColor(hex);
+    }
 }
 
 async function saveProfile(event) {
