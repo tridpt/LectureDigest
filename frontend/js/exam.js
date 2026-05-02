@@ -257,12 +257,16 @@ function _mexamSelectAnswer(qId, optIndex) {
     if (_mexam.submitted) return;
     _mexam.answers[qId] = optIndex;
     _mexamRenderQuestion();
+    // Auto-save progress so user can resume later
+    _mexamSaveProgress();
 }
 
 function mexamNav(dir) {
     var total = _mexam.examData.questions.length;
     _mexam.currentQ = Math.max(0, Math.min(total - 1, _mexam.currentQ + dir));
     _mexamRenderQuestion();
+    // Save current position for resume
+    _mexamSaveProgress();
 }
 
 function mexamSubmit() {
@@ -475,8 +479,15 @@ function _mexamRenderHistory() {
         var timeStr = date.toLocaleTimeString('vi-VN', { hour:'2-digit', minute:'2-digit' });
         var mins = Math.floor((e.elapsed || 0) / 60);
         var secs = (e.elapsed || 0) % 60;
-        var statusLabel = !isCompleted ? '<span style="color:#fbbf24;font-size:11px">⏳ Chưa làm</span>' :
-            e.correctAnswers + '/' + e.totalQuestions + ' đúng · ' + mins + 'm' + secs + 's';
+        var answeredN = Object.keys(e.answers || {}).length;
+        var statusLabel;
+        if (!isCompleted) {
+            statusLabel = answeredN > 0
+                ? '<span style="color:#fbbf24;font-size:11px">⏳ ' + answeredN + '/' + e.totalQuestions + ' đã trả lời</span>'
+                : '<span style="color:#fbbf24;font-size:11px">⏳ Chưa làm</span>';
+        } else {
+            statusLabel = e.correctAnswers + '/' + e.totalQuestions + ' đúng · ' + mins + 'm' + secs + 's';
+        }
 
         return '<div class="mexam-hist-card" onclick="_mexamReplayExam(' + idx + ')">' +
             '<div class="mexam-hist-score ' + gradeClass + '">' +
@@ -543,22 +554,24 @@ function _mexamReplayExam(idx) {
         _mexam.submitted = true;
         _mexam.currentQ = 0;
         _mexam.elapsed = entry.elapsed || 0;
+
+        document.getElementById('mexamSubtitle').textContent =
+            entry.totalQuestions + ' câu hỏi · ' + entry.videoCount + ' video';
+        var titleEl = document.getElementById('mexamExamTitle');
+        if (titleEl) titleEl.textContent = entry.title;
+
         _mexamShowStep(3);
         _mexamRenderQuestion();
     } else {
-        // Resume unfinished exam (fresh start)
-        _mexam.answers = {};
-        _mexam.submitted = false;
-        _mexam.currentQ = 0;
-        _mexamStartTimer();
-        _mexamShowStep(3);
-        _mexamRenderQuestion();
+        // In-progress exam — ask user: resume or restart
+        var answeredCount = Object.keys(entry.answers || {}).length;
+        if (answeredCount > 0) {
+            _mexamShowResumeDialog(idx, entry, answeredCount);
+        } else {
+            // No answers yet, just start fresh
+            _mexamStartExamFresh(entry);
+        }
     }
-
-    document.getElementById('mexamSubtitle').textContent =
-        entry.totalQuestions + ' câu hỏi · ' + entry.videoCount + ' video';
-    var titleEl = document.getElementById('mexamExamTitle');
-    if (titleEl) titleEl.textContent = entry.title;
 }
 
 function _mexamRetakeExam(idx) {
@@ -699,3 +712,131 @@ function _mexamBuildAndDownload(examData, answers, elapsed) {
 }
 
 
+// ── Auto-save exam progress ──
+var _mexamSaveProgressTimer = null;
+
+function _mexamSaveProgress() {
+    // Debounce: save at most once per second
+    clearTimeout(_mexamSaveProgressTimer);
+    _mexamSaveProgressTimer = setTimeout(function() {
+        if (!_mexam._activeHistId || !_mexam.examData) return;
+        var list = _mexamLoadExamHistory();
+        for (var i = 0; i < list.length; i++) {
+            if (list[i].id === _mexam._activeHistId) {
+                list[i].answers = Object.assign({}, _mexam.answers);
+                list[i].currentQ = _mexam.currentQ;
+                list[i].elapsed = _mexam.elapsed || Math.floor((Date.now() - _mexam.startTime) / 1000);
+                break;
+            }
+        }
+        safeLsSet(MEXAM_HISTORY_KEY, JSON.stringify(list));
+        _mexamSyncToServer();
+    }, 1000);
+}
+
+function _mexamSyncToServer() {
+    // Push exam history to server via extra_data sync
+    var token = localStorage.getItem('ld_auth_token');
+    if (!token) return;
+    var examData = localStorage.getItem(MEXAM_HISTORY_KEY);
+    if (!examData) return;
+    var extra = {};
+    extra[MEXAM_HISTORY_KEY] = examData;
+    try {
+        fetch((window.API_BASE || '') + '/api/db/sync', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+            body: JSON.stringify({
+                history: [], notes: {}, bookmarks: {}, gamification: {},
+                extra_data: extra
+            })
+        }).catch(function() {});
+    } catch(e) {}
+}
+
+// ── Resume / Restart Dialog ──
+function _mexamShowResumeDialog(idx, entry, answeredCount) {
+    var total = entry.totalQuestions;
+    var savedQ = (entry.currentQ || 0) + 1;
+
+    // Build inline dialog in step area
+    _mexamShowStep(2); // reuse loading step container
+    var loadingDiv = document.getElementById('mexamStep2');
+    if (!loadingDiv) return;
+
+    loadingDiv.innerHTML =
+        '<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;padding:60px 20px;gap:20px;">' +
+            '<div style="font-size:48px;">📝</div>' +
+            '<div style="font-size:20px;font-weight:800;color:var(--text-primary);">' + escHtml(entry.title) + '</div>' +
+            '<div style="font-size:14px;color:var(--text-secondary);">Bạn đã trả lời <strong style="color:var(--accent);">' + answeredCount + '/' + total + '</strong> câu · Đang ở câu ' + savedQ + '</div>' +
+            '<div style="display:flex;gap:12px;margin-top:12px;">' +
+                '<button class="mexam-nav-btn mexam-primary" onclick="_mexamResumeExam(' + idx + ')" style="padding:12px 28px;font-size:15px;">' +
+                    '▶ Làm tiếp' +
+                '</button>' +
+                '<button class="mexam-nav-btn" onclick="_mexamRetakeExam(' + idx + ')" style="padding:12px 28px;font-size:15px;">' +
+                    '🔄 Làm từ đầu' +
+                '</button>' +
+            '</div>' +
+            '<button class="mexam-nav-btn" onclick="_mexamSwitchTab(\'history\')" style="margin-top:8px;font-size:12px;opacity:.7;">← Quay lại</button>' +
+        '</div>';
+}
+
+function _mexamStartExamFresh(entry) {
+    _mexam.examData = {
+        exam_title: entry.title,
+        questions: entry.questions,
+        video_count: entry.videoCount,
+        video_titles: entry.videoTitles
+    };
+    _mexam.answers = {};
+    _mexam.submitted = false;
+    _mexam.currentQ = 0;
+    _mexam._activeHistId = entry.id;
+
+    document.getElementById('mexamSubtitle').textContent =
+        entry.totalQuestions + ' câu hỏi · ' + entry.videoCount + ' video';
+    var titleEl = document.getElementById('mexamExamTitle');
+    if (titleEl) titleEl.textContent = entry.title;
+
+    _mexamStartTimer();
+    _mexamShowStep(3);
+    _mexamRenderQuestion();
+}
+
+function _mexamResumeExam(idx) {
+    var list = _mexamLoadExamHistory();
+    var entry = list[idx];
+    if (!entry) return;
+
+    _mexam.examData = {
+        exam_title: entry.title,
+        questions: entry.questions,
+        video_count: entry.videoCount,
+        video_titles: entry.videoTitles
+    };
+    // Restore saved answers and position
+    _mexam.answers = Object.assign({}, entry.answers || {});
+    _mexam.submitted = false;
+    _mexam.currentQ = entry.currentQ || 0;
+    _mexam._activeHistId = entry.id;
+
+    document.getElementById('mexamSubtitle').textContent =
+        entry.totalQuestions + ' câu hỏi · ' + entry.videoCount + ' video';
+    var titleEl = document.getElementById('mexamExamTitle');
+    if (titleEl) titleEl.textContent = entry.title;
+
+    // Resume timer from saved elapsed
+    _mexam.startTime = Date.now() - (entry.elapsed || 0) * 1000;
+    _mexam.elapsed = entry.elapsed || 0;
+    _mexamStopTimer();
+    _mexam.timerInterval = setInterval(function() {
+        _mexam.elapsed = Math.floor((Date.now() - _mexam.startTime) / 1000);
+        var m = String(Math.floor(_mexam.elapsed / 60)).padStart(2, '0');
+        var s = String(_mexam.elapsed % 60).padStart(2, '0');
+        var el = document.getElementById('mexamTimer');
+        if (el) el.textContent = m + ':' + s;
+    }, 1000);
+
+    _mexamShowStep(3);
+    _mexamRenderQuestion();
+}

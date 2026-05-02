@@ -397,6 +397,34 @@ function _authShowError(msg) {
 
 // ── Logout ──
 function authLogout() {
+    // ── Push data to server BEFORE clearing localStorage ──
+    var token = localStorage.getItem('ld_auth_token');
+    if (token) {
+        try {
+            // Gather all extra data (exam history, etc.) to push
+            var extraData = {};
+            for (var i = 0; i < localStorage.length; i++) {
+                var key = localStorage.key(i);
+                if (key && typeof _isExtraSyncKey === 'function' && _isExtraSyncKey(key)) {
+                    extraData[key] = localStorage.getItem(key) || '';
+                }
+            }
+            // Fire-and-forget push to server with current token
+            var headers = { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token };
+            fetch((window.API_BASE || '') + '/api/db/sync', {
+                method: 'POST',
+                headers: headers,
+                body: JSON.stringify({
+                    history: [],
+                    notes: {},
+                    bookmarks: {},
+                    gamification: {},
+                    extra_data: extraData
+                })
+            }).catch(function() {});
+        } catch(e) {}
+    }
+
     _authToken = null;
     _authUser = null;
     localStorage.removeItem('ld_auth_token');
@@ -406,18 +434,19 @@ function authLogout() {
     localStorage.removeItem('lectureDigest_gamification');
     // Clear notes, bookmarks, and all per-user extra data
     var keysToRemove = [];
-    for (var i = 0; i < localStorage.length; i++) {
-        var key = localStorage.key(i);
-        if (key && (
-            key.indexOf('lectureDigest_note_') === 0 ||
-            key.indexOf('lectureDigest_bookmarks_') === 0 ||
-            key.indexOf('lectureDigest_sm2_') === 0 ||
-            key.indexOf('lectureDigest_customfc_') === 0 ||
-            key.indexOf('lectureDigest_tags') === 0 ||
-            key.indexOf('lectureDigest_progress_') === 0 ||
-            key.indexOf('lectureDigest_playlist_') === 0
+    for (var j = 0; j < localStorage.length; j++) {
+        var lsKey = localStorage.key(j);
+        if (lsKey && (
+            lsKey.indexOf('lectureDigest_note_') === 0 ||
+            lsKey.indexOf('lectureDigest_bookmarks_') === 0 ||
+            lsKey.indexOf('lectureDigest_examHistory') === 0 ||
+            lsKey.indexOf('lectureDigest_sm2_') === 0 ||
+            lsKey.indexOf('lectureDigest_customfc_') === 0 ||
+            lsKey.indexOf('lectureDigest_tags') === 0 ||
+            lsKey.indexOf('lectureDigest_progress_') === 0 ||
+            lsKey.indexOf('lectureDigest_playlist_') === 0
         )) {
-            keysToRemove.push(key);
+            keysToRemove.push(lsKey);
         }
     }
     keysToRemove.forEach(function(k) { localStorage.removeItem(k); });
