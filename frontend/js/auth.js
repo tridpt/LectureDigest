@@ -411,7 +411,6 @@ function authLogout() {
         if (key && (
             key.indexOf('lectureDigest_note_') === 0 ||
             key.indexOf('lectureDigest_bookmarks_') === 0 ||
-            key.indexOf('lectureDigest_examHistory') === 0 ||
             key.indexOf('lectureDigest_sm2_') === 0 ||
             key.indexOf('lectureDigest_customfc_') === 0 ||
             key.indexOf('lectureDigest_tags') === 0 ||
