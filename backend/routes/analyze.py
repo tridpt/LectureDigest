@@ -344,8 +344,14 @@ async def analyze_video(request: VideoRequest):
         raise HTTPException(status_code=500, detail="GEMINI_API_KEY not configured in .env")
 
     # 1. Validate & extract video ID
+    url = request.url.strip()
+    if len(url) > 2000:
+        raise HTTPException(status_code=400, detail="URL quá dài")
+    if not url.startswith(("http://", "https://")):
+        raise HTTPException(status_code=400, detail="URL không hợp lệ — phải bắt đầu bằng http:// hoặc https://")
+
     try:
-        video_id = extract_video_id(request.url)
+        video_id = extract_video_id(url)
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
 
@@ -390,10 +396,3 @@ async def analyze_video(request: VideoRequest):
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"AI analysis failed: {str(e)}")
 
-
-@router.get("/health")
-async def health():
-    return {
-        "status": "ok",
-        "gemini_configured": bool(os.getenv("GEMINI_API_KEY")),
-    }
