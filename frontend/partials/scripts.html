@@ -69,4 +69,13 @@
     <script src="/js/weekly-goals.js"></script>
     <!-- Leaderboard -->
     <script src="/js/leaderboard.js"></script>
+    <!-- Text-to-Speech (Web Speech API) -->
+    <script src="/js/tts.js"></script>
+
+    <!-- TTS floating controls (shown when reading) -->
+    <div class="tts-controls" id="ttsControls">
+        <span class="tts-ctrl-label">🔊 Đang đọc</span>
+        <button type="button" class="tts-ctrl-btn" id="ttsPauseBtn" onclick="ttsPause()" title="Tạm dừng" aria-label="Tạm dừng đọc">⏸</button>
+        <button type="button" class="tts-ctrl-btn tts-stop-btn" onclick="ttsStop()" title="Dừng đọc" aria-label="Dừng đọc">⏹</button>
+    </div>
 

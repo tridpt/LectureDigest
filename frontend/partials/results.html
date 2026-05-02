@@ -83,6 +83,10 @@
                     <div class="card-header">
                         <span class="card-icon" aria-hidden="true">📋</span>
                         <h3 class="card-title">Overview</h3>
+                        <button type="button" class="tts-btn" onclick="ttsToggle('overview')" title="Đọc to overview" aria-label="Đọc to overview">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M15.54 8.46a5 5 0 010 7.07M19.07 4.93a10 10 0 010 14.14" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                            Đọc to
+                        </button>
                     </div>
                     <p class="overview-text" id="overviewText"></p>
                     <div class="takeaways-section">
@@ -97,6 +101,9 @@
                         <span class="card-icon" aria-hidden="true">📝</span>
                         <h3 class="card-title">Ghi chú</h3>
                         <div class="notes-header-actions">
+                            <button type="button" class="tts-btn" onclick="ttsToggle('notes')" title="Đọc to ghi chú" aria-label="Đọc to ghi chú">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M15.54 8.46a5 5 0 010 7.07" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                            </button>
                             <span class="notes-word-count" id="notesWordCount">0 từ</span>
                             <button type="button" class="notes-action-btn auto-notes-btn" id="autoNotesBtn" onclick="generateAutoNotes()" title="AI tạo ghi chú Cornell" aria-label="AI tạo ghi chú Cornell">
                                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
