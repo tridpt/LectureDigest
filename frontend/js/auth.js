@@ -20,25 +20,32 @@ var _googleClientId = null;
 
 // ── Google Sign-In ──────────────────────────────────────
 function _loadGoogleSignIn() {
-    // Skip GSI on localhost — origin won't be in Google's allowed list
-    var host = window.location.hostname;
-    if (host === 'localhost' || host === '127.0.0.1') return;
-
-    // 1. Fetch client ID from backend
+    // Fetch client ID from backend — if not configured, hide Google button area
     fetchWithTimeout(API_BASE + '/api/auth/google-client-id', 10000)
         .then(function(r) { return r.json(); })
         .then(function(data) {
             _googleClientId = data.client_id;
-            if (!_googleClientId) return;
-            // 2. Load GSI script
+            if (!_googleClientId) {
+                _hideGoogleSignIn();
+                return;
+            }
+            // Load GSI script
             var script = document.createElement('script');
             script.src = 'https://accounts.google.com/gsi/client';
             script.async = true;
             script.defer = true;
             script.onload = function() { _initGoogleButton(); };
+            script.onerror = function() { _hideGoogleSignIn(); };
             document.head.appendChild(script);
         })
-        .catch(function() { /* Google Sign-In not available */ });
+        .catch(function() { _hideGoogleSignIn(); });
+}
+
+function _hideGoogleSignIn() {
+    var wrap = document.getElementById('authGoogleWrap');
+    var divider = document.querySelector('.auth-divider');
+    if (wrap) wrap.classList.add('hidden');
+    if (divider) divider.classList.add('hidden');
 }
 
 function _initGoogleButton() {
