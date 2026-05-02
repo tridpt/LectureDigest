@@ -19,18 +19,8 @@ function setLoadingProgress(pct, stepIndex, statusText) {
     if (fill) fill.style.width = pct + '%';
     if (pctEl) pctEl.textContent = Math.round(pct) + '%';
 
-    // ETA calculation
-    if (etaEl && pct > 5 && pct < 100) {
-        var elapsed = (Date.now() - _loadProgress.startTime) / 1000;
-        var remaining = (elapsed / pct) * (100 - pct);
-        if (remaining > 60) {
-            etaEl.textContent = '~' + Math.ceil(remaining / 60) + ' phút còn lại';
-        } else {
-            etaEl.textContent = '~' + Math.ceil(remaining) + 's còn lại';
-        }
-    } else if (etaEl) {
-        etaEl.textContent = pct >= 100 ? '' : 'Đang ước tính...';
-    }
+    // Hide ETA element (not shown)
+    if (etaEl) etaEl.textContent = '';
 
     // Update steps
     var stepIds = ['step1', 'step2', 'step3', 'step4'];
