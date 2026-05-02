@@ -39,3 +39,6 @@ uvicorn.log
 
 # Uploads (temp files)
 uploads/
+
+# Database backups
+backups/

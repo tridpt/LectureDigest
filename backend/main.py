@@ -2,9 +2,10 @@
 LectureDigest API — FastAPI application entry point.
 
 This is the main orchestrator that:
-  1. Initializes the database
-  2. Registers all route modules
-  3. Serves the frontend SPA with proper routing
+  1. Validates environment configuration
+  2. Initializes the database
+  3. Registers all route modules
+  4. Serves the frontend SPA with proper routing
 
 Route modules:
   - routes/auth.py     — Authentication (register, login, Google OAuth, password reset)
@@ -12,30 +13,115 @@ Route modules:
   - routes/ai_tools.py — Quiz regen, AI chat, translate, concept explainer
   - routes/sync.py     — Database sync (history, notes, bookmarks, gamification, shared notes)
   - routes/content.py  — Exercises, multi-video exam, playlist
+  - routes/folders.py  — Video folder organization
 """
 
 import os
+import sys
+import time as _startup_time
+import logging
 from dotenv import load_dotenv
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.gzip import GZipMiddleware
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, JSONResponse
 from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.requests import Request
 
-from database import init_db
+from database import init_db, db_create_backup
+
+# ═══════════════════════════════════════════════════════
+# STRUCTURED LOGGING
+# ═══════════════════════════════════════════════════════
+
+_LOG_FORMAT = "[%(asctime)s] %(levelname)-7s %(name)s — %(message)s"
+_LOG_DATE_FORMAT = "%H:%M:%S"
+
+logging.basicConfig(
+    level=logging.INFO,
+    format=_LOG_FORMAT,
+    datefmt=_LOG_DATE_FORMAT,
+    handlers=[logging.StreamHandler(sys.stdout)],
+)
+
+# Reduce noise from third-party libraries
+logging.getLogger("uvicorn.access").setLevel(logging.WARNING)
+logging.getLogger("httpx").setLevel(logging.WARNING)
+logging.getLogger("httpcore").setLevel(logging.WARNING)
+
+logger = logging.getLogger("lecturedigest")
+logger.setLevel(logging.INFO)
+
+
+# ═══════════════════════════════════════════════════════
+# ENVIRONMENT VALIDATION
+# ═══════════════════════════════════════════════════════
+
+load_dotenv(os.path.join(os.path.dirname(__file__), ".env"), override=True)
+
+def _validate_environment():
+    """Check required and optional env vars at startup. Warn early instead of failing later."""
+    issues = []
+    warnings = []
+
+    # ── Required ──
+    gemini_key = os.getenv("GEMINI_API_KEY", "").strip()
+    if not gemini_key:
+        issues.append("GEMINI_API_KEY is not set — video analysis and all AI features will fail!")
+    elif len(gemini_key) < 10:
+        warnings.append("GEMINI_API_KEY looks too short — double-check your key")
+
+    # ── Optional but important ──
+    jwt_secret = os.getenv("JWT_SECRET", "").strip()
+    if not jwt_secret:
+        warnings.append("JWT_SECRET not set — using default. Set a strong random secret for production!")
+
+    google_client = os.getenv("GOOGLE_CLIENT_ID", "").strip()
+    if not google_client:
+        warnings.append("GOOGLE_CLIENT_ID not set — Google OAuth sign-in will be disabled")
+
+    # SMTP for password reset
+    smtp_host = os.getenv("SMTP_HOST", "").strip()
+    smtp_user = os.getenv("SMTP_USER", "").strip()
+    if not smtp_host or not smtp_user:
+        warnings.append("SMTP not configured — password reset links will only print to console")
+
+    # ── Report ──
+    if issues:
+        logger.error("=" * 60)
+        logger.error("⚠️  CRITICAL CONFIGURATION ISSUES:")
+        for issue in issues:
+            logger.error(f"   ❌ {issue}")
+        logger.error("=" * 60)
+
+    if warnings:
+        logger.warning("Configuration warnings:")
+        for w in warnings:
+            logger.warning(f"   ⚡ {w}")
+
+    if not issues and not warnings:
+        logger.info("✅ All environment variables validated")
+
+    return len(issues) == 0
+
+_env_ok = _validate_environment()
+
 
 # ═══════════════════════════════════════════════════════
 # APP INITIALIZATION
 # ═══════════════════════════════════════════════════════
+
+_startup_ts = _startup_time.time()
 
 app = FastAPI(title="LectureDigest API", version="1.0.0")
 
 # Initialize SQLite database
 init_db()
 
+# Auto-backup database on startup (keeps last 7)
+db_create_backup()
+
 # CORS: read allowed origins from env, default to localhost for development
-load_dotenv(os.path.join(os.path.dirname(__file__), ".env"), override=True)
 _allowed_origins = [
     o.strip() for o in os.getenv("ALLOWED_ORIGINS", "").split(",") if o.strip()
 ] or [
@@ -116,6 +202,45 @@ app.include_router(ai_tools_router)
 app.include_router(sync_router)
 app.include_router(content_router)
 app.include_router(folders_router)
+
+
+# ═══════════════════════════════════════════════════════
+# HEALTH CHECK & MONITORING
+# ═══════════════════════════════════════════════════════
+
+@app.get("/health", tags=["monitoring"])
+async def health_check():
+    """Health check endpoint for deployment monitoring."""
+    import sqlite3
+    from database import DB_PATH
+
+    uptime = _startup_time.time() - _startup_ts
+
+    # Check DB connectivity
+    db_ok = False
+    try:
+        conn = sqlite3.connect(DB_PATH, timeout=2)
+        conn.execute("SELECT 1").fetchone()
+        conn.close()
+        db_ok = True
+    except Exception:
+        pass
+
+    # Check Gemini key presence
+    gemini_ok = bool(os.getenv("GEMINI_API_KEY", "").strip())
+
+    status = "healthy" if (db_ok and gemini_ok) else "degraded"
+
+    return JSONResponse({
+        "status": status,
+        "uptime_seconds": round(uptime, 1),
+        "database": "ok" if db_ok else "error",
+        "gemini_api": "configured" if gemini_ok else "missing",
+        "environment": "ok" if _env_ok else "issues",
+    })
+
+
+logger.info(f"🚀 LectureDigest API ready (startup: {_startup_time.time() - _startup_ts:.2f}s)")
 
 
 # ═══════════════════════════════════════════════════════
