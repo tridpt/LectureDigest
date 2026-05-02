@@ -473,6 +473,7 @@ html.light-mode .mexam-page { background: #eef0ff; }
 .mexam-hist-score.grade-b { border-color: #60a5fa; color: #60a5fa; background: rgba(96,165,250,0.08); }
 .mexam-hist-score.grade-c { border-color: #fbbf24; color: #fbbf24; background: rgba(251,191,36,0.08); }
 .mexam-hist-score.grade-f { border-color: #f87171; color: #f87171; background: rgba(248,113,113,0.08); }
+.mexam-hist-score.grade-draft { border-color: #fbbf24; color: #fbbf24; background: rgba(251,191,36,0.06); border-style: dashed; }
 .mexam-hist-grade {
     font-size: 9px; font-weight: 700; opacity: 0.7;
 }

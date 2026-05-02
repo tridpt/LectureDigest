@@ -153,6 +153,11 @@ async function generateMexam() {
         _mexam.currentQ = 0;
         _mexam.answers = {};
         _mexam.submitted = false;
+        _mexam._activeHistId = null;
+
+        // Save exam immediately so user can retake later
+        _mexam._activeHistId = _mexamSaveExamDraft();
+
         _mexamStartTimer();
         _mexamShowStep(3);
         _mexamRenderQuestion();
@@ -263,7 +268,7 @@ function mexamNav(dir) {
 function mexamSubmit() {
     _mexam.submitted = true;
     _mexamStopTimer();
-    _mexamSaveToHistory();
+    _mexamUpdateHistoryResult();
     _mexamShowStep(4);
     _mexamRenderResults();
 }
@@ -387,7 +392,38 @@ function _mexamUpdateHistCount() {
     if (el) el.textContent = count;
 }
 
-function _mexamSaveToHistory() {
+function _mexamSaveExamDraft() {
+    // Save exam immediately when generated (before user answers)
+    var questions = _mexam.examData.questions;
+    var total = questions.length;
+    var entryId = 'exam_' + Date.now();
+
+    var entry = {
+        id: entryId,
+        savedAt: Date.now(),
+        title: _mexam.examData.exam_title || 'Đề thi tổng hợp',
+        videoTitles: _mexam.examData.video_titles || [],
+        videoCount: _mexam.examData.video_count || 0,
+        totalQuestions: total,
+        correctAnswers: 0,
+        percentage: 0,
+        elapsed: 0,
+        completed: false,
+        questions: questions,
+        answers: {}
+    };
+
+    var list = _mexamLoadExamHistory();
+    list.unshift(entry);
+    list.splice(MEXAM_HISTORY_MAX);
+    safeLsSet(MEXAM_HISTORY_KEY, JSON.stringify(list));
+    _mexamUpdateHistCount();
+    return entryId;
+}
+
+function _mexamUpdateHistoryResult() {
+    // Update the saved draft with final answers/score
+    var list = _mexamLoadExamHistory();
     var questions = _mexam.examData.questions;
     var total = questions.length;
     var correct = 0;
@@ -396,23 +432,25 @@ function _mexamSaveToHistory() {
     });
     var pct = Math.round((correct / total) * 100);
 
-    var entry = {
-        id: 'exam_' + Date.now(),
-        savedAt: Date.now(),
-        title: _mexam.examData.exam_title || 'Đề thi tổng hợp',
-        videoTitles: _mexam.examData.video_titles || [],
-        videoCount: _mexam.examData.video_count || 0,
-        totalQuestions: total,
-        correctAnswers: correct,
-        percentage: pct,
-        elapsed: _mexam.elapsed,
-        questions: questions,
-        answers: Object.assign({}, _mexam.answers)
-    };
-
-    var list = _mexamLoadExamHistory();
-    list.unshift(entry);
-    list.splice(MEXAM_HISTORY_MAX);
+    var targetId = _mexam._activeHistId;
+    var found = false;
+    for (var i = 0; i < list.length; i++) {
+        if (list[i].id === targetId) {
+            list[i].correctAnswers = correct;
+            list[i].percentage = pct;
+            list[i].elapsed = _mexam.elapsed;
+            list[i].answers = Object.assign({}, _mexam.answers);
+            list[i].completed = true;
+            list[i].lastAttempt = Date.now();
+            found = true;
+            break;
+        }
+    }
+    if (!found) {
+        // Fallback: create new entry
+        _mexam._activeHistId = _mexamSaveExamDraft();
+        return _mexamUpdateHistoryResult();
+    }
     safeLsSet(MEXAM_HISTORY_KEY, JSON.stringify(list));
     _mexamUpdateHistCount();
 }
@@ -428,25 +466,28 @@ function _mexamRenderHistory() {
     }
 
     container.innerHTML = list.map(function(e, idx) {
-        var pct = e.percentage;
-        var gradeClass = pct >= 80 ? 'grade-a' : pct >= 60 ? 'grade-b' : pct >= 40 ? 'grade-c' : 'grade-f';
-        var grade = pct >= 90 ? 'A+' : pct >= 80 ? 'A' : pct >= 70 ? 'B' : pct >= 60 ? 'C' : pct >= 50 ? 'D' : 'F';
-        var date = new Date(e.savedAt);
+        var pct = e.percentage || 0;
+        var isCompleted = e.completed !== false;
+        var gradeClass = !isCompleted ? 'grade-draft' : pct >= 80 ? 'grade-a' : pct >= 60 ? 'grade-b' : pct >= 40 ? 'grade-c' : 'grade-f';
+        var grade = !isCompleted ? '—' : pct >= 90 ? 'A+' : pct >= 80 ? 'A' : pct >= 70 ? 'B' : pct >= 60 ? 'C' : pct >= 50 ? 'D' : 'F';
+        var date = new Date(e.lastAttempt || e.savedAt);
         var dateStr = date.toLocaleDateString('vi-VN', { day:'2-digit', month:'2-digit', year:'numeric' });
         var timeStr = date.toLocaleTimeString('vi-VN', { hour:'2-digit', minute:'2-digit' });
         var mins = Math.floor((e.elapsed || 0) / 60);
         var secs = (e.elapsed || 0) % 60;
+        var statusLabel = !isCompleted ? '<span style="color:#fbbf24;font-size:11px">⏳ Chưa làm</span>' :
+            e.correctAnswers + '/' + e.totalQuestions + ' đúng · ' + mins + 'm' + secs + 's';
 
         return '<div class="mexam-hist-card" onclick="_mexamReplayExam(' + idx + ')">' +
             '<div class="mexam-hist-score ' + gradeClass + '">' +
-                pct + '%' +
+                (isCompleted ? pct + '%' : '📝') +
                 '<div class="mexam-hist-grade">' + grade + '</div>' +
             '</div>' +
             '<div class="mexam-hist-info">' +
                 '<div class="mexam-hist-name">' + escHtml(e.title) + '</div>' +
                 '<div class="mexam-hist-detail">' +
-                    e.correctAnswers + '/' + e.totalQuestions + ' đúng · ' +
-                    e.videoCount + ' video · ' + mins + 'm' + secs + 's · ' +
+                    statusLabel + ' · ' +
+                    e.videoCount + ' video · ' +
                     dateStr + ' ' + timeStr +
                 '</div>' +
                 '<div class="mexam-hist-diff-bar">' +
@@ -458,6 +499,9 @@ function _mexamRenderHistory() {
                 '</div>' +
             '</div>' +
             '<div class="mexam-hist-actions">' +
+                '<button class="mexam-hist-action-btn" onclick="event.stopPropagation();_mexamRetakeExam(' + idx + ')" title="Làm lại">' +
+                    '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><path d="M1 4v6h6M23 20v-6h-6" stroke-linecap="round" stroke-linejoin="round"/><path d="M20.49 9A9 9 0 005.64 5.64L1 10m22 4l-4.64 4.36A9 9 0 013.51 15" stroke-linecap="round" stroke-linejoin="round"/></svg>' +
+                '</button>' +
                 '<button class="mexam-hist-action-btn" onclick="event.stopPropagation();_mexamDownloadFromHistory(' + idx + ')" title="Tải về">' +
                     '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M7 10l5 5 5-5M12 15V3" stroke-linecap="round" stroke-linejoin="round"/></svg>' +
                 '</button>' +
@@ -485,23 +529,61 @@ function _mexamReplayExam(idx) {
     var entry = list[idx];
     if (!entry) return;
 
-    // Restore exam state for review
     _mexam.examData = {
         exam_title: entry.title,
         questions: entry.questions,
         video_count: entry.videoCount,
         video_titles: entry.videoTitles
     };
-    _mexam.answers = Object.assign({}, entry.answers || {});
-    _mexam.submitted = true;
+    _mexam._activeHistId = entry.id;
+
+    if (entry.completed) {
+        // Show review of completed exam
+        _mexam.answers = Object.assign({}, entry.answers || {});
+        _mexam.submitted = true;
+        _mexam.currentQ = 0;
+        _mexam.elapsed = entry.elapsed || 0;
+        _mexamShowStep(3);
+        _mexamRenderQuestion();
+    } else {
+        // Resume unfinished exam (fresh start)
+        _mexam.answers = {};
+        _mexam.submitted = false;
+        _mexam.currentQ = 0;
+        _mexamStartTimer();
+        _mexamShowStep(3);
+        _mexamRenderQuestion();
+    }
+
+    document.getElementById('mexamSubtitle').textContent =
+        entry.totalQuestions + ' câu hỏi · ' + entry.videoCount + ' video';
+    var titleEl = document.getElementById('mexamExamTitle');
+    if (titleEl) titleEl.textContent = entry.title;
+}
+
+function _mexamRetakeExam(idx) {
+    var list = _mexamLoadExamHistory();
+    var entry = list[idx];
+    if (!entry) return;
+
+    _mexam.examData = {
+        exam_title: entry.title,
+        questions: entry.questions,
+        video_count: entry.videoCount,
+        video_titles: entry.videoTitles
+    };
+    // Reset for fresh attempt
+    _mexam.answers = {};
+    _mexam.submitted = false;
     _mexam.currentQ = 0;
-    _mexam.elapsed = entry.elapsed || 0;
+    _mexam._activeHistId = entry.id;
 
     document.getElementById('mexamSubtitle').textContent =
         entry.totalQuestions + ' câu hỏi · ' + entry.videoCount + ' video';
     var titleEl = document.getElementById('mexamExamTitle');
     if (titleEl) titleEl.textContent = entry.title;
 
+    _mexamStartTimer();
     _mexamShowStep(3);
     _mexamRenderQuestion();
 }
