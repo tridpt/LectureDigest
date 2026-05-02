@@ -35,12 +35,18 @@
 
 /* Header */
 .db-header {
-    display: flex; align-items: center; gap: 12px;
+    display: flex; align-items: center; justify-content: space-between;
     padding: 28px 0 20px;
     border-bottom: 1px solid rgba(255,255,255,0.06);
     margin-bottom: 28px;
+    position: relative;
 }
-.db-header-center { flex: 1; text-align: center; }
+.db-header-center {
+    position: absolute;
+    left: 50%; transform: translateX(-50%);
+    text-align: center;
+    pointer-events: none;
+}
 .db-title  { font-size: 24px; font-weight: 800; color: #f1f1f1; margin: 0; }
 .db-date   { font-size: 12px; color: #555; margin: 3px 0 0; }
 .db-header-right { flex-shrink: 0; }
