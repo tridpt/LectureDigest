@@ -8,6 +8,7 @@ import json
 import time
 import hashlib
 import secrets
+import logging
 
 from fastapi import APIRouter, HTTPException, UploadFile, File, Form, Request, Depends
 from pydantic import BaseModel
@@ -17,6 +18,7 @@ from youtube import extract_video_id, get_video_info, get_transcript, format_sec
 from database import db_check_rate_limit
 
 router = APIRouter(prefix="/api", tags=["analyze"])
+logger = logging.getLogger("analyze")
 
 
 # ── Rate limiting ──
@@ -214,14 +216,14 @@ async def upload_analyze(
                     )
                 buf.write(chunk)
 
-        print(f"[Upload] Saved {original_name} ({total_size // 1024}KB) → {tmp_path}")
+        logger.info("Upload: saved %s (%dKB) → %s", original_name, total_size // 1024, tmp_path)
 
         # ── Step 1: Upload to Gemini Files API ──
         client = get_genai_client()
-        print(f"[Upload] Uploading to Gemini Files API...")
+        logger.info("Upload: uploading to Gemini Files API...")
 
         gemini_file = client.files.upload(file=tmp_path, config={"mime_type": mime_type})
-        print(f"[Upload] Gemini file: {gemini_file.name}, state: {gemini_file.state}")
+        logger.info("Upload: Gemini file %s, state: %s", gemini_file.name, gemini_file.state)
 
         # Wait for file to be processed
         max_wait = 120  # seconds
@@ -230,7 +232,7 @@ async def upload_analyze(
             time.sleep(3)
             waited += 3
             gemini_file = client.files.get(name=gemini_file.name)
-            print(f"[Upload] Processing... ({waited}s)")
+            logger.info("Upload: processing... (%ds)", waited)
 
         if gemini_file.state.name == "FAILED":
             raise HTTPException(status_code=500, detail="Gemini không thể xử lý file này")
@@ -239,7 +241,7 @@ async def upload_analyze(
             raise HTTPException(status_code=500, detail=f"File chưa sẵn sàng (state: {gemini_file.state.name})")
 
         # ── Step 2: Transcribe with Gemini ──
-        print(f"[Upload] Transcribing with Gemini...")
+        logger.info("Upload: transcribing with Gemini...")
         transcribe_prompt = """Transcribe this audio/video content with precise timestamps.
 
 Output format — return ONLY a JSON array like this (no markdown, no extra text):
@@ -278,14 +280,14 @@ RULES:
         if not transcript_data or not isinstance(transcript_data, list):
             raise HTTPException(status_code=500, detail="Transcript trống hoặc không hợp lệ")
 
-        print(f"[Upload] Got {len(transcript_data)} transcript segments")
+        logger.info("Upload: got %d transcript segments", len(transcript_data))
 
         # ── Step 3: Format and analyze ──
         full_transcript = _format_transcript_lines(transcript_data)
         full_transcript = _truncate_transcript(full_transcript)
 
         display_title = title.strip() or original_name
-        print(f"[Upload] Analyzing content: {display_title}")
+        logger.info("Upload: analyzing content: %s", display_title)
 
         prompt = _build_analyze_prompt(
             title=display_title,
@@ -311,7 +313,7 @@ RULES:
             result["author"] = "Uploaded File"
 
         result["transcript"] = transcript_data
-        print(f"[Upload] Analysis complete: {result.get('title')}")
+        logger.info("Upload: analysis complete: %s", result.get('title'))
 
         # Clean up Gemini file
         try:
@@ -326,7 +328,7 @@ RULES:
     except json.JSONDecodeError as e:
         raise HTTPException(status_code=500, detail=f"Failed to parse AI response: {str(e)}")
     except Exception as e:
-        print(f"[Upload] Error: {e}")
+        logger.error("Upload error: %s", e)
         raise HTTPException(status_code=500, detail=f"Lỗi phân tích file: {str(e)}")
     finally:
         if os.path.exists(tmp_path):
@@ -359,7 +361,7 @@ async def analyze_video(request: VideoRequest):
     video_info = get_video_info(video_id)
 
     if request.transcript:
-        print(f"[LectureDigest] Using client-provided transcript ({len(request.transcript)} segments)")
+        logger.info("Using client-provided transcript (%d segments)", len(request.transcript))
         transcript_data = request.transcript
     else:
         transcript_data = get_transcript(video_id, request.language)

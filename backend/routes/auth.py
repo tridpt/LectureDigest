@@ -42,9 +42,9 @@ if not _JWT_SECRET:
         env_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), ".env")
         with open(env_path, "a", encoding="utf-8") as f:
             f.write(f"\nJWT_SECRET={_JWT_SECRET}\n")
-        print(f"[Auth] Generated and saved JWT_SECRET")
+        logger.info("Generated and saved JWT_SECRET")
     except Exception:
-        print(f"[Auth] Generated JWT_SECRET (not saved to .env)")
+        logger.info("Generated JWT_SECRET (not saved to .env)")
 
 _JWT_EXPIRY = 7 * 24 * 3600  # 7 days
 
@@ -161,11 +161,8 @@ def _send_reset_email(to_email: str, reset_url: str, display_name: str = ""):
 
     if not smtp_host or not smtp_user:
         # Dev mode: print to console
-        print(f"\n{'='*60}")
-        print(f"📧 PASSWORD RESET EMAIL (dev mode — no SMTP configured)")
-        print(f"To: {to_email}")
-        print(f"Reset URL: {reset_url}")
-        print(f"{'='*60}\n")
+        logger.info("PASSWORD RESET EMAIL (dev mode — no SMTP configured)")
+        logger.info("To: %s | Reset URL: %s", to_email, reset_url)
         return
 
     # Production: send via SMTP
@@ -181,9 +178,9 @@ def _send_reset_email(to_email: str, reset_url: str, display_name: str = ""):
             server.starttls()
             server.login(smtp_user, smtp_pass)
             server.sendmail(smtp_from, to_email, msg.as_string())
-        print(f"[Auth] Reset email sent to {to_email}")
+        logger.info("Reset email sent to %s", to_email)
     except Exception as e:
-        print(f"[Auth] SMTP error: {e}")
+        logger.error("SMTP error: %s", e)
         raise Exception(f"Không thể gửi email: {e}")
 
 
@@ -415,7 +412,7 @@ async def forgot_password(req: ForgotPasswordRequest):
         try:
             _send_reset_email(email, reset_url, user.get("display_name", ""))
         except Exception as e:
-            print(f"[Auth] Failed to send reset email: {e}")
+            logger.warning("Failed to send reset email: %s", e)
 
     return {"ok": True, "message": "Nếu email tồn tại, chúng tôi đã gửi link đặt lại mật khẩu."}
 
@@ -506,7 +503,7 @@ async def delete_account(req: DeleteAccountRequest, request: Request):
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Không thể xóa tài khoản: {e}")
 
-    print(f"[Auth] Account deleted: {email} (user_id={user_id})")
+    logger.info("Account deleted: %s (user_id=%d)", email, user_id)
     return {"ok": True, "message": "Tài khoản đã được xóa vĩnh viễn"}
 
 

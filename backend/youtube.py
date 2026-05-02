@@ -9,7 +9,10 @@ import json
 import base64
 import tempfile
 import atexit
+import logging
 import urllib.request
+
+logger = logging.getLogger("youtube")
 
 from fastapi import HTTPException
 from youtube_transcript_api import YouTubeTranscriptApi
@@ -37,10 +40,10 @@ def _init_cookies() -> str | None:
         tmp.close()
         _cookies_tmp_path = tmp.name
         atexit.register(lambda: os.unlink(_cookies_tmp_path) if os.path.isfile(_cookies_tmp_path) else None)
-        print(f"[LectureDigest] YouTube cookies loaded from YOUTUBE_COOKIES_B64 ({len(content)} bytes)")
+        logger.info("YouTube cookies loaded from YOUTUBE_COOKIES_B64 (%d bytes)", len(content))
         return _cookies_tmp_path
     except Exception as e:
-        print(f"[LectureDigest] Warning: Could not decode YOUTUBE_COOKIES_B64 — {e}")
+        logger.warning("Could not decode YOUTUBE_COOKIES_B64: %s", e)
         return None
 
 
@@ -65,9 +68,9 @@ def get_yt_api() -> YouTubeTranscriptApi:
             jar = MozillaCookieJar(cookies_path)
             jar.load(ignore_discard=True, ignore_expires=True)
             cookie_dict = {c.name: c.value for c in jar}
-            print(f"[LectureDigest] Loaded {len(cookie_dict)} cookies from {cookies_path}")
+            logger.info("Loaded %d cookies from %s", len(cookie_dict), cookies_path)
         except Exception as e:
-            print(f"[LectureDigest] Cookie load failed ({e})")
+            logger.warning("Cookie load failed: %s", e)
 
     # ── 2. Load proxy ─────────────────────────────────────────────────────────
     proxy_url = os.getenv("YOUTUBE_PROXY_URL", "").strip()
@@ -80,12 +83,12 @@ def get_yt_api() -> YouTubeTranscriptApi:
             client_kwargs["cookies"] = cookie_dict
         if proxy_url:
             client_kwargs["proxy"] = proxy_url
-            print(f"[LectureDigest] Using proxy: {proxy_url.split('@')[-1]}")  # hide credentials
+            logger.info("Using proxy: %s", proxy_url.split('@')[-1])  # hide credentials
         try:
             client = httpx.Client(**client_kwargs)
             return YouTubeTranscriptApi(http_client=client)
         except Exception as e:
-            print(f"[LectureDigest] Could not create custom http_client ({e}), using default.")
+            logger.warning("Could not create custom http_client: %s, using default", e)
 
     return YouTubeTranscriptApi()
 
@@ -236,11 +239,11 @@ def fetch_transcript_innertube(video_id: str) -> list:
             if not snippets:
                 raise ValueError("Transcript is empty")
 
-            print(f"[LectureDigest] InnerTube ({client['name']}): fetched {len(snippets)} segments")
+            logger.info("InnerTube (%s): fetched %d segments", client['name'], len(snippets))
             return snippets
 
         except Exception as e:
-            print(f"[LectureDigest] InnerTube {client['name']} failed: {e}")
+            logger.warning("InnerTube %s failed: %s", client['name'], e)
             last_err = e
             continue
 
@@ -254,7 +257,7 @@ def get_transcript(video_id: str, language: str = "en") -> list:
     try:
         return fetch_transcript_innertube(video_id)
     except Exception as e:
-        print(f"[LectureDigest] InnerTube failed ({e}), trying youtube-transcript-api...")
+        logger.info("InnerTube failed (%s), trying youtube-transcript-api...", e)
 
     # ── Fallback: youtube-transcript-api ──────────────────────────────────────
     try:
@@ -288,7 +291,7 @@ def get_transcript(video_id: str, language: str = "en") -> list:
         try:
             result = _snippets_to_list(transcript.fetch())
             if result:
-                print(f"[LectureDigest] Using fallback track: {transcript.language_code}")
+                logger.info("Using fallback track: %s", transcript.language_code)
                 return result
         except Exception:
             continue

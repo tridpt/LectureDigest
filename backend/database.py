@@ -6,6 +6,9 @@ import sqlite3
 import os
 import json
 import time
+import logging
+
+logger = logging.getLogger("database")
 
 DB_PATH = os.path.join(os.path.dirname(__file__), "lecturedb.sqlite3")
 
@@ -138,7 +141,7 @@ def init_db():
 
     conn.commit()
     conn.close()
-    print(f"[DB] Initialized at {DB_PATH}")
+    logger.info("Database initialized at %s", DB_PATH)
 
 
 def _migrate_add_user_id(conn):
@@ -151,7 +154,7 @@ def _migrate_add_user_id(conn):
     for table, col_def in tables_to_migrate.items():
         try:
             conn.execute(f"ALTER TABLE {table} ADD COLUMN {col_def}")
-            print(f"[DB Migration] Added user_id to {table}")
+            logger.info("Migration: added user_id to %s", table)
         except sqlite3.OperationalError:
             pass  # Column already exists
 
@@ -163,14 +166,14 @@ def _migrate_add_user_id(conn):
     for col_name, col_def in google_cols.items():
         try:
             conn.execute(f"ALTER TABLE users ADD COLUMN {col_def}")
-            print(f"[DB Migration] Added {col_name} to users")
+            logger.info("Migration: added %s to users", col_name)
         except sqlite3.OperationalError:
             pass  # Column already exists
 
     # Add summary column to bookmarks table
     try:
         conn.execute("ALTER TABLE bookmarks ADD COLUMN summary TEXT DEFAULT ''")
-        print("[DB Migration] Added summary to bookmarks")
+        logger.info("Migration: added summary to bookmarks")
     except sqlite3.OperationalError:
         pass  # Column already exists
 
@@ -213,7 +216,7 @@ def _migrate_notes_composite_pk(conn):
     pk_cols = [r[1] for r in info if r[5] > 0]  # r[5] is pk flag
     # If only video_id is PK (old schema), we need to recreate
     if len(pk_cols) == 1 and pk_cols[0] == 'video_id':
-        print("[DB Migration] Recreating notes table with user-aware unique constraint")
+        logger.info("Migration: recreating notes table with user-aware unique constraint")
         conn.executescript("""
             CREATE TABLE IF NOT EXISTS notes_new (
                 id         INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -229,7 +232,7 @@ def _migrate_notes_composite_pk(conn):
             CREATE UNIQUE INDEX IF NOT EXISTS idx_notes_video_user
                 ON notes (video_id, COALESCE(user_id, 0));
         """)
-        print("[DB Migration] Notes table recreated successfully")
+        logger.info("Migration: notes table recreated successfully")
 
 
 
@@ -562,7 +565,7 @@ def db_migrate_anonymous_to_user(user_id: int):
 
     conn.commit()
     conn.close()
-    print(f"[DB] Migrated anonymous data to user {user_id}")
+    logger.info("Migrated anonymous data to user %d", user_id)
 
 
 # ══════════════════════════════════════════
@@ -586,7 +589,7 @@ def db_full_sync(user_id, local_history, local_notes, local_bookmarks, local_gam
                       entry.get("author",""), entry.get("thumbnail",""), entry.get("savedAt", int(time.time()*1000)),
                       entry.get("lang","en"), data_json, transcript_json, user_id))
             except Exception as e:
-                print(f"[Sync] Skip history: {e}")
+                logger.warning("Sync skip history: %s", e)
 
         # 2. Save notes
         for video_id, content in local_notes.items():
@@ -609,7 +612,7 @@ def db_full_sync(user_id, local_history, local_notes, local_bookmarks, local_gam
                     conn.execute("INSERT INTO notes (video_id, content, updated_at, user_id) VALUES (?,?,?,?)",
                                  (video_id, content, int(time.time()*1000), user_id))
             except Exception as e:
-                print(f"[Sync] Skip note {video_id}: {e}")
+                logger.warning("Sync skip note %s: %s", video_id, e)
 
         # 3. Save bookmarks
         for video_id, bms in local_bookmarks.items():
@@ -624,7 +627,7 @@ def db_full_sync(user_id, local_history, local_notes, local_bookmarks, local_gam
                     conn.execute("INSERT INTO bookmarks (video_id, time_secs, label, created_at, user_id, summary) VALUES (?,?,?,?,?,?)",
                                  (video_id, bm.get("time",0), bm.get("label",""), bm.get("createdAt",""), user_id, bm.get("summary","")))
             except Exception as e:
-                print(f"[Sync] Skip bookmarks {video_id}: {e}")
+                logger.warning("Sync skip bookmarks %s: %s", video_id, e)
 
         # 4. Save gamification (merge)
         if local_gamif:
@@ -652,7 +655,7 @@ def db_full_sync(user_id, local_history, local_notes, local_bookmarks, local_gam
                 else:
                     conn.execute("UPDATE gamification SET data_json=?, updated_at=? WHERE id=1", (data_str, now))
             except Exception as e:
-                print(f"[Sync] Gamification error: {e}")
+                logger.warning("Sync gamification error: %s", e)
 
         # 5. Save extra data (KV store)
         if user_id and extra_data:
@@ -664,7 +667,7 @@ def db_full_sync(user_id, local_history, local_notes, local_bookmarks, local_gam
                             ON CONFLICT(user_id, data_key) DO UPDATE SET data_value=?, updated_at=?""",
                             (user_id, ekey, evalue, now, evalue, now))
                     except Exception as e:
-                        print(f"[Sync] Skip extra {ekey}: {e}")
+                        logger.warning("Sync skip extra %s: %s", ekey, e)
 
         conn.commit()
 
@@ -721,7 +724,7 @@ def db_full_sync(user_id, local_history, local_notes, local_bookmarks, local_gam
             erows = conn.execute("SELECT data_key, data_value FROM user_kv_store WHERE user_id=?", (user_id,)).fetchall()
             result_extra = {r["data_key"]: r["data_value"] for r in erows}
 
-        print(f"[Sync] OK: {len(result_history)} hist, {len(result_notes)} notes, {len(result_bookmarks)} bm, {len(result_extra)} extra for user {user_id}")
+        logger.info("Sync OK: %d hist, %d notes, %d bm, %d extra for user %d", len(result_history), len(result_notes), len(result_bookmarks), len(result_extra), user_id)
         return {
             "ok": True,
             "history": result_history,
@@ -731,7 +734,7 @@ def db_full_sync(user_id, local_history, local_notes, local_bookmarks, local_gam
             "extra_data": result_extra
         }
     except Exception as e:
-        print(f"[Sync] Fatal error: {e}")
+        logger.error("Sync fatal error: %s", e)
         return {"ok": False, "error": str(e), "history": [], "gamification": {}, "notes": {}, "bookmarks": {}, "extra_data": {}}
     finally:
         conn.close()
@@ -1279,7 +1282,7 @@ def db_create_backup():
     from datetime import datetime
 
     if not os.path.isfile(DB_PATH):
-        print("[Backup] No database file to back up")
+        logger.warning("No database file to back up")
         return None
 
     os.makedirs(_BACKUP_DIR, exist_ok=True)
@@ -1296,14 +1299,14 @@ def db_create_backup():
         src.backup(dst)
         dst.close()
         src.close()
-        print(f"[Backup] Created {backup_name} ({db_size_mb:.1f} MB)")
+        logger.info("Backup created: %s (%.1f MB)", backup_name, db_size_mb)
     except Exception as e:
         # Fallback to file copy if backup API fails
         try:
             shutil.copy2(DB_PATH, backup_path)
-            print(f"[Backup] Created {backup_name} (copy, {db_size_mb:.1f} MB)")
+            logger.info("Backup created (copy): %s (%.1f MB)", backup_name, db_size_mb)
         except Exception as e2:
-            print(f"[Backup] Failed: {e2}")
+            logger.error("Backup failed: %s", e2)
             return None
 
     # Cleanup old backups — keep only the most recent _BACKUP_KEEP
@@ -1315,9 +1318,10 @@ def db_create_backup():
         while len(backups) > _BACKUP_KEEP:
             old = backups.pop(0)
             os.remove(os.path.join(_BACKUP_DIR, old))
-            print(f"[Backup] Removed old backup: {old}")
+            logger.info("Removed old backup: %s", old)
     except Exception as e:
-        print(f"[Backup] Cleanup warning: {e}")
+        logger.warning("Backup cleanup warning: %s", e)
 
     return backup_path
+
 

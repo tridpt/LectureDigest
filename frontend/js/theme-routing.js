@@ -8,29 +8,61 @@
 
 const THEME_KEY = 'lectureDigest_theme';
 
-function applyTheme(theme) {
-    const html = document.documentElement;
-    const icon = document.getElementById('themeIcon');
-    if (theme === 'light') {
+function _getSystemTheme() {
+    return window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark';
+}
+
+function _resolveTheme(pref) {
+    if (pref === 'auto') return _getSystemTheme();
+    return pref;
+}
+
+function applyTheme(pref) {
+    var resolved = _resolveTheme(pref);
+    var html = document.documentElement;
+    var icon = document.getElementById('themeIcon');
+    var toggleBtn = document.getElementById('themeToggleBtn');
+
+    if (resolved === 'light') {
         html.classList.add('light-mode');
-        if (icon) icon.textContent = '☀️';
     } else {
         html.classList.remove('light-mode');
-        if (icon) icon.textContent = '🌙';
+    }
+
+    // Icon: 🌙 = dark, ☀️ = light, 🔄 = auto
+    if (icon) {
+        if (pref === 'auto') icon.textContent = '🔄';
+        else if (pref === 'light') icon.textContent = '☀️';
+        else icon.textContent = '🌙';
+    }
+    if (toggleBtn) {
+        var labels = { dark: 'Tối', light: 'Sáng', auto: 'Tự động' };
+        toggleBtn.title = 'Theme: ' + (labels[pref] || pref);
     }
 }
 
 function toggleTheme() {
-    const current = localStorage.getItem(THEME_KEY) || 'dark';
-    const next = current === 'dark' ? 'light' : 'dark';
+    var current = localStorage.getItem(THEME_KEY) || 'dark';
+    // Cycle: dark → light → auto → dark
+    var order = ['dark', 'light', 'auto'];
+    var idx = order.indexOf(current);
+    var next = order[(idx + 1) % order.length];
     safeLsSet(THEME_KEY, next);
     applyTheme(next);
 }
 
 // Apply saved theme on load (before paint)
 (function initTheme() {
-    const saved = localStorage.getItem(THEME_KEY) || 'dark';
+    var saved = localStorage.getItem(THEME_KEY) || 'dark';
     applyTheme(saved);
+
+    // Listen for system theme changes (only relevant when set to "auto")
+    try {
+        window.matchMedia('(prefers-color-scheme: light)').addEventListener('change', function() {
+            var pref = localStorage.getItem(THEME_KEY) || 'dark';
+            if (pref === 'auto') applyTheme('auto');
+        });
+    } catch(e) { /* older browsers */ }
 })();
 
 // ══════════════════════════════════════════════════════════

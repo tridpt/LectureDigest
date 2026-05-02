@@ -5,6 +5,7 @@ Content generation routes — exercises, multi-video exam, playlist.
 import os
 import re
 import json
+import logging
 
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
@@ -13,6 +14,7 @@ from gemini_client import call_gemini
 from youtube import extract_playlist_id, fetch_playlist_videos
 
 router = APIRouter(prefix="/api", tags=["content"])
+logger = logging.getLogger("content")
 
 
 # ═══════════════════════════════════════════════════════
@@ -253,10 +255,10 @@ async def get_playlist_info(request: PlaylistRequest):
 
     try:
         result = fetch_playlist_videos(playlist_id)
-        print(f"[LectureDigest] Playlist: {result['title']} ({result['video_count']} videos)")
+        logger.info("Playlist: %s (%d videos)", result['title'], result['video_count'])
         return result
     except ValueError as e:
         raise HTTPException(status_code=404, detail=str(e))
     except Exception as e:
-        print(f"[LectureDigest] Playlist error: {e}")
+        logger.error("Playlist error: %s", e)
         raise HTTPException(status_code=500, detail=f"Failed to load playlist: {e}")

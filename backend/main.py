@@ -185,6 +185,30 @@ app.add_middleware(SecurityHeadersMiddleware)
 app.add_middleware(GZipMiddleware, minimum_size=500)
 
 
+# ── Request Body Size Limit ─────────────────────────────
+_MAX_BODY_BYTES = 10 * 1024 * 1024       # 10 MB for JSON API payloads
+_MAX_UPLOAD_BYTES = 200 * 1024 * 1024    # 200 MB for file uploads
+
+class BodySizeLimitMiddleware(BaseHTTPMiddleware):
+    """Reject oversized request bodies to prevent abuse and OOM."""
+
+    async def dispatch(self, request: Request, call_next):
+        content_length = request.headers.get("content-length")
+        if content_length:
+            size = int(content_length)
+            path = request.url.path
+            limit = _MAX_UPLOAD_BYTES if path == "/api/analyze-file" else _MAX_BODY_BYTES
+            if size > limit:
+                limit_mb = limit // (1024 * 1024)
+                return JSONResponse(
+                    status_code=413,
+                    content={"detail": f"Request body too large (max {limit_mb}MB)"},
+                )
+        return await call_next(request)
+
+app.add_middleware(BodySizeLimitMiddleware)
+
+
 # ═══════════════════════════════════════════════════════
 # REGISTER ROUTE MODULES
 # ═══════════════════════════════════════════════════════

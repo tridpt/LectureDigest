@@ -5,8 +5,11 @@ Provides call_gemini() and call_gemini_multi() with automatic model fallback and
 
 import os
 import time
+import logging
 from google import genai
 from dotenv import load_dotenv
+
+logger = logging.getLogger("gemini")
 
 load_dotenv(override=True)
 
@@ -70,20 +73,20 @@ def _call_with_retry(generate_fn, retries: int = 4) -> str:
             try:
                 text = generate_fn(client, model)
                 if model != PRIMARY_MODEL:
-                    print(f"[LectureDigest] ⚠ Used fallback model: {model}")
+                    logger.warning("Used fallback model: %s", model)
                 return text
             except Exception as e:
                 last_err = e
                 err_str = str(e)
 
                 if _is_quota_error(err_str):
-                    print(f"[LectureDigest] Quota exhausted for {model}, trying fallback...")
+                    logger.warning("Quota exhausted for %s, trying fallback...", model)
                     break  # → try next model
 
                 if _is_retryable(err_str):
                     retry_after = _parse_retry_after(err_str)
                     wait = retry_after if retry_after else (2 ** attempt)
-                    print(f"[LectureDigest] {model} retry {attempt+1}/{retries} in {wait}s: {err_str[:80]}")
+                    logger.info("%s retry %d/%d in %ds: %s", model, attempt+1, retries, wait, err_str[:80])
                     time.sleep(wait)
                     continue
 
