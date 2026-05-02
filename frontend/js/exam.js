@@ -344,13 +344,54 @@ function _mexamRenderResults() {
         '</div>';
     }).join('');
 
+    // Build attempts history section
+    var attemptsHtml = '';
+    var entry = null;
+    var list = _mexamLoadExamHistory();
+    for (var ai = 0; ai < list.length; ai++) {
+        if (list[ai].id === _mexam._activeHistId) { entry = list[ai]; break; }
+    }
+    var allAttempts = entry && entry.attempts ? entry.attempts : [];
+    if (allAttempts.length > 1) {
+        attemptsHtml = '<div class="mexam-attempts-section">' +
+            '<h4 style="font-size:14px;font-weight:700;color:var(--text-secondary);margin:30px 0 12px;text-transform:uppercase;letter-spacing:.05em">📊 Lịch sử các lần thi</h4>' +
+            '<div class="mexam-attempts-list">';
+        for (var a = allAttempts.length - 1; a >= 0; a--) {
+            var att = allAttempts[a];
+            var attPct = att.percentage || 0;
+            var attGrade = attPct >= 90 ? 'A+' : attPct >= 80 ? 'A' : attPct >= 70 ? 'B' : attPct >= 60 ? 'C' : attPct >= 50 ? 'D' : 'F';
+            var attMins = Math.floor((att.elapsed || 0) / 60);
+            var attSecs = (att.elapsed || 0) % 60;
+            var attDate = new Date(att.completedAt);
+            var attDateStr = attDate.toLocaleDateString('vi-VN', { day:'2-digit', month:'2-digit' }) + ' ' + attDate.toLocaleTimeString('vi-VN', { hour:'2-digit', minute:'2-digit' });
+            var isLatest = a === allAttempts.length - 1;
+            var prevPct = a > 0 ? allAttempts[a - 1].percentage : null;
+            var diffBadge = '';
+            if (prevPct !== null) {
+                var d = attPct - prevPct;
+                if (d > 0) diffBadge = ' <span style="color:#10b981;font-size:11px;font-weight:700">▲+' + d + '%</span>';
+                else if (d < 0) diffBadge = ' <span style="color:#f87171;font-size:11px;font-weight:700">▼' + d + '%</span>';
+                else diffBadge = ' <span style="color:#fbbf24;font-size:11px">= 0%</span>';
+            }
+            attemptsHtml += '<div class="mexam-attempt-row' + (isLatest ? ' latest' : '') + '" style="display:flex;align-items:center;gap:12px;padding:10px 14px;border-radius:10px;background:' + (isLatest ? 'rgba(139,92,246,0.08)' : 'rgba(255,255,255,0.03)') + ';border:1px solid ' + (isLatest ? 'rgba(139,92,246,0.2)' : 'var(--border)') + ';margin-bottom:6px;">' +
+                '<div style="font-size:12px;font-weight:700;color:var(--text-secondary);min-width:65px;">Lần ' + (a + 1) + '</div>' +
+                '<div style="font-size:20px;font-weight:900;color:' + (attPct >= 60 ? '#10b981' : attPct >= 40 ? '#fbbf24' : '#f87171') + ';min-width:55px;">' + attPct + '%</div>' +
+                '<div style="font-size:11px;color:var(--text-secondary);">' + attGrade + ' · ' + att.correctAnswers + '/' + total + ' · ' + attMins + 'm' + attSecs + 's' + diffBadge + '</div>' +
+                '<div style="flex:1;text-align:right;font-size:10px;color:var(--text-muted);">' + attDateStr + '</div>' +
+            '</div>';
+        }
+        attemptsHtml += '</div></div>';
+    }
+
     document.getElementById('mexamResults').innerHTML =
         '<div class="mexam-score-circle">' +
             '<div class="mexam-score-num">' + pct + '%</div>' +
             '<div class="mexam-score-label">Grade: ' + grade + '</div>' +
         '</div>' +
         '<div class="mexam-result-title">' + emoji + ' ' + message + '</div>' +
-        '<div class="mexam-result-subtitle">' + correct + '/' + total + ' câu đúng · Thời gian: ' + timeStr + '</div>' +
+        '<div class="mexam-result-subtitle">' + correct + '/' + total + ' câu đúng · Thời gian: ' + timeStr +
+            (allAttempts.length > 0 ? ' · Lần thi ' + allAttempts.length : '') +
+        '</div>' +
 
         '<div class="mexam-result-stats">' +
             '<div class="mexam-stat"><div class="mexam-stat-num" style="color:#34d399">' + byDiff.easy.correct + '/' + byDiff.easy.total + '</div><div class="mexam-stat-label">Easy</div></div>' +
@@ -359,10 +400,12 @@ function _mexamRenderResults() {
             (crossTotal > 0 ? '<div class="mexam-stat"><div class="mexam-stat-num" style="color:#60a5fa">' + crossCorrect + '/' + crossTotal + '</div><div class="mexam-stat-label">Cross-Video</div></div>' : '') +
         '</div>' +
 
+        attemptsHtml +
+
         '<div class="mexam-result-actions">' +
             '<button class="mexam-result-btn" onclick="_mexamShowStep(3);_mexam.currentQ=0;_mexamRenderQuestion()">📋 Xem lại đề</button>' +
             '<button class="mexam-result-btn" onclick="_mexamDownloadExam()">⬇ Tải đề thi</button>' +
-            '<button class="mexam-result-btn primary" onclick="openMexam()">🔄 Thi lại</button>' +
+            '<button class="mexam-result-btn primary" onclick="_mexamRetakeCurrentExam()">🔄 Thi lại</button>' +
             '<button class="mexam-result-btn" onclick="closeMexam()">✕ Đóng</button>' +
         '</div>' +
 
@@ -414,7 +457,8 @@ function _mexamSaveExamDraft() {
         elapsed: 0,
         completed: false,
         questions: questions,
-        answers: {}
+        answers: {},
+        attempts: []   // Array of past completed attempts
     };
 
     var list = _mexamLoadExamHistory();
@@ -426,7 +470,7 @@ function _mexamSaveExamDraft() {
 }
 
 function _mexamUpdateHistoryResult() {
-    // Update the saved draft with final answers/score
+    // Add completed attempt to history entry
     var list = _mexamLoadExamHistory();
     var questions = _mexam.examData.questions;
     var total = questions.length;
@@ -436,10 +480,21 @@ function _mexamUpdateHistoryResult() {
     });
     var pct = Math.round((correct / total) * 100);
 
+    var attempt = {
+        answers: Object.assign({}, _mexam.answers),
+        correctAnswers: correct,
+        percentage: pct,
+        elapsed: _mexam.elapsed,
+        completedAt: Date.now()
+    };
+
     var targetId = _mexam._activeHistId;
     var found = false;
     for (var i = 0; i < list.length; i++) {
         if (list[i].id === targetId) {
+            if (!list[i].attempts) list[i].attempts = [];
+            list[i].attempts.push(attempt);
+            // Update top-level with latest attempt
             list[i].correctAnswers = correct;
             list[i].percentage = pct;
             list[i].elapsed = _mexam.elapsed;
@@ -451,7 +506,6 @@ function _mexamUpdateHistoryResult() {
         }
     }
     if (!found) {
-        // Fallback: create new entry
         _mexam._activeHistId = _mexamSaveExamDraft();
         return _mexamUpdateHistoryResult();
     }
@@ -472,6 +526,7 @@ function _mexamRenderHistory() {
     container.innerHTML = list.map(function(e, idx) {
         var pct = e.percentage || 0;
         var isCompleted = e.completed !== false;
+        var attemptCount = (e.attempts || []).length;
         var gradeClass = !isCompleted ? 'grade-draft' : pct >= 80 ? 'grade-a' : pct >= 60 ? 'grade-b' : pct >= 40 ? 'grade-c' : 'grade-f';
         var grade = !isCompleted ? '—' : pct >= 90 ? 'A+' : pct >= 80 ? 'A' : pct >= 70 ? 'B' : pct >= 60 ? 'C' : pct >= 50 ? 'D' : 'F';
         var date = new Date(e.lastAttempt || e.savedAt);
@@ -488,6 +543,7 @@ function _mexamRenderHistory() {
         } else {
             statusLabel = e.correctAnswers + '/' + e.totalQuestions + ' đúng · ' + mins + 'm' + secs + 's';
         }
+        var attemptBadge = attemptCount > 1 ? ' · <span style="color:var(--accent);font-weight:600">' + attemptCount + ' lần thi</span>' : '';
 
         return '<div class="mexam-hist-card" onclick="_mexamReplayExam(' + idx + ')">' +
             '<div class="mexam-hist-score ' + gradeClass + '">' +
@@ -498,7 +554,7 @@ function _mexamRenderHistory() {
                 '<div class="mexam-hist-name">' + escHtml(e.title) + '</div>' +
                 '<div class="mexam-hist-detail">' +
                     statusLabel + ' · ' +
-                    e.videoCount + ' video · ' +
+                    e.videoCount + ' video' + attemptBadge + ' · ' +
                     dateStr + ' ' + timeStr +
                 '</div>' +
                 '<div class="mexam-hist-diff-bar">' +
@@ -839,4 +895,17 @@ function _mexamResumeExam(idx) {
 
     _mexamShowStep(3);
     _mexamRenderQuestion();
+}
+
+function _mexamRetakeCurrentExam() {
+    // Retake the same exam — uses _mexam._activeHistId to find it
+    if (!_mexam._activeHistId || !_mexam.examData) { openMexam(); return; }
+    var list = _mexamLoadExamHistory();
+    for (var i = 0; i < list.length; i++) {
+        if (list[i].id === _mexam._activeHistId) {
+            _mexamRetakeExam(i);
+            return;
+        }
+    }
+    openMexam();
 }
