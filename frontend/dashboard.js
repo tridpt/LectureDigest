@@ -78,6 +78,11 @@ function renderDashboard() {
         ['renderDbVideos',    'dbVideoList',      function() { renderDbVideos(history); }],
         ['renderDbBadgeCats', 'dbBadgeCats',      function() { renderDbBadgeCats(g); }],
         ['renderSrsBanner',   'srsBannerWrap',    function() { if (typeof renderSrsBanner === 'function') renderSrsBanner('srsBannerWrap'); }],
+        ['anHeatmap',         'anHeatmap',        function() { if (typeof _anRenderHeatmap === 'function') _anRenderHeatmap(g); }],
+        ['anQuizTrend',       'anQuizTrend',      function() { if (typeof _anRenderQuizTrend === 'function') _anRenderQuizTrend(history); }],
+        ['anWeeklyReport',    'anWeeklyReport',   function() { if (typeof _anRenderWeeklyReport === 'function') _anRenderWeeklyReport(g, history); }],
+        ['anTopicMastery',    'anTopicMastery',   function() { if (typeof _anRenderTopicMastery === 'function') _anRenderTopicMastery(history); }],
+        ['anStudyHours',      'anStudyHours',     function() { if (typeof _anRenderStudyHours === 'function') _anRenderStudyHours(g); }],
     ];
 
     renders.forEach(function(entry) {
