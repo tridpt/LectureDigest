@@ -18,6 +18,57 @@ var _mexam = {
 };
 
 function openMexam() {
+    // ── TEMPORARILY DISABLED — show "under development" notice ──
+    var existing = document.getElementById('mexamDevOverlay');
+    if (existing) existing.remove();
+
+    var overlay = document.createElement('div');
+    overlay.id = 'mexamDevOverlay';
+    overlay.style.cssText = 'position:fixed;inset:0;z-index:99999;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,0.6);backdrop-filter:blur(8px);animation:mexamDevFadeIn .3s ease';
+    overlay.innerHTML =
+        '<div style="background:var(--card-bg,#1e1e2e);border:1px solid var(--border,#333);border-radius:20px;padding:48px 40px;max-width:420px;width:90%;text-align:center;box-shadow:0 25px 60px rgba(0,0,0,0.4);animation:mexamDevSlideUp .4s ease">' +
+            '<div style="font-size:64px;margin-bottom:16px;filter:grayscale(0.2)">🚧</div>' +
+            '<div style="font-size:22px;font-weight:800;color:var(--text-primary,#fff);margin-bottom:8px">Tính năng đang phát triển</div>' +
+            '<div style="font-size:14px;color:var(--text-secondary,#aaa);line-height:1.7;margin-bottom:24px">' +
+                'Chức năng <strong style="color:var(--accent,#8b5cf6)">Multi-Video Exam</strong> hiện đang được nâng cấp và cải thiện.<br>' +
+                'Chúng tôi sẽ sớm hoàn thành — hãy quay lại sau nhé!' +
+            '</div>' +
+            '<div style="display:inline-flex;align-items:center;gap:8px;padding:8px 16px;background:rgba(251,191,36,0.1);border:1px solid rgba(251,191,36,0.25);border-radius:10px;font-size:12px;color:#fbbf24;margin-bottom:24px">' +
+                '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><circle cx="12" cy="12" r="10"/><path d="M12 8v4M12 16h.01" stroke-linecap="round"/></svg>' +
+                'Coming Soon' +
+            '</div><br>' +
+            '<button onclick="this.closest(\'#mexamDevOverlay\').remove()" style="padding:12px 32px;border:none;border-radius:12px;background:var(--accent,#8b5cf6);color:#fff;font-size:14px;font-weight:700;cursor:pointer;transition:transform .15s,box-shadow .15s" ' +
+                'onmouseover="this.style.transform=\'scale(1.04)\';this.style.boxShadow=\'0 4px 20px rgba(139,92,246,0.4)\'" ' +
+                'onmouseout="this.style.transform=\'scale(1)\';this.style.boxShadow=\'none\'">' +
+                'Đã hiểu 👍' +
+            '</button>' +
+        '</div>';
+
+    // Close on backdrop click
+    overlay.addEventListener('click', function(e) {
+        if (e.target === overlay) overlay.remove();
+    });
+    // Close on Escape
+    var escHandler = function(e) {
+        if (e.key === 'Escape') { overlay.remove(); document.removeEventListener('keydown', escHandler); }
+    };
+    document.addEventListener('keydown', escHandler);
+
+    // Inject animation keyframes if not already present
+    if (!document.getElementById('mexamDevStyles')) {
+        var style = document.createElement('style');
+        style.id = 'mexamDevStyles';
+        style.textContent =
+            '@keyframes mexamDevFadeIn{from{opacity:0}to{opacity:1}}' +
+            '@keyframes mexamDevSlideUp{from{opacity:0;transform:translateY(30px) scale(0.95)}to{opacity:1;transform:translateY(0) scale(1)}}';
+        document.head.appendChild(style);
+    }
+
+    document.body.appendChild(overlay);
+}
+
+// Original function preserved for re-enablement
+function _openMexamOriginal() {
     document.getElementById('mexamSection').classList.remove('hidden');
     _mexam.selectedVideos = [];
     _mexam.examData = null;
