@@ -1,0 +1,55 @@
+    <!-- ═══════════════════════════ ANALYTICS PAGE ════════════════════════════ -->
+    <section class="an-page hidden" id="analyticsSection" aria-label="Study Analytics">
+        <div class="an-inner">
+
+            <!-- Header -->
+            <div class="an-header">
+                <button type="button" class="bp-back-btn" onclick="closeAnalytics()" aria-label="Quay lại">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="18" height="18">
+                        <path d="M19 12H5M12 5l-7 7 7 7" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                    Quay lại
+                </button>
+                <div class="an-header-center">
+                    <h1 class="an-title">📊 Study Analytics</h1>
+                    <p class="an-subtitle">Phân tích chi tiết quá trình học tập</p>
+                </div>
+                <div style="width:110px"></div>
+            </div>
+
+            <!-- Stat Cards -->
+            <div class="an-stat-grid" id="anStatCards"></div>
+
+            <!-- Heatmap -->
+            <div class="an-card">
+                <div class="an-card-title">🟩 Lịch hoạt động (90 ngày)</div>
+                <div id="anHeatmap"></div>
+            </div>
+
+            <!-- 2-column: Quiz Trend + Weekly Report -->
+            <div class="an-grid-2">
+                <div class="an-card">
+                    <div class="an-card-title">📈 Xu hướng Quiz</div>
+                    <div id="anQuizTrend"></div>
+                </div>
+                <div class="an-card">
+                    <div class="an-card-title">📋 Báo cáo tuần</div>
+                    <div id="anWeeklyReport"></div>
+                </div>
+            </div>
+
+            <!-- 2-column: Topic Mastery + Study Hours -->
+            <div class="an-grid-2">
+                <div class="an-card">
+                    <div class="an-card-title">🎯 Topic Mastery</div>
+                    <div id="anTopicMastery"></div>
+                </div>
+                <div class="an-card">
+                    <div class="an-card-title">📅 Phân bố ngày học</div>
+                    <div id="anStudyHours"></div>
+                </div>
+            </div>
+
+        </div>
+    </section>
+
