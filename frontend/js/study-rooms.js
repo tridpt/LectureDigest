@@ -192,7 +192,7 @@ async function srLoadComments() {
         return;
     }
 
-    var isOwner = _srIsOwner();
+    var canModerate = _srIsModOrOwner();
     var myId = _authUser ? _authUser.id : null;
 
     msgEl.innerHTML = comments.map(function(c) {
@@ -202,8 +202,8 @@ async function srLoadComments() {
             ? '<img class="sr-msg-avatar-img" src="' + c.avatar_url + '" alt="">'
             : '<div class="sr-msg-avatar" style="background:' + (c.avatar_color || '#8b5cf6') + '">' + initial + '</div>';
 
-        // Owner can delete any message, user can delete their own
-        var canDelete = isOwner || c.user_id === myId;
+        // Owner/moderator can delete any message, user can delete their own
+        var canDelete = canModerate || c.user_id === myId;
         var deleteBtn = canDelete
             ? '<button class="sr-msg-del" onclick="srDeleteComment(' + c.id + ')" title="Xóa">✕</button>'
             : '';
@@ -261,6 +261,26 @@ function _srIsOwner() {
     return _srCurrentRoom.owner_id === _authUser.id;
 }
 
+function _srIsModOrOwner() {
+    if (!_srCurrentRoom || !_authUser) return false;
+    if (_srCurrentRoom.owner_id === _authUser.id) return true;
+    var members = _srCurrentRoom.members || [];
+    for (var i = 0; i < members.length; i++) {
+        if (members[i].user_id === _authUser.id && members[i].role === 'moderator') return true;
+    }
+    return false;
+}
+
+function _srMyRole() {
+    if (!_srCurrentRoom || !_authUser) return 'member';
+    if (_srCurrentRoom.owner_id === _authUser.id) return 'owner';
+    var members = _srCurrentRoom.members || [];
+    for (var i = 0; i < members.length; i++) {
+        if (members[i].user_id === _authUser.id) return members[i].role;
+    }
+    return 'member';
+}
+
 function _srRenderVideos() {
     if (!_srCurrentRoom) return;
     var el = document.getElementById('srVideoList');
@@ -272,9 +292,9 @@ function _srRenderVideos() {
         return;
     }
 
-    var isOwner = _srIsOwner();
+    var canManage = _srIsModOrOwner();
     el.innerHTML = videos.map(function(v) {
-        var deleteBtn = isOwner
+        var deleteBtn = canManage
             ? '<button class="sr-video-del-btn" onclick="event.stopPropagation();srRemoveVideo(\'' + v.video_id + '\')" title="Xóa video">🗑️</button>'
             : '';
         return '<div class="sr-video-card" onclick="srViewVideo(\'' + v.video_id + '\')" style="cursor:pointer">'
@@ -541,6 +561,7 @@ function _srRenderMembers() {
 
     var members = _srCurrentRoom.members || [];
     var isOwner = _srIsOwner();
+    var myRole = _srMyRole();
     var myId = _authUser ? _authUser.id : null;
 
     el.innerHTML = members.map(function(m) {
@@ -552,19 +573,25 @@ function _srRenderMembers() {
         var roleLabel = m.role === 'owner' ? '👑 Chủ phòng' : m.role === 'moderator' ? '🛡️ Quản lý' : '👤 Thành viên';
         var joinDate = new Date(m.joined_at).toLocaleDateString('vi-VN');
 
-        // Admin controls (only for owner, not on themselves)
+        // Admin controls
         var adminHtml = '';
-        if (isOwner && m.user_id !== myId) {
-            adminHtml = '<div class="sr-member-actions">';
-            // Role toggle
-            if (m.role === 'member') {
-                adminHtml += '<button class="sr-member-action-btn sr-promote-btn" onclick="srChangeRole(' + m.user_id + ',\'moderator\')" title="Thăng quản lý">🛡️</button>';
-            } else if (m.role === 'moderator') {
-                adminHtml += '<button class="sr-member-action-btn sr-demote-btn" onclick="srChangeRole(' + m.user_id + ',\'member\')" title="Hạ thành viên">👤</button>';
+        if (m.user_id !== myId) {
+            if (isOwner) {
+                // Owner can promote/demote and kick anyone
+                adminHtml = '<div class="sr-member-actions">';
+                if (m.role === 'member') {
+                    adminHtml += '<button class="sr-member-action-btn sr-promote-btn" onclick="srChangeRole(' + m.user_id + ',\'moderator\')" title="Thăng quản lý">🛡️</button>';
+                } else if (m.role === 'moderator') {
+                    adminHtml += '<button class="sr-member-action-btn sr-demote-btn" onclick="srChangeRole(' + m.user_id + ',\'member\')" title="Hạ thành viên">👤</button>';
+                }
+                adminHtml += '<button class="sr-member-action-btn sr-kick-btn" onclick="srKickMember(' + m.user_id + ',\'' + _srEsc(m.display_name) + '\')" title="Kick">❌</button>';
+                adminHtml += '</div>';
+            } else if (myRole === 'moderator' && m.role === 'member') {
+                // Moderator can only kick regular members
+                adminHtml = '<div class="sr-member-actions">';
+                adminHtml += '<button class="sr-member-action-btn sr-kick-btn" onclick="srKickMember(' + m.user_id + ',\'' + _srEsc(m.display_name) + '\')" title="Kick">❌</button>';
+                adminHtml += '</div>';
             }
-            // Kick
-            adminHtml += '<button class="sr-member-action-btn sr-kick-btn" onclick="srKickMember(' + m.user_id + ',\'' + _srEsc(m.display_name) + '\')" title="Kick">❌</button>';
-            adminHtml += '</div>';
         }
 
         return '<div class="sr-member-card">'

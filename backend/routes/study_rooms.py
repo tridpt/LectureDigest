@@ -444,18 +444,36 @@ async def leave_room(room_id: str, request: Request):
 
 @router.post("/{room_id}/kick/{target_user_id}")
 async def kick_member(room_id: str, target_user_id: int, request: Request):
-    """Kick a member (owner only)."""
+    """Kick a member (owner or moderator can kick members)."""
     user = _require_auth(request)
     uid = user["id"]
 
     conn = get_db()
     room = conn.execute("SELECT owner_id FROM study_rooms WHERE id = ?", (room_id,)).fetchone()
-    if not room or room["owner_id"] != uid:
+    if not room:
         conn.close()
-        raise HTTPException(status_code=403, detail="Chỉ chủ phòng mới có thể kick")
+        raise HTTPException(status_code=404, detail="Phòng không tồn tại")
+
+    # Check kicker's role
+    kicker_role = conn.execute(
+        "SELECT role FROM room_members WHERE room_id = ? AND user_id = ?", (room_id, uid)
+    ).fetchone()
+    if not kicker_role or kicker_role["role"] not in ('owner', 'moderator'):
+        conn.close()
+        raise HTTPException(status_code=403, detail="Chỉ chủ phòng hoặc quản lý mới có thể kick")
+
     if target_user_id == uid:
         conn.close()
         raise HTTPException(status_code=400, detail="Không thể kick chính mình")
+
+    # Moderators can only kick regular members, not other moderators or owner
+    if kicker_role["role"] == 'moderator':
+        target_role = conn.execute(
+            "SELECT role FROM room_members WHERE room_id = ? AND user_id = ?", (room_id, target_user_id)
+        ).fetchone()
+        if target_role and target_role["role"] in ('owner', 'moderator'):
+            conn.close()
+            raise HTTPException(status_code=403, detail="Quản lý không thể kick chủ phòng hoặc quản lý khác")
 
     conn.execute("DELETE FROM room_members WHERE room_id = ? AND user_id = ?", (room_id, target_user_id))
     # Get room name for notification
@@ -604,13 +622,12 @@ async def get_room_video_data(room_id: str, video_id: str, request: Request):
 
 @router.delete("/{room_id}/videos/{video_id}")
 async def remove_video_from_room(room_id: str, video_id: str, request: Request):
-    """Remove a video from the room."""
+    """Remove a video from the room (owner, moderator, or the person who added)."""
     user = _require_auth(request)
     uid = user["id"]
     role = _require_member(room_id, uid)
 
     conn = get_db()
-    # Only owner or the person who added can remove
     video = conn.execute(
         "SELECT added_by FROM room_videos WHERE room_id = ? AND video_id = ?",
         (room_id, video_id)
@@ -619,7 +636,8 @@ async def remove_video_from_room(room_id: str, video_id: str, request: Request):
         conn.close()
         raise HTTPException(status_code=404, detail="Video không tồn tại trong phòng")
 
-    if role != 'owner' and video["added_by"] != uid:
+    # Owner, moderator, or the person who added can remove
+    if role not in ('owner', 'moderator') and video["added_by"] != uid:
         conn.close()
         raise HTTPException(status_code=403, detail="Không có quyền xóa video này")
 
@@ -707,7 +725,7 @@ async def post_comment(room_id: str, req: PostCommentRequest, request: Request):
 
 @router.delete("/{room_id}/comments/{comment_id}")
 async def delete_comment(room_id: str, comment_id: int, request: Request):
-    """Delete a comment (author or room owner)."""
+    """Delete a comment (author, moderator, or room owner)."""
     user = _require_auth(request)
     uid = user["id"]
 
@@ -720,10 +738,14 @@ async def delete_comment(room_id: str, comment_id: int, request: Request):
         conn.close()
         raise HTTPException(status_code=404, detail="Bình luận không tồn tại")
 
-    room = conn.execute("SELECT owner_id FROM study_rooms WHERE id = ?", (room_id,)).fetchone()
-    if comment["user_id"] != uid and (not room or room["owner_id"] != uid):
-        conn.close()
-        raise HTTPException(status_code=403, detail="Không có quyền xóa bình luận này")
+    # Check if user can delete: author, owner, or moderator
+    if comment["user_id"] != uid:
+        user_role = conn.execute(
+            "SELECT role FROM room_members WHERE room_id = ? AND user_id = ?", (room_id, uid)
+        ).fetchone()
+        if not user_role or user_role["role"] not in ('owner', 'moderator'):
+            conn.close()
+            raise HTTPException(status_code=403, detail="Không có quyền xóa bình luận này")
 
     conn.execute("DELETE FROM room_comments WHERE id = ?", (comment_id,))
     conn.commit()
