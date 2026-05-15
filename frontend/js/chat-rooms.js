@@ -321,10 +321,12 @@ function _crRenderMessages() {
                 menuItems += '<button class="cr-msg-menu-item" onclick="event.stopPropagation();crPinMessage(\'' + msg.id + '\')">' + pinLabel + '</button>';
             }
             if (isCreator && !isOwn) {
-                menuItems += '<button class="cr-msg-menu-item cr-msg-menu-danger" onclick="event.stopPropagation();crBanUser(' + msg.user_id + ')">🚫 Chặn người này</button>';
+                menuItems += '<button class="cr-msg-menu-item cr-msg-menu-danger" onclick="event.stopPropagation();crKickUser(' + msg.user_id + ')">🚪 Kick</button>';
+                menuItems += '<button class="cr-msg-menu-item cr-msg-menu-danger" onclick="event.stopPropagation();crMuteUser(' + msg.user_id + ')">🔇 Cấm chat</button>';
+                menuItems += '<button class="cr-msg-menu-item cr-msg-menu-danger" onclick="event.stopPropagation();crBanUser(' + msg.user_id + ')">🚫 Chặn</button>';
             }
-            // Report option for non-own messages (any member)
-            if (!isOwn) {
+            // Report option for non-own messages (non-creator members only)
+            if (!isOwn && !isCreator) {
                 menuItems += '<button class="cr-msg-menu-item" onclick="event.stopPropagation();crReportMessage(\'' + msg.id + '\')">⚠️ Báo cáo</button>';
             }
             menuHtml = '<div class="cr-msg-menu-wrap">'
