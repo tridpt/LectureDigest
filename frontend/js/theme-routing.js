@@ -108,6 +108,8 @@ function updatePageTitle(sectionId) {
         studyPlanSection: 'Lộ trình học tập — LectureDigest',
         studyRoomsSection: 'Phòng học nhóm — LectureDigest',
         roomDetailSection: 'Phòng học — LectureDigest',
+        chatRoomsSection: 'Phòng chat — LectureDigest',
+        chatDetailSection: 'Phòng chat — LectureDigest',
     };
     document.title = titles[sectionId] || titles.hero;
 }
@@ -148,6 +150,8 @@ window.addEventListener('popstate', function(e) {
         if (typeof openStudyPlan === 'function') openStudyPlan();
     } else if (path === '/rooms') {
         if (typeof openStudyRooms === 'function') openStudyRooms();
+    } else if (path === '/chat') {
+        if (typeof openChatRooms === 'function') openChatRooms();
     } else {
         showSection('hero');
     }
@@ -204,6 +208,10 @@ window.addEventListener('popstate', function(e) {
     } else if (path === '/review') {
         window.addEventListener('DOMContentLoaded', function() {
             if (typeof openSrsReview === 'function') openSrsReview();
+        }, { once: true });
+    } else if (path === '/chat') {
+        window.addEventListener('DOMContentLoaded', function() {
+            if (typeof openChatRooms === 'function') openChatRooms();
         }, { once: true });
     }
 })();
