@@ -165,11 +165,11 @@ function crOpenRoom(roomId) {
     var isCreator = String(room.created_by) === _crCurrentUserId;
     if (deleteBtn) deleteBtn.style.display = isCreator ? '' : 'none';
     if (clearBtn) clearBtn.style.display = isCreator ? '' : 'none';
-    // Show reports button for admin/creator and check count
+    // Show reports button for admin/creator
     if (reportsBtn) {
-        reportsBtn.classList.add('hidden');
-        _crCheckReports();
+        reportsBtn.classList.add('hidden'); // hidden until _crCheckReports confirms admin
     }
+    _crCheckReports();
 
     // Load messages
     _crLoadMessages();
@@ -784,16 +784,20 @@ function _crCheckReports() {
             var count = (data.reports || []).length;
             var btn = document.getElementById('crReportsBtn');
             var badge = document.getElementById('crReportsBadge');
-            if (btn) {
-                btn.classList.toggle('hidden', count === 0);
-            }
+            // Admin confirmed — always show button
+            if (btn) btn.classList.remove('hidden');
+            // Badge only when there are reports
             if (badge) {
                 badge.textContent = count;
-                badge.classList.toggle('hidden', count === 0);
+                if (count > 0) {
+                    badge.classList.remove('hidden');
+                } else {
+                    badge.classList.add('hidden');
+                }
             }
         })
         .catch(function() {
-            // Not admin — hide button
+            // Not admin or error — hide button
             var btn = document.getElementById('crReportsBtn');
             if (btn) btn.classList.add('hidden');
         });

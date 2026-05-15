@@ -205,10 +205,15 @@ def _is_room_admin(room_id: str, user_id) -> bool:
         return True
     conn = get_db()
     row = conn.execute(
-        "SELECT role FROM chat_room_members WHERE room_id = ? AND user_id = ?",
+        "SELECT * FROM chat_room_members WHERE room_id = ? AND user_id = ?",
         (room_id, user_id)
     ).fetchone()
-    return row and row["role"] == 'admin'
+    if not row:
+        return False
+    try:
+        return row["role"] == 'admin'
+    except (KeyError, IndexError):
+        return False
 
 
 def _is_banned(room_id: str, user_id) -> bool:
