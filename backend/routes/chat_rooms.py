@@ -636,6 +636,10 @@ async def kick_member(room_id: str, target_user_id: int, request: Request, delet
     if str(target_user_id) == str(user["id"]):
         raise HTTPException(status_code=400, detail="Không thể kick chính mình")
 
+    # Check target is still a member
+    if not _is_room_member(room_id, target_user_id):
+        raise HTTPException(status_code=400, detail="Người này không còn trong phòng")
+
     conn = get_db()
     # Get target name for system message
     target_info = _get_user_info(target_user_id)

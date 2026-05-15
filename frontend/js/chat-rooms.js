@@ -648,7 +648,7 @@ async function crBanUser(userId) {
         { label: 'Chặn + Giữ tin nhắn', primary: true },
         { label: 'Chặn + Xóa tin nhắn', danger: true }
     ]);
-    if (result === '0') return; // Hủy
+    if (result === '0' || result === 'cancel') return;
 
     var deleteMsg = result === '2';
     var headers = _crAuthHeaders();
@@ -677,7 +677,7 @@ async function crKickUser(userId) {
         { label: 'Kick + Giữ tin nhắn', primary: true },
         { label: 'Kick + Xóa tin nhắn', danger: true }
     ]);
-    if (result === '0') return; // Hủy
+    if (result === '0' || result === 'cancel') return;
 
     var deleteMsg = result === '2';
     var headers = _crAuthHeaders();
