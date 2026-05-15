@@ -110,7 +110,10 @@ function _crRenderRoomList() {
     for (var i = 0; i < _crRooms.length; i++) {
         var room = _crRooms[i];
         var lastMsg = room.last_message;
-        var preview = lastMsg ? (lastMsg.username + ': ' + lastMsg.content) : 'Chưa có tin nhắn';
+        var preview = 'Chưa có tin nhắn';
+        if (lastMsg) {
+            preview = lastMsg.username ? (lastMsg.username + ': ' + lastMsg.content) : lastMsg.content;
+        }
         if (preview.length > 60) preview = preview.substring(0, 60) + '...';
 
         html += '<div class="cr-room-card" onclick="crOpenRoom(\'' + room.id + '\')">';

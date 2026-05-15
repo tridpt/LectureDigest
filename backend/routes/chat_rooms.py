@@ -155,6 +155,8 @@ def _generate_id():
 
 def _get_user_info(user_id):
     """Get display_name and avatar_url for a user."""
+    if str(user_id) == '__system__':
+        return {"username": "", "avatar_url": None, "avatar_color": "#8b5cf6"}
     conn = get_db()
     row = conn.execute(
         "SELECT display_name, avatar_url, avatar_color FROM users WHERE id = ?", (user_id,)
