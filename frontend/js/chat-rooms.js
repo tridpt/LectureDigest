@@ -161,13 +161,13 @@ function crOpenRoom(roomId) {
     if (nameEl) nameEl.textContent = room.name;
     if (membersEl) membersEl.textContent = (room.member_count || 0) + ' thành viên';
 
-    // Show/hide delete button (creator only)
-    var deleteBtn = document.getElementById('crDeleteRoomBtn');
-    var clearBtn = document.getElementById('crClearMsgsBtn');
-    var reportsBtn = document.getElementById('crReportsBtn');
+    // Show/hide admin items in header menu
     var isCreator = String(room.created_by) === _crCurrentUserId;
-    if (deleteBtn) deleteBtn.style.display = isCreator ? '' : 'none';
-    if (clearBtn) clearBtn.style.display = isCreator ? '' : 'none';
+    var hmClear = document.getElementById('crHmClear');
+    var hmDelete = document.getElementById('crHmDelete');
+    var reportsBtn = document.getElementById('crReportsBtn');
+    if (hmClear) hmClear.style.display = isCreator ? '' : 'none';
+    if (hmDelete) hmDelete.style.display = isCreator ? '' : 'none';
     // Show reports button for admin/creator
     if (reportsBtn) {
         reportsBtn.classList.add('hidden'); // hidden until _crCheckReports confirms admin
@@ -365,6 +365,15 @@ function _crRenderMessages() {
     container.innerHTML = html;
 }
 
+function crToggleHeaderMenu() {
+    var menu = document.getElementById('crHeaderMenu');
+    if (menu) menu.classList.toggle('hidden');
+}
+function crCloseHeaderMenu() {
+    var menu = document.getElementById('crHeaderMenu');
+    if (menu) menu.classList.add('hidden');
+}
+
 function crToggleMsgMenu(msgId) {
     var menu = document.getElementById('crMsgMenu_' + msgId);
     if (!menu) return;
@@ -397,6 +406,9 @@ function crToggleMsgMenu(msgId) {
 document.addEventListener('click', function(e) {
     if (!e.target.closest('.cr-msg-menu-wrap')) {
         document.querySelectorAll('.cr-msg-menu').forEach(function(m) { m.classList.add('hidden'); });
+    }
+    if (!e.target.closest('.cr-header-more-wrap')) {
+        crCloseHeaderMenu();
     }
 });
 

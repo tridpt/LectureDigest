@@ -1413,3 +1413,58 @@ img.cr-member-av {
 .light-mode .cr-info-row {
     background: rgba(0, 0, 0, 0.03);
 }
+
+/* ── Header more menu ── */
+.cr-header-more-wrap {
+    position: relative;
+}
+
+.cr-header-menu {
+    position: absolute;
+    top: calc(100% + 6px);
+    right: 0;
+    background: #1e1e3a;
+    border: 1px solid rgba(139, 92, 246, 0.2);
+    border-radius: 10px;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+    z-index: 200;
+    padding: 4px;
+    min-width: 180px;
+}
+
+.cr-header-menu.hidden {
+    display: none;
+}
+
+.cr-hm-item {
+    display: block;
+    width: 100%;
+    padding: 9px 14px;
+    background: none;
+    border: none;
+    color: var(--text-secondary, #cbd5e1);
+    font-size: 13px;
+    cursor: pointer;
+    border-radius: 6px;
+    text-align: left;
+    transition: background 0.15s;
+}
+
+.cr-hm-item:hover {
+    background: rgba(139, 92, 246, 0.1);
+    color: var(--text-primary, #f1f5f9);
+}
+
+.cr-hm-item.cr-hm-danger {
+    color: #f87171;
+}
+
+.cr-hm-item.cr-hm-danger:hover {
+    background: rgba(248, 113, 113, 0.1);
+}
+
+.light-mode .cr-header-menu {
+    background: #fff;
+    border-color: rgba(0, 0, 0, 0.1);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+}
