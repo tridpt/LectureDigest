@@ -15,6 +15,7 @@ from typing import Optional
 
 from database import get_db
 from routes.auth import get_current_user
+from routes.notifications import create_notification, create_notification_for_room_members
 
 router = APIRouter(prefix="/api/rooms", tags=["study-rooms"])
 logger = logging.getLogger("study-rooms")
@@ -408,6 +409,15 @@ async def join_room(invite_code: str, request: Request):
     conn.commit()
     conn.close()
 
+    # Notify room members about new member
+    display_name = user.get("display_name", "Ai đó")
+    create_notification_for_room_members(
+        room["id"], "room_join",
+        f"👋 {display_name} đã tham gia phòng",
+        f"{display_name} vừa tham gia phòng \"{room['name']}\"",
+        "/rooms", exclude_user_id=uid
+    )
+
     return {"ok": True, "room_id": room["id"], "room_name": room["name"]}
 
 
@@ -448,8 +458,20 @@ async def kick_member(room_id: str, target_user_id: int, request: Request):
         raise HTTPException(status_code=400, detail="Không thể kick chính mình")
 
     conn.execute("DELETE FROM room_members WHERE room_id = ? AND user_id = ?", (room_id, target_user_id))
+    # Get room name for notification
+    room_info = conn.execute("SELECT name FROM study_rooms WHERE id = ?", (room_id,)).fetchone()
     conn.commit()
     conn.close()
+
+    # Notify the kicked user
+    room_name = room_info["name"] if room_info else "phòng học"
+    create_notification(
+        target_user_id, "room_kicked",
+        f"🚫 Bạn đã bị kick khỏi phòng \"{room_name}\"",
+        "Bạn không còn là thành viên của phòng này nữa.",
+        "/rooms"
+    )
+
     return {"ok": True}
 
 
@@ -488,8 +510,27 @@ async def change_member_role(room_id: str, target_user_id: int, req: ChangeRoleR
         "UPDATE room_members SET role = ? WHERE room_id = ? AND user_id = ?",
         (req.role, room_id, target_user_id)
     )
+    room_info = conn.execute("SELECT name FROM study_rooms WHERE id = ?", (room_id,)).fetchone()
     conn.commit()
     conn.close()
+
+    # Notify the user about role change
+    room_name = room_info["name"] if room_info else "phòng học"
+    if req.role == 'moderator':
+        create_notification(
+            target_user_id, "room_promoted",
+            f"🛡️ Bạn đã được thăng cấp Quản lý",
+            f"Bạn được thăng cấp quản lý trong phòng \"{room_name}\"",
+            "/rooms"
+        )
+    else:
+        create_notification(
+            target_user_id, "room_demoted",
+            f"👤 Quyền của bạn đã thay đổi",
+            f"Bạn đã trở thành thành viên thường trong phòng \"{room_name}\"",
+            "/rooms"
+        )
+
     return {"ok": True, "role": req.role}
 
 
@@ -517,6 +558,17 @@ async def add_video_to_room(room_id: str, req: AddVideoRequest, request: Request
         conn.close()
         raise HTTPException(status_code=500, detail=str(e))
     conn.close()
+
+    # Notify room members about new video
+    display_name = user.get("display_name", "Ai đó")
+    video_title = req.title or req.video_id
+    create_notification_for_room_members(
+        room_id, "room_video",
+        f"🎬 Video mới: {video_title[:50]}",
+        f"{display_name} đã thêm video vào phòng",
+        "/rooms", exclude_user_id=uid
+    )
+
     return {"ok": True}
 
 
