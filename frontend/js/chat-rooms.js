@@ -161,9 +161,15 @@ function crOpenRoom(roomId) {
     // Show/hide delete button (creator only)
     var deleteBtn = document.getElementById('crDeleteRoomBtn');
     var clearBtn = document.getElementById('crClearMsgsBtn');
+    var reportsBtn = document.getElementById('crReportsBtn');
     var isCreator = String(room.created_by) === _crCurrentUserId;
     if (deleteBtn) deleteBtn.style.display = isCreator ? '' : 'none';
     if (clearBtn) clearBtn.style.display = isCreator ? '' : 'none';
+    // Show reports button for admin/creator and check count
+    if (reportsBtn) {
+        reportsBtn.classList.add('hidden');
+        _crCheckReports();
+    }
 
     // Load messages
     _crLoadMessages();
@@ -751,6 +757,9 @@ function _crStartPolling() {
                 }
             })
             .catch(function() {});
+
+        // Also check reports for admins
+        _crCheckReports();
     }, 5000);
 }
 
@@ -759,6 +768,35 @@ function _crStopPolling() {
         clearInterval(_crPollTimer);
         _crPollTimer = null;
     }
+}
+
+function _crCheckReports() {
+    if (!_crCurrentRoom) return;
+    var headers = _crAuthHeaders();
+    if (!headers) return;
+
+    fetchWithTimeout('/api/chat-rooms/' + _crCurrentRoom.id + '/reports', { headers: headers }, 10000)
+        .then(function(r) {
+            if (!r.ok) throw new Error('not admin');
+            return r.json();
+        })
+        .then(function(data) {
+            var count = (data.reports || []).length;
+            var btn = document.getElementById('crReportsBtn');
+            var badge = document.getElementById('crReportsBadge');
+            if (btn) {
+                btn.classList.toggle('hidden', count === 0);
+            }
+            if (badge) {
+                badge.textContent = count;
+                badge.classList.toggle('hidden', count === 0);
+            }
+        })
+        .catch(function() {
+            // Not admin — hide button
+            var btn = document.getElementById('crReportsBtn');
+            if (btn) btn.classList.add('hidden');
+        });
 }
 
 // ══════════════════════════════════════════════════════

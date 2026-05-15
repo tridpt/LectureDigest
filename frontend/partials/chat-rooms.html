@@ -37,6 +37,9 @@
                     <span class="cr-chat-room-members" id="crChatRoomMembers">0 thành viên</span>
                 </div>
                 <div class="cr-chat-header-actions">
+                    <button type="button" class="cr-btn cr-btn-outline cr-reports-btn hidden" id="crReportsBtn" onclick="crViewReports()" title="Báo cáo" style="font-size:12px;padding:4px 10px;position:relative">
+                        ⚠️ <span class="cr-reports-badge hidden" id="crReportsBadge">0</span>
+                    </button>
                     <button type="button" class="cr-btn cr-btn-outline" onclick="crShowMembers()" title="Thành viên" style="font-size:12px;padding:4px 10px">👥</button>
                     <button type="button" class="cr-btn cr-btn-outline" id="crClearMsgsBtn" onclick="crClearAllMessages()" title="Xóa tất cả tin nhắn" style="display:none;font-size:12px;padding:4px 10px">🧹</button>
                     <button type="button" class="cr-btn cr-btn-danger-sm" id="crLeaveBtn" onclick="crLeaveRoom()" title="Rời phòng">🚪 Rời</button>
