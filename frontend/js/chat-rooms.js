@@ -553,13 +553,61 @@ async function crPinMessage(msgId) {
     } catch(e) { showToast('Lỗi: ' + e.message, 3000); }
 }
 
+// ── Custom confirm modal (replaces browser confirm) ──
+function _crConfirmModal(title, message, options) {
+    return new Promise(function(resolve) {
+        var id = 'crConfirm_' + Date.now();
+        var btnsHtml = '';
+        if (options && options.length) {
+            options.forEach(function(opt, i) {
+                var cls = opt.danger ? 'cr-btn cr-btn-danger-sm' : opt.primary ? 'cr-btn cr-btn-primary' : 'cr-btn cr-btn-outline';
+                btnsHtml += '<button class="' + cls + '" style="padding:8px 16px;font-size:13px" data-val="' + i + '">' + opt.label + '</button>';
+            });
+        } else {
+            btnsHtml = '<button class="cr-btn cr-btn-outline" style="padding:8px 16px;font-size:13px" data-val="cancel">Hủy</button>'
+                + '<button class="cr-btn cr-btn-primary" style="padding:8px 16px;font-size:13px" data-val="ok">Xác nhận</button>';
+        }
+
+        var html = '<div class="cr-modal-overlay" id="' + id + '" style="z-index:99999">'
+            + '<div class="cr-modal" style="max-width:380px;overflow:visible">'
+            + '<div style="padding:24px;text-align:center">'
+            + '<div style="font-size:28px;margin-bottom:12px">' + (title || '⚠️') + '</div>'
+            + '<div style="font-size:14px;color:var(--text-primary,#f1f5f9);font-weight:600;margin-bottom:8px">' + (message || '') + '</div>'
+            + '<div style="display:flex;gap:8px;justify-content:center;margin-top:20px;flex-wrap:wrap">' + btnsHtml + '</div>'
+            + '</div></div></div>';
+
+        var container = document.createElement('div');
+        container.innerHTML = html;
+        var overlay = container.firstElementChild;
+        document.body.appendChild(overlay);
+
+        overlay.addEventListener('click', function(e) {
+            var btn = e.target.closest('[data-val]');
+            if (btn) {
+                overlay.remove();
+                resolve(btn.getAttribute('data-val'));
+            } else if (e.target === overlay) {
+                overlay.remove();
+                resolve('cancel');
+            }
+        });
+    });
+}
+
 async function crBanUser(userId) {
     if (!_crCurrentRoom) return;
-    if (!confirm('Chặn người này? Họ sẽ bị kick và không thể tham gia lại.')) return;
-    var deleteMsg = confirm('Xóa toàn bộ tin nhắn của người này?\n\n• OK = Xóa hết tin nhắn\n• Cancel = Giữ lại tin nhắn');
+    document.querySelectorAll('.cr-msg-menu').forEach(function(m) { m.classList.add('hidden'); });
+
+    var result = await _crConfirmModal('🚫 Chặn thành viên', 'Người này sẽ bị kick và không thể tham gia lại.', [
+        { label: 'Hủy', danger: false },
+        { label: 'Chặn + Giữ tin nhắn', primary: true },
+        { label: 'Chặn + Xóa tin nhắn', danger: true }
+    ]);
+    if (result === '0') return; // Hủy
+
+    var deleteMsg = result === '2';
     var headers = _crAuthHeaders();
     if (!headers) return;
-    document.querySelectorAll('.cr-msg-menu').forEach(function(m) { m.classList.add('hidden'); });
 
     try {
         var url = '/api/chat-rooms/' + _crCurrentRoom.id + '/ban/' + userId + (deleteMsg ? '?delete_messages=true' : '');
@@ -577,8 +625,15 @@ async function crBanUser(userId) {
 
 async function crKickUser(userId) {
     if (!_crCurrentRoom) return;
-    if (!confirm('Kick người này khỏi phòng?')) return;
-    var deleteMsg = confirm('Xóa toàn bộ tin nhắn của người này?\n\n• OK = Xóa hết tin nhắn\n• Cancel = Giữ lại tin nhắn');
+
+    var result = await _crConfirmModal('🚪 Kick thành viên', 'Người này sẽ bị đuổi khỏi phòng.', [
+        { label: 'Hủy', danger: false },
+        { label: 'Kick + Giữ tin nhắn', primary: true },
+        { label: 'Kick + Xóa tin nhắn', danger: true }
+    ]);
+    if (result === '0') return; // Hủy
+
+    var deleteMsg = result === '2';
     var headers = _crAuthHeaders();
     if (!headers) return;
 
@@ -733,7 +788,10 @@ function crCloseMembersPanel() {
 
 async function crClearAllMessages() {
     if (!_crCurrentRoom) return;
-    if (!confirm('Xóa TẤT CẢ tin nhắn trong phòng? Không thể hoàn tác.')) return;
+    var result = await _crConfirmModal('🗑️ Xóa tất cả', 'Xóa toàn bộ tin nhắn trong phòng?\nKhông thể hoàn tác.', [
+        { label: 'Hủy' }, { label: 'Xóa tất cả', danger: true }
+    ]);
+    if (result !== '1') return;
     var headers = _crAuthHeaders();
     if (!headers) return;
 
@@ -1144,9 +1202,12 @@ function crJoinRoom(roomId) {
 // LEAVE / DELETE ROOM
 // ══════════════════════════════════════════════════════
 
-function crLeaveRoom() {
+async function crLeaveRoom() {
     if (!_crCurrentRoom) return;
-    if (!confirm('Bạn có chắc muốn rời phòng chat này?')) return;
+    var result = await _crConfirmModal('🚪 Rời phòng', 'Bạn có chắc muốn rời phòng chat này?', [
+        { label: 'Ở lại' }, { label: 'Rời phòng', danger: true }
+    ]);
+    if (result !== '1') return;
 
     var headers = _crAuthHeaders();
     if (!headers) return;
@@ -1168,9 +1229,12 @@ function crLeaveRoom() {
         });
 }
 
-function crDeleteRoom() {
+async function crDeleteRoom() {
     if (!_crCurrentRoom) return;
-    if (!confirm('Xóa phòng chat này? Tất cả tin nhắn sẽ bị mất.')) return;
+    var result = await _crConfirmModal('🗑️ Xóa phòng', 'Xóa phòng chat này?\nTất cả tin nhắn sẽ bị mất vĩnh viễn.', [
+        { label: 'Hủy' }, { label: 'Xóa phòng', danger: true }
+    ]);
+    if (result !== '1') return;
 
     var headers = _crAuthHeaders();
     if (!headers) return;
