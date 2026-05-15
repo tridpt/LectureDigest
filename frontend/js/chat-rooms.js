@@ -25,6 +25,7 @@ var _crCurrentUserId = null;
 // ══════════════════════════════════════════════════════
 
 function openChatRooms() {
+    _crCurrentUserId = _crGetCurrentUserId();
     showSection('chatRoomsSection');
     crLoadRooms();
     var footer = document.querySelector('.footer');
@@ -71,7 +72,8 @@ function _crGetCurrentUserId() {
         var token = localStorage.getItem('ld_auth_token') || '';
         if (!token) return null;
         var payload = JSON.parse(atob(token.split('.')[1]));
-        return payload.sub || payload.user_id || null;
+        var uid = payload.sub || payload.user_id || null;
+        return uid !== null ? String(uid) : null;
     } catch(e) { return null; }
 }
 
@@ -159,7 +161,7 @@ function crOpenRoom(roomId) {
     // Show/hide delete button (creator only)
     var deleteBtn = document.getElementById('crDeleteRoomBtn');
     if (deleteBtn) {
-        deleteBtn.style.display = (room.created_by === _crCurrentUserId) ? '' : 'none';
+        deleteBtn.style.display = (String(room.created_by) === _crCurrentUserId) ? '' : 'none';
     }
 
     // Load messages
@@ -198,8 +200,8 @@ function _crRenderMessages() {
     var html = '';
     for (var i = 0; i < _crMessages.length; i++) {
         var msg = _crMessages[i];
-        var isOwn = msg.user_id === _crCurrentUserId;
-        var canDelete = isOwn || (_crCurrentRoom && _crCurrentRoom.created_by === _crCurrentUserId);
+        var isOwn = String(msg.user_id) === _crCurrentUserId;
+        var canDelete = isOwn || (_crCurrentRoom && String(_crCurrentRoom.created_by) === _crCurrentUserId);
 
         var avatarHtml = _crRenderAvatar(msg.username, msg.avatar_url);
         var timeStr = _crFormatTime(msg.created_at);
