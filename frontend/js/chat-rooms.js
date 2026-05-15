@@ -895,14 +895,19 @@ async function crDemoteUser(userId) {
 
 async function crMuteUser(userId) {
     if (!_crCurrentRoom) return;
-    // Show duration picker
-    var duration = prompt('Chọn thời gian cấm chat:\n• 1h = 1 giờ\n• 6h = 6 giờ\n• 1d = 1 ngày\n• 3d = 3 ngày\n• 7d = 7 ngày\n\nNhập:', '1h');
-    if (!duration) return;
-    duration = duration.trim().toLowerCase();
-    if (['1h','6h','1d','3d','7d'].indexOf(duration) < 0) {
-        showToast('Thời gian không hợp lệ. Dùng: 1h, 6h, 1d, 3d, 7d', 3000);
-        return;
-    }
+
+    // Custom in-app duration picker
+    var result = await _crConfirmModal('🔇 Cấm chat', 'Chọn thời gian cấm:', [
+        { label: '1 giờ', primary: false },
+        { label: '6 giờ', primary: false },
+        { label: '1 ngày', primary: false },
+        { label: '3 ngày', primary: false },
+        { label: '7 ngày', primary: false },
+    ]);
+
+    var durations = ['1h', '6h', '1d', '3d', '7d'];
+    var duration = durations[parseInt(result)];
+    if (!duration) return; // cancelled
 
     var headers = _crAuthHeaders();
     if (!headers) return;
