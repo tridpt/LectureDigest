@@ -195,6 +195,7 @@ function _crLoadMessages() {
             // Update room owner if changed (transfer)
             if (data.created_by && _crCurrentRoom && String(_crCurrentRoom.created_by) !== String(data.created_by)) {
                 _crCurrentRoom.created_by = data.created_by;
+                _crOnOwnershipChanged();
             }
         })
         .catch(function(err) {
@@ -367,6 +368,21 @@ function _crRenderMessages() {
         html += '</div>';
     }
     container.innerHTML = html;
+}
+
+function _crOnOwnershipChanged() {
+    // Re-render messages to update menus (new owner sees admin options)
+    _crRenderMessages();
+    // Update header buttons
+    var isCreator = _crCurrentRoom && String(_crCurrentRoom.created_by) === _crCurrentUserId;
+    var hmClear = document.getElementById('crHmClear');
+    if (hmClear) hmClear.style.display = isCreator ? '' : 'none';
+    // Re-check reports (new owner can now see them)
+    _crCheckReports();
+    // Show toast if I became the owner
+    if (isCreator) {
+        showToast('👑 Bạn đã trở thành chủ phòng!', 3000);
+    }
 }
 
 function crToggleHeaderMenu() {
@@ -1280,6 +1296,7 @@ function _crStartPolling() {
                 // Update room owner if changed (transfer)
                 if (data.created_by && _crCurrentRoom && String(_crCurrentRoom.created_by) !== String(data.created_by)) {
                     _crCurrentRoom.created_by = data.created_by;
+                    _crOnOwnershipChanged();
                 }
             })
             .catch(function() {});
