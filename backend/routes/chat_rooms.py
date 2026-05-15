@@ -541,6 +541,52 @@ async def get_messages(room_id: str, request: Request, limit: int = 50, before: 
     return {"messages": messages, "muted_until": muted_until, "created_by": room["created_by"] if room else None}
 
 
+# ═══════════════════════════════════════════════════════
+# TYPING INDICATOR (in-memory, ephemeral)
+# ═══════════════════════════════════════════════════════
+
+_typing_status = {}  # {room_id: {user_id: {"name": str, "ts": float}}}
+
+
+@router.post("/{room_id}/typing")
+async def set_typing(room_id: str, request: Request):
+    """Signal that user is typing."""
+    user = get_current_user(request)
+    if not user:
+        raise HTTPException(status_code=401, detail="Not authenticated")
+
+    if room_id not in _typing_status:
+        _typing_status[room_id] = {}
+    _typing_status[room_id][str(user["id"])] = {
+        "name": user.get("display_name", "User"),
+        "ts": time.time()
+    }
+    return {"ok": True}
+
+
+@router.get("/{room_id}/typing")
+async def get_typing(room_id: str, request: Request):
+    """Get who is currently typing (within last 4 seconds)."""
+    user = get_current_user(request)
+    if not user:
+        raise HTTPException(status_code=401, detail="Not authenticated")
+
+    now = time.time()
+    typers = []
+    room_typing = _typing_status.get(room_id, {})
+    expired = []
+    for uid, info in room_typing.items():
+        if now - info["ts"] > 4:
+            expired.append(uid)
+        elif uid != str(user["id"]):
+            typers.append(info["name"])
+    # Clean expired
+    for uid in expired:
+        del room_typing[uid]
+
+    return {"typing": typers}
+
+
 @router.post("/{room_id}/messages")
 async def send_message(room_id: str, body: SendMessageBody, request: Request):
     """Send a message to a chat room."""

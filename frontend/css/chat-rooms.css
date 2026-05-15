@@ -1556,3 +1556,12 @@ img.cr-member-av {
 .light-mode .cr-modal {
     scrollbar-color: rgba(139, 92, 246, 0.2) transparent;
 }
+
+/* ── Typing indicator ── */
+.cr-typing-indicator {
+    padding: 4px 16px;
+    font-size: 12px;
+    color: var(--text-secondary, #94a3b8);
+    font-style: italic;
+    flex-shrink: 0;
+}

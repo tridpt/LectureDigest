@@ -59,6 +59,7 @@
                 <div class="cr-messages-list" id="crMessagesList"></div>
             </div>
 
+            <div class="cr-typing-indicator hidden" id="crTypingIndicator"></div>
             <div class="cr-img-preview hidden" id="crImgPreview">
                 <img id="crImgPreviewImg" src="" alt="Preview">
                 <button type="button" class="cr-img-preview-close" onclick="crCancelImage()">✕</button>
@@ -70,6 +71,7 @@
                 <input type="file" id="crImageInput" accept="image/jpeg,image/png,image/gif,image/webp" style="display:none" onchange="crPreviewImage(this)">
                 <input type="text" class="cr-message-input" id="crMessageInput"
                        placeholder="Nhập tin nhắn..." maxlength="2000"
+                       oninput="_crOnTyping()"
                        onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();crSendMessage();}">
                 <button type="button" class="cr-send-btn" onclick="crSendMessage()" aria-label="Gửi">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20"><path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z" stroke-linecap="round" stroke-linejoin="round"/></svg>

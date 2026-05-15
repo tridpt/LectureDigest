@@ -1343,6 +1343,8 @@ function _crStartPolling() {
 
         // Also check reports for admins
         _crCheckReports();
+        // Check typing indicators
+        _crPollTyping();
     }, 5000);
 }
 
@@ -1351,6 +1353,49 @@ function _crStopPolling() {
         clearInterval(_crPollTimer);
         _crPollTimer = null;
     }
+}
+
+// ── Typing indicator ──
+var _crTypingTimer = null;
+var _crLastTypingSent = 0;
+
+function _crOnTyping() {
+    if (!_crCurrentRoom) return;
+    var now = Date.now();
+    // Only send typing signal every 3 seconds
+    if (now - _crLastTypingSent < 3000) return;
+    _crLastTypingSent = now;
+
+    var headers = _crAuthHeaders();
+    if (!headers) return;
+    fetchWithTimeout('/api/chat-rooms/' + _crCurrentRoom.id + '/typing', {
+        method: 'POST', headers: headers
+    }, 5000).catch(function() {});
+}
+
+function _crPollTyping() {
+    if (!_crCurrentRoom) return;
+    var headers = _crAuthHeaders();
+    if (!headers) return;
+
+    fetchWithTimeout('/api/chat-rooms/' + _crCurrentRoom.id + '/typing', { headers: headers }, 5000)
+        .then(function(r) { return r.json(); })
+        .then(function(data) {
+            var typers = data.typing || [];
+            var el = document.getElementById('crTypingIndicator');
+            if (!el) return;
+            if (typers.length === 0) {
+                el.classList.add('hidden');
+                el.textContent = '';
+            } else {
+                var text = typers.length === 1
+                    ? typers[0] + ' đang nhập...'
+                    : typers.slice(0, 2).join(', ') + (typers.length > 2 ? ' và ' + (typers.length - 2) + ' người khác' : '') + ' đang nhập...';
+                el.textContent = '✏️ ' + text;
+                el.classList.remove('hidden');
+            }
+        })
+        .catch(function() {});
 }
 
 function _crCheckReports() {
