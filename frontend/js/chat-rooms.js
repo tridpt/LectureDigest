@@ -840,17 +840,9 @@ async function crReportMessage(msgId) {
     if (!_crCurrentRoom) return;
     document.querySelectorAll('.cr-msg-menu').forEach(function(m) { m.classList.add('hidden'); });
 
-    var result = await _crConfirmModal('⚠️ Báo cáo tin nhắn', 'Chọn lý do báo cáo:', [
-        { label: 'Hủy' },
-        { label: 'Spam / Quảng cáo', primary: true },
-        { label: 'Nội dung không phù hợp', primary: true },
-        { label: 'Quấy rối / Xúc phạm', primary: true },
-        { label: 'Lý do khác', primary: true },
-    ]);
-    if (result === '0' || result === 'cancel') return;
-
-    var reasons = ['', 'Spam / Quảng cáo', 'Nội dung không phù hợp', 'Quấy rối / Xúc phạm', 'Lý do khác'];
-    var reason = reasons[parseInt(result)] || '';
+    // Show custom report modal with preset reasons + text input
+    var reason = await _crShowReportModal();
+    if (reason === null) return; // cancelled
 
     var headers = _crAuthHeaders();
     if (!headers) return;
@@ -867,6 +859,64 @@ async function crReportMessage(msgId) {
             showToast(err.detail || 'Không thể báo cáo', 3000);
         }
     } catch(e) { showToast('Lỗi: ' + e.message, 3000); }
+}
+
+function _crShowReportModal() {
+    return new Promise(function(resolve) {
+        var id = 'crReportModal_' + Date.now();
+        var html = '<div class="cr-modal-overlay" id="' + id + '" style="z-index:99999">'
+            + '<div class="cr-modal" style="max-width:400px;overflow:visible">'
+            + '<div class="cr-modal-header"><h3>⚠️ Báo cáo tin nhắn</h3>'
+            + '<button type="button" class="cr-modal-close" data-action="cancel">&times;</button></div>'
+            + '<div class="cr-modal-body" style="padding:16px 20px">'
+            + '<p style="font-size:13px;color:var(--text-secondary,#94a3b8);margin:0 0 12px">Chọn lý do hoặc nhập nội dung:</p>'
+            + '<div class="cr-report-reasons">'
+            + '<button class="cr-report-reason-btn" data-reason="Spam / Quảng cáo">🚫 Spam / Quảng cáo</button>'
+            + '<button class="cr-report-reason-btn" data-reason="Nội dung không phù hợp">⛔ Nội dung không phù hợp</button>'
+            + '<button class="cr-report-reason-btn" data-reason="Quấy rối / Xúc phạm">😡 Quấy rối / Xúc phạm</button>'
+            + '<button class="cr-report-reason-btn" data-reason="Thông tin sai lệch">❌ Thông tin sai lệch</button>'
+            + '</div>'
+            + '<textarea class="cr-report-input" id="crReportInput_' + id + '" placeholder="Hoặc nhập lý do khác..." maxlength="500" rows="2"></textarea>'
+            + '</div>'
+            + '<div class="cr-modal-footer">'
+            + '<button class="cr-btn cr-btn-outline" data-action="cancel">Hủy</button>'
+            + '<button class="cr-btn cr-btn-primary" data-action="submit">Gửi báo cáo</button>'
+            + '</div></div></div>';
+
+        var container = document.createElement('div');
+        container.innerHTML = html;
+        var overlay = container.firstElementChild;
+        document.body.appendChild(overlay);
+
+        var selectedReason = '';
+        var input = document.getElementById('crReportInput_' + id);
+
+        // Click preset reason buttons
+        overlay.querySelectorAll('.cr-report-reason-btn').forEach(function(btn) {
+            btn.addEventListener('click', function() {
+                overlay.querySelectorAll('.cr-report-reason-btn').forEach(function(b) { b.classList.remove('active'); });
+                btn.classList.add('active');
+                selectedReason = btn.getAttribute('data-reason');
+            });
+        });
+
+        overlay.addEventListener('click', function(e) {
+            var action = e.target.getAttribute('data-action') || e.target.closest('[data-action]')?.getAttribute('data-action');
+            if (action === 'cancel' || e.target === overlay) {
+                overlay.remove();
+                resolve(null);
+            } else if (action === 'submit') {
+                var customText = input ? input.value.trim() : '';
+                var finalReason = customText || selectedReason || '';
+                if (!finalReason) {
+                    showToast('Vui lòng chọn hoặc nhập lý do', 2000);
+                    return;
+                }
+                overlay.remove();
+                resolve(finalReason);
+            }
+        });
+    });
 }
 
 async function crPromoteUser(userId) {

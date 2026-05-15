@@ -1269,3 +1269,70 @@ img.cr-member-av {
     margin: 4px 0;
     opacity: 0.8;
 }
+
+/* ── Report modal ── */
+.cr-report-reasons {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-bottom: 12px;
+}
+
+.cr-report-reason-btn {
+    padding: 6px 12px;
+    border-radius: 8px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    background: rgba(255, 255, 255, 0.04);
+    color: var(--text-secondary, #cbd5e1);
+    font-size: 12px;
+    cursor: pointer;
+    transition: all 0.15s;
+}
+
+.cr-report-reason-btn:hover {
+    border-color: rgba(139, 92, 246, 0.3);
+    background: rgba(139, 92, 246, 0.08);
+}
+
+.cr-report-reason-btn.active {
+    border-color: #8b5cf6;
+    background: rgba(139, 92, 246, 0.15);
+    color: #a78bfa;
+}
+
+.cr-report-input {
+    width: 100%;
+    padding: 10px 12px;
+    border-radius: 8px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    background: rgba(255, 255, 255, 0.04);
+    color: var(--text-primary, #f1f5f9);
+    font-size: 13px;
+    resize: none;
+    outline: none;
+    box-sizing: border-box;
+}
+
+.cr-report-input:focus {
+    border-color: rgba(139, 92, 246, 0.4);
+}
+
+.cr-report-input::placeholder {
+    color: var(--text-secondary, #94a3b8);
+}
+
+.light-mode .cr-report-reason-btn {
+    border-color: rgba(0, 0, 0, 0.1);
+    background: rgba(0, 0, 0, 0.03);
+    color: #4b5563;
+}
+.light-mode .cr-report-reason-btn.active {
+    border-color: #8b5cf6;
+    background: rgba(139, 92, 246, 0.08);
+    color: #7c3aed;
+}
+.light-mode .cr-report-input {
+    border-color: rgba(0, 0, 0, 0.1);
+    background: rgba(0, 0, 0, 0.03);
+    color: #1e293b;
+}
