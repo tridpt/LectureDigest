@@ -357,7 +357,8 @@
 
 .cr-msg-menu {
     position: absolute;
-    top: 100%;
+    bottom: 100%;
+    margin-bottom: 4px;
     background: #1e1e3a;
     border: 1px solid rgba(139, 92, 246, 0.2);
     border-radius: 10px;
