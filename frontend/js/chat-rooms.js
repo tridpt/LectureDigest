@@ -831,6 +831,7 @@ async function crClearAllMessages() {
             showToast('🗑️ Đã xóa tất cả tin nhắn', 2000);
             _crMessages = [];
             _crRenderMessages();
+            _crLoadPinnedMessages();
         }
     } catch(e) { showToast('Lỗi', 3000); }
 }
