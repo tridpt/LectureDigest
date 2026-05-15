@@ -24,13 +24,11 @@
                 </div>
             </div>
 
-            <!-- SRS Review Banner -->
+            <!-- Banners: SRS + Study Plan -->
             <div id="srsBannerWrap" class="hidden"></div>
-
-            <!-- Study Plan Banner -->
             <div id="spBannerWrap" class="hidden"></div>
 
-            <!-- Stat cards row -->
+            <!-- Stat cards row (tổng quan nhanh) -->
             <div class="db-stat-grid" id="dbStatGrid"></div>
 
             <!-- Weekly Learning Goals -->
@@ -39,7 +37,7 @@
                 <div id="dbWeeklyGoals"></div>
             </div>
 
-            <!-- Middle row: Streak calendar + Quiz performance -->
+            <!-- Row: Streak + Activity Heatmap (gom 2 cái lịch thành 1 section) -->
             <div class="db-mid-row">
                 <div class="db-card db-streak-panel">
                     <h3 class="db-card-title">🔥 Streak học tập</h3>
@@ -47,26 +45,13 @@
                     <div class="db-cal-label-row" id="dbCalLabels"></div>
                     <div class="db-calendar" id="dbCalendar"></div>
                 </div>
-                <div class="db-card db-quiz-panel">
-                    <h3 class="db-card-title">🧠 Kết quả quiz gần đây</h3>
-                    <div class="db-quiz-chart" id="dbQuizChart"></div>
-                    <p class="db-quiz-avg" id="dbQuizAvg"></p>
+                <div class="db-card">
+                    <h3 class="db-card-title">🟩 Hoạt động 90 ngày</h3>
+                    <div id="anHeatmap"></div>
                 </div>
             </div>
 
-            <!-- Pomodoro Focus Stats -->
-            <div class="db-card db-pomo-panel">
-                <h3 class="db-card-title">🍅 Pomodoro Focus</h3>
-                <div class="db-pomo-stats" id="dbPomoStats"></div>
-            </div>
-
-            <!-- ═══ Analytics: Activity Heatmap ═══ -->
-            <div class="db-card">
-                <h3 class="db-card-title">🟩 Lịch hoạt động (90 ngày)</h3>
-                <div id="anHeatmap"></div>
-            </div>
-
-            <!-- ═══ Analytics: Quiz Trend + Weekly Report ═══ -->
+            <!-- Row: Quiz Trend + Weekly Report -->
             <div class="db-mid-row">
                 <div class="db-card">
                     <h3 class="db-card-title">📈 Xu hướng Quiz</h3>
@@ -78,26 +63,17 @@
                 </div>
             </div>
 
-            <!-- ═══ Analytics: Topic Mastery + Study Hours ═══ -->
+            <!-- Row: Topic Mastery + Pomodoro -->
             <div class="db-mid-row">
                 <div class="db-card">
                     <h3 class="db-card-title">🎯 Topic Mastery</h3>
                     <div id="anTopicMastery"></div>
                 </div>
-                <div class="db-card">
-                    <h3 class="db-card-title">📅 Phân bố ngày học</h3>
-                    <div id="anStudyHours"></div>
+                <div class="db-card db-pomo-panel">
+                    <h3 class="db-card-title">🍅 Pomodoro Focus</h3>
+                    <div class="db-pomo-stats" id="dbPomoStats"></div>
                 </div>
             </div>
-
-                    <!-- Study Statistics -->
-                    <div class="db-card db-card-full">
-                        <div class="db-card-header">
-                            <h3 class="db-card-title">📊 Thống kê học tập</h3>
-                        </div>
-                        <div id="dbStudyStats" class="db-study-stats"></div>
-                    </div>
-
 
             <!-- Recent videos -->
             <div class="db-card db-recent-panel">

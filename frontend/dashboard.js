@@ -72,9 +72,7 @@ function renderDashboard() {
         ['renderDbStats',     'dbStatGrid',      function() { renderDbStats(g, history); }],
         ['renderWeeklyGoals', null,               function() { if (typeof renderWeeklyGoals === 'function') renderWeeklyGoals(); }],
         ['renderDbStreak',    'dbCalendar',       function() { renderDbStreak(g); }],
-        ['renderDbQuizChart', 'dbQuizChart',      function() { renderDbQuizChart(history); }],
         ['renderDbPomodoro',  'dbPomoStats',      function() { renderDbPomodoro(g); }],
-        ['renderStudyStats',  'dbStudyStats',     function() { renderStudyStats(g, history); }],
         ['renderDbVideos',    'dbVideoList',      function() { renderDbVideos(history); }],
         ['renderDbBadgeCats', 'dbBadgeCats',      function() { renderDbBadgeCats(g); }],
         ['renderSrsBanner',   'srsBannerWrap',    function() { if (typeof renderSrsBanner === 'function') renderSrsBanner('srsBannerWrap'); }],
@@ -83,7 +81,6 @@ function renderDashboard() {
         ['anQuizTrend',       'anQuizTrend',      function() { if (typeof _anRenderQuizTrend === 'function') _anRenderQuizTrend(history); }],
         ['anWeeklyReport',    'anWeeklyReport',   function() { if (typeof _anRenderWeeklyReport === 'function') _anRenderWeeklyReport(g, history); }],
         ['anTopicMastery',    'anTopicMastery',   function() { if (typeof _anRenderTopicMastery === 'function') _anRenderTopicMastery(history); }],
-        ['anStudyHours',      'anStudyHours',     function() { if (typeof _anRenderStudyHours === 'function') _anRenderStudyHours(g); }],
     ];
 
     renders.forEach(function(entry) {
