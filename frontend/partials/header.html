@@ -13,12 +13,12 @@
             </div>
             <div class="header-actions">
                 <!-- Theme toggle -->
-                <button type="button" class="theme-toggle-btn" id="themeToggleBtn" onclick="toggleTheme()" aria-label="Chuyển theme" title="Chuyển sáng/tối" aria-label="Chuyển sáng/tối">
+                <button type="button" class="theme-toggle-btn" id="themeToggleBtn" onclick="toggleTheme()" aria-label="Chuyển theme" title="Chuyển sáng/tối">
                     <span class="theme-icon" id="themeIcon">🌙</span>
                 </button>
 
                 <!-- Global Search -->
-                <button type="button" class="gsearch-trigger" aria-label="Tìm kiếm" onclick="openGlobalSearch()" title="Tim kiem (Ctrl+K)" aria-label="Tim kiem (Ctrl+K)">
+                <button type="button" class="gsearch-trigger" aria-label="Tìm kiếm" onclick="openGlobalSearch()" title="Tìm kiếm (Ctrl+K)">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35" stroke-linecap="round"/></svg>
                     <span class="gsearch-trigger-kbd">Ctrl+K</span>
                 </button>
@@ -45,61 +45,53 @@
                     </div>
                 </div>
 
-                <!-- Keyboard Shortcuts Help -->
-                <button type="button" class="dashboard-nav-btn" onclick="openShortcutsHelp()" title="Phím tắt (?)" aria-label="Phím tắt" style="padding:7px 10px;font-size:14px;font-weight:700;">
-                    ⌨️
-                </button>
-
-                <!-- Dashboard button -->
-                <button type="button" class="dashboard-nav-btn" onclick="try{openDashboard()}catch(e){var ds=document.getElementById('dashboardSection');if(ds){document.querySelectorAll('[id$=Section]').forEach(function(s){s.classList.add('hidden')});ds.classList.remove('hidden')}console.error('Dashboard error:',e)}" title="Dashboard học tập" aria-label="Mở dashboard">
+                <!-- Dashboard button (primary) -->
+                <button type="button" class="dashboard-nav-btn" onclick="try{openDashboard()}catch(e){console.error(e)}" title="Dashboard" aria-label="Dashboard">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16">
                         <rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/>
                         <rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/>
                     </svg>
-                    Dashboard
+                    <span class="hdr-btn-label">Dashboard</span>
                 </button>
 
-                <!-- Knowledge Graph button -->
-                <button type="button" class="dashboard-nav-btn" onclick="openKnowledgeGraph()" title="Knowledge Graph" aria-label="Knowledge Graph">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16">
-                        <circle cx="6" cy="6" r="2.5"/><circle cx="18" cy="6" r="2.5"/><circle cx="12" cy="18" r="2.5"/>
-                        <path d="M8 7.5l3 7.5M16 7.5l-3 7.5M8.5 6h7" stroke-linecap="round"/>
-                    </svg>
-                    Knowledge Graph
-                </button>
-
-                <!-- Multi-Video Exam button -->
-                <button type="button" class="dashboard-nav-btn" onclick="openMexam()" title="Multi-Video Exam" aria-label="Multi-Video Exam">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16">
-                        <path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" stroke-linecap="round" stroke-linejoin="round"/>
-                    </svg>
-                    Exam
-                </button>
-
-                <!-- Study Plan button -->
-                <button type="button" class="dashboard-nav-btn" onclick="openStudyPlan()" title="Lộ trình học tập" aria-label="Lộ trình học tập">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16">
-                        <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/><path d="M8 14h.01M12 14h.01M16 14h.01M8 18h.01M12 18h.01M16 18h.01"/>
-                    </svg>
-                    Lộ trình
-                </button>
-
-                <!-- Study Rooms button -->
-                <button type="button" class="dashboard-nav-btn" onclick="openStudyRooms()" title="Phòng học nhóm" aria-label="Phòng học nhóm">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16">
-                        <path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75" stroke-linecap="round" stroke-linejoin="round"/>
-                    </svg>
-                    Nhóm
-                </button>
+                <!-- More menu (contains secondary nav items) -->
+                <div class="hdr-more-wrapper">
+                    <button type="button" class="hdr-more-btn" id="hdrMoreBtn" onclick="toggleHeaderMore()" aria-label="Thêm" title="Thêm tính năng">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16">
+                            <line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/>
+                        </svg>
+                        <span class="hdr-btn-label">Thêm</span>
+                    </button>
+                    <div class="hdr-more-panel hidden" id="hdrMorePanel">
+                        <button type="button" class="hdr-more-item" onclick="closeHeaderMore();openStudyPlan()">
+                            📅 Lộ trình học tập
+                        </button>
+                        <button type="button" class="hdr-more-item" onclick="closeHeaderMore();openStudyRooms()">
+                            👥 Phòng học nhóm
+                        </button>
+                        <button type="button" class="hdr-more-item" onclick="closeHeaderMore();openKnowledgeGraph()">
+                            🕸️ Knowledge Graph
+                        </button>
+                        <button type="button" class="hdr-more-item" onclick="closeHeaderMore();openMexam()">
+                            📋 Multi-Video Exam
+                        </button>
+                        <button type="button" class="hdr-more-item" onclick="closeHeaderMore();if(typeof openSrsReview==='function')openSrsReview()">
+                            🧠 Ôn tập hàng ngày
+                        </button>
+                        <button type="button" class="hdr-more-item" onclick="closeHeaderMore();openShortcutsHelp()">
+                            ⌨️ Phím tắt
+                        </button>
+                    </div>
+                </div>
 
                 <!-- History button -->
                 <div class="history-wrapper">
                     <button type="button" class="history-btn" id="historyToggle" aria-label="Lịch sử" onclick="toggleHistoryPanel()"
-                            aria-label="Lịch sử phân tích" aria-expanded="false" aria-controls="historyPanel">
+                            aria-expanded="false" aria-controls="historyPanel">
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
                             <path d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" stroke-linecap="round" stroke-linejoin="round"/>
                         </svg>
-                        Lịch sử
+                        <span class="hdr-btn-label">Lịch sử</span>
                         <span class="hist-badge" id="historyCount">0</span>
                     </button>
 
@@ -139,7 +131,7 @@
                 </div>
 
                 <!-- Auth: Login button / User avatar -->
-                <button type="button" class="auth-login-btn" id="authLoginBtn" aria-label="Đăng nhập" onclick="openAuthModal('login')" title="Đăng nhập" aria-label="Đăng nhập">
+                <button type="button" class="auth-login-btn" id="authLoginBtn" aria-label="Đăng nhập" onclick="openAuthModal('login')" title="Đăng nhập">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <path d="M15 3h4a2 2 0 012 2v14a2 2 0 01-2 2h-4M10 17l5-5-5-5M15 12H3" stroke-linecap="round" stroke-linejoin="round"/>
                     </svg>
@@ -154,24 +146,16 @@
                         <div class="auth-menu-name" id="authMenuName"></div>
                         <div class="auth-menu-email" id="authMenuEmail"></div>
                     </div>
-                    <button type="button" class="auth-menu-item" aria-label="Hồ sơ" onclick="openProfileModal()">
+                    <button type="button" class="auth-menu-item" onclick="openProfileModal()">
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2" stroke-linecap="round" stroke-linejoin="round"/><circle cx="12" cy="7" r="4"/></svg>
                         Hồ sơ cá nhân
                     </button>
-                    <button type="button" class="auth-menu-item" aria-label="Ôn tập SRS" onclick="_authCloseUserMenu(); if(typeof openSrsReview==='function') openSrsReview();">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" stroke-linecap="round" stroke-linejoin="round"/></svg>
-                        Ôn tập hàng ngày
-                    </button>
-                    <button type="button" class="auth-menu-item" aria-label="Lộ trình học tập" onclick="_authCloseUserMenu(); if(typeof openStudyPlan==='function') openStudyPlan();">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
-                        Lộ trình học tập
-                    </button>
-                    <button type="button" class="auth-menu-item" aria-label="Xuất dữ liệu" onclick="_authCloseUserMenu(); authExportData();">
+                    <button type="button" class="auth-menu-item" onclick="_authCloseUserMenu(); authExportData();">
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 15V3m0 12l-4-4m4 4l4-4M2 17l.621 2.485A2 2 0 004.561 21h14.878a2 2 0 001.94-1.515L22 17" stroke-linecap="round" stroke-linejoin="round"/></svg>
                         Tải dữ liệu
                     </button>
                     <div class="auth-menu-divider"></div>
-                    <button type="button" class="auth-menu-item logout" aria-label="Đăng xuất" onclick="authLogout()">
+                    <button type="button" class="auth-menu-item logout" onclick="authLogout()">
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4M16 17l5-5-5-5M21 12H9" stroke-linecap="round" stroke-linejoin="round"/></svg>
                         Đăng xuất
                     </button>
@@ -181,3 +165,18 @@
         </div>
     </header>
 
+    <script>
+    // Header "More" menu toggle
+    function toggleHeaderMore() {
+        var panel = document.getElementById('hdrMorePanel');
+        if (panel) panel.classList.toggle('hidden');
+    }
+    function closeHeaderMore() {
+        var panel = document.getElementById('hdrMorePanel');
+        if (panel) panel.classList.add('hidden');
+    }
+    document.addEventListener('click', function(e) {
+        var wrapper = document.querySelector('.hdr-more-wrapper');
+        if (wrapper && !wrapper.contains(e.target)) closeHeaderMore();
+    });
+    </script>
