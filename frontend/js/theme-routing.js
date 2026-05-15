@@ -106,6 +106,8 @@ function updatePageTitle(sectionId) {
         errorSection:   'Lỗi — LectureDigest',
         srsReviewSection: 'Ôn tập hàng ngày — LectureDigest',
         studyPlanSection: 'Lộ trình học tập — LectureDigest',
+        studyRoomsSection: 'Phòng học nhóm — LectureDigest',
+        roomDetailSection: 'Phòng học — LectureDigest',
     };
     document.title = titles[sectionId] || titles.hero;
 }
@@ -144,6 +146,8 @@ window.addEventListener('popstate', function(e) {
         if (typeof openSrsReview === 'function') openSrsReview();
     } else if (path === '/study-plan') {
         if (typeof openStudyPlan === 'function') openStudyPlan();
+    } else if (path === '/rooms') {
+        if (typeof openStudyRooms === 'function') openStudyRooms();
     } else {
         showSection('hero');
     }

@@ -220,6 +220,7 @@ from routes.sync import router as sync_router
 from routes.content import router as content_router
 from routes.folders import router as folders_router
 from routes.study_plan import router as study_plan_router
+from routes.study_rooms import router as study_rooms_router
 
 app.include_router(auth_router)
 app.include_router(analyze_router)
@@ -228,6 +229,7 @@ app.include_router(sync_router)
 app.include_router(content_router)
 app.include_router(folders_router)
 app.include_router(study_plan_router)
+app.include_router(study_rooms_router)
 
 
 # ═══════════════════════════════════════════════════════

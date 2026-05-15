@@ -1,0 +1,575 @@
+/* ════════════════════════════════════════════════
+   LectureDigest — Collaborative Study Rooms
+   Create rooms, invite members, discuss, compare progress
+   ════════════════════════════════════════════════ */
+
+// Register sections + routes
+if (typeof SECTION_IDS !== 'undefined') {
+    if (!SECTION_IDS.includes('studyRoomsSection')) SECTION_IDS.push('studyRoomsSection');
+    if (!SECTION_IDS.includes('roomDetailSection')) SECTION_IDS.push('roomDetailSection');
+}
+if (typeof SPA_ROUTES !== 'undefined') {
+    SPA_ROUTES['studyRoomsSection'] = '/rooms';
+    SPA_ROUTES['roomDetailSection'] = null; // dynamic
+}
+
+var _srRooms = [];
+var _srCurrentRoom = null;
+var _srCurrentTab = 'discussion';
+var _srSelectedIcon = '📚';
+var _srPollTimer = null;
+
+// ══════════════════════════════════════════════════════
+// OPEN / CLOSE
+// ══════════════════════════════════════════════════════
+
+function openStudyRooms() {
+    showSection('studyRoomsSection');
+    srLoadRooms();
+}
+
+function closeStudyRooms() {
+    _srStopPolling();
+    showSection('hero');
+}
+
+function srBackToList() {
+    _srStopPolling();
+    _srCurrentRoom = null;
+    showSection('studyRoomsSection');
+    srLoadRooms();
+}
+
+// ══════════════════════════════════════════════════════
+// AUTH HELPER
+// ══════════════════════════════════════════════════════
+
+function _srAuthHeaders() {
+    var token = '';
+    try { token = localStorage.getItem('lectureDigest_authToken') || ''; } catch(e) {}
+    if (!token) {
+        showToast('Vui lòng đăng nhập để sử dụng phòng học nhóm', 3000);
+        if (typeof openAuthModal === 'function') openAuthModal('login');
+        return null;
+    }
+    return {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer ' + token
+    };
+}
+
+async function _srFetch(url, opts) {
+    var headers = _srAuthHeaders();
+    if (!headers) return null;
+    opts = opts || {};
+    opts.headers = headers;
+    try {
+        var res = await fetchWithTimeout(API_BASE + url, opts, 15000);
+        if (res.status === 401) {
+            showToast('Phiên đăng nhập hết hạn, vui lòng đăng nhập lại', 3000);
+            return null;
+        }
+        return res;
+    } catch(e) {
+        showToast('Lỗi kết nối: ' + e.message, 3000);
+        return null;
+    }
+}
+
+// ══════════════════════════════════════════════════════
+// ROOM LIST
+// ══════════════════════════════════════════════════════
+
+async function srLoadRooms() {
+    var listEl = document.getElementById('srRoomList');
+    var emptyEl = document.getElementById('srEmpty');
+    if (listEl) listEl.innerHTML = '<div class="sr-loading">Đang tải...</div>';
+    if (emptyEl) emptyEl.classList.add('hidden');
+
+    var res = await _srFetch('/api/rooms');
+    if (!res) return;
+
+    if (!res.ok) {
+        if (listEl) listEl.innerHTML = '<div class="sr-error">Không thể tải danh sách phòng</div>';
+        return;
+    }
+
+    _srRooms = await res.json();
+
+    if (_srRooms.length === 0) {
+        if (listEl) listEl.innerHTML = '';
+        if (emptyEl) emptyEl.classList.remove('hidden');
+        return;
+    }
+
+    if (emptyEl) emptyEl.classList.add('hidden');
+    if (listEl) {
+        listEl.innerHTML = _srRooms.map(function(room) {
+            return '<div class="sr-room-card" onclick="srOpenRoom(\'' + room.id + '\')">'
+                + '<div class="sr-room-icon">' + (room.icon || '📚') + '</div>'
+                + '<div class="sr-room-info">'
+                + '<div class="sr-room-name">' + _srEsc(room.name) + '</div>'
+                + '<div class="sr-room-meta">'
+                + '<span>👤 ' + room.member_count + ' thành viên</span>'
+                + '<span>🎬 ' + room.video_count + ' videos</span>'
+                + '</div></div>'
+                + '<div class="sr-room-role">' + (room.role === 'owner' ? '👑' : '👤') + '</div>'
+                + '</div>';
+        }).join('');
+    }
+}
+
+// ══════════════════════════════════════════════════════
+// ROOM DETAIL
+// ══════════════════════════════════════════════════════
+
+async function srOpenRoom(roomId) {
+    var res = await _srFetch('/api/rooms/' + roomId);
+    if (!res || !res.ok) {
+        showToast('Không thể mở phòng', 3000);
+        return;
+    }
+
+    _srCurrentRoom = await res.json();
+    _srRenderRoomDetail();
+    showSection('roomDetailSection');
+    srSwitchTab('discussion');
+    _srStartPolling();
+}
+
+function _srRenderRoomDetail() {
+    if (!_srCurrentRoom) return;
+    var room = _srCurrentRoom;
+
+    var titleEl = document.getElementById('srRoomTitle');
+    var descEl = document.getElementById('srRoomDesc');
+    if (titleEl) titleEl.textContent = (room.icon || '📚') + ' ' + room.name;
+    if (descEl) descEl.textContent = room.description || '';
+}
+
+// ══════════════════════════════════════════════════════
+// TABS
+// ══════════════════════════════════════════════════════
+
+function srSwitchTab(tab) {
+    _srCurrentTab = tab;
+    var tabs = ['discussion', 'videos', 'progress', 'members'];
+    tabs.forEach(function(t) {
+        var tabBtn = document.getElementById('srTab' + t.charAt(0).toUpperCase() + t.slice(1));
+        var panel = document.getElementById('srPanel' + t.charAt(0).toUpperCase() + t.slice(1));
+        if (tabBtn) tabBtn.classList.toggle('sr-tab-active', t === tab);
+        if (panel) panel.classList.toggle('hidden', t !== tab);
+    });
+
+    if (tab === 'discussion') srLoadComments();
+    else if (tab === 'videos') _srRenderVideos();
+    else if (tab === 'progress') srLoadProgress();
+    else if (tab === 'members') _srRenderMembers();
+}
+
+// ══════════════════════════════════════════════════════
+// DISCUSSION / COMMENTS
+// ══════════════════════════════════════════════════════
+
+async function srLoadComments() {
+    if (!_srCurrentRoom) return;
+    var msgEl = document.getElementById('srMessages');
+    if (!msgEl) return;
+
+    var res = await _srFetch('/api/rooms/' + _srCurrentRoom.id + '/comments?limit=100');
+    if (!res || !res.ok) return;
+
+    var comments = await res.json();
+    comments.reverse(); // oldest first
+
+    if (comments.length === 0) {
+        msgEl.innerHTML = '<div class="sr-no-comments">Chưa có bình luận nào. Hãy bắt đầu thảo luận! 💬</div>';
+        return;
+    }
+
+    msgEl.innerHTML = comments.map(function(c) {
+        var time = new Date(c.created_at).toLocaleString('vi-VN', { hour: '2-digit', minute: '2-digit', day: '2-digit', month: '2-digit' });
+        var initial = (c.display_name || '?').charAt(0).toUpperCase();
+        var avatarHtml = c.avatar_url
+            ? '<img class="sr-msg-avatar-img" src="' + c.avatar_url + '" alt="">'
+            : '<div class="sr-msg-avatar" style="background:' + (c.avatar_color || '#8b5cf6') + '">' + initial + '</div>';
+
+        return '<div class="sr-msg">'
+            + avatarHtml
+            + '<div class="sr-msg-body">'
+            + '<div class="sr-msg-header">'
+            + '<span class="sr-msg-name">' + _srEsc(c.display_name) + '</span>'
+            + '<span class="sr-msg-time">' + time + '</span>'
+            + '</div>'
+            + '<div class="sr-msg-text">' + _srEsc(c.content) + '</div>'
+            + (c.video_id ? '<div class="sr-msg-tag">🎬 ' + _srEsc(c.video_id) + '</div>' : '')
+            + '</div></div>';
+    }).join('');
+
+    msgEl.scrollTop = msgEl.scrollHeight;
+}
+
+async function srPostComment() {
+    if (!_srCurrentRoom) return;
+    var input = document.getElementById('srCommentInput');
+    var content = (input.value || '').trim();
+    if (!content) return;
+
+    var payload = { content: content, video_id: '', chapter: '' };
+    var res = await _srFetch('/api/rooms/' + _srCurrentRoom.id + '/comments', {
+        method: 'POST',
+        body: JSON.stringify(payload)
+    });
+
+    if (res && res.ok) {
+        input.value = '';
+        srLoadComments();
+    }
+}
+
+// ══════════════════════════════════════════════════════
+// VIDEOS
+// ══════════════════════════════════════════════════════
+
+function _srRenderVideos() {
+    if (!_srCurrentRoom) return;
+    var el = document.getElementById('srVideoList');
+    if (!el) return;
+
+    var videos = _srCurrentRoom.videos || [];
+    if (videos.length === 0) {
+        el.innerHTML = '<div class="sr-no-comments">Chưa có video nào. Thêm video từ lịch sử phân tích!</div>';
+        return;
+    }
+
+    el.innerHTML = videos.map(function(v) {
+        return '<div class="sr-video-card">'
+            + (v.thumbnail ? '<img class="sr-video-thumb" src="' + v.thumbnail + '" alt="">' : '<div class="sr-video-thumb-placeholder">🎬</div>')
+            + '<div class="sr-video-info">'
+            + '<div class="sr-video-title">' + _srEsc(v.title || v.video_id) + '</div>'
+            + '<div class="sr-video-meta">Thêm lúc ' + new Date(v.added_at).toLocaleDateString('vi-VN') + '</div>'
+            + '</div></div>';
+    }).join('');
+}
+
+async function srAddCurrentVideo() {
+    if (!_srCurrentRoom) return;
+
+    // Get current video from analysisData or history
+    var videoId = window._spaVideoId || (window.analysisData && window.analysisData.video_id);
+    var title = '';
+    var thumbnail = '';
+
+    if (!videoId) {
+        // Try to pick from history
+        try {
+            var history = JSON.parse(localStorage.getItem('lectureDigest_history') || '[]');
+            if (history.length > 0) {
+                var latest = history[0];
+                videoId = latest.video_id;
+                title = latest.title || '';
+                thumbnail = latest.thumbnail || '';
+            }
+        } catch(e) {}
+    } else {
+        if (window.analysisData) {
+            title = window.analysisData.title || '';
+            thumbnail = window.analysisData.thumbnail || '';
+        }
+    }
+
+    if (!videoId) {
+        showToast('Không tìm thấy video để thêm. Hãy phân tích video trước.', 3000);
+        return;
+    }
+
+    var res = await _srFetch('/api/rooms/' + _srCurrentRoom.id + '/videos', {
+        method: 'POST',
+        body: JSON.stringify({ video_id: videoId, title: title, thumbnail: thumbnail })
+    });
+
+    if (res && res.ok) {
+        showToast('✅ Đã thêm video vào phòng', 2000);
+        // Refresh room data
+        srOpenRoom(_srCurrentRoom.id);
+    }
+}
+
+// ══════════════════════════════════════════════════════
+// PROGRESS COMPARISON
+// ══════════════════════════════════════════════════════
+
+async function srLoadProgress() {
+    if (!_srCurrentRoom) return;
+    var el = document.getElementById('srProgressGrid');
+    if (!el) return;
+
+    var res = await _srFetch('/api/rooms/' + _srCurrentRoom.id + '/progress');
+    if (!res || !res.ok) return;
+
+    var data = await res.json();
+    if (data.length === 0) {
+        el.innerHTML = '<div class="sr-no-comments">Chưa có dữ liệu tiến độ. Thành viên cần đồng bộ tiến độ quiz/flashcard.</div>';
+        return;
+    }
+
+    // Group by video
+    var byVideo = {};
+    data.forEach(function(p) {
+        if (!byVideo[p.video_id]) byVideo[p.video_id] = [];
+        byVideo[p.video_id].push(p);
+    });
+
+    var html = '';
+    for (var vid in byVideo) {
+        var entries = byVideo[vid];
+        var videoTitle = '';
+        // Try to find title from room videos
+        (_srCurrentRoom.videos || []).forEach(function(v) {
+            if (v.video_id === vid) videoTitle = v.title;
+        });
+
+        html += '<div class="sr-progress-card">';
+        html += '<div class="sr-progress-video-title">🎬 ' + _srEsc(videoTitle || vid) + '</div>';
+        html += '<div class="sr-progress-table">';
+        html += '<div class="sr-progress-row sr-progress-header"><span>Thành viên</span><span>Quiz</span><span>Xem</span><span>Flashcard</span></div>';
+
+        entries.forEach(function(p) {
+            var quizPct = p.quiz_total > 0 ? Math.round(p.quiz_score / p.quiz_total * 100) + '%' : '—';
+            var fcPct = p.flashcards_total > 0 ? Math.round(p.flashcards_mastered / p.flashcards_total * 100) + '%' : '—';
+            html += '<div class="sr-progress-row">'
+                + '<span class="sr-progress-name">' + _srEsc(p.display_name) + '</span>'
+                + '<span class="sr-progress-val">' + quizPct + '</span>'
+                + '<span class="sr-progress-val">' + p.watch_pct + '%</span>'
+                + '<span class="sr-progress-val">' + fcPct + '</span>'
+                + '</div>';
+        });
+
+        html += '</div></div>';
+    }
+
+    el.innerHTML = html;
+}
+
+// ══════════════════════════════════════════════════════
+// MEMBERS
+// ══════════════════════════════════════════════════════
+
+function _srRenderMembers() {
+    if (!_srCurrentRoom) return;
+    var el = document.getElementById('srMemberList');
+    if (!el) return;
+
+    var members = _srCurrentRoom.members || [];
+    el.innerHTML = members.map(function(m) {
+        var initial = (m.display_name || '?').charAt(0).toUpperCase();
+        var avatarHtml = m.avatar_url
+            ? '<img class="sr-member-avatar-img" src="' + m.avatar_url + '" alt="">'
+            : '<div class="sr-member-avatar" style="background:' + (m.avatar_color || '#8b5cf6') + '">' + initial + '</div>';
+        var roleLabel = m.role === 'owner' ? '👑 Chủ phòng' : '👤 Thành viên';
+        var joinDate = new Date(m.joined_at).toLocaleDateString('vi-VN');
+
+        return '<div class="sr-member-card">'
+            + avatarHtml
+            + '<div class="sr-member-info">'
+            + '<div class="sr-member-name">' + _srEsc(m.display_name) + '</div>'
+            + '<div class="sr-member-meta">' + roleLabel + ' · Tham gia ' + joinDate + '</div>'
+            + '</div></div>';
+    }).join('');
+}
+
+// ══════════════════════════════════════════════════════
+// CREATE ROOM
+// ══════════════════════════════════════════════════════
+
+function srOpenCreateModal() {
+    document.getElementById('srCreateModal').classList.remove('hidden');
+    document.getElementById('srNewName').value = '';
+    document.getElementById('srNewDesc').value = '';
+    _srSelectedIcon = '📚';
+}
+
+function srCloseCreateModal() {
+    document.getElementById('srCreateModal').classList.add('hidden');
+}
+
+function srPickIcon(btn, icon) {
+    _srSelectedIcon = icon;
+    document.querySelectorAll('.sr-icon-opt').forEach(function(b) { b.classList.remove('sr-icon-selected'); });
+    btn.classList.add('sr-icon-selected');
+}
+
+async function srCreateRoom() {
+    var name = (document.getElementById('srNewName').value || '').trim();
+    if (!name) {
+        showToast('Vui lòng nhập tên phòng', 2000);
+        return;
+    }
+
+    var desc = (document.getElementById('srNewDesc').value || '').trim();
+    var btn = document.getElementById('srCreateBtn');
+    if (btn) btn.disabled = true;
+
+    var res = await _srFetch('/api/rooms', {
+        method: 'POST',
+        body: JSON.stringify({ name: name, description: desc, icon: _srSelectedIcon })
+    });
+
+    if (btn) btn.disabled = false;
+
+    if (res && res.ok) {
+        var room = await res.json();
+        showToast('✅ Đã tạo phòng "' + name + '"', 3000);
+        srCloseCreateModal();
+        srLoadRooms();
+    } else if (res) {
+        var err = await res.json().catch(function() { return {}; });
+        showToast('❌ ' + (err.detail || 'Không thể tạo phòng'), 3000);
+    }
+}
+
+// ══════════════════════════════════════════════════════
+// JOIN
+// ══════════════════════════════════════════════════════
+
+async function srJoinByCode() {
+    var input = document.getElementById('srJoinInput');
+    var code = (input.value || '').trim();
+    if (!code) {
+        showToast('Vui lòng nhập mã mời', 2000);
+        return;
+    }
+
+    var res = await _srFetch('/api/rooms/join/' + encodeURIComponent(code), { method: 'POST' });
+    if (res && res.ok) {
+        var data = await res.json();
+        input.value = '';
+        if (data.already_member) {
+            showToast('Bạn đã là thành viên phòng này', 2000);
+        } else {
+            showToast('✅ Đã tham gia phòng "' + (data.room_name || '') + '"', 3000);
+        }
+        srLoadRooms();
+    } else if (res) {
+        var err = await res.json().catch(function() { return {}; });
+        showToast('❌ ' + (err.detail || 'Mã mời không hợp lệ'), 3000);
+    }
+}
+
+// ══════════════════════════════════════════════════════
+// INVITE
+// ══════════════════════════════════════════════════════
+
+function srShowInvite() {
+    if (!_srCurrentRoom) return;
+    document.getElementById('srInviteCode').textContent = _srCurrentRoom.invite_code;
+    document.getElementById('srInviteModal').classList.remove('hidden');
+}
+
+function srCloseInviteModal() {
+    document.getElementById('srInviteModal').classList.add('hidden');
+}
+
+function srCopyInvite() {
+    if (!_srCurrentRoom) return;
+    try {
+        navigator.clipboard.writeText(_srCurrentRoom.invite_code);
+        showToast('📋 Đã copy mã mời!', 2000);
+    } catch(e) {
+        // Fallback
+        var el = document.getElementById('srInviteCode');
+        var range = document.createRange();
+        range.selectNodeContents(el);
+        var sel = window.getSelection();
+        sel.removeAllRanges();
+        sel.addRange(range);
+        document.execCommand('copy');
+        showToast('📋 Đã copy mã mời!', 2000);
+    }
+}
+
+// ══════════════════════════════════════════════════════
+// POLLING (simple refresh for "real-time" feel)
+// ══════════════════════════════════════════════════════
+
+function _srStartPolling() {
+    _srStopPolling();
+    _srPollTimer = setInterval(function() {
+        if (_srCurrentTab === 'discussion' && _srCurrentRoom) {
+            srLoadComments();
+        }
+    }, 10000); // Poll every 10 seconds
+}
+
+function _srStopPolling() {
+    if (_srPollTimer) {
+        clearInterval(_srPollTimer);
+        _srPollTimer = null;
+    }
+}
+
+// ══════════════════════════════════════════════════════
+// SYNC PROGRESS TO ROOM
+// ══════════════════════════════════════════════════════
+
+async function srSyncMyProgress() {
+    if (!_srCurrentRoom) return;
+    var videos = _srCurrentRoom.videos || [];
+    if (videos.length === 0) return;
+
+    for (var i = 0; i < videos.length; i++) {
+        var v = videos[i];
+        var videoId = v.video_id;
+        var payload = { video_id: videoId, quiz_score: -1, quiz_total: 0, watch_pct: 0, flashcards_mastered: 0, flashcards_total: 0 };
+
+        // Get quiz data
+        try {
+            var progressRaw = localStorage.getItem('lectureDigest_progress_' + videoId);
+            if (progressRaw) {
+                var progress = JSON.parse(progressRaw);
+                if (progress.quizHistory && progress.quizHistory.length > 0) {
+                    var lastQuiz = progress.quizHistory[progress.quizHistory.length - 1];
+                    payload.quiz_score = lastQuiz.score || 0;
+                    payload.quiz_total = lastQuiz.total || lastQuiz.answered || 0;
+                }
+                if (progress.watchProgress) payload.watch_pct = progress.watchProgress;
+            }
+        } catch(e) {}
+
+        // Get SRS data
+        try {
+            var sm2Raw = localStorage.getItem('lectureDigest_sm2_' + videoId);
+            if (sm2Raw) {
+                var sm2Data = JSON.parse(sm2Raw);
+                var total = 0, mastered = 0;
+                for (var key in sm2Data) {
+                    total++;
+                    if (sm2Data[key].interval >= 21) mastered++;
+                }
+                payload.flashcards_total = total;
+                payload.flashcards_mastered = mastered;
+            }
+        } catch(e) {}
+
+        // Only sync if there's actual data
+        if (payload.quiz_score >= 0 || payload.watch_pct > 0 || payload.flashcards_total > 0) {
+            await _srFetch('/api/rooms/' + _srCurrentRoom.id + '/progress', {
+                method: 'POST',
+                body: JSON.stringify(payload)
+            });
+        }
+    }
+
+    showToast('✅ Đã đồng bộ tiến độ', 2000);
+}
+
+// ══════════════════════════════════════════════════════
+// UTILS
+// ══════════════════════════════════════════════════════
+
+function _srEsc(str) {
+    if (!str) return '';
+    var div = document.createElement('div');
+    div.textContent = str;
+    return div.innerHTML;
+}

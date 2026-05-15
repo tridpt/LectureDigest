@@ -53,6 +53,7 @@
 | 🔒 **Forgot Password** | Secure token-based password reset via email (SMTP) |
 | ☁️ **Cloud Sync** | Sync progress, notes, bookmarks, and history across devices in real-time |
 | 📤 **Share Notes** | Generate shareable read-only links for notes & bookmarks |
+| 👥 **Study Rooms** | Collaborative study rooms with invite codes, shared videos, discussion threads, and progress comparison |
 
 ### 📱 Platform
 | Feature | Description |

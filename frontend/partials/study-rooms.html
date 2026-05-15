@@ -1,0 +1,149 @@
+    <!-- ═══════════════════════════════ STUDY ROOMS ══════════════════════════════ -->
+    <section class="sr-page hidden" id="studyRoomsSection" aria-label="Phòng học nhóm">
+        <div class="sr-inner">
+            <!-- Header -->
+            <div class="sr-header">
+                <button type="button" class="bp-back-btn" onclick="closeStudyRooms()" aria-label="Quay lại">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="18" height="18">
+                        <path d="M19 12H5M12 5l-7 7 7 7" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                    Quay lại
+                </button>
+                <div class="sr-header-center">
+                    <h1 class="sr-page-title">👥 Phòng học nhóm</h1>
+                    <p class="sr-page-sub">Học cùng bạn bè, so sánh tiến độ</p>
+                </div>
+                <div class="sr-header-actions">
+                    <button type="button" class="sr-create-btn" onclick="srOpenCreateModal()" title="Tạo phòng mới">
+                        ➕ Tạo phòng
+                    </button>
+                </div>
+            </div>
+
+            <!-- Join by code -->
+            <div class="sr-join-bar">
+                <input type="text" id="srJoinInput" placeholder="Nhập mã mời để tham gia phòng..." maxlength="20" class="sr-join-input">
+                <button type="button" class="sr-join-btn" onclick="srJoinByCode()">Tham gia</button>
+            </div>
+
+            <!-- Room List -->
+            <div class="sr-room-list" id="srRoomList">
+                <div class="sr-loading">Đang tải...</div>
+            </div>
+
+            <!-- Empty state -->
+            <div class="sr-empty hidden" id="srEmpty">
+                <div class="sr-empty-icon">👥</div>
+                <h3>Chưa có phòng học</h3>
+                <p>Tạo phòng mới hoặc nhập mã mời để tham gia nhóm học tập.</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- ═══════════════════════════════ ROOM DETAIL ══════════════════════════════ -->
+    <section class="sr-page hidden" id="roomDetailSection" aria-label="Chi tiết phòng học">
+        <div class="sr-inner">
+            <!-- Room Header -->
+            <div class="sr-header">
+                <button type="button" class="bp-back-btn" onclick="srBackToList()" aria-label="Quay lại">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="18" height="18">
+                        <path d="M19 12H5M12 5l-7 7 7 7" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                    Danh sách
+                </button>
+                <div class="sr-header-center">
+                    <h1 class="sr-page-title" id="srRoomTitle">📚 Phòng học</h1>
+                    <p class="sr-page-sub" id="srRoomDesc"></p>
+                </div>
+                <div class="sr-header-actions">
+                    <button type="button" class="sr-invite-btn" onclick="srShowInvite()" title="Mời bạn bè">
+                        🔗 Mời
+                    </button>
+                </div>
+            </div>
+
+            <!-- Tabs -->
+            <div class="sr-tabs">
+                <button type="button" class="sr-tab sr-tab-active" onclick="srSwitchTab('discussion')" id="srTabDiscussion">💬 Thảo luận</button>
+                <button type="button" class="sr-tab" onclick="srSwitchTab('videos')" id="srTabVideos">🎬 Videos</button>
+                <button type="button" class="sr-tab" onclick="srSwitchTab('progress')" id="srTabProgress">📊 Tiến độ</button>
+                <button type="button" class="sr-tab" onclick="srSwitchTab('members')" id="srTabMembers">👤 Thành viên</button>
+            </div>
+
+            <!-- Tab: Discussion -->
+            <div class="sr-tab-content" id="srPanelDiscussion">
+                <div class="sr-chat-messages" id="srMessages"></div>
+                <div class="sr-chat-input-wrap">
+                    <input type="text" id="srCommentInput" placeholder="Viết bình luận..." maxlength="2000" class="sr-chat-input" onkeydown="if(event.key==='Enter')srPostComment()">
+                    <button type="button" class="sr-send-btn" onclick="srPostComment()">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18"><path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Tab: Videos -->
+            <div class="sr-tab-content hidden" id="srPanelVideos">
+                <div class="sr-add-video-bar">
+                    <button type="button" class="sr-add-video-btn" onclick="srAddCurrentVideo()">📤 Thêm video đang xem</button>
+                </div>
+                <div class="sr-video-list" id="srVideoList"></div>
+            </div>
+
+            <!-- Tab: Progress -->
+            <div class="sr-tab-content hidden" id="srPanelProgress">
+                <div class="sr-progress-grid" id="srProgressGrid"></div>
+            </div>
+
+            <!-- Tab: Members -->
+            <div class="sr-tab-content hidden" id="srPanelMembers">
+                <div class="sr-member-list" id="srMemberList"></div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Create Room Modal -->
+    <div class="sr-modal-overlay hidden" id="srCreateModal" onclick="if(event.target===this)srCloseCreateModal()">
+        <div class="sr-modal">
+            <h2 class="sr-modal-title">➕ Tạo phòng học mới</h2>
+            <div class="sr-modal-field">
+                <label>Tên phòng</label>
+                <input type="text" id="srNewName" placeholder="VD: Nhóm ôn thi ML..." maxlength="100">
+            </div>
+            <div class="sr-modal-field">
+                <label>Mô tả (tùy chọn)</label>
+                <input type="text" id="srNewDesc" placeholder="Mô tả ngắn về phòng học..." maxlength="200">
+            </div>
+            <div class="sr-modal-field">
+                <label>Icon</label>
+                <div class="sr-icon-picker" id="srIconPicker">
+                    <button type="button" class="sr-icon-opt sr-icon-selected" onclick="srPickIcon(this,'📚')">📚</button>
+                    <button type="button" class="sr-icon-opt" onclick="srPickIcon(this,'🧠')">🧠</button>
+                    <button type="button" class="sr-icon-opt" onclick="srPickIcon(this,'💻')">💻</button>
+                    <button type="button" class="sr-icon-opt" onclick="srPickIcon(this,'🔬')">🔬</button>
+                    <button type="button" class="sr-icon-opt" onclick="srPickIcon(this,'📊')">📊</button>
+                    <button type="button" class="sr-icon-opt" onclick="srPickIcon(this,'🎓')">🎓</button>
+                    <button type="button" class="sr-icon-opt" onclick="srPickIcon(this,'🌍')">🌍</button>
+                    <button type="button" class="sr-icon-opt" onclick="srPickIcon(this,'🎵')">🎵</button>
+                </div>
+            </div>
+            <div class="sr-modal-actions">
+                <button type="button" class="sr-modal-cancel" onclick="srCloseCreateModal()">Hủy</button>
+                <button type="button" class="sr-modal-confirm" onclick="srCreateRoom()" id="srCreateBtn">Tạo phòng</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Invite Modal -->
+    <div class="sr-modal-overlay hidden" id="srInviteModal" onclick="if(event.target===this)srCloseInviteModal()">
+        <div class="sr-modal">
+            <h2 class="sr-modal-title">🔗 Mời bạn bè</h2>
+            <p class="sr-modal-desc">Chia sẻ mã mời để bạn bè tham gia phòng học:</p>
+            <div class="sr-invite-code-wrap">
+                <code class="sr-invite-code" id="srInviteCode"></code>
+                <button type="button" class="sr-copy-btn" onclick="srCopyInvite()">📋 Copy</button>
+            </div>
+            <div class="sr-modal-actions">
+                <button type="button" class="sr-modal-cancel" onclick="srCloseInviteModal()">Đóng</button>
+            </div>
+        </div>
+    </div>
