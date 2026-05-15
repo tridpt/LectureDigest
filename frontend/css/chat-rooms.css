@@ -1468,3 +1468,38 @@ img.cr-member-av {
     border-color: rgba(0, 0, 0, 0.1);
     box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
 }
+
+/* ── Custom scrollbar for chat ── */
+.cr-messages-area::-webkit-scrollbar {
+    width: 6px;
+}
+
+.cr-messages-area::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.cr-messages-area::-webkit-scrollbar-thumb {
+    background: rgba(139, 92, 246, 0.3);
+    border-radius: 3px;
+}
+
+.cr-messages-area::-webkit-scrollbar-thumb:hover {
+    background: rgba(139, 92, 246, 0.5);
+}
+
+.cr-messages-area {
+    scrollbar-width: thin;
+    scrollbar-color: rgba(139, 92, 246, 0.3) transparent;
+}
+
+.light-mode .cr-messages-area::-webkit-scrollbar-thumb {
+    background: rgba(139, 92, 246, 0.2);
+}
+
+.light-mode .cr-messages-area::-webkit-scrollbar-thumb:hover {
+    background: rgba(139, 92, 246, 0.4);
+}
+
+.light-mode .cr-messages-area {
+    scrollbar-color: rgba(139, 92, 246, 0.2) transparent;
+}
