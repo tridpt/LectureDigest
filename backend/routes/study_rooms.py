@@ -60,6 +60,8 @@ def _init_rooms_tables():
             thumbnail  TEXT DEFAULT '',
             added_by   INTEGER,
             added_at   INTEGER NOT NULL,
+            data_json  TEXT DEFAULT '',
+            url        TEXT DEFAULT '',
             PRIMARY KEY (room_id, video_id),
             FOREIGN KEY (room_id) REFERENCES study_rooms(id) ON DELETE CASCADE
         );
@@ -93,6 +95,19 @@ def _init_rooms_tables():
     """)
     conn.commit()
     conn.close()
+
+    # Migration: add data_json and url columns to room_videos if missing
+    conn2 = get_db()
+    try:
+        conn2.execute("ALTER TABLE room_videos ADD COLUMN data_json TEXT DEFAULT ''")
+    except:
+        pass
+    try:
+        conn2.execute("ALTER TABLE room_videos ADD COLUMN url TEXT DEFAULT ''")
+    except:
+        pass
+    conn2.commit()
+    conn2.close()
 
 
 # Initialize tables on module load
@@ -146,6 +161,8 @@ class AddVideoRequest(BaseModel):
     video_id: str
     title: str = ''
     thumbnail: str = ''
+    url: str = ''
+    data_json: str = ''  # JSON string of analysis data
 
 class PostCommentRequest(BaseModel):
     video_id: str = ''
@@ -442,7 +459,7 @@ async def kick_member(room_id: str, target_user_id: int, request: Request):
 
 @router.post("/{room_id}/videos")
 async def add_video_to_room(room_id: str, req: AddVideoRequest, request: Request):
-    """Add a video to the room's shared list."""
+    """Add a video to the room's shared list, including analysis data."""
     user = _require_auth(request)
     uid = user["id"]
     _require_member(room_id, uid)
@@ -451,9 +468,9 @@ async def add_video_to_room(room_id: str, req: AddVideoRequest, request: Request
     now = int(time.time() * 1000)
     try:
         conn.execute("""
-            INSERT OR IGNORE INTO room_videos (room_id, video_id, title, thumbnail, added_by, added_at)
-            VALUES (?, ?, ?, ?, ?, ?)
-        """, (room_id, req.video_id, req.title, req.thumbnail, uid, now))
+            INSERT OR REPLACE INTO room_videos (room_id, video_id, title, thumbnail, added_by, added_at, data_json, url)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+        """, (room_id, req.video_id, req.title, req.thumbnail, uid, now, req.data_json, req.url))
         conn.execute("UPDATE study_rooms SET updated_at = ? WHERE id = ?", (now, room_id))
         conn.commit()
     except Exception as e:
@@ -461,6 +478,36 @@ async def add_video_to_room(room_id: str, req: AddVideoRequest, request: Request
         raise HTTPException(status_code=500, detail=str(e))
     conn.close()
     return {"ok": True}
+
+
+@router.get("/{room_id}/videos/{video_id}")
+async def get_room_video_data(room_id: str, video_id: str, request: Request):
+    """Get a shared video's analysis data so other members can view it."""
+    user = _require_auth(request)
+    uid = user["id"]
+    _require_member(room_id, uid)
+
+    conn = get_db()
+    row = conn.execute(
+        "SELECT * FROM room_videos WHERE room_id = ? AND video_id = ?",
+        (room_id, video_id)
+    ).fetchone()
+    conn.close()
+
+    if not row:
+        raise HTTPException(status_code=404, detail="Video không tồn tại trong phòng")
+
+    data_json = row["data_json"] if "data_json" in row.keys() else ""
+
+    return {
+        "video_id": row["video_id"],
+        "title": row["title"],
+        "thumbnail": row["thumbnail"],
+        "url": row["url"] if "url" in row.keys() else "",
+        "added_by": row["added_by"],
+        "added_at": row["added_at"],
+        "data_json": data_json,
+    }
 
 
 @router.delete("/{room_id}/videos/{video_id}")

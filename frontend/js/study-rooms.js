@@ -248,18 +248,13 @@ function _srRenderVideos() {
     }
 
     el.innerHTML = videos.map(function(v) {
-        var hasLocal = _srHasVideoInHistory(v.video_id);
-        var actionHtml = hasLocal
-            ? '<button class="sr-video-view-btn" onclick="event.stopPropagation();srViewVideo(\'' + v.video_id + '\')">📖 Xem phân tích</button>'
-            : '<button class="sr-video-analyze-btn" onclick="event.stopPropagation();srAnalyzeVideo(\'' + v.video_id + '\')">🔍 Phân tích</button>';
-
         return '<div class="sr-video-card" onclick="srViewVideo(\'' + v.video_id + '\')" style="cursor:pointer">'
             + (v.thumbnail ? '<img class="sr-video-thumb" src="' + v.thumbnail + '" alt="">' : '<div class="sr-video-thumb-placeholder">🎬</div>')
             + '<div class="sr-video-info">'
             + '<div class="sr-video-title">' + _srEsc(v.title || v.video_id) + '</div>'
             + '<div class="sr-video-meta">Thêm lúc ' + new Date(v.added_at).toLocaleDateString('vi-VN') + '</div>'
             + '</div>'
-            + '<div class="sr-video-actions">' + actionHtml + '</div>'
+            + '<div class="sr-video-actions"><button class="sr-video-view-btn" onclick="event.stopPropagation();srViewVideo(\'' + v.video_id + '\')">📖 Xem phân tích</button></div>'
             + '</div>';
     }).join('');
 }
@@ -276,23 +271,59 @@ function _srHasVideoInHistory(videoId) {
 
 function srViewVideo(videoId) {
     // Try to load from local history first
-    if (typeof loadFromHistory === 'function') {
-        var history = [];
-        try { history = JSON.parse(localStorage.getItem('lectureDigest_history') || '[]'); } catch(e) {}
-        var entry = null;
-        for (var i = 0; i < history.length; i++) {
-            if (history[i].video_id === videoId && history[i].data) {
-                entry = history[i];
-                break;
-            }
-        }
-        if (entry) {
-            loadFromHistory(entry.entry_id || entry.video_id);
-            return;
+    var history = [];
+    try { history = JSON.parse(localStorage.getItem('lectureDigest_history') || '[]'); } catch(e) {}
+    var entry = null;
+    for (var i = 0; i < history.length; i++) {
+        if (history[i].video_id === videoId && history[i].data) {
+            entry = history[i];
+            break;
         }
     }
-    // Not in local history — offer to analyze
-    srAnalyzeVideo(videoId);
+    if (entry) {
+        if (typeof loadFromHistory === 'function') {
+            loadFromHistory(entry.entry_id || entry.video_id);
+        }
+        return;
+    }
+    // Not in local history — fetch from room server
+    _srFetchAndViewVideo(videoId);
+}
+
+async function _srFetchAndViewVideo(videoId) {
+    if (!_srCurrentRoom) return;
+    showToast('Đang tải bài phân tích...', 2000);
+
+    var res = await _srFetch('/api/rooms/' + _srCurrentRoom.id + '/videos/' + videoId);
+    if (!res || !res.ok) {
+        showToast('Không thể tải bài phân tích', 3000);
+        return;
+    }
+
+    var videoData = await res.json();
+    if (!videoData.data_json) {
+        showToast('Video này chưa có dữ liệu phân tích', 3000);
+        return;
+    }
+
+    var data;
+    try { data = JSON.parse(videoData.data_json); } catch(e) {
+        showToast('Dữ liệu phân tích bị lỗi', 3000);
+        return;
+    }
+
+    // Load the analysis into the app
+    var urlInput = document.getElementById('urlInput');
+    if (urlInput) urlInput.value = videoData.url || ('https://www.youtube.com/watch?v=' + videoId);
+    window.analysisData = data;
+    window._spaVideoId = videoId;
+    if (typeof clearChat === 'function') clearChat();
+    if (typeof renderResults === 'function') renderResults(data);
+    if (typeof initNotes === 'function') initNotes(videoId);
+    if (typeof renderTranscript === 'function') renderTranscript(data.transcript || []);
+    if (typeof initProgress === 'function') initProgress(videoId);
+    if (typeof initBookmarks === 'function') initBookmarks(videoId);
+    showSection('resultsSection');
 }
 
 function srAnalyzeVideo(videoId) {
@@ -313,6 +344,8 @@ async function srAddCurrentVideo() {
     var videoId = window._spaVideoId || (window.analysisData && window.analysisData.video_id);
     var title = '';
     var thumbnail = '';
+    var dataJson = '';
+    var videoUrl = '';
 
     if (!videoId) {
         // Try to pick from history
@@ -323,13 +356,18 @@ async function srAddCurrentVideo() {
                 videoId = latest.video_id;
                 title = latest.title || '';
                 thumbnail = latest.thumbnail || '';
+                videoUrl = latest.url || '';
+                if (latest.data) dataJson = JSON.stringify(latest.data);
             }
         } catch(e) {}
     } else {
         if (window.analysisData) {
             title = window.analysisData.title || '';
             thumbnail = window.analysisData.thumbnail || '';
+            dataJson = JSON.stringify(window.analysisData);
         }
+        var urlInput = document.getElementById('urlInput');
+        if (urlInput) videoUrl = urlInput.value || '';
     }
 
     if (!videoId) {
@@ -337,9 +375,14 @@ async function srAddCurrentVideo() {
         return;
     }
 
+    if (!dataJson) {
+        showToast('Video chưa có dữ liệu phân tích', 3000);
+        return;
+    }
+
     var res = await _srFetch('/api/rooms/' + _srCurrentRoom.id + '/videos', {
         method: 'POST',
-        body: JSON.stringify({ video_id: videoId, title: title, thumbnail: thumbnail })
+        body: JSON.stringify({ video_id: videoId, title: title, thumbnail: thumbnail, url: videoUrl, data_json: dataJson })
     });
 
     if (res && res.ok) {
