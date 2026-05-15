@@ -173,6 +173,7 @@ function crOpenRoom(roomId) {
 
     // Load messages
     _crLoadMessages();
+    _crLoadPinnedMessages();
 
     // Start polling
     _crStartPolling();
@@ -233,6 +234,53 @@ function _crUpdateMuteStatus(mutedUntil) {
     }
 }
 
+function _crLoadPinnedMessages() {
+    if (!_crCurrentRoom) return;
+    var headers = _crAuthHeaders();
+    if (!headers) return;
+
+    fetchWithTimeout('/api/chat-rooms/' + _crCurrentRoom.id + '/pinned', { headers: headers }, 10000)
+        .then(function(r) { return r.json(); })
+        .then(function(data) {
+            _crRenderPinnedBar(data.messages || []);
+        })
+        .catch(function() {});
+}
+
+function _crRenderPinnedBar(pinnedMsgs) {
+    var bar = document.getElementById('crPinnedBar');
+    if (!bar) return;
+
+    if (pinnedMsgs.length === 0) {
+        bar.classList.add('hidden');
+        bar.innerHTML = '';
+        return;
+    }
+
+    bar.classList.remove('hidden');
+    var html = '<div class="cr-pinned-header">📌 Tin nhắn đã ghim (' + pinnedMsgs.length + ')</div>';
+    html += '<div class="cr-pinned-list">';
+    pinnedMsgs.forEach(function(msg) {
+        var preview = msg.content ? msg.content.substring(0, 50) + (msg.content.length > 50 ? '...' : '') : '📷 Ảnh';
+        html += '<div class="cr-pinned-item" onclick="crScrollToMessage(\'' + msg.id + '\')">'
+            + '<span class="cr-pinned-author">' + _crEsc(msg.username) + ':</span> '
+            + '<span class="cr-pinned-text">' + _crEsc(preview) + '</span>'
+            + '</div>';
+    });
+    html += '</div>';
+    bar.innerHTML = html;
+}
+
+function crScrollToMessage(msgId) {
+    var msgEl = document.querySelector('[data-msg-id="' + msgId + '"]');
+    if (msgEl) {
+        msgEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        // Highlight briefly
+        msgEl.classList.add('cr-msg-highlight');
+        setTimeout(function() { msgEl.classList.remove('cr-msg-highlight'); }, 2000);
+    }
+}
+
 function _crRenderMessages() {
     var container = document.getElementById('crMessagesList');
     if (!container) return;
@@ -281,7 +329,7 @@ function _crRenderMessages() {
         // Pinned indicator
         var pinnedBadge = msg.pinned ? '<div class="cr-msg-pinned">📌 Đã ghim</div>' : '';
 
-        html += '<div class="cr-msg ' + (isOwn ? 'cr-msg-own' : 'cr-msg-other') + '">';
+        html += '<div class="cr-msg ' + (isOwn ? 'cr-msg-own' : 'cr-msg-other') + '" data-msg-id="' + msg.id + '">';
         if (!isOwn) {
             html += '<div class="cr-msg-avatar">' + avatarHtml + '</div>';
         }
@@ -500,6 +548,7 @@ async function crPinMessage(msgId) {
         if (data.ok) {
             showToast(data.pinned ? '📌 Đã ghim' : '📌 Đã bỏ ghim', 2000);
             _crLoadMessages();
+            _crLoadPinnedMessages();
         }
     } catch(e) { showToast('Lỗi: ' + e.message, 3000); }
 }
