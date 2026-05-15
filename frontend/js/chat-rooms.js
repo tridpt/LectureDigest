@@ -293,6 +293,13 @@ function _crRenderMessages() {
     var html = '';
     for (var i = 0; i < _crMessages.length; i++) {
         var msg = _crMessages[i];
+
+        // System messages (join/leave/kick/ban)
+        if (String(msg.user_id) === '__system__') {
+            html += '<div class="cr-msg-system">' + _crEsc(msg.content) + '</div>';
+            continue;
+        }
+
         var isOwn = String(msg.user_id) === _crCurrentUserId;
         var canDelete = isOwn || (_crCurrentRoom && String(_crCurrentRoom.created_by) === _crCurrentUserId);
 

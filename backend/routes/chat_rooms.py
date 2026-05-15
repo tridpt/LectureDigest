@@ -379,9 +379,17 @@ async def join_room(room_id: str, request: Request):
         raise HTTPException(status_code=400, detail="Room is full")
 
     conn = get_db()
+    now = time.time()
     conn.execute(
         "INSERT INTO chat_room_members (room_id, user_id, joined_at) VALUES (?, ?, ?)",
-        (room_id, user["id"], time.time())
+        (room_id, user["id"], now)
+    )
+    # System message: user joined
+    display_name = user.get("display_name", "Ai đó")
+    msg_id = _generate_id()
+    conn.execute(
+        "INSERT INTO chat_messages (id, room_id, user_id, content, image_url, created_at) VALUES (?, ?, ?, ?, '', ?)",
+        (msg_id, room_id, '__system__', f'👋 {display_name} đã tham gia phòng', now)
     )
     conn.commit()
 
@@ -399,9 +407,17 @@ async def leave_room(room_id: str, request: Request):
         raise HTTPException(status_code=400, detail="Not a member")
 
     conn = get_db()
+    now = time.time()
     conn.execute(
         "DELETE FROM chat_room_members WHERE room_id = ? AND user_id = ?",
         (room_id, user["id"])
+    )
+    # System message
+    display_name = user.get("display_name", "Ai đó")
+    msg_id = _generate_id()
+    conn.execute(
+        "INSERT INTO chat_messages (id, room_id, user_id, content, image_url, created_at) VALUES (?, ?, ?, ?, '', ?)",
+        (msg_id, room_id, '__system__', f'🚪 {display_name} đã rời phòng', now)
     )
     conn.commit()
 
@@ -571,9 +587,19 @@ async def kick_member(room_id: str, target_user_id: int, request: Request, delet
         raise HTTPException(status_code=400, detail="Không thể kick chính mình")
 
     conn = get_db()
+    # Get target name for system message
+    target_info = _get_user_info(target_user_id)
+    now = time.time()
+
     conn.execute("DELETE FROM chat_room_members WHERE room_id = ? AND user_id = ?", (room_id, target_user_id))
     if delete_messages:
         conn.execute("DELETE FROM chat_messages WHERE room_id = ? AND user_id = ?", (room_id, target_user_id))
+    # System message
+    sys_msg_id = _generate_id()
+    conn.execute(
+        "INSERT INTO chat_messages (id, room_id, user_id, content, image_url, created_at) VALUES (?, ?, ?, ?, '', ?)",
+        (sys_msg_id, room_id, '__system__', f'⛔ {target_info["username"]} đã bị kick', now)
+    )
     conn.commit()
     return {"ok": True}
 
@@ -590,13 +616,22 @@ async def ban_member(room_id: str, target_user_id: int, request: Request, delete
         raise HTTPException(status_code=400, detail="Không thể chặn chính mình")
 
     conn = get_db()
+    target_info = _get_user_info(target_user_id)
+    now = time.time()
+
     conn.execute("DELETE FROM chat_room_members WHERE room_id = ? AND user_id = ?", (room_id, target_user_id))
     conn.execute(
         "INSERT OR REPLACE INTO chat_room_bans (room_id, user_id, banned_by, reason, banned_at) VALUES (?, ?, ?, '', ?)",
-        (room_id, target_user_id, user["id"], time.time())
+        (room_id, target_user_id, user["id"], now)
     )
     if delete_messages:
         conn.execute("DELETE FROM chat_messages WHERE room_id = ? AND user_id = ?", (room_id, target_user_id))
+    # System message
+    sys_msg_id = _generate_id()
+    conn.execute(
+        "INSERT INTO chat_messages (id, room_id, user_id, content, image_url, created_at) VALUES (?, ?, ?, ?, '', ?)",
+        (sys_msg_id, room_id, '__system__', f'🚫 {target_info["username"]} đã bị chặn', now)
+    )
     conn.commit()
     return {"ok": True}
 
