@@ -1191,3 +1191,80 @@ img.cr-member-av {
     background: rgba(251, 191, 36, 0.06);
     border-color: rgba(251, 191, 36, 0.15);
 }
+
+/* ── Member dropdown menu (compact) ── */
+.cr-member-menu-wrap {
+    position: relative;
+    flex-shrink: 0;
+}
+
+.cr-member-menu-btn {
+    background: none;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 6px;
+    color: var(--text-secondary, #94a3b8);
+    font-size: 16px;
+    cursor: pointer;
+    padding: 2px 8px;
+    transition: all 0.15s;
+}
+
+.cr-member-menu-btn:hover {
+    background: rgba(255, 255, 255, 0.08);
+    color: var(--text-primary, #f1f5f9);
+}
+
+.cr-member-menu {
+    position: absolute;
+    right: 0;
+    top: 100%;
+    background: #1e1e3a;
+    border: 1px solid rgba(139, 92, 246, 0.2);
+    border-radius: 10px;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+    z-index: 200;
+    padding: 4px;
+    min-width: 150px;
+}
+
+.cr-member-menu.hidden {
+    display: none;
+}
+
+.cr-mm-item {
+    display: block;
+    width: 100%;
+    padding: 8px 12px;
+    background: none;
+    border: none;
+    color: var(--text-secondary, #cbd5e1);
+    font-size: 13px;
+    cursor: pointer;
+    border-radius: 6px;
+    text-align: left;
+    transition: background 0.15s;
+}
+
+.cr-mm-item:hover {
+    background: rgba(139, 92, 246, 0.1);
+    color: var(--text-primary, #f1f5f9);
+}
+
+.cr-mm-item.cr-mm-danger {
+    color: #f87171;
+}
+
+.cr-mm-item.cr-mm-danger:hover {
+    background: rgba(248, 113, 113, 0.1);
+}
+
+.light-mode .cr-member-menu-btn {
+    border-color: rgba(0, 0, 0, 0.1);
+    color: #64748b;
+}
+
+.light-mode .cr-member-menu {
+    background: #fff;
+    border-color: rgba(0, 0, 0, 0.1);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+}

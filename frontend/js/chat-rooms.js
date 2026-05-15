@@ -624,17 +624,12 @@ async function crShowMembers() {
 
 function _crRenderMembersPanel(members, banned) {
     var isCreator = _crCurrentRoom && String(_crCurrentRoom.created_by) === _crCurrentUserId;
-    var isAdmin = isCreator; // TODO: check from member list
 
     var html = '<div class="cr-modal-overlay" id="crMembersModal" onclick="if(event.target===this)crCloseMembersPanel()">'
         + '<div class="cr-modal cr-modal-lg">'
         + '<div class="cr-modal-header"><h3>👥 Thành viên (' + members.length + ')</h3>'
-        + '<div style="display:flex;gap:8px">';
-    if (isCreator) {
-        html += '<button type="button" class="cr-btn cr-btn-outline" style="font-size:12px" onclick="crCloseMembersPanel();crViewReports()">⚠️ Báo cáo</button>';
-    }
-    html += '<button type="button" class="cr-modal-close" onclick="crCloseMembersPanel()">&times;</button>'
-        + '</div></div>'
+        + '<button type="button" class="cr-modal-close" onclick="crCloseMembersPanel()">&times;</button>'
+        + '</div>'
         + '<div class="cr-modal-body">';
 
     html += '<div class="cr-members-list">';
@@ -643,33 +638,37 @@ function _crRenderMembersPanel(members, banned) {
         var avatarHtml = m.avatar_url
             ? '<img class="cr-member-av" src="' + _crEsc(m.avatar_url) + '" alt="">'
             : '<span class="cr-member-av" style="background:' + (m.avatar_color || '#8b5cf6') + '">' + initial + '</span>';
-        var badge = m.is_creator ? ' <span class="cr-creator-badge">👑 Chủ phòng</span>'
-            : m.role === 'admin' ? ' <span class="cr-admin-badge">🛡️ QTV</span>' : '';
-        // Mute status
+        var badge = m.is_creator ? ' <span class="cr-creator-badge">👑</span>'
+            : m.role === 'admin' ? ' <span class="cr-admin-badge">🛡️</span>' : '';
         var muteInfo = '';
         if (m.muted_until) {
             var remaining = Math.max(0, Math.floor(m.muted_until - Date.now() / 1000));
             var muteStr = remaining > 3600 ? Math.floor(remaining / 3600) + 'h' : Math.floor(remaining / 60) + 'm';
             muteInfo = ' <span class="cr-mute-badge">🔇 ' + muteStr + '</span>';
         }
+
+        // Compact dropdown menu for admin actions
         var actions = '';
         if (isCreator && String(m.user_id) !== _crCurrentUserId && !m.is_creator) {
-            actions = '<div class="cr-member-actions">';
+            var menuId = 'crMemberMenu_' + m.user_id;
+            actions = '<div class="cr-member-menu-wrap">'
+                + '<button class="cr-member-menu-btn" onclick="event.stopPropagation();crToggleMemberMenu(\'' + menuId + '\')">⋯</button>'
+                + '<div class="cr-member-menu hidden" id="' + menuId + '">';
             if (m.role === 'admin') {
-                actions += '<button class="cr-btn cr-btn-outline" style="font-size:11px;padding:3px 8px" onclick="crDemoteUser(' + m.user_id + ')">Hạ cấp</button>';
+                actions += '<button class="cr-mm-item" onclick="crDemoteUser(' + m.user_id + ')">👤 Hạ cấp</button>';
             } else {
-                actions += '<button class="cr-btn cr-btn-outline" style="font-size:11px;padding:3px 8px" onclick="crPromoteUser(' + m.user_id + ')">🛡️ QTV</button>';
+                actions += '<button class="cr-mm-item" onclick="crPromoteUser(' + m.user_id + ')">🛡️ Bổ nhiệm QTV</button>';
             }
-            // Mute/unmute
             if (m.muted_until) {
-                actions += '<button class="cr-btn cr-btn-outline" style="font-size:11px;padding:3px 8px" onclick="crUnmuteUser(' + m.user_id + ')">🔊 Bỏ cấm</button>';
+                actions += '<button class="cr-mm-item" onclick="crUnmuteUser(' + m.user_id + ')">🔊 Bỏ cấm chat</button>';
             } else {
-                actions += '<button class="cr-btn cr-btn-outline" style="font-size:11px;padding:3px 8px" onclick="crMuteUser(' + m.user_id + ')">🔇 Cấm chat</button>';
+                actions += '<button class="cr-mm-item" onclick="crMuteUser(' + m.user_id + ')">🔇 Cấm chat</button>';
             }
-            actions += '<button class="cr-btn cr-btn-danger-sm" style="font-size:11px;padding:3px 8px" onclick="crKickUser(' + m.user_id + ')">Kick</button>';
-            actions += '<button class="cr-btn cr-btn-danger-sm" style="font-size:11px;padding:3px 8px" onclick="crBanUser(' + m.user_id + ')">Chặn</button>';
-            actions += '</div>';
+            actions += '<button class="cr-mm-item cr-mm-danger" onclick="crKickUser(' + m.user_id + ')">🚪 Kick</button>';
+            actions += '<button class="cr-mm-item cr-mm-danger" onclick="crBanUser(' + m.user_id + ')">🚫 Chặn</button>';
+            actions += '</div></div>';
         }
+
         html += '<div class="cr-member-row">' + avatarHtml
             + '<span class="cr-member-name">' + _crEsc(m.display_name) + badge + muteInfo + '</span>'
             + actions + '</div>';
@@ -691,12 +690,19 @@ function _crRenderMembersPanel(members, banned) {
 
     html += '</div></div></div>';
 
-    // Remove existing
     var existing = document.getElementById('crMembersModal');
     if (existing) existing.remove();
     var container = document.createElement('div');
     container.innerHTML = html;
     document.body.appendChild(container.firstElementChild);
+}
+
+function crToggleMemberMenu(menuId) {
+    document.querySelectorAll('.cr-member-menu').forEach(function(m) {
+        if (m.id !== menuId) m.classList.add('hidden');
+    });
+    var menu = document.getElementById(menuId);
+    if (menu) menu.classList.toggle('hidden');
 }
 
 function crCloseMembersPanel() {
