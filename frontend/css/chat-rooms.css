@@ -363,7 +363,7 @@
     border: 1px solid rgba(139, 92, 246, 0.2);
     border-radius: 10px;
     box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
-    z-index: 100;
+    z-index: 9999;
     padding: 4px;
     min-width: 140px;
 }
@@ -1135,6 +1135,8 @@ img.cr-member-av {
     flex-shrink: 0;
     max-height: 100px;
     overflow-y: auto;
+    position: relative;
+    z-index: 1;
 }
 
 .cr-pinned-header {
