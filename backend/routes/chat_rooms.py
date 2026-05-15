@@ -105,6 +105,19 @@ def _init_chat_rooms_tables():
     except:
         pass
 
+    # Create mute table
+    conn.execute("""
+        CREATE TABLE IF NOT EXISTS chat_room_mutes (
+            room_id TEXT NOT NULL,
+            user_id TEXT NOT NULL,
+            muted_by TEXT NOT NULL,
+            muted_until REAL NOT NULL,
+            reason TEXT DEFAULT '',
+            created_at REAL NOT NULL,
+            PRIMARY KEY (room_id, user_id)
+        )
+    """)
+
     conn.commit()
 
 
@@ -223,6 +236,24 @@ def _is_banned(room_id: str, user_id) -> bool:
         (room_id, user_id)
     ).fetchone()
     return row is not None
+
+
+def _is_muted(room_id: str, user_id):
+    """Check if user is muted. Returns muted_until timestamp or None."""
+    conn = get_db()
+    row = conn.execute(
+        "SELECT muted_until FROM chat_room_mutes WHERE room_id = ? AND user_id = ?",
+        (room_id, user_id)
+    ).fetchone()
+    if not row:
+        return None
+    muted_until = row["muted_until"]
+    if time.time() >= muted_until:
+        # Mute expired — clean up
+        conn.execute("DELETE FROM chat_room_mutes WHERE room_id = ? AND user_id = ?", (room_id, user_id))
+        conn.commit()
+        return None
+    return muted_until
 
 
 # ═══════════════════════════════════════════════════════
@@ -454,6 +485,19 @@ async def send_message(room_id: str, body: SendMessageBody, request: Request):
     if not _is_room_member(room_id, user["id"]):
         raise HTTPException(status_code=403, detail="Not a member of this room")
 
+    # Check if muted
+    muted_until = _is_muted(room_id, user["id"])
+    if muted_until:
+        import datetime
+        remaining = int(muted_until - time.time())
+        if remaining > 3600:
+            time_str = f"{remaining // 3600} giờ {(remaining % 3600) // 60} phút"
+        elif remaining > 60:
+            time_str = f"{remaining // 60} phút"
+        else:
+            time_str = f"{remaining} giây"
+        raise HTTPException(status_code=403, detail=f"Bạn đã bị cấm chat. Còn {time_str} nữa.")
+
     conn = get_db()
     msg_id = _generate_id()
     now = time.time()
@@ -567,6 +611,52 @@ async def unban_member(room_id: str, target_user_id: int, request: Request):
     return {"ok": True}
 
 
+class MuteBody(BaseModel):
+    duration: str = '1h'  # '1h', '6h', '1d', '3d', '7d'
+
+
+@router.post("/{room_id}/mute/{target_user_id}")
+async def mute_member(room_id: str, target_user_id: int, request: Request, body: MuteBody = MuteBody()):
+    """Mute a member for a duration (admin/creator)."""
+    user = get_current_user(request)
+    if not user:
+        raise HTTPException(status_code=401, detail="Not authenticated")
+    if not _is_room_admin(room_id, user["id"]):
+        raise HTTPException(status_code=403, detail="Chỉ quản trị viên mới có thể cấm chat")
+    if str(target_user_id) == str(user["id"]):
+        raise HTTPException(status_code=400, detail="Không thể tự cấm chat")
+
+    # Parse duration
+    durations = {'1h': 3600, '6h': 21600, '1d': 86400, '3d': 259200, '7d': 604800}
+    seconds = durations.get(body.duration, 3600)
+    muted_until = time.time() + seconds
+
+    conn = get_db()
+    conn.execute(
+        "INSERT OR REPLACE INTO chat_room_mutes (room_id, user_id, muted_by, muted_until, reason, created_at) VALUES (?, ?, ?, ?, '', ?)",
+        (room_id, target_user_id, user["id"], muted_until, time.time())
+    )
+    conn.commit()
+
+    duration_labels = {'1h': '1 giờ', '6h': '6 giờ', '1d': '1 ngày', '3d': '3 ngày', '7d': '7 ngày'}
+    return {"ok": True, "duration": duration_labels.get(body.duration, '1 giờ'), "muted_until": muted_until}
+
+
+@router.post("/{room_id}/unmute/{target_user_id}")
+async def unmute_member(room_id: str, target_user_id: int, request: Request):
+    """Unmute a member (admin/creator)."""
+    user = get_current_user(request)
+    if not user:
+        raise HTTPException(status_code=401, detail="Not authenticated")
+    if not _is_room_admin(room_id, user["id"]):
+        raise HTTPException(status_code=403, detail="Chỉ quản trị viên mới có thể bỏ cấm chat")
+
+    conn = get_db()
+    conn.execute("DELETE FROM chat_room_mutes WHERE room_id = ? AND user_id = ?", (room_id, target_user_id))
+    conn.commit()
+    return {"ok": True}
+
+
 @router.get("/{room_id}/members")
 async def get_members(room_id: str, request: Request):
     """Get list of room members."""
@@ -596,6 +686,7 @@ async def get_members(room_id: str, request: Request):
             "joined_at": r["joined_at"],
             "role": r["role"] if "role" in r.keys() else "member",
             "is_creator": str(r["user_id"]) == str(room["created_by"]) if room else False,
+            "muted_until": _is_muted(room_id, r["user_id"]),
         })
 
     # Also get banned list (for creator)

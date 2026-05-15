@@ -558,6 +558,13 @@ function _crRenderMembersPanel(members, banned) {
             : '<span class="cr-member-av" style="background:' + (m.avatar_color || '#8b5cf6') + '">' + initial + '</span>';
         var badge = m.is_creator ? ' <span class="cr-creator-badge">👑 Chủ phòng</span>'
             : m.role === 'admin' ? ' <span class="cr-admin-badge">🛡️ QTV</span>' : '';
+        // Mute status
+        var muteInfo = '';
+        if (m.muted_until) {
+            var remaining = Math.max(0, Math.floor(m.muted_until - Date.now() / 1000));
+            var muteStr = remaining > 3600 ? Math.floor(remaining / 3600) + 'h' : Math.floor(remaining / 60) + 'm';
+            muteInfo = ' <span class="cr-mute-badge">🔇 ' + muteStr + '</span>';
+        }
         var actions = '';
         if (isCreator && String(m.user_id) !== _crCurrentUserId && !m.is_creator) {
             actions = '<div class="cr-member-actions">';
@@ -566,12 +573,18 @@ function _crRenderMembersPanel(members, banned) {
             } else {
                 actions += '<button class="cr-btn cr-btn-outline" style="font-size:11px;padding:3px 8px" onclick="crPromoteUser(' + m.user_id + ')">🛡️ QTV</button>';
             }
+            // Mute/unmute
+            if (m.muted_until) {
+                actions += '<button class="cr-btn cr-btn-outline" style="font-size:11px;padding:3px 8px" onclick="crUnmuteUser(' + m.user_id + ')">🔊 Bỏ cấm</button>';
+            } else {
+                actions += '<button class="cr-btn cr-btn-outline" style="font-size:11px;padding:3px 8px" onclick="crMuteUser(' + m.user_id + ')">🔇 Cấm chat</button>';
+            }
             actions += '<button class="cr-btn cr-btn-danger-sm" style="font-size:11px;padding:3px 8px" onclick="crKickUser(' + m.user_id + ')">Kick</button>';
             actions += '<button class="cr-btn cr-btn-danger-sm" style="font-size:11px;padding:3px 8px" onclick="crBanUser(' + m.user_id + ')">Chặn</button>';
             actions += '</div>';
         }
         html += '<div class="cr-member-row">' + avatarHtml
-            + '<span class="cr-member-name">' + _crEsc(m.display_name) + badge + '</span>'
+            + '<span class="cr-member-name">' + _crEsc(m.display_name) + badge + muteInfo + '</span>'
             + actions + '</div>';
     });
     html += '</div>';
@@ -675,6 +688,50 @@ async function crDemoteUser(userId) {
         } else {
             var err = await res.json().catch(function() { return {}; });
             showToast(err.detail || 'Lỗi', 3000);
+        }
+    } catch(e) { showToast('Lỗi', 3000); }
+}
+
+async function crMuteUser(userId) {
+    if (!_crCurrentRoom) return;
+    // Show duration picker
+    var duration = prompt('Chọn thời gian cấm chat:\n• 1h = 1 giờ\n• 6h = 6 giờ\n• 1d = 1 ngày\n• 3d = 3 ngày\n• 7d = 7 ngày\n\nNhập:', '1h');
+    if (!duration) return;
+    duration = duration.trim().toLowerCase();
+    if (['1h','6h','1d','3d','7d'].indexOf(duration) < 0) {
+        showToast('Thời gian không hợp lệ. Dùng: 1h, 6h, 1d, 3d, 7d', 3000);
+        return;
+    }
+
+    var headers = _crAuthHeaders();
+    if (!headers) return;
+    try {
+        var res = await fetchWithTimeout('/api/chat-rooms/' + _crCurrentRoom.id + '/mute/' + userId, {
+            method: 'POST', headers: headers,
+            body: JSON.stringify({ duration: duration })
+        }, 10000);
+        if (res.ok) {
+            var data = await res.json();
+            showToast('🔇 Đã cấm chat ' + (data.duration || duration), 2000);
+            crShowMembers();
+        } else {
+            var err = await res.json().catch(function() { return {}; });
+            showToast(err.detail || 'Lỗi', 3000);
+        }
+    } catch(e) { showToast('Lỗi', 3000); }
+}
+
+async function crUnmuteUser(userId) {
+    if (!_crCurrentRoom) return;
+    var headers = _crAuthHeaders();
+    if (!headers) return;
+    try {
+        var res = await fetchWithTimeout('/api/chat-rooms/' + _crCurrentRoom.id + '/unmute/' + userId, {
+            method: 'POST', headers: headers
+        }, 10000);
+        if (res.ok) {
+            showToast('🔊 Đã bỏ cấm chat', 2000);
+            crShowMembers();
         }
     } catch(e) { showToast('Lỗi', 3000); }
 }

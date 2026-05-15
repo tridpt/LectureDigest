@@ -1099,3 +1099,14 @@ img.cr-member-av {
     0%, 100% { transform: scale(1); }
     50% { transform: scale(1.15); }
 }
+
+/* ── Mute badge ── */
+.cr-mute-badge {
+    font-size: 11px;
+    color: #f87171;
+    background: rgba(248, 113, 113, 0.1);
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-weight: 600;
+    margin-left: 6px;
+}
