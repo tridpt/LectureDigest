@@ -400,8 +400,8 @@ async def delete_message(room_id: str, msg_id: str, request: Request):
         raise HTTPException(status_code=404, detail="Message not found")
 
     room = _get_room(room_id)
-    is_author = msg["user_id"] == user["id"]
-    is_creator = room and room["created_by"] == user["id"]
+    is_author = str(msg["user_id"]) == str(user["id"])
+    is_creator = room and str(room["created_by"]) == str(user["id"])
 
     if not is_author and not is_creator:
         raise HTTPException(status_code=403, detail="Cannot delete this message")

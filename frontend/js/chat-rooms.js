@@ -332,20 +332,26 @@ function crDeleteMessage(msgId) {
     var headers = _crAuthHeaders();
     if (!headers) return;
 
+    // Close the menu
+    document.querySelectorAll('.cr-msg-menu').forEach(function(m) { m.classList.add('hidden'); });
+
     fetchWithTimeout('/api/chat-rooms/' + _crCurrentRoom.id + '/messages/' + msgId, {
         method: 'DELETE',
         headers: headers
     }, 10000)
-        .then(function(r) { return r.json(); })
+        .then(function(r) {
+            if (!r.ok) return r.json().then(function(d) { throw new Error(d.detail || 'Lỗi'); });
+            return r.json();
+        })
         .then(function(data) {
             if (data.ok) {
-                _crMessages = _crMessages.filter(function(m) { return m.id !== msgId; });
+                _crMessages = _crMessages.filter(function(m) { return String(m.id) !== String(msgId); });
                 _crRenderMessages();
             }
         })
         .catch(function(err) {
             console.error('Failed to delete message:', err);
-            showToast('Không thể xóa tin nhắn', 3000);
+            showToast('Không thể xóa: ' + err.message, 3000);
         });
 }
 
