@@ -105,6 +105,7 @@ function updatePageTitle(sectionId) {
         loadingSection: 'Đang phân tích... — LectureDigest',
         errorSection:   'Lỗi — LectureDigest',
         srsReviewSection: 'Ôn tập hàng ngày — LectureDigest',
+        studyPlanSection: 'Lộ trình học tập — LectureDigest',
     };
     document.title = titles[sectionId] || titles.hero;
 }
@@ -141,6 +142,8 @@ window.addEventListener('popstate', function(e) {
         }
     } else if (path === '/review') {
         if (typeof openSrsReview === 'function') openSrsReview();
+    } else if (path === '/study-plan') {
+        if (typeof openStudyPlan === 'function') openStudyPlan();
     } else {
         showSection('hero');
     }
