@@ -556,17 +556,18 @@ async function crPinMessage(msgId) {
 async function crBanUser(userId) {
     if (!_crCurrentRoom) return;
     if (!confirm('Chặn người này? Họ sẽ bị kick và không thể tham gia lại.')) return;
+    var deleteMsg = confirm('Xóa toàn bộ tin nhắn của người này?\n\n• OK = Xóa hết tin nhắn\n• Cancel = Giữ lại tin nhắn');
     var headers = _crAuthHeaders();
     if (!headers) return;
     document.querySelectorAll('.cr-msg-menu').forEach(function(m) { m.classList.add('hidden'); });
 
     try {
-        var res = await fetchWithTimeout('/api/chat-rooms/' + _crCurrentRoom.id + '/ban/' + userId, {
-            method: 'POST', headers: headers
-        }, 10000);
+        var url = '/api/chat-rooms/' + _crCurrentRoom.id + '/ban/' + userId + (deleteMsg ? '?delete_messages=true' : '');
+        var res = await fetchWithTimeout(url, { method: 'POST', headers: headers }, 10000);
         if (res.ok) {
-            showToast('🚫 Đã chặn', 2000);
+            showToast('🚫 Đã chặn' + (deleteMsg ? ' + xóa tin nhắn' : ''), 2000);
             _crLoadMessages();
+            crCloseMembersPanel();
         } else {
             var err = await res.json().catch(function() { return {}; });
             showToast(err.detail || 'Không thể chặn', 3000);
@@ -577,15 +578,16 @@ async function crBanUser(userId) {
 async function crKickUser(userId) {
     if (!_crCurrentRoom) return;
     if (!confirm('Kick người này khỏi phòng?')) return;
+    var deleteMsg = confirm('Xóa toàn bộ tin nhắn của người này?\n\n• OK = Xóa hết tin nhắn\n• Cancel = Giữ lại tin nhắn');
     var headers = _crAuthHeaders();
     if (!headers) return;
 
     try {
-        var res = await fetchWithTimeout('/api/chat-rooms/' + _crCurrentRoom.id + '/kick/' + userId, {
-            method: 'POST', headers: headers
-        }, 10000);
+        var url = '/api/chat-rooms/' + _crCurrentRoom.id + '/kick/' + userId + (deleteMsg ? '?delete_messages=true' : '');
+        var res = await fetchWithTimeout(url, { method: 'POST', headers: headers }, 10000);
         if (res.ok) {
-            showToast('✅ Đã kick', 2000);
+            showToast('✅ Đã kick' + (deleteMsg ? ' + xóa tin nhắn' : ''), 2000);
+            _crLoadMessages();
             crShowMembers();
         } else {
             var err = await res.json().catch(function() { return {}; });

@@ -560,8 +560,8 @@ async def delete_message(room_id: str, msg_id: str, request: Request):
 # ═══════════════════════════════════════════════════════
 
 @router.post("/{room_id}/kick/{target_user_id}")
-async def kick_member(room_id: str, target_user_id: int, request: Request):
-    """Kick a member from the chat room (creator only)."""
+async def kick_member(room_id: str, target_user_id: int, request: Request, delete_messages: bool = False):
+    """Kick a member from the chat room (creator/admin)."""
     user = get_current_user(request)
     if not user:
         raise HTTPException(status_code=401, detail="Not authenticated")
@@ -572,13 +572,15 @@ async def kick_member(room_id: str, target_user_id: int, request: Request):
 
     conn = get_db()
     conn.execute("DELETE FROM chat_room_members WHERE room_id = ? AND user_id = ?", (room_id, target_user_id))
+    if delete_messages:
+        conn.execute("DELETE FROM chat_messages WHERE room_id = ? AND user_id = ?", (room_id, target_user_id))
     conn.commit()
     return {"ok": True}
 
 
 @router.post("/{room_id}/ban/{target_user_id}")
-async def ban_member(room_id: str, target_user_id: int, request: Request):
-    """Ban a user from the chat room (creator only). Removes them and prevents rejoin."""
+async def ban_member(room_id: str, target_user_id: int, request: Request, delete_messages: bool = False):
+    """Ban a user from the chat room (creator/admin). Removes them and prevents rejoin."""
     user = get_current_user(request)
     if not user:
         raise HTTPException(status_code=401, detail="Not authenticated")
@@ -588,13 +590,13 @@ async def ban_member(room_id: str, target_user_id: int, request: Request):
         raise HTTPException(status_code=400, detail="Không thể chặn chính mình")
 
     conn = get_db()
-    # Remove from members
     conn.execute("DELETE FROM chat_room_members WHERE room_id = ? AND user_id = ?", (room_id, target_user_id))
-    # Add to ban list
     conn.execute(
         "INSERT OR REPLACE INTO chat_room_bans (room_id, user_id, banned_by, reason, banned_at) VALUES (?, ?, ?, '', ?)",
         (room_id, target_user_id, user["id"], time.time())
     )
+    if delete_messages:
+        conn.execute("DELETE FROM chat_messages WHERE room_id = ? AND user_id = ?", (room_id, target_user_id))
     conn.commit()
     return {"ok": True}
 
