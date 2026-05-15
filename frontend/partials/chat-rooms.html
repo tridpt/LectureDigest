@@ -52,8 +52,12 @@
                 </div>
             </div>
 
-            <!-- Pinned messages bar -->
-            <div class="cr-pinned-bar hidden" id="crPinnedBar"></div>
+            <!-- Pinned messages trigger -->
+            <div class="cr-pinned-trigger hidden" id="crPinnedTrigger" onclick="crOpenPinnedPanel()">
+                <span>📌</span>
+                <span id="crPinnedTriggerText">0 tin nhắn đã ghim</span>
+                <span class="cr-pinned-arrow">▾</span>
+            </div>
 
             <div class="cr-messages-area" id="crMessagesArea">
                 <div class="cr-messages-list" id="crMessagesList"></div>

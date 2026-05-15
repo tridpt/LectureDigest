@@ -293,35 +293,52 @@ function _crLoadPinnedMessages() {
         .catch(function() {});
 }
 
+var _crPinnedMessages = [];
+
 function _crRenderPinnedBar(pinnedMsgs) {
-    var bar = document.getElementById('crPinnedBar');
-    if (!bar) return;
+    _crPinnedMessages = pinnedMsgs;
+    var trigger = document.getElementById('crPinnedTrigger');
+    var text = document.getElementById('crPinnedTriggerText');
+    if (!trigger) return;
 
     if (pinnedMsgs.length === 0) {
-        bar.classList.add('hidden');
-        bar.innerHTML = '';
-        return;
+        trigger.classList.add('hidden');
+    } else {
+        trigger.classList.remove('hidden');
+        if (text) text.textContent = pinnedMsgs.length + ' tin nhắn đã ghim';
     }
+}
 
-    bar.classList.remove('hidden');
-    var html = '<div class="cr-pinned-header">📌 Tin nhắn đã ghim (' + pinnedMsgs.length + ')</div>';
-    html += '<div class="cr-pinned-list">';
-    pinnedMsgs.forEach(function(msg) {
-        var preview = msg.content ? msg.content.substring(0, 50) + (msg.content.length > 50 ? '...' : '') : '📷 Ảnh';
-        html += '<div class="cr-pinned-item" onclick="crScrollToMessage(\'' + msg.id + '\')">'
-            + '<span class="cr-pinned-author">' + _crEsc(msg.username) + ':</span> '
-            + '<span class="cr-pinned-text">' + _crEsc(preview) + '</span>'
+function crOpenPinnedPanel() {
+    if (_crPinnedMessages.length === 0) return;
+
+    var html = '<div class="cr-modal-overlay" id="crPinnedModal" onclick="if(event.target===this)this.remove()">'
+        + '<div class="cr-modal" style="max-width:450px;max-height:70vh;overflow-y:auto">'
+        + '<div class="cr-modal-header"><h3>📌 Tin nhắn đã ghim (' + _crPinnedMessages.length + ')</h3>'
+        + '<button type="button" class="cr-modal-close" onclick="document.getElementById(\'crPinnedModal\').remove()">&times;</button></div>'
+        + '<div class="cr-modal-body" style="padding:12px">';
+
+    _crPinnedMessages.forEach(function(msg) {
+        var content = msg.content || '📷 Ảnh';
+        html += '<div class="cr-pinned-msg-item" onclick="document.getElementById(\'crPinnedModal\').remove();crScrollToMessage(\'' + msg.id + '\')">'
+            + '<div class="cr-pinned-msg-author">' + _crEsc(msg.username) + '</div>'
+            + '<div class="cr-pinned-msg-content">' + _crEsc(content) + '</div>'
             + '</div>';
     });
-    html += '</div>';
-    bar.innerHTML = html;
+
+    html += '</div></div></div>';
+
+    var existing = document.getElementById('crPinnedModal');
+    if (existing) existing.remove();
+    var container = document.createElement('div');
+    container.innerHTML = html;
+    document.body.appendChild(container.firstElementChild);
 }
 
 function crScrollToMessage(msgId) {
     var msgEl = document.querySelector('[data-msg-id="' + msgId + '"]');
     if (msgEl) {
         msgEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
-        // Highlight briefly
         msgEl.classList.add('cr-msg-highlight');
         setTimeout(function() { msgEl.classList.remove('cr-msg-highlight'); }, 2000);
     }
