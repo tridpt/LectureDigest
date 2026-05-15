@@ -363,12 +363,31 @@ function _crRenderMessages() {
 }
 
 function crToggleMsgMenu(msgId) {
-    // Close all other menus first
-    document.querySelectorAll('.cr-msg-menu').forEach(function(m) {
-        if (m.id !== 'crMsgMenu_' + msgId) m.classList.add('hidden');
-    });
     var menu = document.getElementById('crMsgMenu_' + msgId);
-    if (menu) menu.classList.toggle('hidden');
+    if (!menu) return;
+    var wasHidden = menu.classList.contains('hidden');
+
+    // Close all menus first
+    document.querySelectorAll('.cr-msg-menu').forEach(function(m) { m.classList.add('hidden'); });
+
+    if (wasHidden) {
+        // Position using the ⋯ button coordinates
+        var btn = menu.closest('.cr-msg-menu-wrap').querySelector('.cr-msg-menu-btn');
+        if (btn) {
+            var rect = btn.getBoundingClientRect();
+            menu.classList.remove('hidden');
+            var menuH = menu.offsetHeight;
+            // Show above the button
+            menu.style.top = (rect.top - menuH - 4) + 'px';
+            menu.style.left = (rect.left - 60) + 'px';
+            // If off-screen top, show below
+            if (rect.top - menuH - 4 < 10) {
+                menu.style.top = (rect.bottom + 4) + 'px';
+            }
+        } else {
+            menu.classList.remove('hidden');
+        }
+    }
 }
 
 // Close menus on outside click

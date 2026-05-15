@@ -356,9 +356,7 @@
 }
 
 .cr-msg-menu {
-    position: absolute;
-    bottom: 100%;
-    margin-bottom: 4px;
+    position: fixed;
     background: #1e1e3a;
     border: 1px solid rgba(139, 92, 246, 0.2);
     border-radius: 10px;
@@ -366,14 +364,6 @@
     z-index: 9999;
     padding: 4px;
     min-width: 140px;
-}
-
-.cr-msg-own .cr-msg-menu {
-    right: 0;
-}
-
-.cr-msg-other .cr-msg-menu {
-    left: 0;
 }
 
 .cr-msg-menu.hidden {
