@@ -339,14 +339,14 @@
 .cr-input-bar {
     display: flex;
     gap: 0.5rem;
-    padding: 1rem 1.25rem;
+    padding: 0.5rem 1rem;
     border-top: 1px solid rgba(255,255,255,0.08);
     flex-shrink: 0;
 }
 
 .cr-message-input {
     flex: 1;
-    padding: 0.75rem 1rem;
+    padding: 0.6rem 1rem;
     border-radius: 24px;
     border: 1px solid rgba(255,255,255,0.12);
     background: rgba(255,255,255,0.04);
@@ -363,8 +363,8 @@
 }
 
 .cr-send-btn {
-    width: 42px;
-    height: 42px;
+    width: 36px;
+    height: 36px;
     border-radius: 50%;
     background: var(--accent, #8b5cf6);
     color: #fff;
