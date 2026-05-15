@@ -160,9 +160,10 @@ function crOpenRoom(roomId) {
 
     // Show/hide delete button (creator only)
     var deleteBtn = document.getElementById('crDeleteRoomBtn');
-    if (deleteBtn) {
-        deleteBtn.style.display = (String(room.created_by) === _crCurrentUserId) ? '' : 'none';
-    }
+    var clearBtn = document.getElementById('crClearMsgsBtn');
+    var isCreator = String(room.created_by) === _crCurrentUserId;
+    if (deleteBtn) deleteBtn.style.display = isCreator ? '' : 'none';
+    if (clearBtn) clearBtn.style.display = isCreator ? '' : 'none';
 
     // Load messages
     _crLoadMessages();
@@ -208,13 +209,28 @@ function _crRenderMessages() {
 
         // 3-dot menu (like Messenger)
         var menuHtml = '';
-        if (canDelete) {
+        var isCreator = _crCurrentRoom && String(_crCurrentRoom.created_by) === _crCurrentUserId;
+        if (canDelete || isCreator) {
+            var menuItems = '';
+            if (canDelete) {
+                menuItems += '<button class="cr-msg-menu-item cr-msg-menu-danger" onclick="event.stopPropagation();crDeleteMessage(\'' + msg.id + '\')">🗑️ Xóa tin nhắn</button>';
+            }
+            if (isCreator) {
+                var pinLabel = msg.pinned ? '📌 Bỏ ghim' : '📌 Ghim tin nhắn';
+                menuItems += '<button class="cr-msg-menu-item" onclick="event.stopPropagation();crPinMessage(\'' + msg.id + '\')">' + pinLabel + '</button>';
+            }
+            if (isCreator && !isOwn) {
+                menuItems += '<button class="cr-msg-menu-item cr-msg-menu-danger" onclick="event.stopPropagation();crBanUser(' + msg.user_id + ')">🚫 Chặn người này</button>';
+            }
             menuHtml = '<div class="cr-msg-menu-wrap">'
                 + '<button class="cr-msg-menu-btn" onclick="event.stopPropagation();crToggleMsgMenu(\'' + msg.id + '\')" title="Tùy chọn">⋯</button>'
                 + '<div class="cr-msg-menu hidden" id="crMsgMenu_' + msg.id + '">'
-                + '<button class="cr-msg-menu-item" onclick="event.stopPropagation();crDeleteMessage(\'' + msg.id + '\')">🗑️ Xóa tin nhắn</button>'
+                + menuItems
                 + '</div></div>';
         }
+
+        // Pinned indicator
+        var pinnedBadge = msg.pinned ? '<div class="cr-msg-pinned">📌 Đã ghim</div>' : '';
 
         html += '<div class="cr-msg ' + (isOwn ? 'cr-msg-own' : 'cr-msg-other') + '">';
         if (!isOwn) {
@@ -223,6 +239,7 @@ function _crRenderMessages() {
         html += '<div class="cr-msg-row">';
         if (isOwn) html += menuHtml;
         html += '<div class="cr-msg-bubble">';
+        html += pinnedBadge;
         if (!isOwn) {
             html += '<div class="cr-msg-name">' + _crEsc(msg.username) + '</div>';
         }
@@ -414,6 +431,172 @@ function crDeleteMessage(msgId) {
             console.error('Failed to delete message:', err);
             showToast('Không thể xóa: ' + err.message, 3000);
         });
+}
+
+// ══════════════════════════════════════════════════════
+// ADMIN: PIN, BAN, KICK, MEMBERS, CLEAR
+// ══════════════════════════════════════════════════════
+
+async function crPinMessage(msgId) {
+    if (!_crCurrentRoom) return;
+    var headers = _crAuthHeaders();
+    if (!headers) return;
+    document.querySelectorAll('.cr-msg-menu').forEach(function(m) { m.classList.add('hidden'); });
+
+    try {
+        var res = await fetchWithTimeout('/api/chat-rooms/' + _crCurrentRoom.id + '/pin/' + msgId, {
+            method: 'POST', headers: headers
+        }, 10000);
+        var data = await res.json();
+        if (data.ok) {
+            showToast(data.pinned ? '📌 Đã ghim' : '📌 Đã bỏ ghim', 2000);
+            _crLoadMessages();
+        }
+    } catch(e) { showToast('Lỗi: ' + e.message, 3000); }
+}
+
+async function crBanUser(userId) {
+    if (!_crCurrentRoom) return;
+    if (!confirm('Chặn người này? Họ sẽ bị kick và không thể tham gia lại.')) return;
+    var headers = _crAuthHeaders();
+    if (!headers) return;
+    document.querySelectorAll('.cr-msg-menu').forEach(function(m) { m.classList.add('hidden'); });
+
+    try {
+        var res = await fetchWithTimeout('/api/chat-rooms/' + _crCurrentRoom.id + '/ban/' + userId, {
+            method: 'POST', headers: headers
+        }, 10000);
+        if (res.ok) {
+            showToast('🚫 Đã chặn', 2000);
+            _crLoadMessages();
+        } else {
+            var err = await res.json().catch(function() { return {}; });
+            showToast(err.detail || 'Không thể chặn', 3000);
+        }
+    } catch(e) { showToast('Lỗi: ' + e.message, 3000); }
+}
+
+async function crKickUser(userId) {
+    if (!_crCurrentRoom) return;
+    if (!confirm('Kick người này khỏi phòng?')) return;
+    var headers = _crAuthHeaders();
+    if (!headers) return;
+
+    try {
+        var res = await fetchWithTimeout('/api/chat-rooms/' + _crCurrentRoom.id + '/kick/' + userId, {
+            method: 'POST', headers: headers
+        }, 10000);
+        if (res.ok) {
+            showToast('✅ Đã kick', 2000);
+            crShowMembers();
+        } else {
+            var err = await res.json().catch(function() { return {}; });
+            showToast(err.detail || 'Không thể kick', 3000);
+        }
+    } catch(e) { showToast('Lỗi: ' + e.message, 3000); }
+}
+
+async function crUnbanUser(userId) {
+    if (!_crCurrentRoom) return;
+    var headers = _crAuthHeaders();
+    if (!headers) return;
+
+    try {
+        var res = await fetchWithTimeout('/api/chat-rooms/' + _crCurrentRoom.id + '/unban/' + userId, {
+            method: 'POST', headers: headers
+        }, 10000);
+        if (res.ok) {
+            showToast('✅ Đã bỏ chặn', 2000);
+            crShowMembers();
+        }
+    } catch(e) { showToast('Lỗi', 3000); }
+}
+
+async function crShowMembers() {
+    if (!_crCurrentRoom) return;
+    var headers = _crAuthHeaders();
+    if (!headers) return;
+
+    try {
+        var res = await fetchWithTimeout('/api/chat-rooms/' + _crCurrentRoom.id + '/members', { headers: headers }, 10000);
+        var data = await res.json();
+        _crRenderMembersPanel(data.members || [], data.banned || []);
+    } catch(e) { showToast('Không thể tải danh sách', 3000); }
+}
+
+function _crRenderMembersPanel(members, banned) {
+    var isCreator = _crCurrentRoom && String(_crCurrentRoom.created_by) === _crCurrentUserId;
+
+    var html = '<div class="cr-modal-overlay" id="crMembersModal" onclick="if(event.target===this)crCloseMembersPanel()">'
+        + '<div class="cr-modal cr-modal-lg">'
+        + '<div class="cr-modal-header"><h3>👥 Thành viên (' + members.length + ')</h3>'
+        + '<button type="button" class="cr-modal-close" onclick="crCloseMembersPanel()">&times;</button></div>'
+        + '<div class="cr-modal-body">';
+
+    html += '<div class="cr-members-list">';
+    members.forEach(function(m) {
+        var initial = (m.display_name || '?').charAt(0).toUpperCase();
+        var avatarHtml = m.avatar_url
+            ? '<img class="cr-member-av" src="' + _crEsc(m.avatar_url) + '" alt="">'
+            : '<span class="cr-member-av" style="background:' + (m.avatar_color || '#8b5cf6') + '">' + initial + '</span>';
+        var badge = m.is_creator ? ' <span class="cr-creator-badge">👑</span>' : '';
+        var actions = '';
+        if (isCreator && String(m.user_id) !== _crCurrentUserId) {
+            actions = '<div class="cr-member-actions">'
+                + '<button class="cr-btn cr-btn-danger-sm" onclick="crKickUser(' + m.user_id + ')">Kick</button>'
+                + '<button class="cr-btn cr-btn-danger-sm" onclick="crBanUser(' + m.user_id + ')">Chặn</button>'
+                + '</div>';
+        }
+        html += '<div class="cr-member-row">' + avatarHtml
+            + '<span class="cr-member-name">' + _crEsc(m.display_name) + badge + '</span>'
+            + actions + '</div>';
+    });
+    html += '</div>';
+
+    // Banned list (creator only)
+    if (isCreator && banned.length > 0) {
+        html += '<h4 style="margin-top:16px;font-size:13px;color:#f87171">🚫 Đã chặn (' + banned.length + ')</h4>';
+        html += '<div class="cr-members-list">';
+        banned.forEach(function(b) {
+            html += '<div class="cr-member-row">'
+                + '<span class="cr-member-name" style="opacity:0.6">' + _crEsc(b.display_name) + '</span>'
+                + '<button class="cr-btn cr-btn-outline" style="font-size:11px;padding:4px 8px" onclick="crUnbanUser(' + b.user_id + ')">Bỏ chặn</button>'
+                + '</div>';
+        });
+        html += '</div>';
+    }
+
+    html += '</div></div></div>';
+
+    // Remove existing
+    var existing = document.getElementById('crMembersModal');
+    if (existing) existing.remove();
+    var container = document.createElement('div');
+    container.innerHTML = html;
+    document.body.appendChild(container.firstElementChild);
+}
+
+function crCloseMembersPanel() {
+    var modal = document.getElementById('crMembersModal');
+    if (modal) modal.remove();
+}
+
+async function crClearAllMessages() {
+    if (!_crCurrentRoom) return;
+    if (!confirm('Xóa TẤT CẢ tin nhắn trong phòng? Không thể hoàn tác.')) return;
+    var headers = _crAuthHeaders();
+    if (!headers) return;
+
+    try {
+        var res = await fetchWithTimeout('/api/chat-rooms/' + _crCurrentRoom.id + '/clear-messages', {
+            method: 'POST', headers: headers
+        }, 10000);
+        if (res.ok) {
+            showToast('🗑️ Đã xóa tất cả tin nhắn', 2000);
+            _crMessages = [];
+            _crRenderMessages();
+        }
+    } catch(e) { showToast('Lỗi', 3000); }
 }
 
 // ══════════════════════════════════════════════════════

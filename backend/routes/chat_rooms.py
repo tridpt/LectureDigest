@@ -62,6 +62,26 @@ def _init_chat_rooms_tables():
     except:
         pass
 
+    # Migration: add pinned column to messages
+    try:
+        conn.execute("ALTER TABLE chat_messages ADD COLUMN pinned INTEGER DEFAULT 0")
+        conn.commit()
+    except:
+        pass
+
+    # Create banned members table
+    conn.execute("""
+        CREATE TABLE IF NOT EXISTS chat_room_bans (
+            room_id TEXT NOT NULL,
+            user_id TEXT NOT NULL,
+            banned_by TEXT NOT NULL,
+            reason TEXT DEFAULT '',
+            banned_at REAL NOT NULL,
+            PRIMARY KEY (room_id, user_id)
+        )
+    """)
+    conn.commit()
+
 
 # Initialize tables on module load
 try:
@@ -147,6 +167,20 @@ def _get_last_message(room_id: str):
         user_info = _get_user_info(row["user_id"])
         return {"content": row["content"], "username": user_info["username"], "created_at": row["created_at"]}
     return None
+
+
+def _is_room_creator(room_id: str, user_id) -> bool:
+    room = _get_room(room_id)
+    return room and str(room["created_by"]) == str(user_id)
+
+
+def _is_banned(room_id: str, user_id) -> bool:
+    conn = get_db()
+    row = conn.execute(
+        "SELECT 1 FROM chat_room_bans WHERE room_id = ? AND user_id = ?",
+        (room_id, user_id)
+    ).fetchone()
+    return row is not None
 
 
 # ═══════════════════════════════════════════════════════
@@ -260,6 +294,10 @@ async def join_room(room_id: str, request: Request):
     if not room["is_public"]:
         raise HTTPException(status_code=403, detail="Room is private")
 
+    # Check if banned
+    if _is_banned(room_id, user["id"]):
+        raise HTTPException(status_code=403, detail="Bạn đã bị chặn khỏi phòng này")
+
     if _is_room_member(room_id, user["id"]):
         return {"ok": True, "message": "Already a member"}
 
@@ -332,12 +370,12 @@ async def get_messages(room_id: str, request: Request, limit: int = 50, before: 
     conn = get_db()
     if before:
         rows = conn.execute(
-            "SELECT id, room_id, user_id, content, image_url, created_at FROM chat_messages WHERE room_id = ? AND created_at < ? ORDER BY created_at DESC LIMIT ?",
+            "SELECT id, room_id, user_id, content, image_url, pinned, created_at FROM chat_messages WHERE room_id = ? AND created_at < ? ORDER BY created_at DESC LIMIT ?",
             (room_id, before, min(limit, 100))
         ).fetchall()
     else:
         rows = conn.execute(
-            "SELECT id, room_id, user_id, content, image_url, created_at FROM chat_messages WHERE room_id = ? ORDER BY created_at DESC LIMIT ?",
+            "SELECT id, room_id, user_id, content, image_url, pinned, created_at FROM chat_messages WHERE room_id = ? ORDER BY created_at DESC LIMIT ?",
             (room_id, min(limit, 100))
         ).fetchall()
 
@@ -352,6 +390,7 @@ async def get_messages(room_id: str, request: Request, limit: int = 50, before: 
             "avatar_url": user_info["avatar_url"],
             "content": row["content"],
             "image_url": row["image_url"] if "image_url" in row.keys() else "",
+            "pinned": bool(row["pinned"]) if "pinned" in row.keys() else False,
             "created_at": row["created_at"],
         })
 
@@ -424,6 +463,218 @@ async def delete_message(room_id: str, msg_id: str, request: Request):
     conn.execute("DELETE FROM chat_messages WHERE id = ?", (msg_id,))
     conn.commit()
 
+    return {"ok": True}
+
+
+# ═══════════════════════════════════════════════════════
+# ROOM ADMIN: KICK, BAN, MEMBERS, PIN, EDIT
+# ═══════════════════════════════════════════════════════
+
+@router.post("/{room_id}/kick/{target_user_id}")
+async def kick_member(room_id: str, target_user_id: int, request: Request):
+    """Kick a member from the chat room (creator only)."""
+    user = get_current_user(request)
+    if not user:
+        raise HTTPException(status_code=401, detail="Not authenticated")
+    if not _is_room_creator(room_id, user["id"]):
+        raise HTTPException(status_code=403, detail="Chỉ chủ phòng mới có thể kick")
+    if str(target_user_id) == str(user["id"]):
+        raise HTTPException(status_code=400, detail="Không thể kick chính mình")
+
+    conn = get_db()
+    conn.execute("DELETE FROM chat_room_members WHERE room_id = ? AND user_id = ?", (room_id, target_user_id))
+    conn.commit()
+    return {"ok": True}
+
+
+@router.post("/{room_id}/ban/{target_user_id}")
+async def ban_member(room_id: str, target_user_id: int, request: Request):
+    """Ban a user from the chat room (creator only). Removes them and prevents rejoin."""
+    user = get_current_user(request)
+    if not user:
+        raise HTTPException(status_code=401, detail="Not authenticated")
+    if not _is_room_creator(room_id, user["id"]):
+        raise HTTPException(status_code=403, detail="Chỉ chủ phòng mới có thể chặn")
+    if str(target_user_id) == str(user["id"]):
+        raise HTTPException(status_code=400, detail="Không thể chặn chính mình")
+
+    conn = get_db()
+    # Remove from members
+    conn.execute("DELETE FROM chat_room_members WHERE room_id = ? AND user_id = ?", (room_id, target_user_id))
+    # Add to ban list
+    conn.execute(
+        "INSERT OR REPLACE INTO chat_room_bans (room_id, user_id, banned_by, reason, banned_at) VALUES (?, ?, ?, '', ?)",
+        (room_id, target_user_id, user["id"], time.time())
+    )
+    conn.commit()
+    return {"ok": True}
+
+
+@router.post("/{room_id}/unban/{target_user_id}")
+async def unban_member(room_id: str, target_user_id: int, request: Request):
+    """Unban a user (creator only)."""
+    user = get_current_user(request)
+    if not user:
+        raise HTTPException(status_code=401, detail="Not authenticated")
+    if not _is_room_creator(room_id, user["id"]):
+        raise HTTPException(status_code=403, detail="Chỉ chủ phòng mới có thể bỏ chặn")
+
+    conn = get_db()
+    conn.execute("DELETE FROM chat_room_bans WHERE room_id = ? AND user_id = ?", (room_id, target_user_id))
+    conn.commit()
+    return {"ok": True}
+
+
+@router.get("/{room_id}/members")
+async def get_members(room_id: str, request: Request):
+    """Get list of room members."""
+    user = get_current_user(request)
+    if not user:
+        raise HTTPException(status_code=401, detail="Not authenticated")
+    if not _is_room_member(room_id, user["id"]):
+        raise HTTPException(status_code=403, detail="Not a member")
+
+    conn = get_db()
+    rows = conn.execute("""
+        SELECT crm.user_id, crm.joined_at, u.display_name, u.avatar_url, u.avatar_color
+        FROM chat_room_members crm
+        JOIN users u ON crm.user_id = u.id
+        WHERE crm.room_id = ?
+        ORDER BY crm.joined_at ASC
+    """, (room_id,)).fetchall()
+
+    room = _get_room(room_id)
+    members = []
+    for r in rows:
+        members.append({
+            "user_id": r["user_id"],
+            "display_name": r["display_name"] or "User",
+            "avatar_url": r["avatar_url"] or "",
+            "avatar_color": r["avatar_color"] or "#8b5cf6",
+            "joined_at": r["joined_at"],
+            "is_creator": str(r["user_id"]) == str(room["created_by"]) if room else False,
+        })
+
+    # Also get banned list (for creator)
+    banned = []
+    if room and str(room["created_by"]) == str(user["id"]):
+        ban_rows = conn.execute("""
+            SELECT crb.user_id, crb.banned_at, u.display_name
+            FROM chat_room_bans crb
+            LEFT JOIN users u ON crb.user_id = u.id
+            WHERE crb.room_id = ?
+        """, (room_id,)).fetchall()
+        for br in ban_rows:
+            banned.append({
+                "user_id": br["user_id"],
+                "display_name": br["display_name"] or "User",
+                "banned_at": br["banned_at"],
+            })
+
+    return {"members": members, "banned": banned}
+
+
+@router.post("/{room_id}/pin/{msg_id}")
+async def pin_message(room_id: str, msg_id: str, request: Request):
+    """Pin/unpin a message (creator only)."""
+    user = get_current_user(request)
+    if not user:
+        raise HTTPException(status_code=401, detail="Not authenticated")
+    if not _is_room_creator(room_id, user["id"]):
+        raise HTTPException(status_code=403, detail="Chỉ chủ phòng mới có thể ghim tin nhắn")
+
+    conn = get_db()
+    msg = conn.execute("SELECT pinned FROM chat_messages WHERE id = ? AND room_id = ?", (msg_id, room_id)).fetchone()
+    if not msg:
+        raise HTTPException(status_code=404, detail="Message not found")
+
+    new_val = 0 if msg["pinned"] else 1
+    conn.execute("UPDATE chat_messages SET pinned = ? WHERE id = ?", (new_val, msg_id))
+    conn.commit()
+    return {"ok": True, "pinned": bool(new_val)}
+
+
+@router.get("/{room_id}/pinned")
+async def get_pinned_messages(room_id: str, request: Request):
+    """Get pinned messages for a room."""
+    user = get_current_user(request)
+    if not user:
+        raise HTTPException(status_code=401, detail="Not authenticated")
+    if not _is_room_member(room_id, user["id"]):
+        raise HTTPException(status_code=403, detail="Not a member")
+
+    conn = get_db()
+    rows = conn.execute(
+        "SELECT id, user_id, content, image_url, created_at FROM chat_messages WHERE room_id = ? AND pinned = 1 ORDER BY created_at DESC",
+        (room_id,)
+    ).fetchall()
+
+    messages = []
+    for row in rows:
+        user_info = _get_user_info(row["user_id"])
+        messages.append({
+            "id": row["id"],
+            "user_id": row["user_id"],
+            "username": user_info["username"],
+            "content": row["content"],
+            "image_url": row["image_url"] if "image_url" in row.keys() else "",
+            "created_at": row["created_at"],
+        })
+    return {"messages": messages}
+
+
+class EditRoomBody(BaseModel):
+    name: Optional[str] = None
+    icon: Optional[str] = None
+    is_public: Optional[bool] = None
+    max_members: Optional[int] = None
+
+
+@router.put("/{room_id}")
+async def edit_room(room_id: str, body: EditRoomBody, request: Request):
+    """Edit room settings (creator only)."""
+    user = get_current_user(request)
+    if not user:
+        raise HTTPException(status_code=401, detail="Not authenticated")
+    if not _is_room_creator(room_id, user["id"]):
+        raise HTTPException(status_code=403, detail="Chỉ chủ phòng mới có thể chỉnh sửa")
+
+    conn = get_db()
+    updates = []
+    params = []
+    if body.name is not None:
+        updates.append("name = ?")
+        params.append(body.name.strip()[:100])
+    if body.icon is not None:
+        updates.append("icon = ?")
+        params.append(body.icon[:10])
+    if body.is_public is not None:
+        updates.append("is_public = ?")
+        params.append(int(body.is_public))
+    if body.max_members is not None:
+        updates.append("max_members = ?")
+        params.append(max(2, min(200, body.max_members)))
+
+    if updates:
+        params.append(room_id)
+        conn.execute(f"UPDATE chat_rooms SET {', '.join(updates)} WHERE id = ?", params)
+        conn.commit()
+
+    return {"ok": True}
+
+
+@router.post("/{room_id}/clear-messages")
+async def clear_all_messages(room_id: str, request: Request):
+    """Delete all messages in the room (creator only)."""
+    user = get_current_user(request)
+    if not user:
+        raise HTTPException(status_code=401, detail="Not authenticated")
+    if not _is_room_creator(room_id, user["id"]):
+        raise HTTPException(status_code=403, detail="Chỉ chủ phòng mới có thể xóa tất cả tin nhắn")
+
+    conn = get_db()
+    conn.execute("DELETE FROM chat_messages WHERE room_id = ?", (room_id,))
+    conn.commit()
     return {"ok": True}
 
 
