@@ -248,13 +248,62 @@ function _srRenderVideos() {
     }
 
     el.innerHTML = videos.map(function(v) {
-        return '<div class="sr-video-card">'
+        var hasLocal = _srHasVideoInHistory(v.video_id);
+        var actionHtml = hasLocal
+            ? '<button class="sr-video-view-btn" onclick="event.stopPropagation();srViewVideo(\'' + v.video_id + '\')">📖 Xem phân tích</button>'
+            : '<button class="sr-video-analyze-btn" onclick="event.stopPropagation();srAnalyzeVideo(\'' + v.video_id + '\')">🔍 Phân tích</button>';
+
+        return '<div class="sr-video-card" onclick="srViewVideo(\'' + v.video_id + '\')" style="cursor:pointer">'
             + (v.thumbnail ? '<img class="sr-video-thumb" src="' + v.thumbnail + '" alt="">' : '<div class="sr-video-thumb-placeholder">🎬</div>')
             + '<div class="sr-video-info">'
             + '<div class="sr-video-title">' + _srEsc(v.title || v.video_id) + '</div>'
             + '<div class="sr-video-meta">Thêm lúc ' + new Date(v.added_at).toLocaleDateString('vi-VN') + '</div>'
-            + '</div></div>';
+            + '</div>'
+            + '<div class="sr-video-actions">' + actionHtml + '</div>'
+            + '</div>';
     }).join('');
+}
+
+function _srHasVideoInHistory(videoId) {
+    try {
+        var history = JSON.parse(localStorage.getItem('lectureDigest_history') || '[]');
+        for (var i = 0; i < history.length; i++) {
+            if (history[i].video_id === videoId && history[i].data) return true;
+        }
+    } catch(e) {}
+    return false;
+}
+
+function srViewVideo(videoId) {
+    // Try to load from local history first
+    if (typeof loadFromHistory === 'function') {
+        var history = [];
+        try { history = JSON.parse(localStorage.getItem('lectureDigest_history') || '[]'); } catch(e) {}
+        var entry = null;
+        for (var i = 0; i < history.length; i++) {
+            if (history[i].video_id === videoId && history[i].data) {
+                entry = history[i];
+                break;
+            }
+        }
+        if (entry) {
+            loadFromHistory(entry.entry_id || entry.video_id);
+            return;
+        }
+    }
+    // Not in local history — offer to analyze
+    srAnalyzeVideo(videoId);
+}
+
+function srAnalyzeVideo(videoId) {
+    var url = 'https://www.youtube.com/watch?v=' + videoId;
+    var urlInput = document.getElementById('urlInput');
+    if (urlInput) urlInput.value = url;
+    showSection('hero');
+    // Auto-trigger analysis
+    setTimeout(function() {
+        if (typeof analyzeVideo === 'function') analyzeVideo();
+    }, 200);
 }
 
 async function srAddCurrentVideo() {

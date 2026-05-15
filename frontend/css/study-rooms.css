@@ -378,6 +378,38 @@
     margin-top: 2px;
 }
 
+.sr-video-actions {
+    flex-shrink: 0;
+}
+
+.sr-video-view-btn, .sr-video-analyze-btn {
+    padding: 6px 12px;
+    border-radius: 8px;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    border: none;
+    transition: all 0.2s;
+}
+
+.sr-video-view-btn {
+    background: rgba(139, 92, 246, 0.15);
+    color: #a78bfa;
+}
+
+.sr-video-view-btn:hover {
+    background: rgba(139, 92, 246, 0.25);
+}
+
+.sr-video-analyze-btn {
+    background: rgba(59, 130, 246, 0.15);
+    color: #93c5fd;
+}
+
+.sr-video-analyze-btn:hover {
+    background: rgba(59, 130, 246, 0.25);
+}
+
 /* ── Progress ── */
 .sr-progress-grid {
     display: flex;
