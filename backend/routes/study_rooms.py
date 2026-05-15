@@ -710,6 +710,16 @@ async def post_comment(room_id: str, req: PostCommentRequest, request: Request):
     conn.commit()
     conn.close()
 
+    # Notify room members about new comment
+    display_name = user.get("display_name", "Ai đó")
+    short_content = req.content[:60] + ("..." if len(req.content) > 60 else "")
+    create_notification_for_room_members(
+        room_id, "room_comment",
+        f"💬 {display_name}: {short_content}",
+        "",
+        "/rooms", exclude_user_id=uid
+    )
+
     return {
         "id": comment_id,
         "video_id": req.video_id,

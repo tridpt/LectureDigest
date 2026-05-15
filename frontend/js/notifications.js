@@ -17,6 +17,8 @@ function notifInit() {
     if (!token) return;
     notifFetch();
     _notifStartPolling();
+    // Check local reminders after a short delay
+    setTimeout(_notifCheckLocalReminders, 3000);
 }
 
 function _notifStartPolling() {
@@ -147,15 +149,17 @@ function _notifTimeAgo(ts) {
 // ══════════════════════════════════════════════════════
 
 async function notifClick(id, link) {
-    // Mark as read
-    var token = localStorage.getItem('ld_auth_token');
-    if (token) {
-        try {
-            await fetchWithTimeout(API_BASE + '/api/notifications/read/' + id, {
-                method: 'POST',
-                headers: { 'Authorization': 'Bearer ' + token }
-            }, 5000);
-        } catch(e) {}
+    // Mark as read — only call server for server-side notifications (id > 0)
+    if (id > 0) {
+        var token = localStorage.getItem('ld_auth_token');
+        if (token) {
+            try {
+                await fetchWithTimeout(API_BASE + '/api/notifications/read/' + id, {
+                    method: 'POST',
+                    headers: { 'Authorization': 'Bearer ' + token }
+                }, 5000);
+            } catch(e) {}
+        }
     }
 
     // Update local state
@@ -224,3 +228,112 @@ document.addEventListener('click', function(e) {
         closeNotifPanel();
     }
 });
+
+// ══════════════════════════════════════════════════════
+// LOCAL REMINDERS (SRS + Study Plan)
+// ══════════════════════════════════════════════════════
+
+var _NOTIF_LOCAL_KEY = 'lectureDigest_localNotifDate';
+
+function _notifCheckLocalReminders() {
+    // Only show once per day
+    var today = new Date().toISOString().split('T')[0];
+    var lastCheck = localStorage.getItem(_NOTIF_LOCAL_KEY) || '';
+    if (lastCheck === today) return;
+
+    var added = false;
+
+    // 1. SRS Flashcard reminder
+    added = _notifCheckSRS() || added;
+
+    // 2. Study Plan reminder
+    added = _notifCheckStudyPlan() || added;
+
+    // Mark today as checked
+    safeLsSet(_NOTIF_LOCAL_KEY, today);
+
+    // If we added local notifications, update the panel
+    if (added) {
+        _notifUpdateBadge();
+        if (_notifPanelOpen) _notifRenderPanel();
+    }
+}
+
+function _notifCheckSRS() {
+    // Count due flashcards across all videos
+    var today = new Date().toISOString().split('T')[0];
+    var dueCount = 0;
+
+    try {
+        for (var i = 0; i < localStorage.length; i++) {
+            var key = localStorage.key(i);
+            if (!key || key.indexOf('lectureDigest_sm2_') !== 0) continue;
+            var sm2Data = JSON.parse(localStorage.getItem(key));
+            for (var cardKey in sm2Data) {
+                var card = sm2Data[cardKey];
+                if (!card.nextReview || card.nextReview <= today) dueCount++;
+            }
+        }
+    } catch(e) {}
+
+    if (dueCount > 0) {
+        // Add local notification to the list
+        _notifData.unshift({
+            id: -1,
+            type: 'srs_reminder',
+            title: '🧠 Bạn có ' + dueCount + ' flashcard cần ôn tập',
+            message: 'Ôn tập hàng ngày giúp ghi nhớ lâu hơn!',
+            link: '/review',
+            is_read: false,
+            created_at: Date.now(),
+            _local: true
+        });
+        _notifUnread++;
+        return true;
+    }
+    return false;
+}
+
+function _notifCheckStudyPlan() {
+    try {
+        var planRaw = localStorage.getItem('lectureDigest_studyPlan');
+        if (!planRaw) return false;
+        var plan = JSON.parse(planRaw);
+        if (!plan || !plan.weekly_schedule) return false;
+
+        // Count total tasks and completed tasks
+        var completedRaw = localStorage.getItem('lectureDigest_studyPlan_completed');
+        var completed = completedRaw ? JSON.parse(completedRaw) : {};
+
+        var totalTasks = 0;
+        var completedCount = 0;
+        var schedule = plan.weekly_schedule || [];
+        for (var w = 0; w < schedule.length; w++) {
+            var days = schedule[w].days || [];
+            for (var d = 0; d < days.length; d++) {
+                var tasks = days[d].tasks || [];
+                for (var t = 0; t < tasks.length; t++) {
+                    totalTasks++;
+                    if (completed[w + '-' + d + '-' + t]) completedCount++;
+                }
+            }
+        }
+
+        var remaining = totalTasks - completedCount;
+        if (remaining > 0 && completedCount < totalTasks) {
+            _notifData.unshift({
+                id: -2,
+                type: 'study_plan',
+                title: '📅 Lộ trình: còn ' + remaining + ' nhiệm vụ chưa hoàn thành',
+                message: 'Tiếp tục học để đạt mục tiêu!',
+                link: '/study-plan',
+                is_read: false,
+                created_at: Date.now(),
+                _local: true
+            });
+            _notifUnread++;
+            return true;
+        }
+    } catch(e) {}
+    return false;
+}
