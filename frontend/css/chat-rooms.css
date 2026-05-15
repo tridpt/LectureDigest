@@ -810,3 +810,124 @@
     }
 }
 /* Hide global footer when chat rooms are visible */
+
+/* ── Image upload button ── */
+.cr-img-btn {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: var(--text-secondary, #94a3b8);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    transition: all 0.2s;
+}
+
+.cr-img-btn:hover {
+    background: rgba(139, 92, 246, 0.15);
+    border-color: rgba(139, 92, 246, 0.3);
+    color: #a78bfa;
+}
+
+/* ── Image preview (before send) ── */
+.cr-img-preview {
+    padding: 8px 12px;
+    border-top: 1px solid rgba(255, 255, 255, 0.08);
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+.cr-img-preview img {
+    max-height: 120px;
+    max-width: 200px;
+    border-radius: 10px;
+    object-fit: cover;
+}
+
+.cr-img-preview-close {
+    position: absolute;
+    top: 4px;
+    right: 12px;
+    background: rgba(239, 68, 68, 0.9);
+    color: #fff;
+    border: none;
+    border-radius: 50%;
+    width: 24px;
+    height: 24px;
+    font-size: 14px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* ── Image in message bubble ── */
+.cr-msg-image {
+    margin: 4px 0;
+}
+
+.cr-msg-image img {
+    max-width: 250px;
+    max-height: 200px;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: opacity 0.2s;
+    display: block;
+}
+
+.cr-msg-image img:hover {
+    opacity: 0.85;
+}
+
+/* ── Full-screen image viewer ── */
+.cr-img-viewer {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.85);
+    backdrop-filter: blur(8px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 99999;
+    cursor: pointer;
+}
+
+.cr-img-viewer img {
+    max-width: 90vw;
+    max-height: 90vh;
+    border-radius: 8px;
+    object-fit: contain;
+}
+
+.cr-img-viewer-close {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    background: rgba(255, 255, 255, 0.15);
+    color: #fff;
+    border: none;
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+    font-size: 20px;
+    cursor: pointer;
+}
+
+/* Light mode */
+.light-mode .cr-img-btn {
+    background: rgba(0, 0, 0, 0.04);
+    border-color: rgba(0, 0, 0, 0.1);
+    color: #64748b;
+}
+.light-mode .cr-img-btn:hover {
+    background: rgba(139, 92, 246, 0.08);
+    color: #7c3aed;
+}
+.light-mode .cr-img-preview {
+    border-color: rgba(0, 0, 0, 0.08);
+}

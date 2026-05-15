@@ -46,7 +46,15 @@
                 <div class="cr-messages-list" id="crMessagesList"></div>
             </div>
 
+            <div class="cr-img-preview hidden" id="crImgPreview">
+                <img id="crImgPreviewImg" src="" alt="Preview">
+                <button type="button" class="cr-img-preview-close" onclick="crCancelImage()">✕</button>
+            </div>
             <div class="cr-input-bar">
+                <button type="button" class="cr-img-btn" onclick="document.getElementById('crImageInput').click()" title="Gửi ảnh" aria-label="Gửi ảnh">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>
+                </button>
+                <input type="file" id="crImageInput" accept="image/jpeg,image/png,image/gif,image/webp" style="display:none" onchange="crPreviewImage(this)">
                 <input type="text" class="cr-message-input" id="crMessageInput"
                        placeholder="Nhập tin nhắn..." maxlength="2000"
                        onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();crSendMessage();}">

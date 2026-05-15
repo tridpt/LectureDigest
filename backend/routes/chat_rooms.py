@@ -3,10 +3,12 @@ Chat Rooms — standalone real-time chat system.
 Users can create/join chat rooms and message each other.
 """
 
+import os
 import time
 import logging
+import secrets
 
-from fastapi import APIRouter, HTTPException, Request
+from fastapi import APIRouter, HTTPException, Request, UploadFile, File
 from pydantic import BaseModel, Field
 from typing import Optional
 
@@ -44,13 +46,21 @@ def _init_chat_rooms_tables():
             id TEXT PRIMARY KEY,
             room_id TEXT NOT NULL,
             user_id TEXT NOT NULL,
-            content TEXT NOT NULL,
+            content TEXT NOT NULL DEFAULT '',
+            image_url TEXT DEFAULT '',
             created_at REAL NOT NULL
         );
         CREATE INDEX IF NOT EXISTS idx_chat_messages_room ON chat_messages(room_id, created_at);
         CREATE INDEX IF NOT EXISTS idx_chat_room_members_user ON chat_room_members(user_id);
     """)
     conn.commit()
+
+    # Migration: add image_url column if missing
+    try:
+        conn.execute("ALTER TABLE chat_messages ADD COLUMN image_url TEXT DEFAULT ''")
+        conn.commit()
+    except:
+        pass
 
 
 # Initialize tables on module load
@@ -72,7 +82,8 @@ class CreateRoomBody(BaseModel):
 
 
 class SendMessageBody(BaseModel):
-    content: str = Field(..., min_length=1, max_length=2000)
+    content: str = Field(default='', max_length=2000)
+    image_url: str = ''
 
 
 # ═══════════════════════════════════════════════════════
@@ -80,7 +91,6 @@ class SendMessageBody(BaseModel):
 # ═══════════════════════════════════════════════════════
 
 def _generate_id():
-    import secrets
     return secrets.token_hex(12)
 
 
@@ -341,6 +351,7 @@ async def get_messages(room_id: str, request: Request, limit: int = 50, before: 
             "username": user_info["username"],
             "avatar_url": user_info["avatar_url"],
             "content": row["content"],
+            "image_url": row["image_url"] if "image_url" in row.keys() else "",
             "created_at": row["created_at"],
         })
 
@@ -356,6 +367,9 @@ async def send_message(room_id: str, body: SendMessageBody, request: Request):
     if not user:
         raise HTTPException(status_code=401, detail="Not authenticated")
 
+    if not body.content.strip() and not body.image_url.strip():
+        raise HTTPException(status_code=400, detail="Message must have content or image")
+
     if not _is_room_member(room_id, user["id"]):
         raise HTTPException(status_code=403, detail="Not a member of this room")
 
@@ -364,8 +378,8 @@ async def send_message(room_id: str, body: SendMessageBody, request: Request):
     now = time.time()
 
     conn.execute(
-        "INSERT INTO chat_messages (id, room_id, user_id, content, created_at) VALUES (?, ?, ?, ?, ?)",
-        (msg_id, room_id, user["id"], body.content.strip(), now)
+        "INSERT INTO chat_messages (id, room_id, user_id, content, image_url, created_at) VALUES (?, ?, ?, ?, ?, ?)",
+        (msg_id, room_id, user["id"], body.content.strip(), body.image_url.strip(), now)
     )
     conn.commit()
 
@@ -379,6 +393,7 @@ async def send_message(room_id: str, body: SendMessageBody, request: Request):
             "username": user_info["username"],
             "avatar_url": user_info["avatar_url"],
             "content": body.content.strip(),
+            "image_url": body.image_url.strip(),
             "created_at": now,
         }
     }
@@ -410,3 +425,47 @@ async def delete_message(room_id: str, msg_id: str, request: Request):
     conn.commit()
 
     return {"ok": True}
+
+
+# ═══════════════════════════════════════════════════════
+# IMAGE UPLOAD
+# ═══════════════════════════════════════════════════════
+
+_CHAT_UPLOAD_DIR = os.path.join(os.path.dirname(os.path.dirname(__file__)), "uploads", "chat")
+_MAX_IMAGE_SIZE = 5 * 1024 * 1024  # 5MB
+_ALLOWED_TYPES = {"image/jpeg", "image/png", "image/gif", "image/webp"}
+
+
+@router.post("/upload-image")
+async def upload_chat_image(request: Request, file: UploadFile = File(...)):
+    """Upload an image for chat. Returns the URL to use in messages."""
+    user = get_current_user(request)
+    if not user:
+        raise HTTPException(status_code=401, detail="Not authenticated")
+
+    # Validate content type
+    if file.content_type not in _ALLOWED_TYPES:
+        raise HTTPException(status_code=400, detail="Chỉ hỗ trợ JPEG, PNG, GIF, WebP")
+
+    # Read and validate size
+    data = await file.read()
+    if len(data) > _MAX_IMAGE_SIZE:
+        raise HTTPException(status_code=400, detail="Ảnh tối đa 5MB")
+
+    # Ensure upload directory exists
+    os.makedirs(_CHAT_UPLOAD_DIR, exist_ok=True)
+
+    # Generate unique filename
+    ext = file.filename.rsplit('.', 1)[-1].lower() if '.' in file.filename else 'jpg'
+    if ext not in ('jpg', 'jpeg', 'png', 'gif', 'webp'):
+        ext = 'jpg'
+    filename = f"{secrets.token_hex(16)}.{ext}"
+    filepath = os.path.join(_CHAT_UPLOAD_DIR, filename)
+
+    # Save file
+    with open(filepath, 'wb') as f:
+        f.write(data)
+
+    # Return URL (served as static file)
+    image_url = f"/uploads/chat/{filename}"
+    return {"ok": True, "image_url": image_url}

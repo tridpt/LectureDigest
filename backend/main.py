@@ -276,6 +276,23 @@ logger.info(f"🚀 LectureDigest API ready (startup: {_startup_time.time() - _st
 
 
 # ═══════════════════════════════════════════════════════
+# SERVE UPLOADED FILES (chat images, etc.)
+# ═══════════════════════════════════════════════════════
+
+_UPLOADS_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), "uploads"))
+
+@app.get("/uploads/{file_path:path}", include_in_schema=False)
+async def serve_upload(file_path: str):
+    """Serve uploaded files (chat images)."""
+    target = os.path.abspath(os.path.join(_UPLOADS_DIR, file_path))
+    if not target.startswith(_UPLOADS_DIR):
+        raise HTTPException(status_code=403, detail="Forbidden")
+    if not os.path.isfile(target):
+        raise HTTPException(status_code=404, detail="Not found")
+    return FileResponse(target)
+
+
+# ═══════════════════════════════════════════════════════
 # FRONTEND SPA SERVING
 # ═══════════════════════════════════════════════════════
 

@@ -226,7 +226,12 @@ function _crRenderMessages() {
         if (!isOwn) {
             html += '<div class="cr-msg-name">' + _crEsc(msg.username) + '</div>';
         }
-        html += '<div class="cr-msg-content">' + _crEsc(msg.content) + '</div>';
+        if (msg.image_url) {
+            html += '<div class="cr-msg-image"><img src="' + _crEsc(msg.image_url) + '" alt="Ảnh" onclick="crViewImage(\'' + _crEsc(msg.image_url) + '\')"></div>';
+        }
+        if (msg.content) {
+            html += '<div class="cr-msg-content">' + _crEsc(msg.content) + '</div>';
+        }
         html += '<div class="cr-msg-time">' + timeStr + '</div>';
         html += '</div>';
         if (!isOwn) html += menuHtml;
@@ -291,36 +296,92 @@ function _crFormatTime(ts) {
 // SEND MESSAGE
 // ══════════════════════════════════════════════════════
 
-function crSendMessage() {
+var _crPendingImage = null; // File object waiting to be sent
+
+function crPreviewImage(input) {
+    if (!input.files || !input.files[0]) return;
+    var file = input.files[0];
+    if (file.size > 5 * 1024 * 1024) {
+        showToast('Ảnh tối đa 5MB', 3000);
+        input.value = '';
+        return;
+    }
+    _crPendingImage = file;
+    var reader = new FileReader();
+    reader.onload = function(e) {
+        var preview = document.getElementById('crImgPreview');
+        var img = document.getElementById('crImgPreviewImg');
+        if (img) img.src = e.target.result;
+        if (preview) preview.classList.remove('hidden');
+    };
+    reader.readAsDataURL(file);
+}
+
+function crCancelImage() {
+    _crPendingImage = null;
+    var preview = document.getElementById('crImgPreview');
+    if (preview) preview.classList.add('hidden');
+    var input = document.getElementById('crImageInput');
+    if (input) input.value = '';
+}
+
+async function crSendMessage() {
     if (!_crCurrentRoom) return;
     var input = document.getElementById('crMessageInput');
     if (!input) return;
     var content = input.value.trim();
-    if (!content) return;
+
+    // Must have content or image
+    if (!content && !_crPendingImage) return;
 
     var headers = _crAuthHeaders();
     if (!headers) return;
 
+    var imageUrl = '';
+
+    // Upload image first if pending
+    if (_crPendingImage) {
+        try {
+            var formData = new FormData();
+            formData.append('file', _crPendingImage);
+            var token = localStorage.getItem('ld_auth_token') || '';
+            var uploadRes = await fetchWithTimeout('/api/chat-rooms/upload-image', {
+                method: 'POST',
+                headers: { 'Authorization': 'Bearer ' + token },
+                body: formData
+            }, 30000);
+            if (!uploadRes.ok) {
+                var err = await uploadRes.json().catch(function() { return {}; });
+                throw new Error(err.detail || 'Upload failed');
+            }
+            var uploadData = await uploadRes.json();
+            imageUrl = uploadData.image_url || '';
+        } catch(e) {
+            showToast('Không thể tải ảnh: ' + e.message, 3000);
+            return;
+        }
+        crCancelImage();
+    }
+
     input.value = '';
 
-    fetchWithTimeout('/api/chat-rooms/' + _crCurrentRoom.id + '/messages', {
-        method: 'POST',
-        headers: headers,
-        body: JSON.stringify({ content: content })
-    }, 10000)
-        .then(function(r) { return r.json(); })
-        .then(function(data) {
-            if (data.ok && data.message) {
-                _crMessages.push(data.message);
-                _crRenderMessages();
-                _crScrollToBottom();
-            }
-        })
-        .catch(function(err) {
-            console.error('Failed to send message:', err);
-            showToast('Không thể gửi tin nhắn', 3000);
-            input.value = content; // restore
-        });
+    try {
+        var res = await fetchWithTimeout('/api/chat-rooms/' + _crCurrentRoom.id + '/messages', {
+            method: 'POST',
+            headers: headers,
+            body: JSON.stringify({ content: content, image_url: imageUrl })
+        }, 10000);
+        var data = await res.json();
+        if (data.ok && data.message) {
+            _crMessages.push(data.message);
+            _crRenderMessages();
+            _crScrollToBottom();
+        }
+    } catch(err) {
+        console.error('Failed to send message:', err);
+        showToast('Không thể gửi tin nhắn', 3000);
+        input.value = content;
+    }
 }
 
 // ══════════════════════════════════════════════════════
@@ -613,4 +674,12 @@ function _crEsc(str) {
     var div = document.createElement('div');
     div.textContent = str;
     return div.innerHTML;
+}
+
+function crViewImage(url) {
+    var overlay = document.createElement('div');
+    overlay.className = 'cr-img-viewer';
+    overlay.onclick = function() { overlay.remove(); };
+    overlay.innerHTML = '<img src="' + url + '" alt="Ảnh"><button class="cr-img-viewer-close" onclick="this.parentElement.remove()">✕</button>';
+    document.body.appendChild(overlay);
 }
