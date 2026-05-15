@@ -14,6 +14,7 @@ from typing import Optional
 
 from database import get_db
 from routes.auth import get_current_user
+from routes.notifications import create_notification
 
 router = APIRouter(prefix="/api/chat-rooms", tags=["chat-rooms"])
 logger = logging.getLogger("chat-rooms")
@@ -936,6 +937,34 @@ async def report_message(room_id: str, msg_id: str, request: Request, body: Repo
         (room_id, msg_id, user["id"], body.reason, time.time())
     )
     conn.commit()
+
+    # Notify room creator and admins
+    room = _get_room(room_id)
+    if room:
+        reporter_name = user.get("display_name", "Ai đó")
+        # Notify creator
+        creator_id = room["created_by"]
+        if str(creator_id) != str(user["id"]):
+            create_notification(
+                int(creator_id) if str(creator_id).isdigit() else creator_id,
+                "chat_report",
+                f"⚠️ Báo cáo mới trong phòng \"{room['name']}\"",
+                f"{reporter_name} đã báo cáo một tin nhắn" + (f": {body.reason}" if body.reason else ""),
+                "/chat"
+            )
+        # Notify admins
+        admin_rows = conn.execute(
+            "SELECT user_id FROM chat_room_members WHERE room_id = ? AND role = 'admin'", (room_id,)
+        ).fetchall()
+        for ar in admin_rows:
+            if str(ar["user_id"]) != str(user["id"]) and str(ar["user_id"]) != str(creator_id):
+                create_notification(
+                    ar["user_id"], "chat_report",
+                    f"⚠️ Báo cáo mới trong phòng \"{room['name']}\"",
+                    f"{reporter_name} đã báo cáo một tin nhắn",
+                    "/chat"
+                )
+
     return {"ok": True, "message": "Đã báo cáo tin nhắn"}
 
 
