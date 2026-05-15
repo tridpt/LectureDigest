@@ -332,12 +332,12 @@ async def get_messages(room_id: str, request: Request, limit: int = 50, before: 
     conn = get_db()
     if before:
         rows = conn.execute(
-            "SELECT id, room_id, user_id, content, created_at FROM chat_messages WHERE room_id = ? AND created_at < ? ORDER BY created_at DESC LIMIT ?",
+            "SELECT id, room_id, user_id, content, image_url, created_at FROM chat_messages WHERE room_id = ? AND created_at < ? ORDER BY created_at DESC LIMIT ?",
             (room_id, before, min(limit, 100))
         ).fetchall()
     else:
         rows = conn.execute(
-            "SELECT id, room_id, user_id, content, created_at FROM chat_messages WHERE room_id = ? ORDER BY created_at DESC LIMIT ?",
+            "SELECT id, room_id, user_id, content, image_url, created_at FROM chat_messages WHERE room_id = ? ORDER BY created_at DESC LIMIT ?",
             (room_id, min(limit, 100))
         ).fetchall()
 
