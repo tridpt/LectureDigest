@@ -401,13 +401,17 @@ async def join_room(room_id: str, request: Request):
 
 @router.post("/{room_id}/leave")
 async def leave_room(room_id: str, request: Request):
-    """Leave a chat room."""
+    """Leave a chat room. Creator must transfer ownership first."""
     user = get_current_user(request)
     if not user:
         raise HTTPException(status_code=401, detail="Not authenticated")
 
     if not _is_room_member(room_id, user["id"]):
         raise HTTPException(status_code=400, detail="Not a member")
+
+    # Creator cannot leave — must transfer ownership or delete room
+    if _is_room_creator(room_id, user["id"]):
+        raise HTTPException(status_code=400, detail="Chủ phòng không thể rời. Hãy chuyển quyền chủ phòng hoặc xóa phòng.")
 
     conn = get_db()
     now = time.time()
@@ -422,6 +426,28 @@ async def leave_room(room_id: str, request: Request):
         "INSERT INTO chat_messages (id, room_id, user_id, content, image_url, created_at) VALUES (?, ?, ?, ?, '', ?)",
         (msg_id, room_id, '__system__', f'🚪 {display_name} đã rời phòng', now)
     )
+    conn.commit()
+
+    return {"ok": True}
+
+
+@router.post("/{room_id}/transfer/{new_owner_id}")
+async def transfer_ownership(room_id: str, new_owner_id: int, request: Request):
+    """Transfer room ownership to another member (creator only)."""
+    user = get_current_user(request)
+    if not user:
+        raise HTTPException(status_code=401, detail="Not authenticated")
+    if not _is_room_creator(room_id, user["id"]):
+        raise HTTPException(status_code=403, detail="Chỉ chủ phòng mới có thể chuyển quyền")
+    if str(new_owner_id) == str(user["id"]):
+        raise HTTPException(status_code=400, detail="Không thể chuyển cho chính mình")
+
+    # Check new owner is a member
+    if not _is_room_member(room_id, new_owner_id):
+        raise HTTPException(status_code=400, detail="Người này không phải thành viên")
+
+    conn = get_db()
+    conn.execute("UPDATE chat_rooms SET created_by = ? WHERE id = ?", (new_owner_id, room_id))
     conn.commit()
 
     return {"ok": True}

@@ -164,10 +164,8 @@ function crOpenRoom(roomId) {
     // Show/hide admin items in header menu
     var isCreator = String(room.created_by) === _crCurrentUserId;
     var hmClear = document.getElementById('crHmClear');
-    var hmDelete = document.getElementById('crHmDelete');
     var reportsBtn = document.getElementById('crReportsBtn');
     if (hmClear) hmClear.style.display = isCreator ? '' : 'none';
-    if (hmDelete) hmDelete.style.display = isCreator ? '' : 'none';
     // Show reports button for admin/creator
     if (reportsBtn) {
         reportsBtn.classList.add('hidden'); // hidden until _crCheckReports confirms admin
@@ -752,8 +750,28 @@ async function crShowRoomInfo() {
             + '<div class="cr-info-edit-row"><label>Tên phòng</label><input type="text" class="cr-input" id="crInfoEditName" value="' + _crEsc(room.name) + '" maxlength="100"></div>'
             + '<div class="cr-info-edit-row"><label>Loại</label><select class="cr-input" id="crInfoEditPublic"><option value="1"' + (room.is_public ? ' selected' : '') + '>Công khai</option><option value="0"' + (!room.is_public ? ' selected' : '') + '>Riêng tư</option></select></div>'
             + '<div class="cr-info-edit-row"><label>Tối đa</label><input type="number" class="cr-input" id="crInfoEditMax" value="' + room.max_members + '" min="2" max="200"></div>'
-            + '<button class="cr-btn cr-btn-primary" style="width:100%;margin-top:10px" onclick="crSaveRoomInfo()">💾 Lưu thay đổi</button>'
+            + '<button class="cr-btn cr-btn-primary" style="width:100%;margin-top:10px" onclick="crSaveRoomInfo()">💾 Lưu thay đổi</button>';
+
+        // Transfer ownership
+        var otherMembers = members.filter(function(m) { return !m.is_creator; });
+        if (otherMembers.length > 0) {
+            html += '<div style="margin-top:16px;border-top:1px solid rgba(255,255,255,0.06);padding-top:12px">'
+                + '<h4 style="font-size:13px;color:var(--text-secondary,#94a3b8);margin:0 0 8px">👑 Chuyển quyền chủ phòng</h4>'
+                + '<select class="cr-input" id="crTransferSelect">';
+            otherMembers.forEach(function(m) {
+                html += '<option value="' + m.user_id + '">' + _crEsc(m.display_name) + '</option>';
+            });
+            html += '</select>'
+                + '<button class="cr-btn cr-btn-outline" style="width:100%;margin-top:8px" onclick="crTransferOwnership()">Chuyển quyền</button>'
+                + '</div>';
+        }
+
+        // Delete room
+        html += '<div style="margin-top:16px;border-top:1px solid rgba(248,113,113,0.2);padding-top:12px">'
+            + '<button class="cr-btn cr-btn-danger-sm" style="width:100%;padding:10px" onclick="document.getElementById(\'crInfoModal\').remove();crDeleteRoom()">🗑️ Xóa phòng vĩnh viễn</button>'
             + '</div>';
+
+        html += '</div>';
     }
 
     html += '</div></div></div>';
@@ -781,14 +799,44 @@ async function crSaveRoomInfo() {
         }, 10000);
         if (res.ok) {
             showToast('💾 Đã lưu', 2000);
-            // Update local state
             if (name) _crCurrentRoom.name = name;
             _crCurrentRoom.is_public = isPublic;
             _crCurrentRoom.max_members = maxMembers;
-            // Update header
             var nameEl = document.getElementById('crChatRoomName');
             if (nameEl && name) nameEl.textContent = name;
             document.getElementById('crInfoModal')?.remove();
+        } else {
+            var err = await res.json().catch(function() { return {}; });
+            showToast(err.detail || 'Lỗi', 3000);
+        }
+    } catch(e) { showToast('Lỗi', 3000); }
+}
+
+async function crTransferOwnership() {
+    if (!_crCurrentRoom) return;
+    var select = document.getElementById('crTransferSelect');
+    if (!select) return;
+    var newOwnerId = select.value;
+    if (!newOwnerId) return;
+
+    var result = await _crConfirmModal('👑 Chuyển quyền chủ phòng', 'Bạn sẽ mất quyền chủ phòng. Không thể hoàn tác.', [
+        { label: 'Hủy' }, { label: 'Chuyển quyền', danger: true }
+    ]);
+    if (result !== '1') return;
+
+    var headers = _crAuthHeaders();
+    if (!headers) return;
+
+    try {
+        var res = await fetchWithTimeout('/api/chat-rooms/' + _crCurrentRoom.id + '/transfer/' + newOwnerId, {
+            method: 'POST', headers: headers
+        }, 10000);
+        if (res.ok) {
+            showToast('👑 Đã chuyển quyền chủ phòng', 2000);
+            _crCurrentRoom.created_by = newOwnerId;
+            document.getElementById('crInfoModal')?.remove();
+            // Refresh room
+            crOpenRoom(_crCurrentRoom.id);
         } else {
             var err = await res.json().catch(function() { return {}; });
             showToast(err.detail || 'Lỗi', 3000);
