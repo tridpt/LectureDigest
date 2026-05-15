@@ -189,10 +189,48 @@ function _crLoadMessages() {
             _crMessages = data.messages || [];
             _crRenderMessages();
             _crScrollToBottom();
+            _crUpdateMuteStatus(data.muted_until);
         })
         .catch(function(err) {
             console.error('Failed to load messages:', err);
         });
+}
+
+function _crUpdateMuteStatus(mutedUntil) {
+    var inputBar = document.querySelector('.cr-input-bar');
+    var muteBar = document.getElementById('crMuteBar');
+
+    if (mutedUntil) {
+        var remaining = Math.max(0, Math.floor(mutedUntil - Date.now() / 1000));
+        var timeStr;
+        if (remaining > 86400) {
+            timeStr = Math.floor(remaining / 86400) + ' ngày ' + Math.floor((remaining % 86400) / 3600) + ' giờ';
+        } else if (remaining > 3600) {
+            timeStr = Math.floor(remaining / 3600) + ' giờ ' + Math.floor((remaining % 3600) / 60) + ' phút';
+        } else if (remaining > 60) {
+            timeStr = Math.floor(remaining / 60) + ' phút';
+        } else {
+            timeStr = remaining + ' giây';
+        }
+
+        // Hide input bar
+        if (inputBar) inputBar.style.display = 'none';
+
+        // Show mute notice
+        if (!muteBar) {
+            muteBar = document.createElement('div');
+            muteBar.id = 'crMuteBar';
+            muteBar.className = 'cr-mute-bar';
+            var chatContainer = document.querySelector('.cr-chat-container');
+            if (chatContainer) chatContainer.appendChild(muteBar);
+        }
+        muteBar.innerHTML = '🔇 Bạn đã bị cấm chat. Còn <strong>' + timeStr + '</strong> nữa.';
+        muteBar.style.display = '';
+    } else {
+        // Not muted — show input, hide mute bar
+        if (inputBar) inputBar.style.display = '';
+        if (muteBar) muteBar.style.display = 'none';
+    }
 }
 
 function _crRenderMessages() {
@@ -812,6 +850,7 @@ function _crStartPolling() {
                     _crRenderMessages();
                     _crScrollToBottom();
                 }
+                _crUpdateMuteStatus(data.muted_until);
             })
             .catch(function() {});
 

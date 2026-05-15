@@ -469,7 +469,10 @@ async def get_messages(room_id: str, request: Request, limit: int = 50, before: 
 
     # Return in chronological order
     messages.reverse()
-    return {"messages": messages}
+
+    # Include mute status for current user
+    muted_until = _is_muted(room_id, user["id"])
+    return {"messages": messages, "muted_until": muted_until}
 
 
 @router.post("/{room_id}/messages")

@@ -1110,3 +1110,18 @@ img.cr-member-av {
     font-weight: 600;
     margin-left: 6px;
 }
+
+/* ── Mute bar (replaces input when muted) ── */
+.cr-mute-bar {
+    padding: 14px 20px;
+    text-align: center;
+    background: rgba(248, 113, 113, 0.08);
+    border-top: 1px solid rgba(248, 113, 113, 0.2);
+    color: #f87171;
+    font-size: 14px;
+    flex-shrink: 0;
+}
+
+.cr-mute-bar strong {
+    color: #fca5a5;
+}
