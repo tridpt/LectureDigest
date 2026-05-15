@@ -175,6 +175,9 @@ function _authGetInitials(name) {
 function openAuthModal(mode) {
     var overlay = document.getElementById('authModalOverlay');
     if (!overlay) return;
+    // If modal is already open, don't reset the mode (user might be on register/forgot)
+    var isAlreadyOpen = !overlay.classList.contains('hidden');
+    if (isAlreadyOpen) return;
     overlay.classList.remove('hidden');
     _authSetMode(mode || 'login');
     // Re-render Google button (GSI needs visible container)
@@ -268,6 +271,11 @@ function _authSetMode(mode) {
         if (nameRow) nameRow.classList.toggle('hidden', !isRegister);
         if (submitBtn) submitBtn.textContent = isRegister ? 'Đăng ký' : 'Đăng nhập';
         if (forgotLink) forgotLink.classList.toggle('hidden', isRegister);
+
+        // Fix autocomplete for register vs login
+        var pwInput = document.getElementById('authPassword');
+        if (pwInput) pwInput.setAttribute('autocomplete', isRegister ? 'new-password' : 'current-password');
+
         if (switchText) {
             switchText.innerHTML = isRegister
                 ? 'Đã có tài khoản? <a href="#" onclick="event.preventDefault();_authSetMode(\'login\')">Đăng nhập</a>'

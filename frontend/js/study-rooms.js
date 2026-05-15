@@ -48,8 +48,13 @@ function _srAuthHeaders() {
     var token = '';
     try { token = localStorage.getItem('ld_auth_token') || ''; } catch(e) {}
     if (!token) {
-        showToast('Vui lòng đăng nhập để sử dụng phòng học nhóm', 3000);
-        if (typeof openAuthModal === 'function') openAuthModal('login');
+        // Only show auth modal if it's not already open
+        var overlay = document.getElementById('authModalOverlay');
+        var isAlreadyOpen = overlay && !overlay.classList.contains('hidden');
+        if (!isAlreadyOpen) {
+            showToast('Vui lòng đăng nhập để sử dụng phòng học nhóm', 3000);
+            if (typeof openAuthModal === 'function') openAuthModal('login');
+        }
         return null;
     }
     return {
