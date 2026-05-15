@@ -1008,3 +1008,66 @@ img.cr-member-av {
 .light-mode .cr-member-row:hover {
     background: rgba(0, 0, 0, 0.04);
 }
+
+/* ── Admin badge ── */
+.cr-admin-badge {
+    font-size: 11px;
+    color: #60a5fa;
+    font-weight: 600;
+}
+
+.cr-creator-badge {
+    font-size: 11px;
+    color: #fbbf24;
+    font-weight: 600;
+}
+
+/* ── Report items ── */
+.cr-report-item {
+    padding: 12px;
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    border-radius: 10px;
+    margin-bottom: 10px;
+}
+
+.cr-report-header {
+    font-size: 13px;
+    color: var(--text-secondary, #94a3b8);
+    margin-bottom: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 4px;
+}
+
+.cr-report-header strong {
+    color: var(--text-primary, #f1f5f9);
+}
+
+.cr-report-time {
+    font-size: 11px;
+    opacity: 0.6;
+}
+
+.cr-report-content {
+    font-size: 14px;
+    color: var(--text-primary, #f1f5f9);
+    padding: 8px 12px;
+    background: rgba(255, 255, 255, 0.04);
+    border-radius: 8px;
+    margin: 6px 0;
+    font-style: italic;
+}
+
+.cr-report-reason {
+    font-size: 12px;
+    color: #fbbf24;
+    margin-bottom: 8px;
+}
+
+.cr-report-actions {
+    display: flex;
+    gap: 6px;
+}

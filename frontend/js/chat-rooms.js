@@ -210,7 +210,8 @@ function _crRenderMessages() {
         // 3-dot menu (like Messenger)
         var menuHtml = '';
         var isCreator = _crCurrentRoom && String(_crCurrentRoom.created_by) === _crCurrentUserId;
-        if (canDelete || isCreator) {
+        var showMenu = canDelete || isCreator || !isOwn; // Everyone can report others
+        if (showMenu) {
             var menuItems = '';
             if (canDelete) {
                 menuItems += '<button class="cr-msg-menu-item cr-msg-menu-danger" onclick="event.stopPropagation();crDeleteMessage(\'' + msg.id + '\')">🗑️ Xóa tin nhắn</button>';
@@ -221,6 +222,10 @@ function _crRenderMessages() {
             }
             if (isCreator && !isOwn) {
                 menuItems += '<button class="cr-msg-menu-item cr-msg-menu-danger" onclick="event.stopPropagation();crBanUser(' + msg.user_id + ')">🚫 Chặn người này</button>';
+            }
+            // Report option for non-own messages (any member)
+            if (!isOwn) {
+                menuItems += '<button class="cr-msg-menu-item" onclick="event.stopPropagation();crReportMessage(\'' + msg.id + '\')">⚠️ Báo cáo</button>';
             }
             menuHtml = '<div class="cr-msg-menu-wrap">'
                 + '<button class="cr-msg-menu-btn" onclick="event.stopPropagation();crToggleMsgMenu(\'' + msg.id + '\')" title="Tùy chọn">⋯</button>'
@@ -526,11 +531,17 @@ async function crShowMembers() {
 
 function _crRenderMembersPanel(members, banned) {
     var isCreator = _crCurrentRoom && String(_crCurrentRoom.created_by) === _crCurrentUserId;
+    var isAdmin = isCreator; // TODO: check from member list
 
     var html = '<div class="cr-modal-overlay" id="crMembersModal" onclick="if(event.target===this)crCloseMembersPanel()">'
         + '<div class="cr-modal cr-modal-lg">'
         + '<div class="cr-modal-header"><h3>👥 Thành viên (' + members.length + ')</h3>'
-        + '<button type="button" class="cr-modal-close" onclick="crCloseMembersPanel()">&times;</button></div>'
+        + '<div style="display:flex;gap:8px">';
+    if (isCreator) {
+        html += '<button type="button" class="cr-btn cr-btn-outline" style="font-size:12px" onclick="crCloseMembersPanel();crViewReports()">⚠️ Báo cáo</button>';
+    }
+    html += '<button type="button" class="cr-modal-close" onclick="crCloseMembersPanel()">&times;</button>'
+        + '</div></div>'
         + '<div class="cr-modal-body">';
 
     html += '<div class="cr-members-list">';
@@ -539,13 +550,19 @@ function _crRenderMembersPanel(members, banned) {
         var avatarHtml = m.avatar_url
             ? '<img class="cr-member-av" src="' + _crEsc(m.avatar_url) + '" alt="">'
             : '<span class="cr-member-av" style="background:' + (m.avatar_color || '#8b5cf6') + '">' + initial + '</span>';
-        var badge = m.is_creator ? ' <span class="cr-creator-badge">👑</span>' : '';
+        var badge = m.is_creator ? ' <span class="cr-creator-badge">👑 Chủ phòng</span>'
+            : m.role === 'admin' ? ' <span class="cr-admin-badge">🛡️ QTV</span>' : '';
         var actions = '';
-        if (isCreator && String(m.user_id) !== _crCurrentUserId) {
-            actions = '<div class="cr-member-actions">'
-                + '<button class="cr-btn cr-btn-danger-sm" onclick="crKickUser(' + m.user_id + ')">Kick</button>'
-                + '<button class="cr-btn cr-btn-danger-sm" onclick="crBanUser(' + m.user_id + ')">Chặn</button>'
-                + '</div>';
+        if (isCreator && String(m.user_id) !== _crCurrentUserId && !m.is_creator) {
+            actions = '<div class="cr-member-actions">';
+            if (m.role === 'admin') {
+                actions += '<button class="cr-btn cr-btn-outline" style="font-size:11px;padding:3px 8px" onclick="crDemoteUser(' + m.user_id + ')">Hạ cấp</button>';
+            } else {
+                actions += '<button class="cr-btn cr-btn-outline" style="font-size:11px;padding:3px 8px" onclick="crPromoteUser(' + m.user_id + ')">🛡️ QTV</button>';
+            }
+            actions += '<button class="cr-btn cr-btn-danger-sm" style="font-size:11px;padding:3px 8px" onclick="crKickUser(' + m.user_id + ')">Kick</button>';
+            actions += '<button class="cr-btn cr-btn-danger-sm" style="font-size:11px;padding:3px 8px" onclick="crBanUser(' + m.user_id + ')">Chặn</button>';
+            actions += '</div>';
         }
         html += '<div class="cr-member-row">' + avatarHtml
             + '<span class="cr-member-name">' + _crEsc(m.display_name) + badge + '</span>'
@@ -597,6 +614,119 @@ async function crClearAllMessages() {
             _crRenderMessages();
         }
     } catch(e) { showToast('Lỗi', 3000); }
+}
+
+async function crReportMessage(msgId) {
+    if (!_crCurrentRoom) return;
+    var reason = prompt('Lý do báo cáo (tùy chọn):') || '';
+    var headers = _crAuthHeaders();
+    if (!headers) return;
+    document.querySelectorAll('.cr-msg-menu').forEach(function(m) { m.classList.add('hidden'); });
+
+    try {
+        var res = await fetchWithTimeout('/api/chat-rooms/' + _crCurrentRoom.id + '/report/' + msgId, {
+            method: 'POST', headers: headers,
+            body: JSON.stringify({ reason: reason })
+        }, 10000);
+        if (res.ok) {
+            showToast('⚠️ Đã báo cáo tin nhắn', 2000);
+        } else {
+            var err = await res.json().catch(function() { return {}; });
+            showToast(err.detail || 'Không thể báo cáo', 3000);
+        }
+    } catch(e) { showToast('Lỗi: ' + e.message, 3000); }
+}
+
+async function crPromoteUser(userId) {
+    if (!_crCurrentRoom) return;
+    var headers = _crAuthHeaders();
+    if (!headers) return;
+    try {
+        var res = await fetchWithTimeout('/api/chat-rooms/' + _crCurrentRoom.id + '/promote/' + userId, {
+            method: 'POST', headers: headers
+        }, 10000);
+        if (res.ok) {
+            showToast('✅ Đã bổ nhiệm quản trị viên', 2000);
+            crShowMembers();
+        } else {
+            var err = await res.json().catch(function() { return {}; });
+            showToast(err.detail || 'Lỗi', 3000);
+        }
+    } catch(e) { showToast('Lỗi', 3000); }
+}
+
+async function crDemoteUser(userId) {
+    if (!_crCurrentRoom) return;
+    var headers = _crAuthHeaders();
+    if (!headers) return;
+    try {
+        var res = await fetchWithTimeout('/api/chat-rooms/' + _crCurrentRoom.id + '/demote/' + userId, {
+            method: 'POST', headers: headers
+        }, 10000);
+        if (res.ok) {
+            showToast('✅ Đã hạ cấp', 2000);
+            crShowMembers();
+        } else {
+            var err = await res.json().catch(function() { return {}; });
+            showToast(err.detail || 'Lỗi', 3000);
+        }
+    } catch(e) { showToast('Lỗi', 3000); }
+}
+
+async function crViewReports() {
+    if (!_crCurrentRoom) return;
+    var headers = _crAuthHeaders();
+    if (!headers) return;
+    try {
+        var res = await fetchWithTimeout('/api/chat-rooms/' + _crCurrentRoom.id + '/reports', { headers: headers }, 10000);
+        var data = await res.json();
+        _crRenderReportsPanel(data.reports || []);
+    } catch(e) { showToast('Lỗi', 3000); }
+}
+
+function _crRenderReportsPanel(reports) {
+    var html = '<div class="cr-modal-overlay" id="crReportsModal" onclick="if(event.target===this)this.remove()">'
+        + '<div class="cr-modal cr-modal-lg">'
+        + '<div class="cr-modal-header"><h3>⚠️ Báo cáo (' + reports.length + ')</h3>'
+        + '<button type="button" class="cr-modal-close" onclick="document.getElementById(\'crReportsModal\').remove()">&times;</button></div>'
+        + '<div class="cr-modal-body">';
+
+    if (reports.length === 0) {
+        html += '<div class="cr-empty"><p>Không có báo cáo nào</p></div>';
+    } else {
+        reports.forEach(function(r) {
+            var time = new Date(r.created_at * 1000).toLocaleString('vi-VN');
+            html += '<div class="cr-report-item">'
+                + '<div class="cr-report-header">'
+                + '<strong>' + _crEsc(r.reporter_name) + '</strong> báo cáo <strong>' + _crEsc(r.author_name) + '</strong>'
+                + '<span class="cr-report-time">' + time + '</span></div>'
+                + '<div class="cr-report-content">"' + _crEsc(r.msg_content) + '"</div>'
+                + (r.reason ? '<div class="cr-report-reason">Lý do: ' + _crEsc(r.reason) + '</div>' : '')
+                + '<div class="cr-report-actions">'
+                + '<button class="cr-btn cr-btn-danger-sm" onclick="crDeleteMessage(\'' + r.msg_id + '\');crDismissReport(' + r.id + ')">🗑️ Xóa tin nhắn</button>'
+                + '<button class="cr-btn cr-btn-outline" style="font-size:11px;padding:4px 8px" onclick="crDismissReport(' + r.id + ')">Bỏ qua</button>'
+                + '</div></div>';
+        });
+    }
+    html += '</div></div></div>';
+
+    var existing = document.getElementById('crReportsModal');
+    if (existing) existing.remove();
+    var container = document.createElement('div');
+    container.innerHTML = html;
+    document.body.appendChild(container.firstElementChild);
+}
+
+async function crDismissReport(reportId) {
+    if (!_crCurrentRoom) return;
+    var headers = _crAuthHeaders();
+    if (!headers) return;
+    try {
+        await fetchWithTimeout('/api/chat-rooms/' + _crCurrentRoom.id + '/reports/' + reportId + '/dismiss', {
+            method: 'POST', headers: headers
+        }, 10000);
+        crViewReports(); // Refresh
+    } catch(e) {}
 }
 
 // ══════════════════════════════════════════════════════
