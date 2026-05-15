@@ -1490,6 +1490,16 @@ function crJoinRoom(roomId) {
 
 async function crLeaveRoom() {
     if (!_crCurrentRoom) return;
+
+    // Creator cannot leave — must transfer ownership
+    var isCreator = String(_crCurrentRoom.created_by) === _crCurrentUserId;
+    if (isCreator) {
+        await _crConfirmModal('❌ Không thể rời phòng', 'Bạn là chủ phòng. Hãy chuyển quyền chủ phòng\n(trong Thông tin phòng → ⚙️ Cài đặt)\nhoặc xóa phòng trước khi rời.', [
+            { label: 'Đã hiểu', primary: true }
+        ]);
+        return;
+    }
+
     var result = await _crConfirmModal('🚪 Rời phòng', 'Bạn có chắc muốn rời phòng chat này?', [
         { label: 'Ở lại' }, { label: 'Rời phòng', danger: true }
     ]);
@@ -1498,21 +1508,23 @@ async function crLeaveRoom() {
     var headers = _crAuthHeaders();
     if (!headers) return;
 
-    fetchWithTimeout('/api/chat-rooms/' + _crCurrentRoom.id + '/leave', {
-        method: 'POST',
-        headers: headers
-    }, 10000)
-        .then(function(r) { return r.json(); })
-        .then(function(data) {
+    try {
+        var res = await fetchWithTimeout('/api/chat-rooms/' + _crCurrentRoom.id + '/leave', {
+            method: 'POST', headers: headers
+        }, 10000);
+        if (res.ok) {
+            var data = await res.json();
             if (data.ok) {
                 showToast('Đã rời phòng', 2000);
                 crBackToList();
             }
-        })
-        .catch(function(err) {
-            console.error('Failed to leave room:', err);
-            showToast('Không thể rời phòng', 3000);
-        });
+        } else {
+            var err = await res.json().catch(function() { return {}; });
+            showToast(err.detail || 'Không thể rời phòng', 3000);
+        }
+    } catch(e) {
+        showToast('Lỗi kết nối', 3000);
+    }
 }
 
 async function crDeleteRoom() {
