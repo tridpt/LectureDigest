@@ -236,6 +236,11 @@ async function srPostComment() {
 // VIDEOS
 // ══════════════════════════════════════════════════════
 
+function _srIsOwner() {
+    if (!_srCurrentRoom || !_authUser) return false;
+    return _srCurrentRoom.owner_id === _authUser.id;
+}
+
 function _srRenderVideos() {
     if (!_srCurrentRoom) return;
     var el = document.getElementById('srVideoList');
@@ -247,16 +252,35 @@ function _srRenderVideos() {
         return;
     }
 
+    var isOwner = _srIsOwner();
     el.innerHTML = videos.map(function(v) {
+        var deleteBtn = isOwner
+            ? '<button class="sr-video-del-btn" onclick="event.stopPropagation();srRemoveVideo(\'' + v.video_id + '\')" title="Xóa video">🗑️</button>'
+            : '';
         return '<div class="sr-video-card" onclick="srViewVideo(\'' + v.video_id + '\')" style="cursor:pointer">'
             + (v.thumbnail ? '<img class="sr-video-thumb" src="' + v.thumbnail + '" alt="">' : '<div class="sr-video-thumb-placeholder">🎬</div>')
             + '<div class="sr-video-info">'
             + '<div class="sr-video-title">' + _srEsc(v.title || v.video_id) + '</div>'
             + '<div class="sr-video-meta">Thêm lúc ' + new Date(v.added_at).toLocaleDateString('vi-VN') + '</div>'
             + '</div>'
-            + '<div class="sr-video-actions"><button class="sr-video-view-btn" onclick="event.stopPropagation();srViewVideo(\'' + v.video_id + '\')">📖 Xem phân tích</button></div>'
-            + '</div>';
+            + '<div class="sr-video-actions">'
+            + '<button class="sr-video-view-btn" onclick="event.stopPropagation();srViewVideo(\'' + v.video_id + '\')">📖 Xem phân tích</button>'
+            + deleteBtn
+            + '</div></div>';
     }).join('');
+}
+
+async function srRemoveVideo(videoId) {
+    if (!_srCurrentRoom) return;
+    if (!confirm('Xóa video này khỏi phòng?')) return;
+
+    var res = await _srFetch('/api/rooms/' + _srCurrentRoom.id + '/videos/' + videoId, { method: 'DELETE' });
+    if (res && res.ok) {
+        showToast('✅ Đã xóa video', 2000);
+        srOpenRoom(_srCurrentRoom.id);
+    } else {
+        showToast('❌ Không thể xóa video', 3000);
+    }
 }
 
 function _srHasVideoInHistory(videoId) {
@@ -496,21 +520,71 @@ function _srRenderMembers() {
     if (!el) return;
 
     var members = _srCurrentRoom.members || [];
+    var isOwner = _srIsOwner();
+    var myId = _authUser ? _authUser.id : null;
+
     el.innerHTML = members.map(function(m) {
         var initial = (m.display_name || '?').charAt(0).toUpperCase();
         var avatarHtml = m.avatar_url
             ? '<img class="sr-member-avatar-img" src="' + m.avatar_url + '" alt="">'
             : '<div class="sr-member-avatar" style="background:' + (m.avatar_color || '#8b5cf6') + '">' + initial + '</div>';
-        var roleLabel = m.role === 'owner' ? '👑 Chủ phòng' : '👤 Thành viên';
+
+        var roleLabel = m.role === 'owner' ? '👑 Chủ phòng' : m.role === 'moderator' ? '🛡️ Quản lý' : '👤 Thành viên';
         var joinDate = new Date(m.joined_at).toLocaleDateString('vi-VN');
+
+        // Admin controls (only for owner, not on themselves)
+        var adminHtml = '';
+        if (isOwner && m.user_id !== myId) {
+            adminHtml = '<div class="sr-member-actions">';
+            // Role toggle
+            if (m.role === 'member') {
+                adminHtml += '<button class="sr-member-action-btn sr-promote-btn" onclick="srChangeRole(' + m.user_id + ',\'moderator\')" title="Thăng quản lý">🛡️</button>';
+            } else if (m.role === 'moderator') {
+                adminHtml += '<button class="sr-member-action-btn sr-demote-btn" onclick="srChangeRole(' + m.user_id + ',\'member\')" title="Hạ thành viên">👤</button>';
+            }
+            // Kick
+            adminHtml += '<button class="sr-member-action-btn sr-kick-btn" onclick="srKickMember(' + m.user_id + ',\'' + _srEsc(m.display_name) + '\')" title="Kick">❌</button>';
+            adminHtml += '</div>';
+        }
 
         return '<div class="sr-member-card">'
             + avatarHtml
             + '<div class="sr-member-info">'
-            + '<div class="sr-member-name">' + _srEsc(m.display_name) + '</div>'
+            + '<div class="sr-member-name">' + _srEsc(m.display_name) + (m.user_id === myId ? ' <span style="opacity:0.5">(bạn)</span>' : '') + '</div>'
             + '<div class="sr-member-meta">' + roleLabel + ' · Tham gia ' + joinDate + '</div>'
-            + '</div></div>';
+            + '</div>'
+            + adminHtml
+            + '</div>';
     }).join('');
+}
+
+async function srKickMember(userId, name) {
+    if (!_srCurrentRoom) return;
+    if (!confirm('Kick "' + name + '" khỏi phòng?')) return;
+
+    var res = await _srFetch('/api/rooms/' + _srCurrentRoom.id + '/kick/' + userId, { method: 'POST' });
+    if (res && res.ok) {
+        showToast('✅ Đã kick ' + name, 2000);
+        srOpenRoom(_srCurrentRoom.id);
+    } else {
+        showToast('❌ Không thể kick thành viên', 3000);
+    }
+}
+
+async function srChangeRole(userId, newRole) {
+    if (!_srCurrentRoom) return;
+
+    var res = await _srFetch('/api/rooms/' + _srCurrentRoom.id + '/role/' + userId, {
+        method: 'POST',
+        body: JSON.stringify({ role: newRole })
+    });
+    if (res && res.ok) {
+        var label = newRole === 'moderator' ? 'quản lý' : 'thành viên';
+        showToast('✅ Đã đổi quyền thành ' + label, 2000);
+        srOpenRoom(_srCurrentRoom.id);
+    } else {
+        showToast('❌ Không thể đổi quyền', 3000);
+    }
 }
 
 // ══════════════════════════════════════════════════════

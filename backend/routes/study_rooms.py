@@ -453,6 +453,46 @@ async def kick_member(room_id: str, target_user_id: int, request: Request):
     return {"ok": True}
 
 
+class ChangeRoleRequest(BaseModel):
+    role: str = 'member'  # 'member' or 'moderator'
+
+
+@router.post("/{room_id}/role/{target_user_id}")
+async def change_member_role(room_id: str, target_user_id: int, req: ChangeRoleRequest, request: Request):
+    """Change a member's role (owner only)."""
+    user = _require_auth(request)
+    uid = user["id"]
+
+    if req.role not in ('member', 'moderator'):
+        raise HTTPException(status_code=400, detail="Role phải là 'member' hoặc 'moderator'")
+
+    conn = get_db()
+    room = conn.execute("SELECT owner_id FROM study_rooms WHERE id = ?", (room_id,)).fetchone()
+    if not room or room["owner_id"] != uid:
+        conn.close()
+        raise HTTPException(status_code=403, detail="Chỉ chủ phòng mới có thể đổi quyền")
+    if target_user_id == uid:
+        conn.close()
+        raise HTTPException(status_code=400, detail="Không thể đổi quyền chính mình")
+
+    # Check target is a member
+    member = conn.execute(
+        "SELECT 1 FROM room_members WHERE room_id = ? AND user_id = ?",
+        (room_id, target_user_id)
+    ).fetchone()
+    if not member:
+        conn.close()
+        raise HTTPException(status_code=404, detail="Thành viên không tồn tại")
+
+    conn.execute(
+        "UPDATE room_members SET role = ? WHERE room_id = ? AND user_id = ?",
+        (req.role, room_id, target_user_id)
+    )
+    conn.commit()
+    conn.close()
+    return {"ok": True, "role": req.role}
+
+
 # ═══════════════════════════════════════════════════════
 # VIDEOS IN ROOM
 # ═══════════════════════════════════════════════════════
