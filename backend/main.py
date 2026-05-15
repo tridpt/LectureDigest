@@ -393,6 +393,15 @@ if os.path.isdir(_FRONTEND_DIR):
         SPA routing: serve the real file if it exists (css/js/images),
         otherwise fall back to index.html so client-side routing works.
         """
+        # Uploaded files are handled by serve_upload route
+        if full_path.startswith("uploads/"):
+            target = os.path.abspath(os.path.join(_UPLOADS_DIR, full_path[8:]))
+            if not target.startswith(_UPLOADS_DIR):
+                raise HTTPException(status_code=403, detail="Forbidden")
+            if os.path.isfile(target):
+                return FileResponse(target)
+            raise HTTPException(status_code=404, detail="Not found")
+
         # Try to serve the actual file
         target = os.path.join(_FRONTEND_DIR, full_path)
         # Security: prevent path traversal
