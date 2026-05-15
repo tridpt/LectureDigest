@@ -1391,6 +1391,23 @@ img.cr-member-av {
 
 .cr-info-edit-row select.cr-input {
     appearance: auto;
+    color: var(--text-primary, #f1f5f9);
+    background: rgba(15, 15, 30, 0.8);
+}
+
+.cr-info-edit-row select.cr-input option {
+    background: #1e1e3a;
+    color: #f1f5f9;
+}
+
+.light-mode .cr-info-edit-row select.cr-input {
+    background: #fff;
+    color: #1e293b;
+}
+
+.light-mode .cr-info-edit-row select.cr-input option {
+    background: #fff;
+    color: #1e293b;
 }
 
 .light-mode .cr-info-row {

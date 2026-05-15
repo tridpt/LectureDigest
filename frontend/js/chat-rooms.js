@@ -716,7 +716,7 @@ async function crShowRoomInfo() {
     var createdDate = new Date(room.created_at * 1000).toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' });
 
     var html = '<div class="cr-modal-overlay" id="crInfoModal" onclick="if(event.target===this)this.remove()">'
-        + '<div class="cr-modal" style="max-width:420px;overflow:visible">'
+        + '<div class="cr-modal" style="max-width:420px;max-height:85vh;overflow-y:auto">'
         + '<div class="cr-modal-header"><h3>ℹ️ Thông tin phòng</h3>'
         + '<button type="button" class="cr-modal-close" onclick="document.getElementById(\'crInfoModal\').remove()">&times;</button></div>'
         + '<div class="cr-modal-body" style="padding:20px">'
