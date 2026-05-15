@@ -46,7 +46,7 @@ function srBackToList() {
 
 function _srAuthHeaders() {
     var token = '';
-    try { token = localStorage.getItem('lectureDigest_authToken') || ''; } catch(e) {}
+    try { token = localStorage.getItem('ld_auth_token') || ''; } catch(e) {}
     if (!token) {
         showToast('Vui lòng đăng nhập để sử dụng phòng học nhóm', 3000);
         if (typeof openAuthModal === 'function') openAuthModal('login');
