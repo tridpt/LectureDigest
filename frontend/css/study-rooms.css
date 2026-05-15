@@ -680,6 +680,58 @@
     background: rgba(139, 92, 246, 0.25);
 }
 
+/* ── Video Picker ── */
+.sr-picker-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.sr-picker-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 12px;
+    background: rgba(15, 15, 30, 0.4);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    border-radius: 10px;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.sr-picker-item:hover {
+    background: rgba(139, 92, 246, 0.1);
+    border-color: rgba(139, 92, 246, 0.3);
+}
+
+.sr-picker-thumb {
+    width: 72px;
+    height: 40px;
+    border-radius: 6px;
+    object-fit: cover;
+    flex-shrink: 0;
+}
+
+.sr-picker-info {
+    flex: 1;
+    min-width: 0;
+}
+
+.sr-picker-title {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text-primary, #f1f5f9);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.sr-picker-meta {
+    font-size: 11px;
+    color: var(--text-secondary, #94a3b8);
+    margin-top: 2px;
+}
+
 /* ── Empty / Loading ── */
 .sr-empty {
     text-align: center;

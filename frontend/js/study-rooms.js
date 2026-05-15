@@ -338,57 +338,95 @@ function srAnalyzeVideo(videoId) {
 }
 
 async function srAddCurrentVideo() {
+    // This is now handled by the picker — kept for backward compat
+    srOpenVideoPicker();
+}
+
+function srOpenVideoPicker() {
     if (!_srCurrentRoom) return;
 
-    // Get current video from analysisData or history
-    var videoId = window._spaVideoId || (window.analysisData && window.analysisData.video_id);
-    var title = '';
-    var thumbnail = '';
-    var dataJson = '';
-    var videoUrl = '';
+    var history = [];
+    try { history = JSON.parse(localStorage.getItem('lectureDigest_history') || '[]'); } catch(e) {}
 
-    if (!videoId) {
-        // Try to pick from history
-        try {
-            var history = JSON.parse(localStorage.getItem('lectureDigest_history') || '[]');
-            if (history.length > 0) {
-                var latest = history[0];
-                videoId = latest.video_id;
-                title = latest.title || '';
-                thumbnail = latest.thumbnail || '';
-                videoUrl = latest.url || '';
-                if (latest.data) dataJson = JSON.stringify(latest.data);
-            }
-        } catch(e) {}
-    } else {
-        if (window.analysisData) {
-            title = window.analysisData.title || '';
-            thumbnail = window.analysisData.thumbnail || '';
-            dataJson = JSON.stringify(window.analysisData);
-        }
-        var urlInput = document.getElementById('urlInput');
-        if (urlInput) videoUrl = urlInput.value || '';
-    }
+    // Filter: only videos with analysis data, exclude already-added ones
+    var existingIds = (_srCurrentRoom.videos || []).map(function(v) { return v.video_id; });
+    var available = history.filter(function(h) {
+        return h.video_id && h.data && existingIds.indexOf(h.video_id) < 0;
+    });
 
-    if (!videoId) {
-        showToast('Không tìm thấy video để thêm. Hãy phân tích video trước.', 3000);
+    if (available.length === 0) {
+        showToast('Không có video mới để thêm. Hãy phân tích video trước hoặc tất cả đã được thêm.', 3000);
         return;
     }
 
-    if (!dataJson) {
-        showToast('Video chưa có dữ liệu phân tích', 3000);
+    // Build picker modal
+    var html = '<div class="sr-modal-overlay" id="srVideoPickerModal" onclick="if(event.target===this)srCloseVideoPicker()">'
+        + '<div class="sr-modal" style="max-width:560px;max-height:80vh;display:flex;flex-direction:column">'
+        + '<h2 class="sr-modal-title">📤 Chọn video để chia sẻ</h2>'
+        + '<p class="sr-modal-desc">Chọn video đã phân tích để thêm vào phòng học nhóm:</p>'
+        + '<div class="sr-picker-list" style="overflow-y:auto;flex:1;margin:12px 0">';
+
+    available.forEach(function(h) {
+        var thumb = h.thumbnail || ('https://img.youtube.com/vi/' + h.video_id + '/mqdefault.jpg');
+        html += '<div class="sr-picker-item" onclick="srPickVideo(\'' + h.video_id + '\')">'
+            + '<img class="sr-picker-thumb" src="' + thumb + '" alt="" onerror="this.style.display=\'none\'">'
+            + '<div class="sr-picker-info">'
+            + '<div class="sr-picker-title">' + _srEsc(h.title || h.video_id) + '</div>'
+            + '<div class="sr-picker-meta">' + (h.author || '') + '</div>'
+            + '</div></div>';
+    });
+
+    html += '</div>'
+        + '<div class="sr-modal-actions"><button type="button" class="sr-modal-cancel" onclick="srCloseVideoPicker()">Đóng</button></div>'
+        + '</div></div>';
+
+    // Append to body
+    var container = document.createElement('div');
+    container.id = 'srPickerWrap';
+    container.innerHTML = html;
+    document.body.appendChild(container);
+}
+
+function srCloseVideoPicker() {
+    var wrap = document.getElementById('srPickerWrap');
+    if (wrap) wrap.remove();
+}
+
+async function srPickVideo(videoId) {
+    var history = [];
+    try { history = JSON.parse(localStorage.getItem('lectureDigest_history') || '[]'); } catch(e) {}
+
+    var entry = null;
+    for (var i = 0; i < history.length; i++) {
+        if (history[i].video_id === videoId) { entry = history[i]; break; }
+    }
+
+    if (!entry || !entry.data) {
+        showToast('Không tìm thấy dữ liệu phân tích', 3000);
         return;
     }
 
+    srCloseVideoPicker();
+    showToast('Đang tải lên...', 2000);
+
+    var dataJson = JSON.stringify(entry.data);
     var res = await _srFetch('/api/rooms/' + _srCurrentRoom.id + '/videos', {
         method: 'POST',
-        body: JSON.stringify({ video_id: videoId, title: title, thumbnail: thumbnail, url: videoUrl, data_json: dataJson })
+        body: JSON.stringify({
+            video_id: entry.video_id,
+            title: entry.title || '',
+            thumbnail: entry.thumbnail || '',
+            url: entry.url || ('https://www.youtube.com/watch?v=' + entry.video_id),
+            data_json: dataJson
+        })
     });
 
     if (res && res.ok) {
         showToast('✅ Đã thêm video vào phòng', 2000);
-        // Refresh room data
         srOpenRoom(_srCurrentRoom.id);
+    } else if (res) {
+        var err = await res.json().catch(function() { return {}; });
+        showToast('❌ ' + (err.detail || 'Không thể thêm video'), 3000);
     }
 }
 
