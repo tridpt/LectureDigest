@@ -1336,3 +1336,63 @@ img.cr-member-av {
     background: rgba(0, 0, 0, 0.03);
     color: #1e293b;
 }
+
+/* ── Room info panel ── */
+.cr-info-icon {
+    font-size: 48px;
+    text-align: center;
+    margin-bottom: 8px;
+}
+
+.cr-info-name {
+    font-size: 20px;
+    font-weight: 700;
+    color: var(--text-primary, #f1f5f9);
+    text-align: center;
+    margin-bottom: 20px;
+}
+
+.cr-info-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.cr-info-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 12px;
+    background: rgba(255, 255, 255, 0.03);
+    border-radius: 8px;
+}
+
+.cr-info-label {
+    font-size: 13px;
+    color: var(--text-secondary, #94a3b8);
+}
+
+.cr-info-value {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text-primary, #f1f5f9);
+}
+
+.cr-info-edit-row {
+    margin-bottom: 10px;
+}
+
+.cr-info-edit-row label {
+    display: block;
+    font-size: 12px;
+    color: var(--text-secondary, #94a3b8);
+    margin-bottom: 4px;
+}
+
+.cr-info-edit-row select.cr-input {
+    appearance: auto;
+}
+
+.light-mode .cr-info-row {
+    background: rgba(0, 0, 0, 0.03);
+}
