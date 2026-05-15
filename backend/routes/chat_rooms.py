@@ -982,15 +982,18 @@ async def get_reports(room_id: str, request: Request):
         SELECT cr.id, cr.msg_id, cr.reported_by, cr.reason, cr.created_at,
                cm.content as msg_content, cm.user_id as msg_author,
                u1.display_name as reporter_name,
-               u2.display_name as author_name
+               u2.display_name as author_name,
+               crm.role as author_role
         FROM chat_reports cr
         LEFT JOIN chat_messages cm ON cr.msg_id = cm.id
         LEFT JOIN users u1 ON cr.reported_by = u1.id
         LEFT JOIN users u2 ON cm.user_id = u2.id
+        LEFT JOIN chat_room_members crm ON crm.room_id = cr.room_id AND crm.user_id = cm.user_id
         WHERE cr.room_id = ? AND cr.status = 'pending'
         ORDER BY cr.created_at DESC
     """, (room_id,)).fetchall()
 
+    room = _get_room(room_id)
     return {"reports": [{
         "id": r["id"],
         "msg_id": r["msg_id"],
@@ -1000,6 +1003,8 @@ async def get_reports(room_id: str, request: Request):
         "msg_content": r["msg_content"] or "(đã xóa)",
         "msg_author": r["msg_author"],
         "author_name": r["author_name"] or "Unknown",
+        "author_is_creator": room and str(r["msg_author"]) == str(room["created_by"]),
+        "author_is_admin": (r["author_role"] == 'admin') if r["author_role"] else False,
         "created_at": r["created_at"],
     } for r in rows]}
 

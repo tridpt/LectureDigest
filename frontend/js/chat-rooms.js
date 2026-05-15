@@ -1016,17 +1016,33 @@ async function crViewReports() {
 }
 
 function _crRenderReportsPanel(reports) {
+    var isCreator = _crCurrentRoom && String(_crCurrentRoom.created_by) === _crCurrentUserId;
+
     var html = '<div class="cr-modal-overlay" id="crReportsModal" onclick="if(event.target===this)this.remove()">'
         + '<div class="cr-modal cr-modal-lg">'
         + '<div class="cr-modal-header"><h3>⚠️ Báo cáo (' + reports.length + ')</h3>'
         + '<button type="button" class="cr-modal-close" onclick="document.getElementById(\'crReportsModal\').remove()">&times;</button></div>'
-        + '<div class="cr-modal-body">';
+        + '<div class="cr-modal-body" style="max-height:60vh;overflow-y:auto">';
 
     if (reports.length === 0) {
         html += '<div class="cr-empty"><p>Không có báo cáo nào</p></div>';
     } else {
         reports.forEach(function(r) {
             var time = new Date(r.created_at * 1000).toLocaleString('vi-VN');
+            var authorId = r.msg_author;
+            // Check if we can take action on this user
+            // Creator can act on anyone except themselves
+            // Admin can act on members only (not creator or other admins)
+            var canAct = false;
+            if (authorId && String(authorId) !== _crCurrentUserId) {
+                if (isCreator) {
+                    canAct = true; // creator can act on anyone
+                } else {
+                    // Admin: can only act on regular members (check role from reports data)
+                    canAct = !r.author_is_admin && !r.author_is_creator;
+                }
+            }
+
             html += '<div class="cr-report-item">'
                 + '<div class="cr-report-header">'
                 + '<strong>' + _crEsc(r.reporter_name) + '</strong> báo cáo <strong>' + _crEsc(r.author_name) + '</strong>'
@@ -1034,8 +1050,15 @@ function _crRenderReportsPanel(reports) {
                 + '<div class="cr-report-content">"' + _crEsc(r.msg_content) + '"</div>'
                 + (r.reason ? '<div class="cr-report-reason">Lý do: ' + _crEsc(r.reason) + '</div>' : '')
                 + '<div class="cr-report-actions">'
-                + '<button class="cr-btn cr-btn-danger-sm" onclick="crDeleteMessage(\'' + r.msg_id + '\');crDismissReport(' + r.id + ')">🗑️ Xóa tin nhắn</button>'
-                + '<button class="cr-btn cr-btn-outline" style="font-size:11px;padding:4px 8px" onclick="crDismissReport(' + r.id + ')">Bỏ qua</button>'
+                + '<button class="cr-btn cr-btn-danger-sm" onclick="crDeleteMessage(\'' + r.msg_id + '\');crDismissReport(' + r.id + ')">🗑️ Xóa tin nhắn</button>';
+
+            if (canAct && authorId) {
+                html += '<button class="cr-btn cr-btn-danger-sm" onclick="crReportActionKick(' + authorId + ',' + r.id + ')">🚪 Kick</button>'
+                    + '<button class="cr-btn cr-btn-danger-sm" onclick="crReportActionBan(' + authorId + ',' + r.id + ')">🚫 Chặn</button>'
+                    + '<button class="cr-btn cr-btn-danger-sm" onclick="crReportActionMute(' + authorId + ',' + r.id + ')">🔇 Cấm chat</button>';
+            }
+
+            html += '<button class="cr-btn cr-btn-outline" style="font-size:11px;padding:4px 8px" onclick="crDismissReport(' + r.id + ')">Bỏ qua</button>'
                 + '</div></div>';
         });
     }
@@ -1046,6 +1069,24 @@ function _crRenderReportsPanel(reports) {
     var container = document.createElement('div');
     container.innerHTML = html;
     document.body.appendChild(container.firstElementChild);
+}
+
+async function crReportActionKick(userId, reportId) {
+    document.getElementById('crReportsModal')?.remove();
+    await crKickUser(userId);
+    crDismissReport(reportId);
+}
+
+async function crReportActionBan(userId, reportId) {
+    document.getElementById('crReportsModal')?.remove();
+    await crBanUser(userId);
+    crDismissReport(reportId);
+}
+
+async function crReportActionMute(userId, reportId) {
+    document.getElementById('crReportsModal')?.remove();
+    await crMuteUser(userId);
+    crDismissReport(reportId);
 }
 
 async function crDismissReport(reportId) {
