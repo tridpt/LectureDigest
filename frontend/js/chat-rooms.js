@@ -774,21 +774,21 @@ async function crShowRoomInfo() {
             + '<div class="cr-info-edit-row"><label>Tối đa</label><input type="number" class="cr-input" id="crInfoEditMax" value="' + room.max_members + '" min="2" max="200"></div>'
             + '<button class="cr-btn cr-btn-primary" style="width:100%;margin-top:10px" onclick="crSaveRoomInfo()">💾 Lưu thay đổi</button>';
 
-        // Transfer ownership
+        // Transfer ownership (above delete)
         var otherMembers = members.filter(function(m) { return !m.is_creator; });
         if (otherMembers.length > 0) {
             html += '<div style="margin-top:16px;border-top:1px solid rgba(255,255,255,0.06);padding-top:12px">'
                 + '<h4 style="font-size:13px;color:var(--text-secondary,#94a3b8);margin:0 0 8px">👑 Chuyển quyền chủ phòng</h4>'
-                + '<select class="cr-input" id="crTransferSelect">';
+                + '<select class="cr-input cr-select-dark" id="crTransferSelect">';
             otherMembers.forEach(function(m) {
                 html += '<option value="' + m.user_id + '">' + _crEsc(m.display_name) + '</option>';
             });
             html += '</select>'
-                + '<button class="cr-btn cr-btn-outline" style="width:100%;margin-top:8px" onclick="crTransferOwnership()">Chuyển quyền</button>'
+                + '<button class="cr-btn cr-btn-primary" style="width:100%;margin-top:8px;background:#f59e0b" onclick="crTransferOwnership()">👑 Chuyển quyền</button>'
                 + '</div>';
         }
 
-        // Delete room
+        // Delete room (last, most dangerous)
         html += '<div style="margin-top:16px;border-top:1px solid rgba(248,113,113,0.2);padding-top:12px">'
             + '<button class="cr-btn cr-btn-danger-sm" style="width:100%;padding:10px" onclick="document.getElementById(\'crInfoModal\').remove();crDeleteRoom()">🗑️ Xóa phòng vĩnh viễn</button>'
             + '</div>';

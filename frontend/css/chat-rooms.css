@@ -1503,3 +1503,56 @@ img.cr-member-av {
 .light-mode .cr-messages-area {
     scrollbar-color: rgba(139, 92, 246, 0.2) transparent;
 }
+
+/* ── Modal scrollbar (thin, purple) ── */
+.cr-modal::-webkit-scrollbar {
+    width: 5px;
+}
+
+.cr-modal::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.cr-modal::-webkit-scrollbar-thumb {
+    background: rgba(139, 92, 246, 0.25);
+    border-radius: 3px;
+}
+
+.cr-modal::-webkit-scrollbar-thumb:hover {
+    background: rgba(139, 92, 246, 0.45);
+}
+
+.cr-modal {
+    scrollbar-width: thin;
+    scrollbar-color: rgba(139, 92, 246, 0.25) transparent;
+}
+
+/* ── Dark select for transfer/settings ── */
+.cr-select-dark {
+    appearance: auto;
+    background: rgba(15, 15, 30, 0.8) !important;
+    color: var(--text-primary, #f1f5f9) !important;
+}
+
+.cr-select-dark option {
+    background: #1e1e3a;
+    color: #f1f5f9;
+}
+
+.light-mode .cr-select-dark {
+    background: #f8fafc !important;
+    color: #1e293b !important;
+}
+
+.light-mode .cr-select-dark option {
+    background: #fff;
+    color: #1e293b;
+}
+
+.light-mode .cr-modal::-webkit-scrollbar-thumb {
+    background: rgba(139, 92, 246, 0.2);
+}
+
+.light-mode .cr-modal {
+    scrollbar-color: rgba(139, 92, 246, 0.2) transparent;
+}
