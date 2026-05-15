@@ -47,6 +47,37 @@ function crBackToList() {
     crLoadRooms();
     var footer = document.querySelector('.footer');
     if (footer) footer.style.display = 'none';
+    // Update URL back to /chat
+    if (location.pathname !== '/chat') {
+        history.pushState({ section: 'chatRoomsSection' }, '', '/chat');
+    }
+}
+
+async function _crOpenRoomById(roomId) {
+    // Fetch room list first, then open the room
+    var headers = _crAuthHeaders();
+    if (!headers) return;
+
+    try {
+        var res = await fetchWithTimeout('/api/chat-rooms', { headers: headers }, 10000);
+        if (!res.ok) return;
+        var data = await res.json();
+        _crRooms = data.rooms || [];
+
+        // Find the room
+        var room = null;
+        for (var i = 0; i < _crRooms.length; i++) {
+            if (_crRooms[i].id === roomId) { room = _crRooms[i]; break; }
+        }
+        if (room) {
+            crOpenRoom(roomId);
+        } else {
+            showToast('Phòng không tồn tại hoặc bạn chưa tham gia', 3000);
+            openChatRooms();
+        }
+    } catch(e) {
+        openChatRooms();
+    }
 }
 
 // ══════════════════════════════════════════════════════
@@ -146,12 +177,21 @@ function crOpenRoom(roomId) {
     for (var i = 0; i < _crRooms.length; i++) {
         if (_crRooms[i].id === roomId) { room = _crRooms[i]; break; }
     }
-    if (!room) return;
+    if (!room) {
+        // Room not in list yet — try loading it directly
+        _crOpenRoomById(roomId);
+        return;
+    }
 
     _crCurrentRoom = room;
     showSection('chatDetailSection');
     var footer = document.querySelector('.footer');
     if (footer) footer.style.display = 'none';
+
+    // Push URL for this room
+    if (location.pathname !== '/chat/' + roomId) {
+        history.pushState({ section: 'chatDetailSection', roomId: roomId }, '', '/chat/' + roomId);
+    }
 
     // Update header
     var iconEl = document.getElementById('crChatRoomIcon');

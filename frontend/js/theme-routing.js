@@ -152,6 +152,10 @@ window.addEventListener('popstate', function(e) {
         if (typeof openStudyRooms === 'function') openStudyRooms();
     } else if (path === '/chat') {
         if (typeof openChatRooms === 'function') openChatRooms();
+    } else if (path.indexOf('/chat/') === 0) {
+        var roomId = path.replace('/chat/', '');
+        if (roomId && typeof _crOpenRoomById === 'function') _crOpenRoomById(roomId);
+        else if (typeof openChatRooms === 'function') openChatRooms();
     } else {
         showSection('hero');
     }
@@ -212,6 +216,14 @@ window.addEventListener('popstate', function(e) {
     } else if (path === '/chat') {
         window.addEventListener('DOMContentLoaded', function() {
             if (typeof openChatRooms === 'function') openChatRooms();
+        }, { once: true });
+    } else if (path.indexOf('/chat/') === 0) {
+        var _initRoomId = path.replace('/chat/', '');
+        window.addEventListener('DOMContentLoaded', function() {
+            setTimeout(function() {
+                if (_initRoomId && typeof _crOpenRoomById === 'function') _crOpenRoomById(_initRoomId);
+                else if (typeof openChatRooms === 'function') openChatRooms();
+            }, 500);
         }, { once: true });
     }
 })();
