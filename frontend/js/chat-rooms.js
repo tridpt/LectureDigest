@@ -838,10 +838,22 @@ async function crClearAllMessages() {
 
 async function crReportMessage(msgId) {
     if (!_crCurrentRoom) return;
-    var reason = prompt('Lý do báo cáo (tùy chọn):') || '';
+    document.querySelectorAll('.cr-msg-menu').forEach(function(m) { m.classList.add('hidden'); });
+
+    var result = await _crConfirmModal('⚠️ Báo cáo tin nhắn', 'Chọn lý do báo cáo:', [
+        { label: 'Hủy' },
+        { label: 'Spam / Quảng cáo', primary: true },
+        { label: 'Nội dung không phù hợp', primary: true },
+        { label: 'Quấy rối / Xúc phạm', primary: true },
+        { label: 'Lý do khác', primary: true },
+    ]);
+    if (result === '0' || result === 'cancel') return;
+
+    var reasons = ['', 'Spam / Quảng cáo', 'Nội dung không phù hợp', 'Quấy rối / Xúc phạm', 'Lý do khác'];
+    var reason = reasons[parseInt(result)] || '';
+
     var headers = _crAuthHeaders();
     if (!headers) return;
-    document.querySelectorAll('.cr-msg-menu').forEach(function(m) { m.classList.add('hidden'); });
 
     try {
         var res = await fetchWithTimeout('/api/chat-rooms/' + _crCurrentRoom.id + '/report/' + msgId, {
