@@ -206,22 +206,51 @@ function _crRenderMessages() {
         var avatarHtml = _crRenderAvatar(msg.username, msg.avatar_url);
         var timeStr = _crFormatTime(msg.created_at);
 
-        html += '<div class="cr-msg ' + (isOwn ? 'cr-msg-own' : 'cr-msg-other') + '">';
-        html += '  <div class="cr-msg-avatar">' + avatarHtml + '</div>';
-        html += '  <div class="cr-msg-bubble">';
-        if (!isOwn) {
-            html += '    <div class="cr-msg-name">' + _crEsc(msg.username) + '</div>';
-        }
-        html += '    <div class="cr-msg-content">' + _crEsc(msg.content) + '</div>';
-        html += '    <div class="cr-msg-time">' + timeStr + '</div>';
+        // 3-dot menu (like Messenger)
+        var menuHtml = '';
         if (canDelete) {
-            html += '    <button class="cr-msg-delete" onclick="event.stopPropagation();crDeleteMessage(\'' + msg.id + '\')" title="Xóa">✕</button>';
+            menuHtml = '<div class="cr-msg-menu-wrap">'
+                + '<button class="cr-msg-menu-btn" onclick="event.stopPropagation();crToggleMsgMenu(\'' + msg.id + '\')" title="Tùy chọn">⋯</button>'
+                + '<div class="cr-msg-menu hidden" id="crMsgMenu_' + msg.id + '">'
+                + '<button class="cr-msg-menu-item" onclick="event.stopPropagation();crDeleteMessage(\'' + msg.id + '\')">🗑️ Xóa tin nhắn</button>'
+                + '</div></div>';
         }
-        html += '  </div>';
+
+        html += '<div class="cr-msg ' + (isOwn ? 'cr-msg-own' : 'cr-msg-other') + '">';
+        if (!isOwn) {
+            html += '<div class="cr-msg-avatar">' + avatarHtml + '</div>';
+        }
+        html += '<div class="cr-msg-row">';
+        if (isOwn) html += menuHtml;
+        html += '<div class="cr-msg-bubble">';
+        if (!isOwn) {
+            html += '<div class="cr-msg-name">' + _crEsc(msg.username) + '</div>';
+        }
+        html += '<div class="cr-msg-content">' + _crEsc(msg.content) + '</div>';
+        html += '<div class="cr-msg-time">' + timeStr + '</div>';
+        html += '</div>';
+        if (!isOwn) html += menuHtml;
+        html += '</div>';
         html += '</div>';
     }
     container.innerHTML = html;
 }
+
+function crToggleMsgMenu(msgId) {
+    // Close all other menus first
+    document.querySelectorAll('.cr-msg-menu').forEach(function(m) {
+        if (m.id !== 'crMsgMenu_' + msgId) m.classList.add('hidden');
+    });
+    var menu = document.getElementById('crMsgMenu_' + msgId);
+    if (menu) menu.classList.toggle('hidden');
+}
+
+// Close menus on outside click
+document.addEventListener('click', function(e) {
+    if (!e.target.closest('.cr-msg-menu-wrap')) {
+        document.querySelectorAll('.cr-msg-menu').forEach(function(m) { m.classList.add('hidden'); });
+    }
+});
 
 function _crRenderAvatar(username, avatarUrl) {
     if (avatarUrl) {
