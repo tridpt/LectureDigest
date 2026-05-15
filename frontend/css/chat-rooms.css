@@ -731,3 +731,4 @@
         gap: 0.25rem;
     }
 }
+/* Hide global footer when chat rooms are visible */

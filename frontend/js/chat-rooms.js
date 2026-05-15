@@ -27,11 +27,15 @@ var _crCurrentUserId = null;
 function openChatRooms() {
     showSection('chatRoomsSection');
     crLoadRooms();
+    var footer = document.querySelector('.footer');
+    if (footer) footer.style.display = 'none';
 }
 
 function closeChatRooms() {
     _crStopPolling();
     showSection('hero');
+    var footer = document.querySelector('.footer');
+    if (footer) footer.style.display = '';
 }
 
 function crBackToList() {
@@ -40,6 +44,8 @@ function crBackToList() {
     _crMessages = [];
     showSection('chatRoomsSection');
     crLoadRooms();
+    var footer = document.querySelector('.footer');
+    if (footer) footer.style.display = 'none';
 }
 
 // ══════════════════════════════════════════════════════
@@ -139,6 +145,8 @@ function crOpenRoom(roomId) {
 
     _crCurrentRoom = room;
     showSection('chatDetailSection');
+    var footer = document.querySelector('.footer');
+    if (footer) footer.style.display = 'none';
 
     // Update header
     var iconEl = document.getElementById('crChatRoomIcon');
