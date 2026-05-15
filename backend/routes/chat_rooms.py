@@ -448,7 +448,27 @@ async def transfer_ownership(room_id: str, new_owner_id: int, request: Request):
 
     conn = get_db()
     conn.execute("UPDATE chat_rooms SET created_by = ? WHERE id = ?", (new_owner_id, room_id))
+
+    # System message
+    room = _get_room(room_id)
+    old_name = user.get("display_name", "Ai đó")
+    new_info = _get_user_info(new_owner_id)
+    now = time.time()
+    msg_id = _generate_id()
+    conn.execute(
+        "INSERT INTO chat_messages (id, room_id, user_id, content, image_url, created_at) VALUES (?, ?, ?, ?, '', ?)",
+        (msg_id, room_id, '__system__', f'👑 {old_name} đã chuyển quyền chủ phòng cho {new_info["username"]}', now)
+    )
     conn.commit()
+
+    # Notify new owner
+    room_name = room["name"] if room else "phòng chat"
+    create_notification(
+        new_owner_id, "chat_transfer",
+        f"👑 Bạn đã trở thành chủ phòng \"{room_name}\"",
+        f"{old_name} đã chuyển quyền chủ phòng cho bạn",
+        "/chat"
+    )
 
     return {"ok": True}
 
@@ -515,9 +535,10 @@ async def get_messages(room_id: str, request: Request, limit: int = 50, before: 
     # Return in chronological order
     messages.reverse()
 
-    # Include mute status for current user
+    # Include mute status and room owner for current user
     muted_until = _is_muted(room_id, user["id"])
-    return {"messages": messages, "muted_until": muted_until}
+    room = _get_room(room_id)
+    return {"messages": messages, "muted_until": muted_until, "created_by": room["created_by"] if room else None}
 
 
 @router.post("/{room_id}/messages")

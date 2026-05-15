@@ -192,6 +192,10 @@ function _crLoadMessages() {
             _crRenderMessages();
             _crScrollToBottom();
             _crUpdateMuteStatus(data.muted_until);
+            // Update room owner if changed (transfer)
+            if (data.created_by && _crCurrentRoom && String(_crCurrentRoom.created_by) !== String(data.created_by)) {
+                _crCurrentRoom.created_by = data.created_by;
+            }
         })
         .catch(function(err) {
             console.error('Failed to load messages:', err);
@@ -1273,6 +1277,10 @@ function _crStartPolling() {
                     _crScrollToBottom();
                 }
                 _crUpdateMuteStatus(data.muted_until);
+                // Update room owner if changed (transfer)
+                if (data.created_by && _crCurrentRoom && String(_crCurrentRoom.created_by) !== String(data.created_by)) {
+                    _crCurrentRoom.created_by = data.created_by;
+                }
             })
             .catch(function() {});
 
