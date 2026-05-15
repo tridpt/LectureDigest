@@ -93,6 +93,14 @@ async function _handleGoogleCallback(response) {
         if (typeof doDbSync === 'function') setTimeout(function() { doDbSync(true); }, 300);
 
         showToast('👋 Xin chào, ' + _authUser.display_name + '!', 3000);
+
+        // Reload current page if on chat/study rooms
+        setTimeout(function() {
+            var chatSection = document.getElementById('chatRoomsSection');
+            if (chatSection && !chatSection.classList.contains('hidden') && typeof crLoadRooms === 'function') crLoadRooms();
+            var studyRoomsSection = document.getElementById('studyRoomsSection');
+            if (studyRoomsSection && !studyRoomsSection.classList.contains('hidden') && typeof srLoadRooms === 'function') srLoadRooms();
+        }, 500);
     } catch (err) {
         if (errEl) { errEl.textContent = err.message; errEl.classList.remove('hidden'); }
     }
@@ -387,6 +395,14 @@ async function submitAuthForm(event) {
         if (typeof doDbSync === 'function') setTimeout(function() { doDbSync(true); }, 300);
 
         showToast('👋 Xin chào, ' + _authUser.display_name + '!', 3000);
+
+        // Reload current page if on chat/study rooms
+        setTimeout(function() {
+            var chatSection = document.getElementById('chatRoomsSection');
+            if (chatSection && !chatSection.classList.contains('hidden') && typeof crLoadRooms === 'function') crLoadRooms();
+            var studyRoomsSection = document.getElementById('studyRoomsSection');
+            if (studyRoomsSection && !studyRoomsSection.classList.contains('hidden') && typeof srLoadRooms === 'function') srLoadRooms();
+        }, 500);
 
     } catch (err) {
         _authShowError(err.message);
