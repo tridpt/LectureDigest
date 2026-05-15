@@ -615,6 +615,7 @@ async function crBanUser(userId) {
         if (res.ok) {
             showToast('🚫 Đã chặn' + (deleteMsg ? ' + xóa tin nhắn' : ''), 2000);
             _crLoadMessages();
+            _crLoadPinnedMessages();
             crCloseMembersPanel();
         } else {
             var err = await res.json().catch(function() { return {}; });
@@ -643,6 +644,7 @@ async function crKickUser(userId) {
         if (res.ok) {
             showToast('✅ Đã kick' + (deleteMsg ? ' + xóa tin nhắn' : ''), 2000);
             _crLoadMessages();
+            _crLoadPinnedMessages();
             crShowMembers();
         } else {
             var err = await res.json().catch(function() { return {}; });
