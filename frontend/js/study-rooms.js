@@ -192,6 +192,9 @@ async function srLoadComments() {
         return;
     }
 
+    var isOwner = _srIsOwner();
+    var myId = _authUser ? _authUser.id : null;
+
     msgEl.innerHTML = comments.map(function(c) {
         var time = new Date(c.created_at).toLocaleString('vi-VN', { hour: '2-digit', minute: '2-digit', day: '2-digit', month: '2-digit' });
         var initial = (c.display_name || '?').charAt(0).toUpperCase();
@@ -199,12 +202,19 @@ async function srLoadComments() {
             ? '<img class="sr-msg-avatar-img" src="' + c.avatar_url + '" alt="">'
             : '<div class="sr-msg-avatar" style="background:' + (c.avatar_color || '#8b5cf6') + '">' + initial + '</div>';
 
+        // Owner can delete any message, user can delete their own
+        var canDelete = isOwner || c.user_id === myId;
+        var deleteBtn = canDelete
+            ? '<button class="sr-msg-del" onclick="srDeleteComment(' + c.id + ')" title="Xóa">✕</button>'
+            : '';
+
         return '<div class="sr-msg">'
             + avatarHtml
             + '<div class="sr-msg-body">'
             + '<div class="sr-msg-header">'
             + '<span class="sr-msg-name">' + _srEsc(c.display_name) + '</span>'
             + '<span class="sr-msg-time">' + time + '</span>'
+            + deleteBtn
             + '</div>'
             + '<div class="sr-msg-text">' + _srEsc(c.content) + '</div>'
             + (c.video_id ? '<div class="sr-msg-tag">🎬 ' + _srEsc(c.video_id) + '</div>' : '')
@@ -212,6 +222,16 @@ async function srLoadComments() {
     }).join('');
 
     msgEl.scrollTop = msgEl.scrollHeight;
+}
+
+async function srDeleteComment(commentId) {
+    if (!_srCurrentRoom) return;
+    var res = await _srFetch('/api/rooms/' + _srCurrentRoom.id + '/comments/' + commentId, { method: 'DELETE' });
+    if (res && res.ok) {
+        srLoadComments();
+    } else {
+        showToast('❌ Không thể xóa bình luận', 3000);
+    }
 }
 
 async function srPostComment() {
