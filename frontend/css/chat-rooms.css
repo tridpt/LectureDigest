@@ -482,7 +482,7 @@
     width: 100%;
     max-width: 480px;
     max-height: 85vh;
-    overflow-y: auto;
+    overflow: visible;
     box-shadow: 0 20px 60px rgba(0,0,0,0.5);
 }
 
@@ -1215,14 +1215,12 @@ img.cr-member-av {
 }
 
 .cr-member-menu {
-    position: absolute;
-    right: 0;
-    top: 100%;
+    position: fixed;
     background: #1e1e3a;
     border: 1px solid rgba(139, 92, 246, 0.2);
     border-radius: 10px;
     box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
-    z-index: 200;
+    z-index: 99999;
     padding: 4px;
     min-width: 150px;
 }

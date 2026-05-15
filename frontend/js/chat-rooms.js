@@ -698,11 +698,30 @@ function _crRenderMembersPanel(members, banned) {
 }
 
 function crToggleMemberMenu(menuId) {
-    document.querySelectorAll('.cr-member-menu').forEach(function(m) {
-        if (m.id !== menuId) m.classList.add('hidden');
-    });
     var menu = document.getElementById(menuId);
-    if (menu) menu.classList.toggle('hidden');
+    if (!menu) return;
+    var wasHidden = menu.classList.contains('hidden');
+
+    // Close all menus first
+    document.querySelectorAll('.cr-member-menu').forEach(function(m) { m.classList.add('hidden'); });
+
+    if (wasHidden) {
+        // Position relative to the button
+        var btn = menu.previousElementSibling || menu.parentElement.querySelector('.cr-member-menu-btn');
+        if (btn) {
+            var rect = btn.getBoundingClientRect();
+            menu.style.top = (rect.top - menu.offsetHeight - 4) + 'px';
+            menu.style.left = (rect.right - 150) + 'px';
+            menu.classList.remove('hidden');
+            // Adjust if off-screen top
+            var menuRect = menu.getBoundingClientRect();
+            if (menuRect.top < 10) {
+                menu.style.top = (rect.bottom + 4) + 'px';
+            }
+        } else {
+            menu.classList.remove('hidden');
+        }
+    }
 }
 
 function crCloseMembersPanel() {
