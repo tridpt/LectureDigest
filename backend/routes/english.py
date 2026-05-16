@@ -33,6 +33,7 @@ def _init_english_tables():
             meaning TEXT DEFAULT '',
             example TEXT DEFAULT '',
             phonetic TEXT DEFAULT '',
+            part_of_speech TEXT DEFAULT '',
             topic TEXT DEFAULT '',
             level TEXT DEFAULT 'intermediate',
             learned_at REAL NOT NULL,
@@ -73,6 +74,14 @@ def _init_english_tables():
 
 try:
     _init_english_tables()
+except:
+    pass
+
+# Migration: add part_of_speech column if missing
+try:
+    conn = get_db()
+    conn.execute("ALTER TABLE english_vocab ADD COLUMN part_of_speech TEXT DEFAULT ''")
+    conn.commit()
 except:
     pass
 
@@ -152,10 +161,10 @@ Rules:
         saved = []
         for w in words:
             conn.execute("""
-                INSERT INTO english_vocab (user_id, word, meaning, example, phonetic, topic, level, learned_at, next_review)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+                INSERT INTO english_vocab (user_id, word, meaning, example, phonetic, part_of_speech, topic, level, learned_at, next_review)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             """, (user["id"], w.get("word", ""), w.get("meaning", ""), w.get("example", ""),
-                  w.get("phonetic", ""), req.topic, req.level, now, now))
+                  w.get("phonetic", ""), w.get("part_of_speech", ""), req.topic, req.level, now, now))
             saved.append(w)
         conn.commit()
 
@@ -187,6 +196,7 @@ async def get_today_words(request: Request):
     return {"words": [{
         "id": r["id"], "word": r["word"], "meaning": r["meaning"],
         "example": r["example"], "phonetic": r["phonetic"],
+        "part_of_speech": r["part_of_speech"] if "part_of_speech" in r.keys() else "",
         "topic": r["topic"], "level": r["level"],
     } for r in rows]}
 
@@ -210,6 +220,7 @@ async def get_all_words(request: Request, page: int = 1, per_page: int = 20):
         "words": [{
             "id": r["id"], "word": r["word"], "meaning": r["meaning"],
             "example": r["example"], "phonetic": r["phonetic"],
+            "part_of_speech": r["part_of_speech"] if "part_of_speech" in r.keys() else "",
             "topic": r["topic"],
         } for r in rows],
         "total": total,
@@ -255,6 +266,7 @@ async def get_review_words(request: Request, limit: int = 20, topic: str = '', t
     return {"words": [{
         "id": r["id"], "word": r["word"], "meaning": r["meaning"],
         "example": r["example"], "phonetic": r["phonetic"],
+        "part_of_speech": r["part_of_speech"] if "part_of_speech" in r.keys() else "",
         "ease_factor": r["ease_factor"], "interval": r["interval"],
     } for r in rows], "count": len(rows)}
 
@@ -353,12 +365,12 @@ async def generate_quiz(request: Request, count: int = 5, topic: str = ''):
 
     if topic:
         rows = conn.execute("""
-            SELECT word, meaning FROM english_vocab WHERE user_id = ? AND topic = ?
+            SELECT word, meaning, part_of_speech FROM english_vocab WHERE user_id = ? AND topic = ?
             ORDER BY RANDOM() LIMIT ?
         """, (user["id"], topic, count + 5)).fetchall()
     else:
         rows = conn.execute("""
-            SELECT word, meaning FROM english_vocab WHERE user_id = ?
+            SELECT word, meaning, part_of_speech FROM english_vocab WHERE user_id = ?
             ORDER BY RANDOM() LIMIT ?
         """, (user["id"], count + 5)).fetchall()
 
@@ -378,6 +390,7 @@ async def generate_quiz(request: Request, count: int = 5, topic: str = ''):
         questions.append({
             "id": i + 1,
             "word": row["word"],
+            "part_of_speech": row["part_of_speech"] if "part_of_speech" in row.keys() else "",
             "options": options,
             "correct_index": options.index(correct),
         })
@@ -458,13 +471,19 @@ def _add_xp(user_id, amount, source=""):
     leveled_up = False
     new_level = level
 
-    # Check level ups (can level up multiple times)
-    while xp >= _xp_for_level(level):
-        xp -= _xp_for_level(level)
-        level += 1
-        leveled_up = True
+    # Don't let XP go below 0
+    if xp < 0:
+        xp = 0
+    if total_xp < 0:
+        total_xp = 0
 
-    new_level = level
+    # Check level ups (only if gaining XP)
+    if amount > 0:
+        while xp >= _xp_for_level(level):
+            xp -= _xp_for_level(level)
+            level += 1
+            leveled_up = True
+        new_level = level
 
     conn.execute("UPDATE english_xp SET xp = ?, level = ?, total_xp = ? WHERE user_id = ?",
                  (xp, new_level, total_xp, user_id))
@@ -552,10 +571,13 @@ async def award_xp(request: Request):
         if total > 0:
             pct = score / total
             xp = int(15 + pct * 30)  # 15-45 XP
+    elif source == "hint_penalty":
+        # Deduct XP for using hints (score is negative amount)
+        xp = score  # negative value
     else:
         xp = 5  # Default small XP
 
-    if xp <= 0:
+    if xp == 0:
         return {"xp_gained": 0}
 
     result = _add_xp(user["id"], xp, source)

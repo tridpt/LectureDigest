@@ -122,6 +122,46 @@
                 </button>
             </div>
 
+            <!-- Quick Access Buttons -->
+            <div class="hero-quick-access" id="heroQuickAccess">
+                <div class="hero-qa-group">
+                    <span class="hero-qa-label">📚 Học tập</span>
+                    <div class="hero-qa-btns">
+                        <button type="button" class="hero-qa-btn" onclick="openStudyPlan()">
+                            <span class="hero-qa-icon">📅</span> Lộ trình
+                        </button>
+                        <button type="button" class="hero-qa-btn" onclick="openEnglish()">
+                            <span class="hero-qa-icon">🇺🇸</span> Tiếng Anh
+                        </button>
+                        <button type="button" class="hero-qa-btn" onclick="if(typeof openSrsReview==='function')openSrsReview()">
+                            <span class="hero-qa-icon">🧠</span> Ôn tập
+                        </button>
+                    </div>
+                </div>
+                <div class="hero-qa-group">
+                    <span class="hero-qa-label">👥 Cộng đồng</span>
+                    <div class="hero-qa-btns">
+                        <button type="button" class="hero-qa-btn" onclick="openStudyRooms()">
+                            <span class="hero-qa-icon">📖</span> Phòng học
+                        </button>
+                        <button type="button" class="hero-qa-btn" onclick="openChatRooms()">
+                            <span class="hero-qa-icon">💬</span> Chat
+                        </button>
+                    </div>
+                </div>
+                <div class="hero-qa-group">
+                    <span class="hero-qa-label">🛠️ Công cụ</span>
+                    <div class="hero-qa-btns">
+                        <button type="button" class="hero-qa-btn" onclick="openKnowledgeGraph()">
+                            <span class="hero-qa-icon">🕸️</span> Knowledge Graph
+                        </button>
+                        <button type="button" class="hero-qa-btn" onclick="openMexam()">
+                            <span class="hero-qa-icon">📋</span> Multi-Video Exam
+                        </button>
+                    </div>
+                </div>
+            </div>
+
         <!-- Feature cards -->
         <div class="features" role="list">
             <div class="feature-card" role="listitem">

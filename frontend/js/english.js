@@ -93,7 +93,7 @@ async function engAwardXP(source, score, total, quality) {
         }, 10000);
         if (!res.ok) return;
         var data = await res.json();
-        if (data.xp_gained > 0) {
+        if (data.xp_gained !== 0) {
             _engXP.xp = data.current_xp;
             _engXP.level = data.level;
             _engXP.xp_needed = data.xp_needed;
@@ -109,7 +109,12 @@ function engShowXPGain(amount, source, leveledUp, newLevel) {
     // Floating XP notification
     var popup = document.createElement('div');
     popup.className = 'eng-xp-popup';
-    popup.innerHTML = '+' + amount + ' XP';
+    if (amount < 0) {
+        popup.innerHTML = amount + ' XP';
+        popup.classList.add('eng-xp-popup-penalty');
+    } else {
+        popup.innerHTML = '+' + amount + ' XP';
+    }
     if (leveledUp) {
         popup.innerHTML += ' <span class="eng-xp-levelup">🎉 Level ' + newLevel + '!</span>';
         popup.classList.add('eng-xp-popup-levelup');
@@ -161,8 +166,9 @@ function engRenderWords() {
         return;
     }
     el.innerHTML = _engWords.map(function(w) {
+        var pos = w.part_of_speech ? '<span class="eng-pos">' + _engEsc(w.part_of_speech) + '</span>' : '';
         return '<div class="eng-word-card">'
-            + '<div class="eng-word-header"><strong>' + _engEsc(w.word) + '</strong><span class="eng-phonetic">' + _engEsc(w.phonetic) + '</span></div>'
+            + '<div class="eng-word-header"><strong>' + _engEsc(w.word) + '</strong>' + pos + '<span class="eng-phonetic">' + _engEsc(w.phonetic) + '</span></div>'
             + '<div class="eng-meaning">' + _engEsc(w.meaning) + '</div>'
             + '<div class="eng-example">"' + _engEsc(w.example) + '"</div>'
             + (w.exam_tip ? '<div class="eng-tip">💡 ' + _engEsc(w.exam_tip) + '</div>' : '')
@@ -231,8 +237,10 @@ function engRenderSavedList(words, total, page, totalPages) {
     }
 
     el.innerHTML = words.map(function(w) {
+        var pos = w.part_of_speech ? '<span class="eng-saved-pos">' + _engEsc(w.part_of_speech) + '</span>' : '';
         return '<div class="eng-saved-item">'
             + '<strong>' + _engEsc(w.word) + '</strong>'
+            + pos
             + '<span class="eng-saved-meaning">' + _engEsc(w.meaning) + '</span>'
             + '<span class="eng-saved-topic">' + _engEsc(w.topic) + '</span>'
             + '</div>';
@@ -270,11 +278,14 @@ async function engStartReview() {
     // Show word picker when "pick" is selected
     document.getElementById('engReviewType').addEventListener('change', function() {
         var wrap = document.getElementById('engPickWordsWrap');
+        var countInput = document.getElementById('engReviewCount');
         if (this.value === 'pick') {
             wrap.style.display = '';
+            if (countInput) countInput.closest('.eng-opt-row').style.display = 'none';
             _engLoadWordPicker(wrap, 'review');
         } else {
             wrap.style.display = 'none';
+            if (countInput) countInput.closest('.eng-opt-row').style.display = '';
         }
     });
 }
@@ -340,9 +351,11 @@ function engRenderReviewCard() {
         return;
     }
     var w = _engReviewWords[_engReviewIdx];
+    var posHtml = w.part_of_speech ? '<div class="eng-review-pos">' + _engEsc(w.part_of_speech) + '</div>' : '';
     el.innerHTML = '<div class="eng-review-card" onclick="engFlipCard()">'
         + '<div class="eng-review-front' + (_engFlipped ? ' eng-hidden' : '') + '">'
         + '<div class="eng-review-word">' + _engEsc(w.word) + '</div>'
+        + posHtml
         + '<div class="eng-review-phonetic">' + _engEsc(w.phonetic) + '</div>'
         + '<div class="eng-review-hint">Bấm để xem nghĩa</div>'
         + '</div>'
@@ -397,11 +410,14 @@ async function engStartQuiz() {
     _engLoadTopicOptions('engQuizTopic');
     document.getElementById('engQuizPickMode').addEventListener('change', function() {
         var wrap = document.getElementById('engQuizPickWrap');
+        var countInput = document.getElementById('engQuizCount');
         if (this.checked) {
             wrap.style.display = '';
+            if (countInput) countInput.closest('.eng-opt-row').style.display = 'none';
             _engLoadWordPicker(wrap, 'quiz');
         } else {
             wrap.style.display = 'none';
+            if (countInput) countInput.closest('.eng-opt-row').style.display = '';
         }
     });
 }
@@ -467,8 +483,10 @@ function engRenderQuizQ() {
         return;
     }
     var q = _engQuiz[_engQuizIdx];
+    var posHtml = q.part_of_speech ? '<div class="eng-quiz-pos">' + _engEsc(q.part_of_speech) + '</div>' : '';
     var html = '<div class="eng-quiz-card">'
         + '<div class="eng-quiz-word">' + _engEsc(q.word) + '</div>'
+        + posHtml
         + '<div class="eng-quiz-prompt">Nghĩa là gì?</div>'
         + '<div class="eng-quiz-options">';
     q.options.forEach(function(opt, i) {
@@ -567,6 +585,8 @@ var _engGameTotal = 0;
 var _engGameRound = 0;
 var _engGameTimer = null;
 var _engGameTimeLeft = 0;
+var _engGameHintUsed = false;
+var _engGameHintPenalty = 0; // Total XP penalty from hints
 
 async function engGameStart(type) {
     _engGameType = type;
@@ -586,6 +606,7 @@ async function engGameStart(type) {
         _engGameWords = words.sort(function() { return Math.random() - 0.5; });
         _engGameScore = 0;
         _engGameRound = 0;
+        _engGameHintPenalty = 0;
 
         var menu = document.getElementById('engGamesMenu');
         var area = document.getElementById('engGameArea');
@@ -611,16 +632,22 @@ function engGameResult() {
     if (!area) return;
     var pct = Math.round(_engGameScore / _engGameTotal * 100);
     var emoji = pct >= 80 ? '🏆' : pct >= 50 ? '👍' : '💪';
+    var penaltyHtml = _engGameHintPenalty > 0 ? '<div class="eng-game-result-penalty">💡 Gợi ý: -' + _engGameHintPenalty + ' XP</div>' : '';
     area.innerHTML = '<div class="eng-game-result">'
         + '<div class="eng-game-result-emoji">' + emoji + '</div>'
         + '<div class="eng-game-result-score">' + _engGameScore + '/' + _engGameTotal + '</div>'
         + '<div class="eng-game-result-pct">' + pct + '% đúng</div>'
+        + penaltyHtml
         + '<div class="eng-game-result-btns">'
         + '<button class="eng-btn" onclick="engGameStart(\'' + _engGameType + '\')">🔄 Chơi lại</button>'
         + '<button class="eng-btn eng-btn-outline" onclick="engGameBack()">← Quay lại</button>'
         + '</div></div>';
-    // Award XP for game completion
+    // Award XP for game completion (minus hint penalty)
     engAwardXP('game_' + _engGameType, _engGameScore, _engGameTotal);
+    // Deduct XP for hints used
+    if (_engGameHintPenalty > 0) {
+        engAwardXP('hint_penalty', -_engGameHintPenalty, 0);
+    }
 }
 
 // ═══════════════════════════════════════
@@ -656,7 +683,8 @@ function engGameMatch() {
         html += '<button class="eng-match-item eng-match-meaning" data-id="' + item.id + '">' + _engEsc(item.meaning) + '</button>';
     });
     html += '</div></div>'
-        + '<div class="eng-match-score" id="engMatchScore">Đã nối: 0/' + _engGameTotal + '</div>';
+        + '<div class="eng-match-footer"><div class="eng-match-score" id="engMatchScore">Đã nối: 0/' + _engGameTotal + '</div>'
+        + '<button class="eng-game-hint-btn" id="engMatchHintBtn" onclick="engMatchHint()">💡 Gợi ý (-5 XP)</button></div>';
 
     area.innerHTML = html;
 
@@ -717,6 +745,32 @@ function engGameMatch() {
     });
 }
 
+function engMatchHint() {
+    // Find a word that hasn't been matched yet
+    var area = document.getElementById('engGameArea');
+    if (!area) return;
+    var unmatched = area.querySelectorAll('.eng-match-word:not(.eng-match-done)');
+    if (unmatched.length === 0) return;
+
+    // Pick first unmatched word, highlight its correct meaning
+    var wordBtn = unmatched[0];
+    var wordId = wordBtn.getAttribute('data-id');
+    var meaningBtn = area.querySelector('.eng-match-meaning[data-id="' + wordId + '"]:not(.eng-match-done)');
+    if (!meaningBtn) return;
+
+    // Penalty
+    _engGameHintPenalty += 5;
+    showToast('💡 Gợi ý: -5 XP', 1500);
+
+    // Highlight hint
+    wordBtn.classList.add('eng-match-hint-flash');
+    meaningBtn.classList.add('eng-match-hint-flash');
+    setTimeout(function() {
+        wordBtn.classList.remove('eng-match-hint-flash');
+        meaningBtn.classList.remove('eng-match-hint-flash');
+    }, 2000);
+}
+
 // ═══════════════════════════════════════
 // GAME 2: Spelling Bee (đọc nghĩa, gõ từ)
 // ═══════════════════════════════════════
@@ -725,8 +779,11 @@ function engGameSpelling() {
     _engGameTotal = pool.length;
     _engGameScore = 0;
     _engGameRound = 0;
+    _engSpellingRevealed = []; // track revealed letter indices per round
     engSpellingRound(pool);
 }
+
+var _engSpellingRevealed = [];
 
 function engSpellingRound(pool) {
     var area = document.getElementById('engGameArea');
@@ -737,8 +794,9 @@ function engSpellingRound(pool) {
         return;
     }
 
+    _engSpellingRevealed = [0]; // always reveal first letter
     var w = pool[_engGameRound];
-    var hint = w.word.charAt(0) + '_ '.repeat(w.word.length - 1).trim();
+    var hintStr = _engBuildSpellingHint(w.word, _engSpellingRevealed);
 
     area.innerHTML = '<div class="eng-game-header">'
         + '<button class="eng-game-back-btn" onclick="engGameBack()">← Quay lại</button>'
@@ -746,11 +804,13 @@ function engSpellingRound(pool) {
         + '<span class="eng-game-progress">' + (_engGameRound + 1) + '/' + _engGameTotal + '</span>'
         + '</div>'
         + '<div class="eng-spelling-card">'
-        + '<div class="eng-spelling-meaning">' + _engEsc(w.meaning) + '</div>'
-        + '<div class="eng-spelling-hint">Gợi ý: <strong>' + hint + '</strong> (' + w.word.length + ' chữ cái)</div>'
+        + '<div class="eng-spelling-meaning">' + _engEsc(w.meaning) + (w.part_of_speech ? ' <span class="eng-pos">' + _engEsc(w.part_of_speech) + '</span>' : '') + '</div>'
+        + '<div class="eng-spelling-hint" id="engSpellingHintDisplay">Gợi ý: <strong>' + hintStr + '</strong> (' + w.word.length + ' chữ cái)</div>'
         + '<input type="text" class="eng-spelling-input" id="engSpellingInput" placeholder="Gõ từ tiếng Anh..." autocomplete="off" autofocus>'
         + '<div class="eng-spelling-feedback" id="engSpellingFeedback"></div>'
-        + '<button class="eng-btn" id="engSpellingSubmit" onclick="engSpellingCheck()">Kiểm tra</button>'
+        + '<div class="eng-spelling-btns"><button class="eng-btn" id="engSpellingSubmit" onclick="engSpellingCheck()">Kiểm tra</button>'
+        + '<button class="eng-game-hint-btn" id="engSpellingHintBtn" onclick="engSpellingHint()">💡 Gợi ý (-5 XP)</button>'
+        + '<button class="eng-btn eng-btn-outline" onclick="engSpellingSkip()">Bỏ qua</button></div>'
         + '</div>'
         + '<div class="eng-game-score-bar">Điểm: ' + _engGameScore + '/' + _engGameTotal + '</div>';
 
@@ -761,6 +821,68 @@ function engSpellingRound(pool) {
             if (e.key === 'Enter') engSpellingCheck();
         });
     }
+}
+
+function _engBuildSpellingHint(word, revealedIndices) {
+    var result = '';
+    for (var i = 0; i < word.length; i++) {
+        if (revealedIndices.indexOf(i) !== -1) result += word[i];
+        else result += ' _';
+    }
+    return result.trim();
+}
+
+function engSpellingHint() {
+    var pool = _engGameWords.slice(0, Math.min(8, _engGameWords.length));
+    var w = pool[_engGameRound];
+    if (!w) return;
+
+    var word = w.word;
+    var maxRevealed = Math.ceil(word.length * 0.7); // max 70% letters revealed
+
+    if (_engSpellingRevealed.length >= maxRevealed) {
+        showToast('Đã gợi ý tối đa!', 1500);
+        return;
+    }
+
+    // Find a random unrevealed index
+    var unrevealed = [];
+    for (var i = 0; i < word.length; i++) {
+        if (_engSpellingRevealed.indexOf(i) === -1) unrevealed.push(i);
+    }
+    if (unrevealed.length === 0) return;
+
+    var randIdx = unrevealed[Math.floor(Math.random() * unrevealed.length)];
+    _engSpellingRevealed.push(randIdx);
+
+    _engGameHintPenalty += 5;
+    showToast('💡 Gợi ý: -5 XP', 1500);
+
+    var hintStr = _engBuildSpellingHint(word, _engSpellingRevealed);
+    var hintEl = document.getElementById('engSpellingHintDisplay');
+    if (hintEl) {
+        hintEl.innerHTML = 'Gợi ý: <strong style="letter-spacing:3px;color:#fbbf24">' + hintStr + '</strong> (' + word.length + ' chữ cái)';
+    }
+
+    // Disable hint button if max reached
+    if (_engSpellingRevealed.length >= maxRevealed) {
+        var btn = document.getElementById('engSpellingHintBtn');
+        if (btn) { btn.disabled = true; btn.textContent = '💡 Hết gợi ý'; }
+    }
+}
+
+function engSpellingSkip() {
+    var pool = _engGameWords.slice(0, Math.min(8, _engGameWords.length));
+    var w = pool[_engGameRound];
+    var feedback = document.getElementById('engSpellingFeedback');
+    if (feedback) {
+        feedback.innerHTML = '<span class="eng-spelling-wrong">Đáp án: <strong>' + _engEsc(w.word) + '</strong></span>';
+        feedback.className = 'eng-spelling-feedback eng-fb-wrong';
+    }
+    var input = document.getElementById('engSpellingInput');
+    if (input) input.disabled = true;
+    _engGameRound++;
+    setTimeout(function() { engSpellingRound(pool); }, 1500);
 }
 
 function engSpellingCheck() {
@@ -835,7 +957,7 @@ function engScrambleRound(pool) {
         + '<span class="eng-game-progress">' + (_engGameRound + 1) + '/' + _engGameTotal + '</span>'
         + '</div>'
         + '<div class="eng-scramble-card">'
-        + '<div class="eng-scramble-meaning">💡 ' + _engEsc(w.meaning) + '</div>'
+        + '<div class="eng-scramble-meaning">💡 ' + _engEsc(w.meaning) + (w.part_of_speech ? ' <span class="eng-pos">' + _engEsc(w.part_of_speech) + '</span>' : '') + '</div>'
         + '<div class="eng-scramble-letters">' + scrambled.split('').map(function(c) {
             return '<span class="eng-scramble-letter">' + c.toUpperCase() + '</span>';
         }).join('') + '</div>'
@@ -843,6 +965,7 @@ function engScrambleRound(pool) {
         + '<div class="eng-spelling-feedback" id="engScrambleFeedback"></div>'
         + '<div class="eng-scramble-btns">'
         + '<button class="eng-btn" onclick="engScrambleCheck()">Kiểm tra</button>'
+        + '<button class="eng-game-hint-btn" onclick="engScrambleHint()">💡 Gợi ý (-5 XP)</button>'
         + '<button class="eng-btn eng-btn-outline" onclick="engScrambleSkip()">Bỏ qua</button>'
         + '</div>'
         + '</div>'
@@ -854,6 +977,25 @@ function engScrambleRound(pool) {
         input.addEventListener('keydown', function(e) {
             if (e.key === 'Enter') engScrambleCheck();
         });
+    }
+}
+
+function engScrambleHint() {
+    var pool = _engGameWords.filter(function(w) { return w.word.length >= 4; }).slice(0, Math.min(8, _engGameWords.length));
+    if (pool.length < 3) pool = _engGameWords.slice(0, Math.min(8, _engGameWords.length));
+    var w = pool[_engGameRound];
+    if (!w) return;
+
+    // Reveal first 2 letters in correct position
+    var word = w.word;
+    var hint = word.substring(0, 2) + '...';
+
+    _engGameHintPenalty += 5;
+    showToast('💡 Gợi ý: -5 XP', 1500);
+
+    var feedback = document.getElementById('engScrambleFeedback');
+    if (feedback) {
+        feedback.innerHTML = '<span style="color:#fbbf24;font-weight:600">💡 Bắt đầu bằng: <strong>' + _engEsc(hint) + '</strong></span>';
     }
 }
 

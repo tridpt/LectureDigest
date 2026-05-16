@@ -241,3 +241,37 @@
     .eng-xp-container { flex-wrap: wrap; gap: 6px; padding: 10px 12px; }
     .eng-xp-total { display: none; }
 }
+
+
+/* ════════════════════════════════════════════════
+   Game Hint Button & Penalty
+   ════════════════════════════════════════════════ */
+.eng-game-hint-btn { padding: 8px 14px; border-radius: 8px; border: 1px solid rgba(251,191,36,0.3); background: rgba(251,191,36,0.08); color: #fbbf24; font-size: 12px; font-weight: 600; cursor: pointer; transition: all 0.2s; white-space: nowrap; }
+.eng-game-hint-btn:hover { background: rgba(251,191,36,0.15); border-color: rgba(251,191,36,0.5); }
+
+.eng-match-footer { display: flex; align-items: center; justify-content: space-between; margin-top: 16px; }
+.eng-match-score { font-size: 14px; color: var(--text-secondary, #94a3b8); font-weight: 600; }
+
+.eng-match-item.eng-match-hint-flash { border-color: #fbbf24 !important; background: rgba(251,191,36,0.15) !important; box-shadow: 0 0 12px rgba(251,191,36,0.3); animation: engHintPulse 0.6s ease 3; }
+@keyframes engHintPulse {
+    0%, 100% { box-shadow: 0 0 4px rgba(251,191,36,0.2); }
+    50% { box-shadow: 0 0 16px rgba(251,191,36,0.5); }
+}
+
+.eng-spelling-btns { display: flex; gap: 8px; justify-content: center; align-items: center; }
+
+.eng-xp-popup-penalty { background: linear-gradient(135deg, #ef4444, #dc2626); box-shadow: 0 4px 12px rgba(239,68,68,0.4); }
+
+.eng-game-result-penalty { font-size: 13px; color: #f87171; margin: 8px 0; font-weight: 600; }
+
+.light-mode .eng-game-hint-btn { background: rgba(251,191,36,0.1); border-color: rgba(251,191,36,0.4); }
+
+
+/* ════════════════════════════════════════════════
+   Part of Speech Badge
+   ════════════════════════════════════════════════ */
+.eng-pos { display: inline-block; font-size: 11px; font-weight: 700; color: #60a5fa; background: rgba(96,165,250,0.1); border: 1px solid rgba(96,165,250,0.2); padding: 2px 8px; border-radius: 4px; text-transform: lowercase; font-style: italic; vertical-align: middle; }
+.eng-saved-pos { font-size: 11px; font-weight: 600; color: #60a5fa; background: rgba(96,165,250,0.08); padding: 2px 6px; border-radius: 4px; font-style: italic; white-space: nowrap; }
+.eng-review-pos { font-size: 13px; color: #60a5fa; font-style: italic; margin-top: 4px; font-weight: 600; }
+.eng-quiz-pos { font-size: 13px; color: #60a5fa; font-style: italic; margin-bottom: 8px; font-weight: 600; }
+.light-mode .eng-pos, .light-mode .eng-saved-pos { color: #2563eb; background: rgba(37,99,235,0.08); border-color: rgba(37,99,235,0.15); }
