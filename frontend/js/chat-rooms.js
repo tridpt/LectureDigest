@@ -419,6 +419,7 @@ function crScrollToMessage(msgId) {
 function _crRenderMessages() {
     var container = document.getElementById('crMessagesList');
     if (!container) return;
+    if (!_crCurrentUserId) _crCurrentUserId = _crGetCurrentUserId();
 
     if (_crMessages.length === 0) {
         container.innerHTML = '<div class="cr-empty"><p style="opacity:0.6">Chưa có tin nhắn. Hãy bắt đầu cuộc trò chuyện!</p></div>';
@@ -443,14 +444,15 @@ function _crRenderMessages() {
 
         // 3-dot menu (like Messenger)
         var menuHtml = '';
-        var isCreator = _crCurrentRoom && String(_crCurrentRoom.created_by) === _crCurrentUserId;
+        var isCreator = _crCurrentRoom && String(_crCurrentRoom.created_by) == String(_crCurrentUserId);
         var showMenu = canDelete || isCreator || !isOwn; // Everyone can report others
         if (showMenu) {
             var menuItems = '';
             if (canDelete) {
                 menuItems += '<button class="cr-msg-menu-item cr-msg-menu-danger" onclick="event.stopPropagation();crDeleteMessage(\'' + msg.id + '\')">🗑️ Xóa tin nhắn</button>';
             }
-            if (isCreator) {
+            var canPin = isCreator || canDelete;
+            if (canPin) {
                 var pinLabel = msg.pinned ? '📌 Bỏ ghim' : '📌 Ghim tin nhắn';
                 menuItems += '<button class="cr-msg-menu-item" onclick="event.stopPropagation();crPinMessage(\'' + msg.id + '\')">' + pinLabel + '</button>';
             }
@@ -741,6 +743,11 @@ async function crPinMessage(msgId) {
         var res = await fetchWithTimeout('/api/chat-rooms/' + _crCurrentRoom.id + '/pin/' + msgId, {
             method: 'POST', headers: headers
         }, 10000);
+        if (!res.ok) {
+            var err = await res.json().catch(function() { return {}; });
+            showToast(err.detail || 'Không thể ghim', 3000);
+            return;
+        }
         var data = await res.json();
         if (data.ok) {
             showToast(data.pinned ? '📌 Đã ghim' : '📌 Đã bỏ ghim', 2000);
