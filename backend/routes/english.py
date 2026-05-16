@@ -467,13 +467,13 @@ def _add_xp(user_id, amount, source=""):
 
     xp = row["xp"] + amount
     level = row["level"]
-    total_xp = row["total_xp"] + amount
+    total_xp = row["total_xp"]
+    # total_xp only increases (tracks lifetime earned XP, not affected by penalties)
+    if amount > 0:
+        total_xp += amount
     leveled_up = False
     leveled_down = False
     new_level = level
-
-    if total_xp < 0:
-        total_xp = 0
 
     # Handle level down when XP goes negative
     if xp < 0:

@@ -75,12 +75,16 @@ function engRenderXPBar() {
     var el = document.getElementById('engXPBar');
     if (!el) return;
     var pct = _engXP.progress_pct || 0;
+    // Calculate true total: sum of all previous levels' XP + current XP
+    var trueTotalXP = 0;
+    for (var i = 1; i < _engXP.level; i++) trueTotalXP += i * 100;
+    trueTotalXP += _engXP.xp;
     el.innerHTML = '<div class="eng-xp-level-badge">Lv.' + _engXP.level + '</div>'
         + '<div class="eng-xp-bar-wrap">'
         + '<div class="eng-xp-bar-fill" style="width:' + pct + '%"></div>'
         + '</div>'
         + '<div class="eng-xp-text">' + _engXP.xp + ' / ' + _engXP.xp_needed + ' XP</div>'
-        + '<div class="eng-xp-total">Tổng: ' + _engXP.total_xp + ' XP</div>';
+        + '<div class="eng-xp-total">Tổng: ' + trueTotalXP + ' XP</div>';
 }
 
 async function engAwardXP(source, score, total, quality) {
