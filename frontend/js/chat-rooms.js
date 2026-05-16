@@ -529,6 +529,12 @@ function _crRenderAvatar(username, avatarUrl) {
     return '<span style="background:' + bg + ';width:100%;height:100%;display:flex;align-items:center;justify-content:center;border-radius:50%">' + initial + '</span>';
 }
 
+function _crIsAtBottom() {
+    var area = document.getElementById('crMessagesArea');
+    if (!area) return true;
+    return area.scrollHeight - area.scrollTop - area.clientHeight < 80;
+}
+
 function _crScrollToBottom() {
     var area = document.getElementById('crMessagesArea');
     if (area) {
@@ -1374,9 +1380,10 @@ function _crStartPolling() {
             .then(function(data) {
                 var newMsgs = data.messages || [];
                 if (newMsgs.length !== _crMessages.length || (newMsgs.length > 0 && _crMessages.length > 0 && newMsgs[newMsgs.length-1].id !== _crMessages[_crMessages.length-1].id)) {
+                    var wasAtBottom = _crIsAtBottom();
                     _crMessages = newMsgs;
                     _crRenderMessages();
-                    _crScrollToBottom();
+                    if (wasAtBottom) _crScrollToBottom();
                 }
                 _crUpdateMuteStatus(data.muted_until, data.chat_locked);
             _crUpdateUnreadUI(data);
@@ -1683,23 +1690,73 @@ async function crLockChat() {
     var isCreator = String(_crCurrentRoom.created_by) === _crCurrentUserId;
     if (!isCreator) { showToast('Chỉ chủ phòng mới có thể khóa chat', 3000); return; }
 
-    var result = await _crConfirmModal('🔒 Khóa chat', 'Chỉ bạn và người được chỉ định mới có thể nhắn tin.', [
-        { label: 'Hủy' }, { label: '🔒 Khóa', danger: true }
-    ]);
-    if (result !== '1') return;
-
+    // Fetch members to let creator pick who can still chat
     var headers = _crAuthHeaders();
     if (!headers) return;
+    var membersData = [];
+    try {
+        var mRes = await fetchWithTimeout('/api/chat-rooms/' + _crCurrentRoom.id + '/members', { headers: headers }, 10000);
+        if (mRes.ok) { var mData = await mRes.json(); membersData = mData.members || []; }
+    } catch(e) {}
+
+    var otherMembers = membersData.filter(function(m) { return String(m.user_id) !== _crCurrentUserId; });
+
+    // Show picker modal
+    var allowedIds = await _crShowLockPickerModal(otherMembers);
+    if (allowedIds === null) return; // cancelled
+
     try {
         var res = await fetchWithTimeout('/api/chat-rooms/' + _crCurrentRoom.id + '/lock-chat', {
             method: 'POST', headers: headers,
-            body: JSON.stringify({ locked: true, allowed_user_ids: [] })
+            body: JSON.stringify({ locked: true, allowed_user_ids: allowedIds })
         }, 10000);
         if (res.ok) {
-            showToast('🔒 Đã khóa chat', 2000);
+            showToast('🔒 Đã khóa chat' + (allowedIds.length ? ' (' + allowedIds.length + ' người được phép)' : ''), 2000);
             _crLoadMessages();
         }
     } catch(e) { showToast('Lỗi', 3000); }
+}
+
+function _crShowLockPickerModal(members) {
+    return new Promise(function(resolve) {
+        var id = 'crLockPicker_' + Date.now();
+        var listHtml = members.map(function(m) {
+            return '<label class="cr-lock-member">'
+                + '<input type="checkbox" value="' + m.user_id + '">'
+                + '<span>' + _crEsc(m.display_name) + '</span>'
+                + '</label>';
+        }).join('');
+
+        var html = '<div class="cr-modal-overlay" id="' + id + '" style="z-index:99999" onclick="if(event.target===this){this.remove();}">'
+            + '<div class="cr-modal" style="max-width:380px;max-height:80vh;overflow-y:auto">'
+            + '<div class="cr-modal-header"><h3>🔒 Khóa chat</h3>'
+            + '<button type="button" class="cr-modal-close" data-action="cancel">&times;</button></div>'
+            + '<div class="cr-modal-body" style="padding:16px">'
+            + '<p style="font-size:13px;color:var(--text-secondary,#94a3b8);margin:0 0 12px">Chọn người vẫn được phép nhắn tin (ngoài bạn):</p>'
+            + '<div class="cr-lock-members-list">' + (listHtml || '<p style="opacity:0.6">Không có thành viên khác</p>') + '</div>'
+            + '</div>'
+            + '<div class="cr-modal-footer">'
+            + '<button class="cr-btn cr-btn-outline" data-action="cancel">Hủy</button>'
+            + '<button class="cr-btn cr-btn-primary" data-action="lock" style="background:#ef4444">🔒 Khóa</button>'
+            + '</div></div></div>';
+
+        var container = document.createElement('div');
+        container.innerHTML = html;
+        var overlay = container.firstElementChild;
+        document.body.appendChild(overlay);
+
+        overlay.addEventListener('click', function(e) {
+            var action = e.target.getAttribute('data-action') || (e.target.closest('[data-action]') || {}).getAttribute?.('data-action');
+            if (action === 'cancel') { overlay.remove(); resolve(null); }
+            else if (action === 'lock') {
+                var checked = overlay.querySelectorAll('input[type=checkbox]:checked');
+                var ids = [];
+                checked.forEach(function(cb) { ids.push(parseInt(cb.value)); });
+                overlay.remove();
+                resolve(ids);
+            }
+        });
+    });
 }
 
 async function crUnlockChat() {

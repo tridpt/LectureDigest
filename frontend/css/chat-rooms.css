@@ -1758,3 +1758,42 @@ img.cr-member-av {
 .cr-messages-area {
     position: relative;
 }
+
+/* ── Lock chat member picker ── */
+.cr-lock-members-list {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    max-height: 250px;
+    overflow-y: auto;
+}
+
+.cr-lock-member {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 12px;
+    border-radius: 8px;
+    background: rgba(255, 255, 255, 0.03);
+    cursor: pointer;
+    transition: background 0.15s;
+}
+
+.cr-lock-member:hover {
+    background: rgba(139, 92, 246, 0.08);
+}
+
+.cr-lock-member input[type="checkbox"] {
+    accent-color: #8b5cf6;
+    width: 16px;
+    height: 16px;
+}
+
+.cr-lock-member span {
+    font-size: 14px;
+    color: var(--text-primary, #f1f5f9);
+}
+
+.light-mode .cr-lock-member {
+    background: rgba(0, 0, 0, 0.02);
+}
