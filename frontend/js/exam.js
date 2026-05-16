@@ -28,11 +28,17 @@ function openMexam() {
     _mexamSwitchTab('new');
     _mexamRenderVideoList();
     _mexamUpdateHistCount();
+    if (location.pathname !== '/exam') {
+        history.pushState({}, '', '/exam');
+    }
 }
 
 function closeMexam() {
     document.getElementById('mexamSection').classList.add('hidden');
     _mexamStopTimer();
+    if (location.pathname === '/exam') {
+        history.pushState({}, '', '/');
+    }
 }
 
 function _mexamShowStep(n) {

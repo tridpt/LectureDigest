@@ -150,6 +150,10 @@ window.addEventListener('popstate', function(e) {
         if (typeof openStudyPlan === 'function') openStudyPlan();
     } else if (path === '/rooms') {
         if (typeof openStudyRooms === 'function') openStudyRooms();
+    } else if (path === '/knowledge-graph') {
+        if (typeof openKnowledgeGraph === 'function') openKnowledgeGraph();
+    } else if (path === '/exam') {
+        if (typeof openMexam === 'function') openMexam();
     } else if (path === '/chat') {
         if (typeof openChatRooms === 'function') openChatRooms();
     } else if (path.indexOf('/chat/') === 0) {
@@ -212,6 +216,14 @@ window.addEventListener('popstate', function(e) {
     } else if (path === '/review') {
         window.addEventListener('DOMContentLoaded', function() {
             if (typeof openSrsReview === 'function') openSrsReview();
+        }, { once: true });
+    } else if (path === '/knowledge-graph') {
+        window.addEventListener('DOMContentLoaded', function() {
+            if (typeof openKnowledgeGraph === 'function') openKnowledgeGraph();
+        }, { once: true });
+    } else if (path === '/exam') {
+        window.addEventListener('DOMContentLoaded', function() {
+            if (typeof openMexam === 'function') openMexam();
         }, { once: true });
     } else if (path === '/chat') {
         window.addEventListener('DOMContentLoaded', function() {

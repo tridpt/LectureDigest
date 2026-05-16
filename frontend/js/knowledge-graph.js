@@ -20,6 +20,9 @@ function openKnowledgeGraph() {
     var section = document.getElementById('kgSection');
     if (section) section.classList.remove('hidden');
     renderKnowledgeGraph();
+    if (location.pathname !== '/knowledge-graph') {
+        history.pushState({}, '', '/knowledge-graph');
+    }
 }
 
 function closeKnowledgeGraph() {
@@ -27,6 +30,9 @@ function closeKnowledgeGraph() {
     if (section) section.classList.add('hidden');
     if (_kgSimulation) { _kgSimulation.stop(); _kgSimulation = null; }
     closeKgDetail();
+    if (location.pathname === '/knowledge-graph') {
+        history.pushState({}, '', '/');
+    }
 }
 
 function buildKgData() {
