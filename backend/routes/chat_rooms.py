@@ -119,6 +119,18 @@ def _init_chat_rooms_tables():
         )
     """)
 
+    # Migration: add chat_locked and allowed_users to chat_rooms
+    try:
+        conn.execute("ALTER TABLE chat_rooms ADD COLUMN chat_locked INTEGER DEFAULT 0")
+        conn.commit()
+    except:
+        pass
+    try:
+        conn.execute("ALTER TABLE chat_rooms ADD COLUMN allowed_users TEXT DEFAULT ''")
+        conn.commit()
+    except:
+        pass
+
     conn.commit()
 
 
@@ -127,6 +139,14 @@ try:
     _init_chat_rooms_tables()
 except Exception as e:
     logger.warning(f"Chat rooms table init deferred: {e}")
+
+
+# ═══════════════════════════════════════════════════════
+# ONLINE STATUS (in-memory)
+# ═══════════════════════════════════════════════════════
+
+_online_status = {}  # {room_id: {user_id: {"name": str, "ts": float}}}
+_online_hidden = set()  # set of user_ids who hide their online status
 
 
 # ═══════════════════════════════════════════════════════
@@ -183,10 +203,13 @@ def _get_room(room_id: str):
     ).fetchone()
     if not row:
         return None
+    keys = row.keys()
     return {
         "id": row["id"], "name": row["name"], "icon": row["icon"],
         "created_by": row["created_by"], "is_public": bool(row["is_public"]),
-        "max_members": row["max_members"], "created_at": row["created_at"]
+        "max_members": row["max_members"], "created_at": row["created_at"],
+        "chat_locked": bool(row["chat_locked"]) if "chat_locked" in keys else False,
+        "allowed_users": row["allowed_users"] if "allowed_users" in keys else "",
     }
 
 
@@ -538,7 +561,12 @@ async def get_messages(room_id: str, request: Request, limit: int = 50, before: 
     # Include mute status and room owner for current user
     muted_until = _is_muted(room_id, user["id"])
     room = _get_room(room_id)
-    return {"messages": messages, "muted_until": muted_until, "created_by": room["created_by"] if room else None}
+    return {
+        "messages": messages,
+        "muted_until": muted_until,
+        "created_by": room["created_by"] if room else None,
+        "chat_locked": room.get("chat_locked", False) if room else False,
+    }
 
 
 # ═══════════════════════════════════════════════════════
@@ -587,6 +615,113 @@ async def get_typing(room_id: str, request: Request):
     return {"typing": typers}
 
 
+# ═══════════════════════════════════════════════════════
+# ONLINE STATUS
+# ═══════════════════════════════════════════════════════
+
+@router.post("/{room_id}/heartbeat")
+async def heartbeat(room_id: str, request: Request):
+    """Send heartbeat to mark user as online in this room."""
+    user = get_current_user(request)
+    if not user:
+        raise HTTPException(status_code=401, detail="Not authenticated")
+
+    uid = str(user["id"])
+    if uid in _online_hidden:
+        return {"ok": True}
+
+    if room_id not in _online_status:
+        _online_status[room_id] = {}
+    _online_status[room_id][uid] = {
+        "name": user.get("display_name", "User"),
+        "ts": time.time()
+    }
+    return {"ok": True}
+
+
+@router.get("/{room_id}/online")
+async def get_online(room_id: str, request: Request):
+    """Get list of online users in this room (active within 15s)."""
+    user = get_current_user(request)
+    if not user:
+        raise HTTPException(status_code=401, detail="Not authenticated")
+
+    now = time.time()
+    room_online = _online_status.get(room_id, {})
+    online = []
+    expired = []
+    for uid, info in room_online.items():
+        if now - info["ts"] > 15:
+            expired.append(uid)
+        else:
+            online.append({"user_id": uid, "name": info["name"]})
+    for uid in expired:
+        del room_online[uid]
+
+    return {"online": online, "count": len(online)}
+
+
+@router.post("/toggle-online-visibility")
+async def toggle_online_visibility(request: Request):
+    """Toggle whether the user appears online or hidden."""
+    user = get_current_user(request)
+    if not user:
+        raise HTTPException(status_code=401, detail="Not authenticated")
+
+    uid = str(user["id"])
+    if uid in _online_hidden:
+        _online_hidden.discard(uid)
+        return {"ok": True, "hidden": False}
+    else:
+        _online_hidden.add(uid)
+        # Remove from all rooms
+        for room_data in _online_status.values():
+            room_data.pop(uid, None)
+        return {"ok": True, "hidden": True}
+
+
+# ═══════════════════════════════════════════════════════
+# LOCK CHAT (only allowed users can send)
+# ═══════════════════════════════════════════════════════
+
+class LockChatBody(BaseModel):
+    locked: bool = True
+    allowed_user_ids: list = []  # list of user_ids allowed to chat when locked
+
+
+@router.post("/{room_id}/lock-chat")
+async def lock_chat(room_id: str, body: LockChatBody, request: Request):
+    """Lock/unlock chat. When locked, only creator and allowed users can send."""
+    user = get_current_user(request)
+    if not user:
+        raise HTTPException(status_code=401, detail="Not authenticated")
+    if not _is_room_creator(room_id, user["id"]):
+        raise HTTPException(status_code=403, detail="Chỉ chủ phòng mới có thể khóa chat")
+
+    conn = get_db()
+    allowed_str = ','.join(str(uid) for uid in body.allowed_user_ids)
+    conn.execute(
+        "UPDATE chat_rooms SET chat_locked = ?, allowed_users = ? WHERE id = ?",
+        (int(body.locked), allowed_str, room_id)
+    )
+    conn.commit()
+
+    # System message
+    msg_id = _generate_id()
+    now = time.time()
+    if body.locked:
+        sys_content = '🔒 Chủ phòng đã khóa chat'
+    else:
+        sys_content = '🔓 Chủ phòng đã mở khóa chat'
+    conn.execute(
+        "INSERT INTO chat_messages (id, room_id, user_id, content, image_url, created_at) VALUES (?, ?, ?, ?, '', ?)",
+        (msg_id, room_id, '__system__', sys_content, now)
+    )
+    conn.commit()
+
+    return {"ok": True, "locked": body.locked}
+
+
 @router.post("/{room_id}/messages")
 async def send_message(room_id: str, body: SendMessageBody, request: Request):
     """Send a message to a chat room."""
@@ -612,6 +747,16 @@ async def send_message(room_id: str, body: SendMessageBody, request: Request):
         else:
             time_str = f"{remaining} giây"
         raise HTTPException(status_code=403, detail=f"Bạn đã bị cấm chat. Còn {time_str} nữa.")
+
+    # Check if chat is locked
+    room = _get_room(room_id)
+    if room and room.get("chat_locked"):
+        uid_str = str(user["id"])
+        is_creator = str(room["created_by"]) == uid_str
+        allowed_str = room.get("allowed_users", "") or ""
+        allowed_list = [x.strip() for x in allowed_str.split(',') if x.strip()]
+        if not is_creator and uid_str not in allowed_list:
+            raise HTTPException(status_code=403, detail="🔒 Chat đang bị khóa. Chỉ chủ phòng và người được chỉ định mới có thể nhắn.")
 
     conn = get_db()
     msg_id = _generate_id()

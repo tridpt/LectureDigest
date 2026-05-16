@@ -1568,3 +1568,19 @@ img.cr-member-av {
     font-style: italic;
     flex-shrink: 0;
 }
+
+/* ── Online dot ── */
+.cr-online-dot {
+    display: inline-block;
+    width: 8px;
+    height: 8px;
+    background: #10b981;
+    border-radius: 50%;
+    margin-right: 2px;
+    animation: crOnlinePulse 2s infinite;
+}
+
+@keyframes crOnlinePulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.5; }
+}

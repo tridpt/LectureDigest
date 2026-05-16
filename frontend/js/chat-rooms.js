@@ -204,13 +204,18 @@ function crOpenRoom(roomId) {
     // Show/hide admin items in header menu
     var isCreator = String(room.created_by) === _crCurrentUserId;
     var hmClear = document.getElementById('crHmClear');
+    var hmLock = document.getElementById('crHmLock');
+    var hmUnlock = document.getElementById('crHmUnlock');
     var reportsBtn = document.getElementById('crReportsBtn');
     if (hmClear) hmClear.style.display = isCreator ? '' : 'none';
+    if (hmLock) hmLock.style.display = isCreator ? '' : 'none';
+    if (hmUnlock) hmUnlock.style.display = 'none';
     // Show reports button for admin/creator
     if (reportsBtn) {
-        reportsBtn.classList.add('hidden'); // hidden until _crCheckReports confirms admin
+        reportsBtn.classList.add('hidden');
     }
     _crCheckReports();
+    _crSendHeartbeat();
 
     // Load messages
     _crLoadMessages();
@@ -231,7 +236,7 @@ function _crLoadMessages() {
             _crMessages = data.messages || [];
             _crRenderMessages();
             _crScrollToBottom();
-            _crUpdateMuteStatus(data.muted_until);
+            _crUpdateMuteStatus(data.muted_until, data.chat_locked);
             // Update room owner if changed (transfer)
             if (data.created_by && _crCurrentRoom && String(_crCurrentRoom.created_by) !== String(data.created_by)) {
                 _crCurrentRoom.created_by = data.created_by;
@@ -243,9 +248,33 @@ function _crLoadMessages() {
         });
 }
 
-function _crUpdateMuteStatus(mutedUntil) {
+function _crUpdateMuteStatus(mutedUntil, chatLocked) {
     var inputBar = document.querySelector('.cr-input-bar');
     var muteBar = document.getElementById('crMuteBar');
+    var hmLock = document.getElementById('crHmLock');
+    var hmUnlock = document.getElementById('crHmUnlock');
+    var isCreator = _crCurrentRoom && String(_crCurrentRoom.created_by) === _crCurrentUserId;
+
+    // Update lock/unlock menu items
+    if (isCreator) {
+        if (hmLock) hmLock.style.display = chatLocked ? 'none' : '';
+        if (hmUnlock) hmUnlock.style.display = chatLocked ? '' : 'none';
+    }
+
+    // Chat locked (not creator)
+    if (chatLocked && !isCreator) {
+        if (inputBar) inputBar.style.display = 'none';
+        if (!muteBar) {
+            muteBar = document.createElement('div');
+            muteBar.id = 'crMuteBar';
+            muteBar.className = 'cr-mute-bar';
+            var chatContainer = document.querySelector('.cr-chat-container');
+            if (chatContainer) chatContainer.appendChild(muteBar);
+        }
+        muteBar.innerHTML = '🔒 Chat đang bị khóa. Chỉ chủ phòng và người được chỉ định mới có thể nhắn.';
+        muteBar.style.display = '';
+        return;
+    }
 
     if (mutedUntil) {
         var remaining = Math.max(0, Math.floor(mutedUntil - Date.now() / 1000));
@@ -260,10 +289,7 @@ function _crUpdateMuteStatus(mutedUntil) {
             timeStr = remaining + ' giây';
         }
 
-        // Hide input bar
         if (inputBar) inputBar.style.display = 'none';
-
-        // Show mute notice
         if (!muteBar) {
             muteBar = document.createElement('div');
             muteBar.id = 'crMuteBar';
@@ -274,7 +300,6 @@ function _crUpdateMuteStatus(mutedUntil) {
         muteBar.innerHTML = '🔇 Bạn đã bị cấm chat. Còn <strong>' + timeStr + '</strong> nữa.';
         muteBar.style.display = '';
     } else {
-        // Not muted — show input, hide mute bar
         if (inputBar) inputBar.style.display = '';
         if (muteBar) muteBar.style.display = 'none';
     }
@@ -1349,7 +1374,7 @@ function _crStartPolling() {
                     _crRenderMessages();
                     _crScrollToBottom();
                 }
-                _crUpdateMuteStatus(data.muted_until);
+                _crUpdateMuteStatus(data.muted_until, data.chat_locked);
                 // Update room owner if changed (transfer)
                 if (data.created_by && _crCurrentRoom && String(_crCurrentRoom.created_by) !== String(data.created_by)) {
                     _crCurrentRoom.created_by = data.created_by;
@@ -1362,6 +1387,10 @@ function _crStartPolling() {
         _crCheckReports();
         // Check typing indicators
         _crPollTyping();
+        // Send heartbeat (online status)
+        _crSendHeartbeat();
+        // Check online users
+        _crPollOnline();
     }, 5000);
 }
 
@@ -1413,6 +1442,86 @@ function _crPollTyping() {
             }
         })
         .catch(function() {});
+}
+
+function _crSendHeartbeat() {
+    if (!_crCurrentRoom) return;
+    var headers = _crAuthHeaders();
+    if (!headers) return;
+    fetchWithTimeout('/api/chat-rooms/' + _crCurrentRoom.id + '/heartbeat', {
+        method: 'POST', headers: headers
+    }, 5000).catch(function() {});
+}
+
+function _crPollOnline() {
+    if (!_crCurrentRoom) return;
+    var headers = _crAuthHeaders();
+    if (!headers) return;
+
+    fetchWithTimeout('/api/chat-rooms/' + _crCurrentRoom.id + '/online', { headers: headers }, 5000)
+        .then(function(r) { return r.json(); })
+        .then(function(data) {
+            var count = data.count || 0;
+            var membersEl = document.getElementById('crChatRoomMembers');
+            if (membersEl) {
+                membersEl.innerHTML = '<span class="cr-online-dot"></span> ' + count + ' online';
+            }
+        })
+        .catch(function() {});
+}
+
+async function crToggleOnlineVisibility() {
+    var headers = _crAuthHeaders();
+    if (!headers) return;
+    try {
+        var res = await fetchWithTimeout('/api/chat-rooms/toggle-online-visibility', {
+            method: 'POST', headers: headers
+        }, 5000);
+        if (res.ok) {
+            var data = await res.json();
+            showToast(data.hidden ? '👻 Đã ẩn trạng thái online' : '🟢 Đã hiện trạng thái online', 2000);
+        }
+    } catch(e) {}
+}
+
+async function crLockChat() {
+    if (!_crCurrentRoom) return;
+    var isCreator = String(_crCurrentRoom.created_by) === _crCurrentUserId;
+    if (!isCreator) { showToast('Chỉ chủ phòng mới có thể khóa chat', 3000); return; }
+
+    var result = await _crConfirmModal('🔒 Khóa chat', 'Chỉ bạn và người được chỉ định mới có thể nhắn tin.', [
+        { label: 'Hủy' }, { label: '🔒 Khóa', danger: true }
+    ]);
+    if (result !== '1') return;
+
+    var headers = _crAuthHeaders();
+    if (!headers) return;
+    try {
+        var res = await fetchWithTimeout('/api/chat-rooms/' + _crCurrentRoom.id + '/lock-chat', {
+            method: 'POST', headers: headers,
+            body: JSON.stringify({ locked: true, allowed_user_ids: [] })
+        }, 10000);
+        if (res.ok) {
+            showToast('🔒 Đã khóa chat', 2000);
+            _crLoadMessages();
+        }
+    } catch(e) { showToast('Lỗi', 3000); }
+}
+
+async function crUnlockChat() {
+    if (!_crCurrentRoom) return;
+    var headers = _crAuthHeaders();
+    if (!headers) return;
+    try {
+        var res = await fetchWithTimeout('/api/chat-rooms/' + _crCurrentRoom.id + '/lock-chat', {
+            method: 'POST', headers: headers,
+            body: JSON.stringify({ locked: false, allowed_user_ids: [] })
+        }, 10000);
+        if (res.ok) {
+            showToast('🔓 Đã mở khóa chat', 2000);
+            _crLoadMessages();
+        }
+    } catch(e) { showToast('Lỗi', 3000); }
 }
 
 function _crCheckReports() {

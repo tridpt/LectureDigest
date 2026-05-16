@@ -45,6 +45,9 @@
                         <button type="button" class="cr-btn cr-btn-outline" onclick="crToggleHeaderMenu()" title="Thêm" style="font-size:12px;padding:4px 10px">⋯</button>
                         <div class="cr-header-menu hidden" id="crHeaderMenu">
                             <button class="cr-hm-item" onclick="crCloseHeaderMenu();crShowRoomInfo()">ℹ️ Thông tin phòng</button>
+                            <button class="cr-hm-item" onclick="crCloseHeaderMenu();crToggleOnlineVisibility()">👻 Ẩn/hiện online</button>
+                            <button class="cr-hm-item" id="crHmLock" onclick="crCloseHeaderMenu();crLockChat()" style="display:none">🔒 Khóa chat</button>
+                            <button class="cr-hm-item" id="crHmUnlock" onclick="crCloseHeaderMenu();crUnlockChat()" style="display:none">🔓 Mở khóa chat</button>
                             <button class="cr-hm-item" id="crHmClear" onclick="crCloseHeaderMenu();crClearAllMessages()" style="display:none">🧹 Xóa tất cả tin nhắn</button>
                             <button class="cr-hm-item cr-hm-danger" onclick="crCloseHeaderMenu();crLeaveRoom()">🚪 Rời phòng</button>
                         </div>
