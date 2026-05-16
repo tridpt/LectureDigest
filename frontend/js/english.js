@@ -13,7 +13,7 @@ var _engReviewWords = [];
 var _engQuiz = null;
 var _engQuizIdx = 0;
 var _engQuizScore = 0;
-var _engXP = { xp: 0, level: 1, xp_needed: 100, total_xp: 0, progress_pct: 0 };
+var _engXP = { xp: 0, level: 1, xp_needed: 100, total_xp: 0, progress_pct: 0, can_hint: false };
 
 function openEnglish() {
     showSection('englishSection');
@@ -66,6 +66,7 @@ async function engLoadXP() {
         var res = await fetchWithTimeout('/api/english/xp', { headers: headers }, 10000);
         if (!res.ok) return;
         _engXP = await res.json();
+        if (_engXP.can_hint === undefined) _engXP.can_hint = (_engXP.xp > 0 || _engXP.level > 1);
         engRenderXPBar();
     } catch(e) {}
 }
@@ -93,19 +94,22 @@ async function engAwardXP(source, score, total, quality) {
         }, 10000);
         if (!res.ok) return;
         var data = await res.json();
+        // Blocked by server (XP = 0)
+        if (data.blocked) return;
         if (data.xp_gained !== 0) {
             _engXP.xp = data.current_xp;
             _engXP.level = data.level;
             _engXP.xp_needed = data.xp_needed;
             _engXP.total_xp = data.total_xp;
             _engXP.progress_pct = Math.round(data.current_xp / data.xp_needed * 100);
+            _engXP.can_hint = (data.current_xp > 0 || data.level > 1);
             engRenderXPBar();
-            engShowXPGain(data.xp_gained, source, data.leveled_up, data.level);
+            engShowXPGain(data.xp_gained, source, data.leveled_up, data.leveled_down, data.level);
         }
     } catch(e) {}
 }
 
-function engShowXPGain(amount, source, leveledUp, newLevel) {
+function engShowXPGain(amount, source, leveledUp, leveledDown, newLevel) {
     // Floating XP notification
     var popup = document.createElement('div');
     popup.className = 'eng-xp-popup';
@@ -119,6 +123,10 @@ function engShowXPGain(amount, source, leveledUp, newLevel) {
         popup.innerHTML += ' <span class="eng-xp-levelup">🎉 Level ' + newLevel + '!</span>';
         popup.classList.add('eng-xp-popup-levelup');
     }
+    if (leveledDown) {
+        popup.innerHTML += ' <span class="eng-xp-leveldown">⬇️ Level ' + newLevel + '</span>';
+        popup.classList.add('eng-xp-popup-penalty');
+    }
     var bar = document.getElementById('engXPBar');
     if (bar) {
         bar.appendChild(popup);
@@ -128,6 +136,10 @@ function engShowXPGain(amount, source, leveledUp, newLevel) {
     // Level up celebration
     if (leveledUp) {
         engShowLevelUpModal(newLevel);
+    }
+    // Level down warning
+    if (leveledDown) {
+        showToast('⚠️ Bạn đã rớt xuống Level ' + newLevel + '!', 3000);
     }
 }
 
@@ -742,6 +754,11 @@ function engGameMatch() {
 }
 
 function engMatchHint() {
+    // Check if user can use hint
+    if (!_engXP.can_hint) {
+        showToast('❌ XP đã về 0, không thể dùng gợi ý!', 2000);
+        return;
+    }
     // Find a word that hasn't been matched yet
     var area = document.getElementById('engGameArea');
     if (!area) return;
@@ -830,6 +847,11 @@ function _engBuildSpellingHint(word, revealedIndices) {
 }
 
 function engSpellingHint() {
+    // Check if user can use hint
+    if (!_engXP.can_hint) {
+        showToast('❌ XP đã về 0, không thể dùng gợi ý!', 2000);
+        return;
+    }
     var pool = _engGameWords.slice(0, Math.min(8, _engGameWords.length));
     var w = pool[_engGameRound];
     if (!w) return;
@@ -993,6 +1015,11 @@ function engScrambleRound(pool) {
 }
 
 function engScrambleHint() {
+    // Check if user can use hint
+    if (!_engXP.can_hint) {
+        showToast('❌ XP đã về 0, không thể dùng gợi ý!', 2000);
+        return;
+    }
     var pool = _engGameWords.filter(function(w) { return w.word.length >= 4; }).slice(0, Math.min(8, _engGameWords.length));
     if (pool.length < 3) pool = _engGameWords.slice(0, Math.min(8, _engGameWords.length));
     var w = pool[_engGameRound];

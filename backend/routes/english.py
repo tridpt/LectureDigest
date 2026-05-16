@@ -469,13 +469,26 @@ def _add_xp(user_id, amount, source=""):
     level = row["level"]
     total_xp = row["total_xp"] + amount
     leveled_up = False
+    leveled_down = False
     new_level = level
 
-    # Don't let XP go below 0
-    if xp < 0:
-        xp = 0
     if total_xp < 0:
         total_xp = 0
+
+    # Handle level down when XP goes negative
+    if xp < 0:
+        if level <= 1:
+            # Already at level 1, can't go lower
+            xp = 0
+        else:
+            # Level down: borrow XP from previous level
+            while xp < 0 and level > 1:
+                level -= 1
+                xp += _xp_for_level(level)  # previous level's max XP
+                leveled_down = True
+            if xp < 0:
+                xp = 0
+        new_level = level
 
     # Check level ups (only if gaining XP)
     if amount > 0:
@@ -500,6 +513,7 @@ def _add_xp(user_id, amount, source=""):
         "xp_needed": _xp_for_level(new_level),
         "total_xp": total_xp,
         "leveled_up": leveled_up,
+        "leveled_down": leveled_down,
         "source": source,
     }
 
@@ -515,10 +529,11 @@ async def get_xp(request: Request):
     row = conn.execute("SELECT * FROM english_xp WHERE user_id = ?", (user["id"],)).fetchone()
 
     if not row:
-        return {"xp": 0, "level": 1, "xp_needed": 100, "total_xp": 0, "progress_pct": 0}
+        return {"xp": 0, "level": 1, "xp_needed": 100, "total_xp": 0, "progress_pct": 0, "can_hint": False}
 
     xp_needed = _xp_for_level(row["level"])
     progress_pct = round(row["xp"] / xp_needed * 100) if xp_needed > 0 else 0
+    can_hint = row["xp"] > 0 or row["level"] > 1
 
     # Recent XP log (last 10)
     logs = conn.execute("""
@@ -532,6 +547,7 @@ async def get_xp(request: Request):
         "xp_needed": xp_needed,
         "total_xp": row["total_xp"],
         "progress_pct": progress_pct,
+        "can_hint": can_hint,
         "recent_xp": [{"xp": l["xp_gained"], "source": l["source"]} for l in logs],
     }
 
@@ -573,6 +589,11 @@ async def award_xp(request: Request):
             xp = int(15 + pct * 30)  # 15-45 XP
     elif source == "hint_penalty":
         # Deduct XP for using hints (score is negative amount)
+        # Block if user is at level 1 with 0 XP
+        conn = get_db()
+        xp_row = conn.execute("SELECT * FROM english_xp WHERE user_id = ?", (user["id"],)).fetchone()
+        if xp_row and xp_row["level"] <= 1 and xp_row["xp"] <= 0:
+            return {"xp_gained": 0, "blocked": True, "reason": "XP đã về 0, không thể dùng gợi ý"}
         xp = score  # negative value
     else:
         xp = 5  # Default small XP
