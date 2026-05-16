@@ -46,6 +46,7 @@
                         <div class="cr-header-menu hidden" id="crHeaderMenu">
                             <button class="cr-hm-item" onclick="crCloseHeaderMenu();crShowRoomInfo()">ℹ️ Thông tin phòng</button>
                             <button class="cr-hm-item" id="crHmOnline" onclick="crCloseHeaderMenu();crToggleOnlineVisibility()">👻 Ẩn/hiện online</button>
+                            <button class="cr-hm-item" id="crHmNotif" onclick="crCloseHeaderMenu();crToggleNotifMute()">🔕 Tắt thông báo</button>
                             <button class="cr-hm-item" id="crHmLock" onclick="crCloseHeaderMenu();crLockChat()" style="display:none">🔒 Khóa chat</button>
                             <button class="cr-hm-item" id="crHmUnlock" onclick="crCloseHeaderMenu();crUnlockChat()" style="display:none">🔓 Mở khóa chat</button>
                             <button class="cr-hm-item" id="crHmClear" onclick="crCloseHeaderMenu();crClearAllMessages()" style="display:none">🧹 Xóa tất cả tin nhắn</button>
@@ -64,6 +65,9 @@
 
             <div class="cr-messages-area" id="crMessagesArea">
                 <div class="cr-messages-list" id="crMessagesList"></div>
+                <button type="button" class="cr-unread-btn hidden" id="crUnreadBtn" onclick="crJumpToUnread()">
+                    <span id="crUnreadBtnText">↓ tin nhắn mới</span>
+                </button>
             </div>
 
             <div class="cr-typing-indicator hidden" id="crTypingIndicator"></div>

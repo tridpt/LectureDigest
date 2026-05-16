@@ -1730,3 +1730,31 @@ img.cr-member-av {
 .light-mode .cr-emoji-item:hover {
     background: rgba(0, 0, 0, 0.06);
 }
+
+/* ── Unread messages button ── */
+.cr-unread-btn {
+    position: absolute;
+    bottom: 12px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: var(--accent, #8b5cf6);
+    color: #fff;
+    border: none;
+    border-radius: 20px;
+    padding: 8px 16px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    box-shadow: 0 4px 16px rgba(139, 92, 246, 0.4);
+    z-index: 10;
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.cr-unread-btn:hover {
+    transform: translateX(-50%) translateY(-2px);
+    box-shadow: 0 6px 20px rgba(139, 92, 246, 0.5);
+}
+
+.cr-messages-area {
+    position: relative;
+}

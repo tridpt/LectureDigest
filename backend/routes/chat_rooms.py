@@ -106,6 +106,18 @@ def _init_chat_rooms_tables():
     except:
         pass
 
+    # Migration: add last_read_at and notifications_muted
+    try:
+        conn.execute("ALTER TABLE chat_room_members ADD COLUMN last_read_at REAL DEFAULT 0")
+        conn.commit()
+    except:
+        pass
+    try:
+        conn.execute("ALTER TABLE chat_room_members ADD COLUMN notif_muted INTEGER DEFAULT 0")
+        conn.commit()
+    except:
+        pass
+
     # Create mute table
     conn.execute("""
         CREATE TABLE IF NOT EXISTS chat_room_mutes (
@@ -561,11 +573,21 @@ async def get_messages(room_id: str, request: Request, limit: int = 50, before: 
     # Include mute status and room owner for current user
     muted_until = _is_muted(room_id, user["id"])
     room = _get_room(room_id)
+    # Get unread info
+    member_row = conn.execute(
+        "SELECT last_read_at, notif_muted FROM chat_room_members WHERE room_id = ? AND user_id = ?",
+        (room_id, user["id"])
+    ).fetchone()
+    last_read = member_row["last_read_at"] if member_row and "last_read_at" in member_row.keys() else 0
+    notif_muted = bool(member_row["notif_muted"]) if member_row and "notif_muted" in member_row.keys() else False
+
     return {
         "messages": messages,
         "muted_until": muted_until,
         "created_by": room["created_by"] if room else None,
         "chat_locked": room.get("chat_locked", False) if room else False,
+        "last_read_at": last_read or 0,
+        "notif_muted": notif_muted,
     }
 
 
@@ -687,6 +709,76 @@ async def toggle_online_visibility(request: Request):
         for room_data in _online_status.values():
             room_data.pop(uid, None)
         return {"ok": True, "hidden": True}
+
+
+# ═══════════════════════════════════════════════════════
+# READ STATUS & NOTIFICATIONS MUTE
+# ═══════════════════════════════════════════════════════
+
+@router.post("/{room_id}/mark-read")
+async def mark_read(room_id: str, request: Request):
+    """Mark all messages as read (update last_read_at to now)."""
+    user = get_current_user(request)
+    if not user:
+        raise HTTPException(status_code=401, detail="Not authenticated")
+
+    conn = get_db()
+    conn.execute(
+        "UPDATE chat_room_members SET last_read_at = ? WHERE room_id = ? AND user_id = ?",
+        (time.time(), room_id, user["id"])
+    )
+    conn.commit()
+    return {"ok": True}
+
+
+@router.get("/{room_id}/unread")
+async def get_unread_count(room_id: str, request: Request):
+    """Get number of unread messages for current user."""
+    user = get_current_user(request)
+    if not user:
+        raise HTTPException(status_code=401, detail="Not authenticated")
+
+    conn = get_db()
+    member = conn.execute(
+        "SELECT last_read_at FROM chat_room_members WHERE room_id = ? AND user_id = ?",
+        (room_id, user["id"])
+    ).fetchone()
+    if not member:
+        return {"unread": 0}
+
+    last_read = member["last_read_at"] if "last_read_at" in member.keys() else 0
+
+    count = conn.execute(
+        "SELECT COUNT(*) as c FROM chat_messages WHERE room_id = ? AND created_at > ? AND user_id != ?",
+        (room_id, last_read or 0, user["id"])
+    ).fetchone()["c"]
+
+    return {"unread": count, "last_read_at": last_read}
+
+
+@router.post("/{room_id}/toggle-notifications")
+async def toggle_notifications(room_id: str, request: Request):
+    """Toggle notification mute for this room."""
+    user = get_current_user(request)
+    if not user:
+        raise HTTPException(status_code=401, detail="Not authenticated")
+
+    conn = get_db()
+    row = conn.execute(
+        "SELECT notif_muted FROM chat_room_members WHERE room_id = ? AND user_id = ?",
+        (room_id, user["id"])
+    ).fetchone()
+    if not row:
+        raise HTTPException(status_code=400, detail="Not a member")
+
+    current = row["notif_muted"] if "notif_muted" in row.keys() else 0
+    new_val = 0 if current else 1
+    conn.execute(
+        "UPDATE chat_room_members SET notif_muted = ? WHERE room_id = ? AND user_id = ?",
+        (new_val, room_id, user["id"])
+    )
+    conn.commit()
+    return {"ok": True, "muted": bool(new_val)}
 
 
 # ═══════════════════════════════════════════════════════

@@ -237,6 +237,7 @@ function _crLoadMessages() {
             _crRenderMessages();
             _crScrollToBottom();
             _crUpdateMuteStatus(data.muted_until, data.chat_locked);
+            _crUpdateUnreadUI(data);
             // Update room owner if changed (transfer)
             if (data.created_by && _crCurrentRoom && String(_crCurrentRoom.created_by) !== String(data.created_by)) {
                 _crCurrentRoom.created_by = data.created_by;
@@ -1378,6 +1379,7 @@ function _crStartPolling() {
                     _crScrollToBottom();
                 }
                 _crUpdateMuteStatus(data.muted_until, data.chat_locked);
+            _crUpdateUnreadUI(data);
                 // Update room owner if changed (transfer)
                 if (data.created_by && _crCurrentRoom && String(_crCurrentRoom.created_by) !== String(data.created_by)) {
                     _crCurrentRoom.created_by = data.created_by;
@@ -1510,6 +1512,96 @@ function _crPollTyping() {
             }
         })
         .catch(function() {});
+}
+
+// ── Unread & Notification Mute ──
+var _crLastReadAt = 0;
+var _crNotifMuted = false;
+
+function _crUpdateUnreadUI(data) {
+    var lastRead = data.last_read_at || 0;
+    var notifMuted = data.notif_muted || false;
+    _crLastReadAt = lastRead;
+    _crNotifMuted = notifMuted;
+
+    // Count unread messages
+    var unreadCount = 0;
+    _crMessages.forEach(function(m) {
+        if (m.created_at > lastRead && String(m.user_id) !== _crCurrentUserId && String(m.user_id) !== '__system__') {
+            unreadCount++;
+        }
+    });
+
+    // Show/hide unread button
+    var btn = document.getElementById('crUnreadBtn');
+    var btnText = document.getElementById('crUnreadBtnText');
+    if (btn) {
+        if (unreadCount > 0) {
+            btn.classList.remove('hidden');
+            if (btnText) btnText.textContent = '↓ ' + unreadCount + ' tin nhắn mới';
+        } else {
+            btn.classList.add('hidden');
+        }
+    }
+
+    // Update mute menu text
+    var hmNotif = document.getElementById('crHmNotif');
+    if (hmNotif) {
+        hmNotif.textContent = notifMuted ? '🔔 Bật thông báo' : '🔕 Tắt thông báo';
+    }
+}
+
+function crJumpToUnread() {
+    // Find first unread message and scroll to it
+    var firstUnread = null;
+    for (var i = 0; i < _crMessages.length; i++) {
+        var m = _crMessages[i];
+        if (m.created_at > _crLastReadAt && String(m.user_id) !== _crCurrentUserId && String(m.user_id) !== '__system__') {
+            firstUnread = m;
+            break;
+        }
+    }
+
+    if (firstUnread) {
+        crScrollToMessage(firstUnread.id);
+    } else {
+        // No unread, scroll to bottom
+        _crScrollToBottom();
+    }
+
+    // Mark as read
+    _crMarkAsRead();
+}
+
+function _crMarkAsRead() {
+    if (!_crCurrentRoom) return;
+    var headers = _crAuthHeaders();
+    if (!headers) return;
+    fetchWithTimeout('/api/chat-rooms/' + _crCurrentRoom.id + '/mark-read', {
+        method: 'POST', headers: headers
+    }, 5000).then(function() {
+        _crLastReadAt = Date.now() / 1000;
+        var btn = document.getElementById('crUnreadBtn');
+        if (btn) btn.classList.add('hidden');
+    }).catch(function() {});
+}
+
+async function crToggleNotifMute() {
+    if (!_crCurrentRoom) return;
+    var headers = _crAuthHeaders();
+    if (!headers) return;
+    try {
+        var res = await fetchWithTimeout('/api/chat-rooms/' + _crCurrentRoom.id + '/toggle-notifications', {
+            method: 'POST', headers: headers
+        }, 5000);
+        if (res.ok) {
+            var data = await res.json();
+            _crNotifMuted = data.muted;
+            showToast(data.muted ? '🔕 Đã tắt thông báo phòng này' : '🔔 Đã bật thông báo', 2000);
+            var hmNotif = document.getElementById('crHmNotif');
+            if (hmNotif) hmNotif.textContent = data.muted ? '🔔 Bật thông báo' : '🔕 Tắt thông báo';
+        }
+    } catch(e) {}
 }
 
 function _crSendHeartbeat() {
