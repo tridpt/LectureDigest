@@ -642,12 +642,8 @@ function engGameResult() {
         + '<button class="eng-btn" onclick="engGameStart(\'' + _engGameType + '\')">🔄 Chơi lại</button>'
         + '<button class="eng-btn eng-btn-outline" onclick="engGameBack()">← Quay lại</button>'
         + '</div></div>';
-    // Award XP for game completion (minus hint penalty)
+    // Award XP for game completion
     engAwardXP('game_' + _engGameType, _engGameScore, _engGameTotal);
-    // Deduct XP for hints used
-    if (_engGameHintPenalty > 0) {
-        engAwardXP('hint_penalty', -_engGameHintPenalty, 0);
-    }
 }
 
 // ═══════════════════════════════════════
@@ -758,8 +754,9 @@ function engMatchHint() {
     var meaningBtn = area.querySelector('.eng-match-meaning[data-id="' + wordId + '"]:not(.eng-match-done)');
     if (!meaningBtn) return;
 
-    // Penalty
+    // Penalty - deduct immediately
     _engGameHintPenalty += 5;
+    engAwardXP('hint_penalty', -5, 0);
     showToast('💡 Gợi ý: -5 XP', 1500);
 
     // Highlight hint
@@ -856,6 +853,7 @@ function engSpellingHint() {
     _engSpellingRevealed.push(randIdx);
 
     _engGameHintPenalty += 5;
+    engAwardXP('hint_penalty', -5, 0);
     showToast('💡 Gợi ý: -5 XP', 1500);
 
     var hintStr = _engBuildSpellingHint(word, _engSpellingRevealed);
@@ -1013,6 +1011,7 @@ function engScrambleHint() {
     _engScrambleRevealed.push(nextIdx);
 
     _engGameHintPenalty += 5;
+    engAwardXP('hint_penalty', -5, 0);
     showToast('💡 Gợi ý: -5 XP', 1500);
 
     var hintStr = _engBuildScrambleHint(word, _engScrambleRevealed);
