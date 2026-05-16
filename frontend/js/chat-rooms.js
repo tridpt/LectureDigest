@@ -1404,6 +1404,71 @@ function _crStopPolling() {
     }
 }
 
+// ── Emoji Picker ──
+var _crEmojiData = {
+    '😀': ['😀','😃','😄','😁','😆','😅','🤣','😂','🙂','😊','😇','🥰','😍','🤩','😘','😗','😋','😛','😜','🤪','😝','🤑','🤗','🤭','🤫','🤔','🤐','🤨','😐','😑','😶','😏','😒','🙄','😬','🤥','😌','😔','😪','🤤','😴','😷','🤒','🤕','🤢','🤮','🥵','🥶','🥴','😵','🤯','🤠','🥳','🥸','😎','🤓','🧐'],
+    '👋': ['👋','🤚','🖐️','✋','🖖','👌','🤌','🤏','✌️','🤞','🤟','🤘','🤙','👈','👉','👆','👇','☝️','👍','👎','✊','👊','🤛','🤜','👏','🙌','👐','🤲','🤝','🙏'],
+    '❤️': ['❤️','🧡','💛','💚','💙','💜','🖤','🤍','🤎','💔','❣️','💕','💞','💓','💗','💖','💘','💝','💟','♥️','🔥','⭐','🌟','✨','💫','💥','💢','💦','💨','🕊️'],
+    '🎉': ['🎉','🎊','🎈','🎁','🎀','🏆','🥇','🥈','🥉','⚽','🏀','🎮','🎯','🎲','🎵','🎶','🎸','🎹','🎤','📚','📖','✏️','📝','💡','🔔','📌','📎','✅','❌','⚠️']
+};
+
+function crToggleEmojiPicker() {
+    var picker = document.getElementById('crEmojiPicker');
+    if (!picker) return;
+
+    if (!picker.classList.contains('hidden')) {
+        picker.classList.add('hidden');
+        return;
+    }
+
+    // Build picker content if empty
+    if (!picker.innerHTML) {
+        var html = '<div class="cr-emoji-tabs">';
+        var categories = Object.keys(_crEmojiData);
+        categories.forEach(function(cat, i) {
+            html += '<button class="cr-emoji-tab' + (i === 0 ? ' active' : '') + '" onclick="crSwitchEmojiTab(' + i + ')">' + cat + '</button>';
+        });
+        html += '</div><div class="cr-emoji-grid" id="crEmojiGrid"></div>';
+        picker.innerHTML = html;
+        crSwitchEmojiTab(0);
+    }
+
+    picker.classList.remove('hidden');
+}
+
+function crSwitchEmojiTab(idx) {
+    var categories = Object.keys(_crEmojiData);
+    var emojis = _crEmojiData[categories[idx]] || [];
+    var grid = document.getElementById('crEmojiGrid');
+    if (grid) {
+        grid.innerHTML = emojis.map(function(e) {
+            return '<button class="cr-emoji-item" onclick="crInsertEmoji(\'' + e + '\')">' + e + '</button>';
+        }).join('');
+    }
+    // Update active tab
+    document.querySelectorAll('.cr-emoji-tab').forEach(function(t, i) {
+        t.classList.toggle('active', i === idx);
+    });
+}
+
+function crInsertEmoji(emoji) {
+    var input = document.getElementById('crMessageInput');
+    if (input) {
+        var start = input.selectionStart || input.value.length;
+        input.value = input.value.substring(0, start) + emoji + input.value.substring(input.selectionEnd || start);
+        input.focus();
+        input.selectionStart = input.selectionEnd = start + emoji.length;
+    }
+}
+
+// Close emoji picker on outside click
+document.addEventListener('click', function(e) {
+    if (!e.target.closest('.cr-emoji-wrap')) {
+        var picker = document.getElementById('crEmojiPicker');
+        if (picker) picker.classList.add('hidden');
+    }
+});
+
 // ── Typing indicator ──
 var _crTypingTimer = null;
 var _crLastTypingSent = 0;

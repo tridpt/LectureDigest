@@ -75,6 +75,10 @@
                 <button type="button" class="cr-img-btn" onclick="document.getElementById('crImageInput').click()" title="Gửi ảnh" aria-label="Gửi ảnh">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>
                 </button>
+                <div class="cr-emoji-wrap">
+                    <button type="button" class="cr-img-btn" onclick="crToggleEmojiPicker()" title="Emoji" aria-label="Emoji">😊</button>
+                    <div class="cr-emoji-picker hidden" id="crEmojiPicker"></div>
+                </div>
                 <input type="file" id="crImageInput" accept="image/jpeg,image/png,image/gif,image/webp" style="display:none" onchange="crPreviewImage(this)">
                 <input type="text" class="cr-message-input" id="crMessageInput"
                        placeholder="Nhập tin nhắn..." maxlength="2000"
