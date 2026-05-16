@@ -121,12 +121,43 @@ function crLoadRooms() {
         .then(function(data) {
             _crRooms = data.rooms || [];
             _crRenderRoomList();
+            _crUpdateHeaderBadge(data.total_unread || 0);
         })
         .catch(function(err) {
             console.error('Failed to load chat rooms:', err);
             showToast('Không thể tải phòng chat', 3000);
         });
 }
+
+function _crUpdateHeaderBadge(totalUnread) {
+    // Update badge on header "Phòng chat" menu item
+    var menuItem = document.querySelector('.hdr-more-item[onclick*="openChatRooms"]');
+    if (menuItem) {
+        // Remove existing badge
+        var existing = menuItem.querySelector('.cr-header-unread-badge');
+        if (existing) existing.remove();
+        if (totalUnread > 0) {
+            var badge = document.createElement('span');
+            badge.className = 'cr-header-unread-badge';
+            badge.textContent = totalUnread > 99 ? '99+' : totalUnread;
+            menuItem.appendChild(badge);
+        }
+    }
+}
+
+// Poll unread count periodically (even when not in chat)
+setInterval(function() {
+    var token = localStorage.getItem('ld_auth_token');
+    if (!token) return;
+    // Only poll if not currently in a chat room
+    if (_crCurrentRoom) return;
+    fetchWithTimeout('/api/chat-rooms', {
+        headers: { 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json' }
+    }, 10000)
+        .then(function(r) { if (r.ok) return r.json(); throw new Error(); })
+        .then(function(data) { _crUpdateHeaderBadge(data.total_unread || 0); })
+        .catch(function() {});
+}, 30000);
 
 function _crRenderRoomList() {
     var container = document.getElementById('crRoomList');
@@ -157,6 +188,9 @@ function _crRenderRoomList() {
         html += '    </div>';
         html += '    <div class="cr-room-preview">' + _crEsc(preview) + '</div>';
         html += '  </div>';
+        if (room.unread > 0) {
+            html += '  <span class="cr-room-unread">' + (room.unread > 99 ? '99+' : room.unread) + '</span>';
+        }
         html += '</div>';
     }
     container.innerHTML = html;

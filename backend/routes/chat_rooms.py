@@ -333,28 +333,39 @@ async def list_my_rooms(request: Request):
 
     conn = get_db()
     rows = conn.execute("""
-        SELECT cr.id, cr.name, cr.icon, cr.created_by, cr.is_public, cr.max_members, cr.created_at
+        SELECT cr.id, cr.name, cr.icon, cr.created_by, cr.is_public, cr.max_members, cr.created_at,
+               crm.last_read_at
         FROM chat_rooms cr
         JOIN chat_room_members crm ON cr.id = crm.room_id
         WHERE crm.user_id = ?
         ORDER BY cr.created_at DESC
     """, (user["id"],)).fetchall()
 
+    total_unread = 0
     rooms = []
     for row in rows:
         room_id = row["id"]
+        last_read = row["last_read_at"] if "last_read_at" in row.keys() else 0
+        # Count unread
+        unread = conn.execute(
+            "SELECT COUNT(*) as c FROM chat_messages WHERE room_id = ? AND created_at > ? AND user_id != ?",
+            (room_id, last_read or 0, user["id"])
+        ).fetchone()["c"]
+        total_unread += unread
+
         room = {
             "id": room_id, "name": row["name"], "icon": row["icon"],
             "created_by": row["created_by"], "is_public": bool(row["is_public"]),
             "max_members": row["max_members"], "created_at": row["created_at"],
             "member_count": _get_member_count(room_id),
             "last_message": _get_last_message(room_id),
+            "unread": unread,
         }
         creator_info = _get_user_info(row["created_by"])
         room["creator_name"] = creator_info["username"]
         rooms.append(room)
 
-    return {"rooms": rooms}
+    return {"rooms": rooms, "total_unread": total_unread}
 
 
 @router.get("/public")
