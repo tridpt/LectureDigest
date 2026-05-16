@@ -95,3 +95,14 @@
 .eng-options-panel { background: rgba(30,30,58,0.5); border: 1px solid rgba(139,92,246,0.15); border-radius: 14px; padding: 20px; max-width: 400px; margin: 0 auto; }
 .eng-opt-row { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
 .eng-opt-row label { font-size: 13px; color: var(--text-secondary, #94a3b8); min-width: 60px; }
+
+/* Word picker */
+.eng-word-picker { margin-top: 10px; }
+.eng-picker-actions { display: flex; gap: 8px; margin-bottom: 8px; }
+.eng-picker-action { background: none; border: 1px solid rgba(139,92,246,0.3); color: #a78bfa; padding: 4px 10px; border-radius: 6px; font-size: 11px; cursor: pointer; }
+.eng-picker-action:hover { background: rgba(139,92,246,0.1); }
+.eng-picker-list { max-height: 200px; overflow-y: auto; display: flex; flex-direction: column; gap: 4px; }
+.eng-picker-item { display: flex; align-items: center; gap: 8px; padding: 6px 10px; border-radius: 6px; cursor: pointer; font-size: 13px; color: var(--text-primary, #f1f5f9); }
+.eng-picker-item:hover { background: rgba(139,92,246,0.06); }
+.eng-picker-item input { accent-color: #8b5cf6; }
+.eng-picker-meaning { margin-left: auto; font-size: 11px; color: var(--text-secondary, #94a3b8); max-width: 150px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }

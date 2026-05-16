@@ -178,11 +178,21 @@ async function engStartReview() {
         + '<div class="eng-opt-row"><label>Số từ:</label><input type="number" id="engReviewCount" value="10" min="1" max="50" class="eng-count-input"></div>'
         + '<div class="eng-opt-row"><label>Chủ đề:</label><select id="engReviewTopic" class="eng-select" style="flex:1"><option value="">Tất cả</option></select></div>'
         + '<div class="eng-opt-row"><label>Loại:</label><select id="engReviewType" class="eng-select" style="flex:1">'
-        + '<option value="due">Đến hạn ôn</option><option value="new">Chưa ôn lần nào</option><option value="all">Tất cả (ngẫu nhiên)</option></select></div>'
+        + '<option value="due">Đến hạn ôn</option><option value="new">Chưa ôn lần nào</option><option value="all">Tất cả (ngẫu nhiên)</option><option value="pick">Chọn từ cụ thể</option></select></div>'
+        + '<div id="engPickWordsWrap" style="display:none"></div>'
         + '<button class="eng-btn" style="width:100%;margin-top:12px" onclick="engDoReview()">▶️ Bắt đầu ôn tập</button>'
         + '</div>';
-    // Load topics for dropdown
     _engLoadTopicOptions('engReviewTopic');
+    // Show word picker when "pick" is selected
+    document.getElementById('engReviewType').addEventListener('change', function() {
+        var wrap = document.getElementById('engPickWordsWrap');
+        if (this.value === 'pick') {
+            wrap.style.display = '';
+            _engLoadWordPicker(wrap, 'review');
+        } else {
+            wrap.style.display = 'none';
+        }
+    });
 }
 
 async function _engLoadTopicOptions(selectId) {
@@ -207,6 +217,17 @@ async function engDoReview() {
     var type = document.getElementById('engReviewType')?.value || 'due';
     var headers = _engHeaders();
     if (!headers) return;
+
+    // If pick mode, use selected words directly
+    if (type === 'pick') {
+        var picked = _engGetPickedWords('engPickWordsWrap');
+        if (picked.length === 0) { showToast('Chưa chọn từ nào!', 2000); return; }
+        _engReviewWords = picked.map(function(w) { return { id: w.id, word: w.word, meaning: w.meaning, example: '', phonetic: '' }; });
+        _engReviewIdx = 0;
+        _engFlipped = false;
+        engRenderReviewCard();
+        return;
+    }
 
     var url = '/api/english/review?limit=' + count + '&type=' + type;
     if (topic) url += '&topic=' + encodeURIComponent(topic);
@@ -281,16 +302,49 @@ async function engStartQuiz() {
         + '<h3 style="margin:0 0 12px;color:var(--text-primary,#f1f5f9)">🧠 Tùy chọn Quiz</h3>'
         + '<div class="eng-opt-row"><label>Số câu:</label><input type="number" id="engQuizCount" value="5" min="3" max="20" class="eng-count-input"></div>'
         + '<div class="eng-opt-row"><label>Chủ đề:</label><select id="engQuizTopic" class="eng-select" style="flex:1"><option value="">Tất cả</option></select></div>'
+        + '<div class="eng-opt-row"><label></label><label style="min-width:auto"><input type="checkbox" id="engQuizPickMode"> Chọn từ cụ thể</label></div>'
+        + '<div id="engQuizPickWrap" style="display:none"></div>'
         + '<button class="eng-btn" style="width:100%;margin-top:12px" onclick="engDoQuiz()">▶️ Bắt đầu Quiz</button>'
         + '</div>';
     _engLoadTopicOptions('engQuizTopic');
+    document.getElementById('engQuizPickMode').addEventListener('change', function() {
+        var wrap = document.getElementById('engQuizPickWrap');
+        if (this.checked) {
+            wrap.style.display = '';
+            _engLoadWordPicker(wrap, 'quiz');
+        } else {
+            wrap.style.display = 'none';
+        }
+    });
 }
 
 async function engDoQuiz() {
     var count = parseInt(document.getElementById('engQuizCount')?.value) || 5;
     var topic = document.getElementById('engQuizTopic')?.value || '';
+    var pickMode = document.getElementById('engQuizPickMode')?.checked;
     var headers = _engHeaders();
     if (!headers) return;
+
+    // If pick mode, build quiz from selected words locally
+    if (pickMode) {
+        var picked = _engGetPickedWords('engQuizPickWrap');
+        if (picked.length < 4) { showToast('Cần chọn ít nhất 4 từ để tạo quiz', 2000); return; }
+        var questions = [];
+        var shuffled = picked.slice().sort(function() { return Math.random() - 0.5; });
+        shuffled.slice(0, count).forEach(function(w, i) {
+            var correct = w.meaning;
+            var wrongPool = picked.filter(function(p) { return p.id !== w.id; }).map(function(p) { return p.meaning; });
+            wrongPool.sort(function() { return Math.random() - 0.5; });
+            var options = [correct].concat(wrongPool.slice(0, 3));
+            options.sort(function() { return Math.random() - 0.5; });
+            questions.push({ id: i + 1, word: w.word, options: options, correct_index: options.indexOf(correct) });
+        });
+        _engQuiz = questions;
+        _engQuizIdx = 0;
+        _engQuizScore = 0;
+        engRenderQuizQ();
+        return;
+    }
 
     var url = '/api/english/quiz?count=' + count;
     if (topic) url += '&topic=' + encodeURIComponent(topic);
@@ -353,6 +407,48 @@ function engShowTab(tab) {
         if (panel) panel.style.display = t === tab ? '' : 'none';
         if (btn) btn.classList.toggle('eng-tab-active', t === tab);
     });
+}
+
+async function _engLoadWordPicker(container, mode) {
+    var headers = _engHeaders();
+    if (!headers) return;
+    container.innerHTML = '<div style="padding:8px;color:var(--text-secondary,#94a3b8);font-size:12px">Đang tải...</div>';
+
+    try {
+        var res = await fetchWithTimeout('/api/english/all?page=1&per_page=100', { headers: headers }, 10000);
+        if (!res.ok) return;
+        var data = await res.json();
+        var words = data.words || [];
+        if (words.length === 0) {
+            container.innerHTML = '<div style="padding:8px;color:var(--text-secondary,#94a3b8);font-size:12px">Chưa có từ nào</div>';
+            return;
+        }
+        var html = '<div class="eng-word-picker"><div class="eng-picker-actions">'
+            + '<button class="eng-picker-action" onclick="_engPickAll(this,true)">Chọn tất cả</button>'
+            + '<button class="eng-picker-action" onclick="_engPickAll(this,false)">Bỏ chọn</button></div>'
+            + '<div class="eng-picker-list">';
+        words.forEach(function(w) {
+            html += '<label class="eng-picker-item"><input type="checkbox" value="' + w.id + '" data-word="' + _engEsc(w.word) + '" data-meaning="' + _engEsc(w.meaning) + '"><span>' + _engEsc(w.word) + '</span><span class="eng-picker-meaning">' + _engEsc(w.meaning) + '</span></label>';
+        });
+        html += '</div></div>';
+        container.innerHTML = html;
+    } catch(e) { container.innerHTML = '<div style="padding:8px;color:#f87171;font-size:12px">Lỗi tải từ</div>'; }
+}
+
+function _engPickAll(btn, check) {
+    var picker = btn.closest('.eng-word-picker');
+    if (picker) picker.querySelectorAll('input[type=checkbox]').forEach(function(cb) { cb.checked = check; });
+}
+
+function _engGetPickedWords(wrapperId) {
+    var wrap = document.getElementById(wrapperId);
+    if (!wrap) return [];
+    var checked = wrap.querySelectorAll('input[type=checkbox]:checked');
+    var words = [];
+    checked.forEach(function(cb) {
+        words.push({ id: parseInt(cb.value), word: cb.getAttribute('data-word'), meaning: cb.getAttribute('data-meaning') });
+    });
+    return words;
 }
 
 function _engEsc(str) {
