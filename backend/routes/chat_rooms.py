@@ -768,6 +768,10 @@ async def send_message(room_id: str, body: SendMessageBody, request: Request):
     )
     conn.commit()
 
+    # Clear typing status after sending
+    room_typing = _typing_status.get(room_id, {})
+    room_typing.pop(str(user["id"]), None)
+
     user_info = _get_user_info(user["id"])
     return {
         "ok": True,

@@ -621,6 +621,7 @@ async function crSendMessage() {
     }
 
     input.value = '';
+    _crLastTypingSent = 0; // Reset so typing indicator clears immediately
 
     try {
         var res = await fetchWithTimeout('/api/chat-rooms/' + _crCurrentRoom.id + '/messages', {
