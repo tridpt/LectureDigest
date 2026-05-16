@@ -40,7 +40,9 @@ def _init_english_tables():
             next_review REAL DEFAULT 0,
             ease_factor REAL DEFAULT 2.5,
             interval INTEGER DEFAULT 0,
-            repetitions INTEGER DEFAULT 0
+            repetitions INTEGER DEFAULT 0,
+            correct_count INTEGER DEFAULT 0,
+            wrong_count INTEGER DEFAULT 0
         );
         CREATE INDEX IF NOT EXISTS idx_ev_user ON english_vocab(user_id);
         CREATE INDEX IF NOT EXISTS idx_ev_review ON english_vocab(user_id, next_review);
@@ -81,6 +83,15 @@ except:
 try:
     conn = get_db()
     conn.execute("ALTER TABLE english_vocab ADD COLUMN part_of_speech TEXT DEFAULT ''")
+    conn.commit()
+except:
+    pass
+
+# Migration: add correct_count, wrong_count columns
+try:
+    conn = get_db()
+    conn.execute("ALTER TABLE english_vocab ADD COLUMN correct_count INTEGER DEFAULT 0")
+    conn.execute("ALTER TABLE english_vocab ADD COLUMN wrong_count INTEGER DEFAULT 0")
     conn.commit()
 except:
     pass
@@ -222,6 +233,8 @@ async def get_all_words(request: Request, page: int = 1, per_page: int = 20):
             "example": r["example"], "phonetic": r["phonetic"],
             "part_of_speech": r["part_of_speech"] if "part_of_speech" in r.keys() else "",
             "topic": r["topic"],
+            "correct_count": r["correct_count"] if "correct_count" in r.keys() else 0,
+            "mastery": _mastery_level(r["correct_count"] if "correct_count" in r.keys() else 0),
         } for r in rows],
         "total": total,
         "page": page,
@@ -310,6 +323,13 @@ async def review_word(word_id: int, request: Request, quality: int = 3):
         UPDATE english_vocab SET ease_factor = ?, interval = ?, repetitions = ?, next_review = ?
         WHERE id = ?
     """, (ef, interval, reps, next_review, word_id))
+
+    # Update correct/wrong count
+    if quality >= 3:
+        conn.execute("UPDATE english_vocab SET correct_count = correct_count + 1 WHERE id = ?", (word_id,))
+    else:
+        conn.execute("UPDATE english_vocab SET wrong_count = wrong_count + 1 WHERE id = ?", (word_id,))
+
     conn.commit()
 
     return {"ok": True, "next_review_days": interval}
@@ -405,6 +425,40 @@ async def generate_quiz(request: Request, count: int = 5, topic: str = ''):
     return {"questions": questions[:5]}
 
 
+@router.post("/mastery/update")
+async def update_mastery(request: Request):
+    """Update correct/wrong counts for words after quiz or game.
+    Body: { results: [{word: "...", correct: true/false}] }
+    """
+    user = get_current_user(request)
+    if not user:
+        raise HTTPException(status_code=401, detail="Vui lòng đăng nhập")
+
+    body = await request.json()
+    results = body.get("results", [])
+    if not results:
+        return {"ok": True}
+
+    conn = get_db()
+    for r in results:
+        word = r.get("word", "")
+        correct = r.get("correct", False)
+        if not word:
+            continue
+        if correct:
+            conn.execute("""
+                UPDATE english_vocab SET correct_count = correct_count + 1
+                WHERE user_id = ? AND LOWER(word) = LOWER(?)
+            """, (user["id"], word))
+        else:
+            conn.execute("""
+                UPDATE english_vocab SET wrong_count = wrong_count + 1
+                WHERE user_id = ? AND LOWER(word) = LOWER(?)
+            """, (user["id"], word))
+    conn.commit()
+    return {"ok": True, "updated": len(results)}
+
+
 def _update_streak(user_id, words_added):
     """Update study streak."""
     import datetime
@@ -453,6 +507,26 @@ def _update_streak(user_id, words_added):
 def _xp_for_level(level):
     """XP needed to go from `level` to `level+1`."""
     return level * 100
+
+
+def _mastery_level(correct_count):
+    """Calculate mastery level from correct answer count.
+    0 correct = Mới (new)
+    1-2 correct = Quen (familiar)
+    3-5 correct = Khá (good)
+    6-9 correct = Giỏi (proficient)
+    10+ correct = Thành thạo (mastered)
+    """
+    if correct_count >= 10:
+        return {"level": 5, "label": "Thành thạo", "color": "#fbbf24"}
+    elif correct_count >= 6:
+        return {"level": 4, "label": "Giỏi", "color": "#10b981"}
+    elif correct_count >= 3:
+        return {"level": 3, "label": "Khá", "color": "#60a5fa"}
+    elif correct_count >= 1:
+        return {"level": 2, "label": "Quen", "color": "#a78bfa"}
+    else:
+        return {"level": 1, "label": "Mới", "color": "#94a3b8"}
 
 
 def _add_xp(user_id, amount, source=""):

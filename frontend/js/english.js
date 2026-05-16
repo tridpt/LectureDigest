@@ -254,9 +254,12 @@ function engRenderSavedList(words, total, page, totalPages) {
 
     el.innerHTML = words.map(function(w) {
         var pos = w.part_of_speech ? '<span class="eng-saved-pos">' + _engEsc(w.part_of_speech) + '</span>' : '';
+        var mastery = w.mastery || { level: 1, label: 'Mới', color: '#94a3b8' };
+        var masteryHtml = '<span class="eng-mastery-badge" style="--mastery-color:' + mastery.color + '">' + mastery.label + '</span>';
         return '<div class="eng-saved-item">'
             + '<strong>' + _engEsc(w.word) + '</strong>'
             + pos
+            + masteryHtml
             + '<span class="eng-saved-meaning">' + _engEsc(w.meaning) + '</span>'
             + '<span class="eng-saved-topic">' + _engEsc(w.topic) + '</span>'
             + '</div>';
@@ -513,7 +516,10 @@ function engRenderQuizQ() {
 }
 
 function engAnswer(selected, correct) {
+    var q = _engQuiz[_engQuizIdx];
     if (selected === correct) _engQuizScore++;
+    // Track mastery
+    _engReportMastery(q.word, selected === correct);
     var opts = document.querySelectorAll('.eng-quiz-opt');
     opts.forEach(function(btn, i) {
         btn.disabled = true;
@@ -587,6 +593,16 @@ function _engEsc(str) {
     var div = document.createElement('div');
     div.textContent = str;
     return div.innerHTML;
+}
+
+// Report mastery (correct/wrong) for a word
+function _engReportMastery(word, correct) {
+    var headers = _engHeaders();
+    if (!headers) return;
+    fetchWithTimeout('/api/english/mastery/update', {
+        method: 'POST', headers: headers,
+        body: JSON.stringify({ results: [{ word: word, correct: correct }] })
+    }, 5000).catch(function() {});
 }
 
 
@@ -926,9 +942,11 @@ function engSpellingCheck() {
         _engGameScore++;
         feedback.innerHTML = '<span class="eng-spelling-correct">✅ Chính xác!</span>';
         feedback.className = 'eng-spelling-feedback eng-fb-correct';
+        _engReportMastery(w.word, true);
     } else {
         feedback.innerHTML = '<span class="eng-spelling-wrong">❌ Sai! Đáp án: <strong>' + _engEsc(w.word) + '</strong></span>';
         feedback.className = 'eng-spelling-feedback eng-fb-wrong';
+        _engReportMastery(w.word, false);
     }
 
     _engGameRound++;
@@ -1078,9 +1096,11 @@ function engScrambleCheck() {
         _engGameScore++;
         feedback.innerHTML = '<span class="eng-spelling-correct">✅ Chính xác!</span>';
         feedback.className = 'eng-spelling-feedback eng-fb-correct';
+        _engReportMastery(w.word, true);
     } else {
         feedback.innerHTML = '<span class="eng-spelling-wrong">❌ Sai! Đáp án: <strong>' + _engEsc(w.word) + '</strong></span>';
         feedback.className = 'eng-spelling-feedback eng-fb-wrong';
+        _engReportMastery(w.word, false);
     }
 
     _engGameRound++;
