@@ -1,0 +1,55 @@
+    <!-- ═══════════════════════════ ENGLISH LEARNING ═══════════════════════════ -->
+    <section class="eng-page hidden" id="englishSection" aria-label="Học tiếng Anh">
+        <div class="eng-inner">
+            <div class="eng-header">
+                <button type="button" class="bp-back-btn" onclick="closeEnglish()" aria-label="Quay lại">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="18" height="18">
+                        <path d="M19 12H5M12 5l-7 7 7 7" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                </button>
+                <div class="eng-header-center">
+                    <h1 class="eng-title">🇬🇧 Học tiếng Anh mỗi ngày</h1>
+                </div>
+            </div>
+
+            <!-- Stats -->
+            <div class="eng-stats-grid" id="engStats"></div>
+
+            <!-- Tabs -->
+            <div class="eng-tabs">
+                <button class="eng-tab eng-tab-active" id="engTab_words" onclick="engShowTab('words')">📚 Từ vựng</button>
+                <button class="eng-tab" id="engTab_review" onclick="engStartReview()">🔄 Ôn tập</button>
+                <button class="eng-tab" id="engTab_quiz" onclick="engStartQuiz()">🧠 Quiz</button>
+            </div>
+
+            <!-- Panel: Words -->
+            <div id="engPanel_words">
+                <div class="eng-gen-bar">
+                    <select class="eng-select" id="engTopic">
+                        <option value="general">Tổng hợp</option>
+                        <option value="business">Kinh doanh</option>
+                        <option value="technology">Công nghệ</option>
+                        <option value="travel">Du lịch</option>
+                        <option value="academic">Học thuật</option>
+                        <option value="daily life">Đời sống</option>
+                        <option value="health">Sức khỏe</option>
+                        <option value="food">Ẩm thực</option>
+                    </select>
+                    <button class="eng-btn" id="engGenBtn" onclick="engGenerateWords()">✨ Học từ mới</button>
+                </div>
+                <div class="eng-word-list" id="engWordList">
+                    <div class="eng-empty">Bấm "Học từ mới" để bắt đầu!</div>
+                </div>
+            </div>
+
+            <!-- Panel: Review -->
+            <div id="engPanel_review" style="display:none">
+                <div id="engReviewArea"></div>
+            </div>
+
+            <!-- Panel: Quiz -->
+            <div id="engPanel_quiz" style="display:none">
+                <div id="engQuizArea"></div>
+            </div>
+        </div>
+    </section>

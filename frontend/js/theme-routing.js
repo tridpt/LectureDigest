@@ -104,6 +104,7 @@ function updatePageTitle(sectionId) {
         roomDetailSection: 'Phòng học — LectureDigest',
         chatRoomsSection: 'Phòng chat — LectureDigest',
         chatDetailSection: 'Phòng chat — LectureDigest',
+        englishSection: 'Học tiếng Anh — LectureDigest',
     };
     document.title = titles[sectionId] || titles.hero;
 }
@@ -150,6 +151,8 @@ window.addEventListener('popstate', function(e) {
         if (srRoomId && typeof srOpenRoom === 'function') setTimeout(function() { srOpenRoom(srRoomId); }, 300);
     } else if (path === '/knowledge-graph') {
         if (typeof openKnowledgeGraph === 'function') openKnowledgeGraph();
+    } else if (path === '/english') {
+        if (typeof openEnglish === 'function') openEnglish();
     } else if (path === '/exam') {
         if (typeof openMexam === 'function') openMexam();
     } else if (path === '/chat') {
@@ -218,6 +221,10 @@ window.addEventListener('popstate', function(e) {
     } else if (path === '/knowledge-graph') {
         window.addEventListener('DOMContentLoaded', function() {
             if (typeof openKnowledgeGraph === 'function') openKnowledgeGraph();
+        }, { once: true });
+    } else if (path === '/english') {
+        window.addEventListener('DOMContentLoaded', function() {
+            if (typeof openEnglish === 'function') openEnglish();
         }, { once: true });
     } else if (path === '/exam') {
         window.addEventListener('DOMContentLoaded', function() {

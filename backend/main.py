@@ -223,6 +223,7 @@ from routes.study_plan import router as study_plan_router
 from routes.study_rooms import router as study_rooms_router
 from routes.notifications import router as notifications_router
 from routes.chat_rooms import router as chat_rooms_router
+from routes.english import router as english_router
 
 app.include_router(auth_router)
 app.include_router(analyze_router)
@@ -234,6 +235,7 @@ app.include_router(study_plan_router)
 app.include_router(study_rooms_router)
 app.include_router(notifications_router)
 app.include_router(chat_rooms_router)
+app.include_router(english_router)
 
 
 # ═══════════════════════════════════════════════════════
