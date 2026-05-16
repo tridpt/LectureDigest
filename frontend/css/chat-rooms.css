@@ -1881,3 +1881,39 @@ img.cr-member-av {
     color: #7c3aed;
     background: rgba(139, 92, 246, 0.08);
 }
+
+/* ── User profile modal ── */
+.cr-profile-av-wrap {
+    margin-bottom: 12px;
+}
+
+.cr-profile-avatar-img {
+    width: 72px;
+    height: 72px;
+    border-radius: 50%;
+    object-fit: cover;
+}
+
+.cr-profile-avatar {
+    width: 72px;
+    height: 72px;
+    border-radius: 50%;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 28px;
+    font-weight: 700;
+    color: #fff;
+}
+
+.cr-profile-name {
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--text-primary, #f1f5f9);
+    margin-bottom: 4px;
+}
+
+.cr-profile-meta {
+    font-size: 13px;
+    color: var(--text-secondary, #94a3b8);
+}

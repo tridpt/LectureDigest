@@ -477,7 +477,7 @@ function _crRenderMessages() {
 
         html += '<div class="cr-msg ' + (isOwn ? 'cr-msg-own' : 'cr-msg-other') + '" data-msg-id="' + msg.id + '">';
         if (!isOwn) {
-            html += '<div class="cr-msg-avatar">' + avatarHtml + '</div>';
+            html += '<div class="cr-msg-avatar" onclick="crShowUserProfile(' + msg.user_id + ')" style="cursor:pointer">' + avatarHtml + '</div>';
         }
         html += '<div class="cr-msg-row">';
         if (isOwn) html += menuHtml;
@@ -2184,6 +2184,39 @@ function crSelectMention(name, atPos) {
     var newPos = atPos + name.length + 2;
     input.selectionStart = input.selectionEnd = newPos;
     _crHideMentionDropdown();
+}
+
+async function crShowUserProfile(userId) {
+    var token = localStorage.getItem('ld_auth_token') || '';
+    try {
+        var res = await fetchWithTimeout('/api/auth/profile/' + userId, {
+            headers: token ? { 'Authorization': 'Bearer ' + token } : {}
+        }, 10000);
+        if (!res.ok) { showToast('Không thể tải hồ sơ', 3000); return; }
+        var user = await res.json();
+
+        var initial = (user.display_name || '?').charAt(0).toUpperCase();
+        var avatarHtml = user.avatar_url
+            ? '<img class="cr-profile-avatar-img" src="' + _crEsc(user.avatar_url) + '" alt="">'
+            : '<div class="cr-profile-avatar" style="background:' + (user.avatar_color || '#8b5cf6') + '">' + initial + '</div>';
+        var joinDate = user.created_at ? new Date(user.created_at).toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric' }) : '';
+
+        var html = '<div class="cr-modal-overlay" id="crProfileModal" onclick="if(event.target===this)this.remove()">'
+            + '<div class="cr-modal" style="max-width:320px;text-align:center;overflow:visible">'
+            + '<div class="cr-modal-header"><h3>Hồ sơ</h3>'
+            + '<button type="button" class="cr-modal-close" onclick="document.getElementById(\'crProfileModal\').remove()">&times;</button></div>'
+            + '<div class="cr-modal-body" style="padding:24px">'
+            + '<div class="cr-profile-av-wrap">' + avatarHtml + '</div>'
+            + '<div class="cr-profile-name">' + _crEsc(user.display_name) + '</div>'
+            + '<div class="cr-profile-meta">Tham gia: ' + joinDate + '</div>'
+            + '</div></div></div>';
+
+        var existing = document.getElementById('crProfileModal');
+        if (existing) existing.remove();
+        var container = document.createElement('div');
+        container.innerHTML = html;
+        document.body.appendChild(container.firstElementChild);
+    } catch(e) { showToast('Lỗi', 3000); }
 }
 
 function crViewImage(url) {

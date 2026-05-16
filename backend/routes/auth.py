@@ -275,6 +275,21 @@ async def get_me(request: Request):
         raise HTTPException(status_code=500, detail="Lỗi lấy thông tin người dùng")
 
 
+@router.get("/profile/{user_id}")
+async def get_public_profile(user_id: int, request: Request):
+    """Get public profile of any user."""
+    user = db_get_user_by_id(user_id)
+    if not user:
+        raise HTTPException(status_code=404, detail="Người dùng không tồn tại")
+    return {
+        "id": user["id"],
+        "display_name": user.get("display_name", "User"),
+        "avatar_color": user.get("avatar_color", "#8b5cf6"),
+        "avatar_url": user.get("avatar_url", ""),
+        "created_at": user.get("created_at", 0),
+    }
+
+
 @router.put("/profile")
 async def update_profile(req: UpdateProfileRequest, request: Request):
     """Update current user's profile."""
