@@ -20,6 +20,7 @@ function openEnglish() {
     engLoadStats();
     engLoadToday();
     engLoadXP();
+    _engLoadCustomTopics();
     var footer = document.querySelector('.footer');
     if (footer) footer.style.display = 'none';
 }
@@ -222,6 +223,11 @@ async function engGenerateWords() {
         engRenderWords();
         engLoadStats();
         engLoadSavedWords(1);
+        // Add custom topic to dropdown if not already there
+        if (customTopic) {
+            _engAddCustomTopic(customTopic);
+            document.getElementById('engCustomTopic').value = '';
+        }
     } catch(e) { showToast('Lỗi: ' + e.message, 3000); }
     finally { if (btn) { btn.disabled = false; btn.textContent = '✨ Tạo từ vựng'; } }
 }
@@ -603,6 +609,56 @@ function _engReportMastery(word, correct) {
         method: 'POST', headers: headers,
         body: JSON.stringify({ results: [{ word: word, correct: correct }] })
     }, 5000).catch(function() {});
+}
+
+// Add custom topic to dropdown select
+function _engAddCustomTopic(topic) {
+    var sel = document.getElementById('engTopic');
+    if (!sel) return;
+    // Check if already exists
+    var exists = false;
+    for (var i = 0; i < sel.options.length; i++) {
+        if (sel.options[i].value === topic) { exists = true; break; }
+    }
+    if (exists) {
+        sel.value = topic;
+        return;
+    }
+    // Find or create "Chủ đề của bạn" optgroup
+    var customGroup = sel.querySelector('optgroup[label="Chủ đề của bạn"]');
+    if (!customGroup) {
+        customGroup = document.createElement('optgroup');
+        customGroup.label = 'Chủ đề của bạn';
+        sel.insertBefore(customGroup, sel.firstChild.nextSibling); // after the first empty option
+    }
+    var opt = document.createElement('option');
+    opt.value = topic;
+    opt.textContent = topic;
+    customGroup.appendChild(opt);
+    sel.value = topic;
+    // Save to localStorage for persistence
+    var saved = JSON.parse(localStorage.getItem('eng_custom_topics') || '[]');
+    if (saved.indexOf(topic) === -1) {
+        saved.push(topic);
+        localStorage.setItem('eng_custom_topics', JSON.stringify(saved));
+    }
+}
+
+// Load saved custom topics on page load
+function _engLoadCustomTopics() {
+    var saved = JSON.parse(localStorage.getItem('eng_custom_topics') || '[]');
+    if (saved.length === 0) return;
+    var sel = document.getElementById('engTopic');
+    if (!sel) return;
+    var customGroup = document.createElement('optgroup');
+    customGroup.label = 'Chủ đề của bạn';
+    saved.forEach(function(t) {
+        var opt = document.createElement('option');
+        opt.value = t;
+        opt.textContent = t;
+        customGroup.appendChild(opt);
+    });
+    sel.insertBefore(customGroup, sel.firstChild.nextSibling);
 }
 
 
