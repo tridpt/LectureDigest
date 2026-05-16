@@ -285,3 +285,29 @@
    Mastery Badge
    ════════════════════════════════════════════════ */
 .eng-mastery-badge { display: inline-block; font-size: 10px; font-weight: 700; color: var(--mastery-color, #94a3b8); background: color-mix(in srgb, var(--mastery-color, #94a3b8) 12%, transparent); border: 1px solid color-mix(in srgb, var(--mastery-color, #94a3b8) 25%, transparent); padding: 2px 8px; border-radius: 4px; white-space: nowrap; text-transform: uppercase; letter-spacing: 0.3px; }
+
+
+/* ════════════════════════════════════════════════
+   Saved Word Detail (expandable)
+   ════════════════════════════════════════════════ */
+.eng-saved-clickable { cursor: pointer; transition: all 0.2s; }
+.eng-saved-clickable:hover { background: rgba(139,92,246,0.06); border-left: 3px solid rgba(139,92,246,0.4); padding-left: 11px; }
+.eng-saved-expanded { background: rgba(139,92,246,0.08); border-left: 3px solid #a78bfa; padding-left: 11px; }
+
+.eng-word-detail { animation: engDetailSlide 0.25s ease; overflow: hidden; }
+.eng-word-detail-inner { padding: 14px 16px; margin: 4px 0 8px; background: rgba(30,30,58,0.6); border: 1px solid rgba(139,92,246,0.15); border-radius: 12px; }
+.eng-word-detail-inner .eng-word-header { margin-bottom: 8px; }
+.eng-word-detail-inner .eng-meaning { margin-bottom: 6px; }
+.eng-word-detail-inner .eng-example { margin-bottom: 8px; }
+
+.eng-detail-stats { display: flex; align-items: center; gap: 10px; margin-top: 10px; padding-top: 10px; border-top: 1px solid rgba(255,255,255,0.06); }
+.eng-detail-stat { font-size: 12px; color: var(--text-secondary, #94a3b8); font-weight: 600; }
+
+@keyframes engDetailSlide {
+    from { opacity: 0; max-height: 0; transform: translateY(-8px); }
+    to { opacity: 1; max-height: 300px; transform: translateY(0); }
+}
+
+.light-mode .eng-word-detail-inner { background: rgba(255,255,255,0.8); border-color: rgba(139,92,246,0.1); }
+.light-mode .eng-saved-clickable:hover { background: rgba(139,92,246,0.04); }
+.light-mode .eng-saved-expanded { background: rgba(139,92,246,0.06); }

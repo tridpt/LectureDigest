@@ -258,11 +258,11 @@ function engRenderSavedList(words, total, page, totalPages) {
         return;
     }
 
-    el.innerHTML = words.map(function(w) {
+    el.innerHTML = words.map(function(w, idx) {
         var pos = w.part_of_speech ? '<span class="eng-saved-pos">' + _engEsc(w.part_of_speech) + '</span>' : '';
         var mastery = w.mastery || { level: 1, label: 'Mới', color: '#94a3b8' };
         var masteryHtml = '<span class="eng-mastery-badge" style="--mastery-color:' + mastery.color + '">' + mastery.label + '</span>';
-        return '<div class="eng-saved-item">'
+        return '<div class="eng-saved-item eng-saved-clickable" onclick="engToggleWordDetail(this, ' + idx + ')">'
             + '<strong>' + _engEsc(w.word) + '</strong>'
             + pos
             + masteryHtml
@@ -270,6 +270,9 @@ function engRenderSavedList(words, total, page, totalPages) {
             + '<span class="eng-saved-topic">' + _engEsc(w.topic) + '</span>'
             + '</div>';
     }).join('');
+
+    // Store words data for detail view
+    el._wordsData = words;
 
     // Pagination
     var pagEl = document.getElementById('engPagination');
@@ -609,6 +612,47 @@ function _engReportMastery(word, correct) {
         method: 'POST', headers: headers,
         body: JSON.stringify({ results: [{ word: word, correct: correct }] })
     }, 5000).catch(function() {});
+}
+
+// Toggle word detail in saved list
+function engToggleWordDetail(el, idx) {
+    // If detail already open, close it
+    var existing = el.nextElementSibling;
+    if (existing && existing.classList.contains('eng-word-detail')) {
+        existing.remove();
+        el.classList.remove('eng-saved-expanded');
+        return;
+    }
+    // Close any other open detail
+    var list = document.getElementById('engSavedList');
+    if (list) {
+        list.querySelectorAll('.eng-word-detail').forEach(function(d) { d.remove(); });
+        list.querySelectorAll('.eng-saved-expanded').forEach(function(d) { d.classList.remove('eng-saved-expanded'); });
+    }
+    // Get word data
+    var words = list._wordsData;
+    if (!words || !words[idx]) return;
+    var w = words[idx];
+
+    var pos = w.part_of_speech ? '<span class="eng-pos">' + _engEsc(w.part_of_speech) + '</span>' : '';
+    var mastery = w.mastery || { level: 1, label: 'Mới', color: '#94a3b8' };
+    var statsHtml = '<div class="eng-detail-stats">'
+        + '<span class="eng-detail-stat">✅ ' + (w.correct_count || 0) + ' đúng</span>'
+        + '<span class="eng-detail-stat">❌ ' + (w.wrong_count || 0) + ' sai</span>'
+        + '<span class="eng-mastery-badge" style="--mastery-color:' + mastery.color + '">' + mastery.label + '</span>'
+        + '</div>';
+
+    var detail = document.createElement('div');
+    detail.className = 'eng-word-detail';
+    detail.innerHTML = '<div class="eng-word-detail-inner">'
+        + '<div class="eng-word-header"><strong>' + _engEsc(w.word) + '</strong>' + pos + '<span class="eng-phonetic">' + _engEsc(w.phonetic) + '</span></div>'
+        + '<div class="eng-meaning">' + _engEsc(w.meaning) + '</div>'
+        + (w.example ? '<div class="eng-example">"' + _engEsc(w.example) + '"</div>' : '')
+        + statsHtml
+        + '</div>';
+
+    el.classList.add('eng-saved-expanded');
+    el.after(detail);
 }
 
 // Add custom topic to dropdown select

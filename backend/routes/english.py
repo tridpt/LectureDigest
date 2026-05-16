@@ -234,6 +234,7 @@ async def get_all_words(request: Request, page: int = 1, per_page: int = 20):
             "part_of_speech": r["part_of_speech"] if "part_of_speech" in r.keys() else "",
             "topic": r["topic"],
             "correct_count": r["correct_count"] if "correct_count" in r.keys() else 0,
+            "wrong_count": r["wrong_count"] if "wrong_count" in r.keys() else 0,
             "mastery": _mastery_level(r["correct_count"] if "correct_count" in r.keys() else 0),
         } for r in rows],
         "total": total,
