@@ -91,7 +91,7 @@ async def generate_vocab(req: GenerateVocabRequest, request: Request):
     if not allowed:
         raise HTTPException(status_code=429, detail="Quá nhiều yêu cầu")
 
-    count = min(max(req.count, 3), 10)
+    count = min(max(req.count, 1), 100)
     prompt = f"""Generate {count} English vocabulary words for a Vietnamese learner preparing for English proficiency exams.
 
 Exam/Topic: {req.topic}
@@ -165,7 +165,7 @@ async def get_today_words(request: Request):
     today_start = time.time() - 86400  # last 24h
     rows = conn.execute("""
         SELECT * FROM english_vocab WHERE user_id = ? AND learned_at > ?
-        ORDER BY learned_at DESC LIMIT 20
+        ORDER BY learned_at DESC LIMIT 100
     """, (user["id"], today_start)).fetchall()
 
     return {"words": [{
@@ -173,6 +173,34 @@ async def get_today_words(request: Request):
         "example": r["example"], "phonetic": r["phonetic"],
         "topic": r["topic"], "level": r["level"],
     } for r in rows]}
+
+
+@router.get("/all")
+async def get_all_words(request: Request, page: int = 1, per_page: int = 20):
+    """Get all saved words with pagination."""
+    user = get_current_user(request)
+    if not user:
+        raise HTTPException(status_code=401, detail="Vui lòng đăng nhập")
+
+    conn = get_db()
+    total = conn.execute("SELECT COUNT(*) as c FROM english_vocab WHERE user_id = ?", (user["id"],)).fetchone()["c"]
+    offset = (page - 1) * per_page
+    rows = conn.execute("""
+        SELECT * FROM english_vocab WHERE user_id = ?
+        ORDER BY learned_at DESC LIMIT ? OFFSET ?
+    """, (user["id"], per_page, offset)).fetchall()
+
+    return {
+        "words": [{
+            "id": r["id"], "word": r["word"], "meaning": r["meaning"],
+            "example": r["example"], "phonetic": r["phonetic"],
+            "topic": r["topic"],
+        } for r in rows],
+        "total": total,
+        "page": page,
+        "per_page": per_page,
+        "total_pages": (total + per_page - 1) // per_page,
+    }
 
 
 @router.get("/review")

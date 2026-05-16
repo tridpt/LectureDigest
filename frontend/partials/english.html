@@ -24,8 +24,10 @@
 
             <!-- Panel: Words -->
             <div id="engPanel_words">
+                <!-- Generate bar -->
                 <div class="eng-gen-bar">
                     <select class="eng-select" id="engTopic">
+                        <option value="">-- Chọn chủ đề --</option>
                         <optgroup label="Kỳ thi">
                             <option value="IELTS Academic">IELTS Academic</option>
                             <option value="IELTS General">IELTS General</option>
@@ -60,10 +62,26 @@
                             <option value="TOEIC 800+ vocabulary">TOEIC 800+</option>
                         </optgroup>
                     </select>
-                    <button class="eng-btn" id="engGenBtn" onclick="engGenerateWords()">✨ Học từ mới</button>
+                    <input type="text" class="eng-custom-topic" id="engCustomTopic" placeholder="Hoặc nhập chủ đề riêng...">
                 </div>
+                <div class="eng-gen-bar2">
+                    <div class="eng-count-wrap">
+                        <label>Số từ:</label>
+                        <input type="number" class="eng-count-input" id="engWordCount" value="5" min="1" max="100">
+                    </div>
+                    <button class="eng-btn" id="engGenBtn" onclick="engGenerateWords()">✨ Tạo từ vựng</button>
+                </div>
+
+                <!-- Generated words (current batch) -->
                 <div class="eng-word-list" id="engWordList">
-                    <div class="eng-empty">Bấm "Học từ mới" để bắt đầu!</div>
+                    <div class="eng-empty">Chọn chủ đề và bấm "Tạo từ vựng" để bắt đầu!</div>
+                </div>
+
+                <!-- All saved words with pagination -->
+                <div class="eng-saved-section">
+                    <h3 class="eng-saved-title">📖 Danh sách từ đã học</h3>
+                    <div class="eng-saved-list" id="engSavedList"></div>
+                    <div class="eng-pagination" id="engPagination"></div>
                 </div>
             </div>
 

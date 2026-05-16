@@ -18,6 +18,7 @@ function openEnglish() {
     showSection('englishSection');
     engLoadStats();
     engLoadToday();
+    engLoadSavedWords(1);
     var footer = document.querySelector('.footer');
     if (footer) footer.style.display = 'none';
 }
@@ -88,29 +89,80 @@ function engRenderWords() {
 
 // ── Generate new words ──
 async function engGenerateWords() {
-    var topic = document.getElementById('engTopic')?.value || 'general';
+    var topicSelect = document.getElementById('engTopic')?.value || '';
+    var customTopic = document.getElementById('engCustomTopic')?.value.trim() || '';
+    var topic = customTopic || topicSelect || 'IELTS Academic';
+    var count = parseInt(document.getElementById('engWordCount')?.value) || 5;
+    count = Math.max(1, Math.min(100, count));
+
     var headers = _engHeaders();
     if (!headers) return;
 
     var btn = document.getElementById('engGenBtn');
-    if (btn) { btn.disabled = true; btn.textContent = 'Đang tạo...'; }
+    if (btn) { btn.disabled = true; btn.textContent = 'Đang tạo ' + count + ' từ...'; }
 
     try {
         var res = await fetchWithTimeout('/api/english/generate-vocab', {
             method: 'POST', headers: headers,
-            body: JSON.stringify({ topic: topic, level: 'intermediate', count: 5 })
-        }, 30000);
+            body: JSON.stringify({ topic: topic, level: 'intermediate', count: count })
+        }, 60000);
         if (!res.ok) {
             var err = await res.json().catch(function() { return {}; });
             showToast(err.detail || 'Lỗi', 3000);
             return;
         }
         var data = await res.json();
-        showToast('✅ Đã thêm ' + data.count + ' từ mới!', 2000);
-        engLoadToday();
+        _engWords = data.words || [];
+        showToast('✅ Đã tạo ' + data.count + ' từ mới!', 2000);
+        engRenderWords();
         engLoadStats();
+        engLoadSavedWords(1);
     } catch(e) { showToast('Lỗi: ' + e.message, 3000); }
-    finally { if (btn) { btn.disabled = false; btn.textContent = '✨ Học từ mới'; } }
+    finally { if (btn) { btn.disabled = false; btn.textContent = '✨ Tạo từ vựng'; } }
+}
+
+// ── Saved words with pagination ──
+var _engSavedPage = 1;
+
+async function engLoadSavedWords(page) {
+    var headers = _engHeaders();
+    if (!headers) return;
+    _engSavedPage = page || 1;
+
+    try {
+        var res = await fetchWithTimeout('/api/english/all?page=' + _engSavedPage + '&per_page=15', { headers: headers }, 10000);
+        if (!res.ok) return;
+        var data = await res.json();
+        engRenderSavedList(data.words || [], data.total, data.page, data.total_pages);
+    } catch(e) {}
+}
+
+function engRenderSavedList(words, total, page, totalPages) {
+    var el = document.getElementById('engSavedList');
+    if (!el) return;
+
+    if (words.length === 0) {
+        el.innerHTML = '<div class="eng-empty">Chưa có từ nào được lưu</div>';
+        document.getElementById('engPagination').innerHTML = '';
+        return;
+    }
+
+    el.innerHTML = words.map(function(w) {
+        return '<div class="eng-saved-item">'
+            + '<strong>' + _engEsc(w.word) + '</strong>'
+            + '<span class="eng-saved-meaning">' + _engEsc(w.meaning) + '</span>'
+            + '<span class="eng-saved-topic">' + _engEsc(w.topic) + '</span>'
+            + '</div>';
+    }).join('');
+
+    // Pagination
+    var pagEl = document.getElementById('engPagination');
+    if (!pagEl || totalPages <= 1) { if (pagEl) pagEl.innerHTML = ''; return; }
+
+    var html = '<span class="eng-pag-info">' + total + ' từ · Trang ' + page + '/' + totalPages + '</span>';
+    if (page > 1) html += '<button class="eng-pag-btn" onclick="engLoadSavedWords(' + (page - 1) + ')">← Trước</button>';
+    if (page < totalPages) html += '<button class="eng-pag-btn" onclick="engLoadSavedWords(' + (page + 1) + ')">Sau →</button>';
+    pagEl.innerHTML = html;
 }
 
 // ── Review (flashcard) ──
