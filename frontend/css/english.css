@@ -275,3 +275,7 @@
 .eng-review-pos { font-size: 13px; color: #60a5fa; font-style: italic; margin-top: 4px; font-weight: 600; }
 .eng-quiz-pos { font-size: 13px; color: #60a5fa; font-style: italic; margin-bottom: 8px; font-weight: 600; }
 .light-mode .eng-pos, .light-mode .eng-saved-pos { color: #2563eb; background: rgba(37,99,235,0.08); border-color: rgba(37,99,235,0.15); }
+
+
+/* Scramble hint display */
+.eng-scramble-hint-display { margin: 12px 0; padding: 10px 14px; background: rgba(251,191,36,0.06); border: 1px solid rgba(251,191,36,0.15); border-radius: 8px; font-size: 14px; color: var(--text-secondary, #94a3b8); text-align: center; }

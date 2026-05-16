@@ -914,6 +914,8 @@ function engSpellingCheck() {
 // ═══════════════════════════════════════
 // GAME 3: Word Scramble (xáo chữ cái)
 // ═══════════════════════════════════════
+var _engScrambleRevealed = [];
+
 function engGameScramble() {
     var pool = _engGameWords.filter(function(w) { return w.word.length >= 4; }).slice(0, Math.min(8, _engGameWords.length));
     if (pool.length < 3) {
@@ -922,6 +924,7 @@ function engGameScramble() {
     _engGameTotal = pool.length;
     _engGameScore = 0;
     _engGameRound = 0;
+    _engScrambleRevealed = [];
     engScrambleRound(pool);
 }
 
@@ -939,6 +942,15 @@ function _engScrambleWord(word) {
     return scrambled;
 }
 
+function _engBuildScrambleHint(word, revealedIndices) {
+    var result = '';
+    for (var i = 0; i < word.length; i++) {
+        if (revealedIndices.indexOf(i) !== -1) result += word[i];
+        else result += '_';
+    }
+    return result;
+}
+
 function engScrambleRound(pool) {
     var area = document.getElementById('engGameArea');
     if (!area) return;
@@ -948,6 +960,7 @@ function engScrambleRound(pool) {
         return;
     }
 
+    _engScrambleRevealed = [];
     var w = pool[_engGameRound];
     var scrambled = _engScrambleWord(w.word.toLowerCase());
 
@@ -961,11 +974,12 @@ function engScrambleRound(pool) {
         + '<div class="eng-scramble-letters">' + scrambled.split('').map(function(c) {
             return '<span class="eng-scramble-letter">' + c.toUpperCase() + '</span>';
         }).join('') + '</div>'
+        + '<div class="eng-scramble-hint-display" id="engScrambleHintDisplay" style="display:none"></div>'
         + '<input type="text" class="eng-spelling-input" id="engScrambleInput" placeholder="Sắp xếp lại thành từ đúng..." autocomplete="off" autofocus>'
         + '<div class="eng-spelling-feedback" id="engScrambleFeedback"></div>'
         + '<div class="eng-scramble-btns">'
         + '<button class="eng-btn" onclick="engScrambleCheck()">Kiểm tra</button>'
-        + '<button class="eng-game-hint-btn" onclick="engScrambleHint()">💡 Gợi ý (-5 XP)</button>'
+        + '<button class="eng-game-hint-btn" id="engScrambleHintBtn" onclick="engScrambleHint()">💡 Gợi ý (-5 XP)</button>'
         + '<button class="eng-btn eng-btn-outline" onclick="engScrambleSkip()">Bỏ qua</button>'
         + '</div>'
         + '</div>'
@@ -986,16 +1000,34 @@ function engScrambleHint() {
     var w = pool[_engGameRound];
     if (!w) return;
 
-    // Reveal first 2 letters in correct position
     var word = w.word;
-    var hint = word.substring(0, 2) + '...';
+    var maxRevealed = Math.ceil(word.length * 0.7);
+
+    if (_engScrambleRevealed.length >= maxRevealed) {
+        showToast('Đã gợi ý tối đa!', 1500);
+        return;
+    }
+
+    // Reveal next letter in order (from left to right)
+    var nextIdx = _engScrambleRevealed.length;
+    _engScrambleRevealed.push(nextIdx);
 
     _engGameHintPenalty += 5;
     showToast('💡 Gợi ý: -5 XP', 1500);
 
-    var feedback = document.getElementById('engScrambleFeedback');
-    if (feedback) {
-        feedback.innerHTML = '<span style="color:#fbbf24;font-weight:600">💡 Bắt đầu bằng: <strong>' + _engEsc(hint) + '</strong></span>';
+    var hintStr = _engBuildScrambleHint(word, _engScrambleRevealed);
+    var hintEl = document.getElementById('engScrambleHintDisplay');
+    if (hintEl) {
+        hintEl.style.display = '';
+        hintEl.innerHTML = '🔑 Vị trí đúng: <strong style="letter-spacing:3px;color:#fbbf24">' + hintStr.split('').map(function(c) {
+            return c === '_' ? '·' : c.toUpperCase();
+        }).join(' ') + '</strong>';
+    }
+
+    // Disable hint button if max reached
+    if (_engScrambleRevealed.length >= maxRevealed) {
+        var btn = document.getElementById('engScrambleHintBtn');
+        if (btn) { btn.disabled = true; btn.textContent = '💡 Hết gợi ý'; }
     }
 }
 
