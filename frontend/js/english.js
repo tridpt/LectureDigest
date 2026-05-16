@@ -81,6 +81,7 @@ function engRenderWords() {
             + '<div class="eng-word-header"><strong>' + _engEsc(w.word) + '</strong><span class="eng-phonetic">' + _engEsc(w.phonetic) + '</span></div>'
             + '<div class="eng-meaning">' + _engEsc(w.meaning) + '</div>'
             + '<div class="eng-example">"' + _engEsc(w.example) + '"</div>'
+            + (w.exam_tip ? '<div class="eng-tip">💡 ' + _engEsc(w.exam_tip) + '</div>' : '')
             + '</div>';
     }).join('');
 }

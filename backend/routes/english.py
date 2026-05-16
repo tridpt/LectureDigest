@@ -92,29 +92,34 @@ async def generate_vocab(req: GenerateVocabRequest, request: Request):
         raise HTTPException(status_code=429, detail="Quá nhiều yêu cầu")
 
     count = min(max(req.count, 3), 10)
-    prompt = f"""Generate {count} English vocabulary words for a Vietnamese learner.
+    prompt = f"""Generate {count} English vocabulary words for a Vietnamese learner preparing for English proficiency exams.
 
-Topic: {req.topic}
-Level: {req.level}
+Exam/Topic: {req.topic}
+Target Level: {req.level}
 
 Return ONLY a valid JSON array (no markdown fences):
 [
   {{
-    "word": "the English word",
-    "meaning": "nghĩa tiếng Việt",
-    "example": "An example sentence using the word",
-    "phonetic": "/phonetic transcription/",
-    "part_of_speech": "noun/verb/adj/adv"
+    "word": "the English word or phrase",
+    "meaning": "nghĩa tiếng Việt (ngắn gọn, chính xác)",
+    "example": "An example sentence that might appear in the exam",
+    "phonetic": "/IPA phonetic transcription/",
+    "part_of_speech": "noun/verb/adj/adv/phrase",
+    "exam_tip": "Mẹo: ngữ cảnh thường gặp trong đề thi (tiếng Việt)"
   }}
 ]
 
 Rules:
-- Words should be practical and commonly used
-- Examples should be natural and easy to understand
-- Meanings in Vietnamese should be clear and concise
-- Include phonetic transcription (IPA)
-- Vary the parts of speech
-- Don't repeat common basic words (the, is, a, etc.)"""
+- Words MUST be relevant to the specified exam (IELTS/TOEIC/TOEFL/Cambridge)
+- For IELTS: academic vocabulary, collocations, topic-specific words
+- For TOEIC: business English, workplace vocabulary, formal expressions
+- For TOEFL: academic discourse, research vocabulary
+- Examples should mimic real exam contexts (reading passages, listening scripts)
+- Include collocations and phrasal verbs commonly tested
+- Meanings in Vietnamese should be clear and exam-relevant
+- exam_tip: brief Vietnamese tip about how/where this word appears in exams
+- Avoid basic words — focus on B2-C1 level vocabulary
+- Include a mix of single words and useful phrases/collocations"""
 
     try:
         import re

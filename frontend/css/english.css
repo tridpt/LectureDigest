@@ -20,6 +20,7 @@
 .eng-gen-bar { display: flex; gap: 8px; margin-bottom: 16px; }
 .eng-select { flex: 1; padding: 10px 14px; border-radius: 10px; border: 1px solid rgba(255,255,255,0.1); background: rgba(15,15,30,0.5); color: var(--text-primary, #f1f5f9); font-size: 14px; outline: none; }
 .eng-select option { background: #1e1e3a; color: #f1f5f9; }
+.eng-select optgroup { background: #1e1e3a; color: #a78bfa; font-weight: 700; }
 .eng-btn { padding: 10px 18px; border-radius: 10px; border: none; background: linear-gradient(135deg, #8b5cf6, #6d28d9); color: #fff; font-size: 14px; font-weight: 600; cursor: pointer; transition: transform 0.2s; white-space: nowrap; }
 .eng-btn:hover { transform: translateY(-1px); }
 .eng-btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
@@ -31,6 +32,7 @@
 .eng-phonetic { font-size: 13px; color: #a78bfa; font-style: italic; }
 .eng-meaning { font-size: 14px; color: #10b981; font-weight: 600; margin-bottom: 4px; }
 .eng-example { font-size: 13px; color: var(--text-secondary, #94a3b8); font-style: italic; }
+.eng-tip { font-size: 12px; color: #fbbf24; margin-top: 6px; padding: 6px 10px; background: rgba(251,191,36,0.08); border-radius: 6px; }
 .eng-empty { text-align: center; padding: 40px; color: var(--text-secondary, #94a3b8); font-size: 14px; }
 
 /* Review */

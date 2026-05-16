@@ -26,14 +26,39 @@
             <div id="engPanel_words">
                 <div class="eng-gen-bar">
                     <select class="eng-select" id="engTopic">
-                        <option value="general">Tổng hợp</option>
-                        <option value="business">Kinh doanh</option>
-                        <option value="technology">Công nghệ</option>
-                        <option value="travel">Du lịch</option>
-                        <option value="academic">Học thuật</option>
-                        <option value="daily life">Đời sống</option>
-                        <option value="health">Sức khỏe</option>
-                        <option value="food">Ẩm thực</option>
+                        <optgroup label="Kỳ thi">
+                            <option value="IELTS Academic">IELTS Academic</option>
+                            <option value="IELTS General">IELTS General</option>
+                            <option value="TOEIC Listening & Reading">TOEIC L&R</option>
+                            <option value="TOEIC Speaking & Writing">TOEIC S&W</option>
+                            <option value="TOEFL iBT">TOEFL iBT</option>
+                            <option value="Cambridge B2 First (FCE)">B2 First (FCE)</option>
+                            <option value="Cambridge C1 Advanced (CAE)">C1 Advanced (CAE)</option>
+                        </optgroup>
+                        <optgroup label="Chủ đề IELTS">
+                            <option value="IELTS Writing Task 2 - Education">IELTS Writing - Education</option>
+                            <option value="IELTS Writing Task 2 - Environment">IELTS Writing - Environment</option>
+                            <option value="IELTS Writing Task 2 - Technology">IELTS Writing - Technology</option>
+                            <option value="IELTS Writing Task 2 - Health">IELTS Writing - Health</option>
+                            <option value="IELTS Speaking Part 2 - Describe">IELTS Speaking - Describe</option>
+                            <option value="IELTS Reading - Academic vocabulary">IELTS Reading</option>
+                        </optgroup>
+                        <optgroup label="Chủ đề TOEIC">
+                            <option value="TOEIC - Office & Business">TOEIC - Văn phòng</option>
+                            <option value="TOEIC - Finance & Banking">TOEIC - Tài chính</option>
+                            <option value="TOEIC - Travel & Tourism">TOEIC - Du lịch</option>
+                            <option value="TOEIC - Manufacturing & Technology">TOEIC - Sản xuất & CN</option>
+                            <option value="TOEIC - Human Resources">TOEIC - Nhân sự</option>
+                            <option value="TOEIC - Marketing & Sales">TOEIC - Marketing</option>
+                        </optgroup>
+                        <optgroup label="Trình độ">
+                            <option value="Band 5.0-5.5 IELTS vocabulary">IELTS 5.0-5.5</option>
+                            <option value="Band 6.0-6.5 IELTS vocabulary">IELTS 6.0-6.5</option>
+                            <option value="Band 7.0+ IELTS vocabulary">IELTS 7.0+</option>
+                            <option value="TOEIC 450-600 vocabulary">TOEIC 450-600</option>
+                            <option value="TOEIC 600-800 vocabulary">TOEIC 600-800</option>
+                            <option value="TOEIC 800+ vocabulary">TOEIC 800+</option>
+                        </optgroup>
                     </select>
                     <button class="eng-btn" id="engGenBtn" onclick="engGenerateWords()">✨ Học từ mới</button>
                 </div>
