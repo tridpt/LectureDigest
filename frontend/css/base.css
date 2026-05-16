@@ -11,6 +11,38 @@
     padding: 0;
 }
 
+/* ── Global scrollbar (thin, purple) ── */
+::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+}
+
+::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+    background: rgba(139, 92, 246, 0.25);
+    border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: rgba(139, 92, 246, 0.45);
+}
+
+* {
+    scrollbar-width: thin;
+    scrollbar-color: rgba(139, 92, 246, 0.25) transparent;
+}
+
+html.light-mode ::-webkit-scrollbar-thumb {
+    background: rgba(139, 92, 246, 0.2);
+}
+
+html.light-mode ::-webkit-scrollbar-thumb:hover {
+    background: rgba(139, 92, 246, 0.35);
+}
+
 :root {
     --bg-primary: #070712;
     --bg-card: rgba(255, 255, 255, 0.04);
