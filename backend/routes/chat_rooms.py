@@ -646,19 +646,28 @@ async def get_online(room_id: str, request: Request):
     if not user:
         raise HTTPException(status_code=401, detail="Not authenticated")
 
+    uid = str(user["id"])
+    is_hidden = uid in _online_hidden
+
+    # If user is hidden, they can't see who's online
+    if is_hidden:
+        return {"online": [], "online_ids": [], "count": 0, "my_hidden": True}
+
     now = time.time()
     room_online = _online_status.get(room_id, {})
     online = []
+    online_ids = []
     expired = []
-    for uid, info in room_online.items():
+    for u_id, info in room_online.items():
         if now - info["ts"] > 15:
-            expired.append(uid)
+            expired.append(u_id)
         else:
-            online.append({"user_id": uid, "name": info["name"]})
-    for uid in expired:
-        del room_online[uid]
+            online.append({"user_id": u_id, "name": info["name"]})
+            online_ids.append(u_id)
+    for u_id in expired:
+        del room_online[u_id]
 
-    return {"online": online, "count": len(online)}
+    return {"online": online, "online_ids": online_ids, "count": len(online), "my_hidden": False}
 
 
 @router.post("/toggle-online-visibility")

@@ -1584,3 +1584,57 @@ img.cr-member-av {
     0%, 100% { opacity: 1; }
     50% { opacity: 0.5; }
 }
+
+/* ── Online dot on chat message avatars ── */
+.cr-msg-avatar.cr-avatar-online::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    right: 0;
+    width: 10px;
+    height: 10px;
+    background: #10b981;
+    border: 2px solid var(--card-bg, #1e1b2e);
+    border-radius: 50%;
+}
+
+.cr-msg-avatar {
+    position: relative;
+}
+
+/* ── Offline dot (hidden mode) ── */
+.cr-offline-dot {
+    display: inline-block;
+    width: 8px;
+    height: 8px;
+    background: #64748b;
+    border-radius: 50%;
+    margin-right: 2px;
+}
+
+/* ── Member panel online dot ── */
+.cr-member-av-wrap {
+    position: relative;
+    display: inline-flex;
+    flex-shrink: 0;
+}
+
+.cr-member-online-dot {
+    position: absolute;
+    bottom: 0;
+    right: 0;
+    width: 10px;
+    height: 10px;
+    background: #10b981;
+    border: 2px solid var(--card-bg, #1e1b2e);
+    border-radius: 50%;
+    z-index: 1;
+}
+
+.light-mode .cr-msg-avatar.cr-avatar-online::after {
+    border-color: #fff;
+}
+
+.light-mode .cr-member-online-dot {
+    border-color: #fff;
+}

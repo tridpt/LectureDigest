@@ -974,9 +974,11 @@ function _crRenderMembersPanel(members, banned) {
     html += '<div class="cr-members-list">';
     members.forEach(function(m) {
         var initial = (m.display_name || '?').charAt(0).toUpperCase();
+        var isOnline = !_crMyOnlineHidden && _crOnlineIds.indexOf(String(m.user_id)) >= 0;
+        var onlineDotHtml = isOnline ? '<span class="cr-member-online-dot"></span>' : '';
         var avatarHtml = m.avatar_url
-            ? '<img class="cr-member-av" src="' + _crEsc(m.avatar_url) + '" alt="">'
-            : '<span class="cr-member-av" style="background:' + (m.avatar_color || '#8b5cf6') + '">' + initial + '</span>';
+            ? '<div class="cr-member-av-wrap">' + onlineDotHtml + '<img class="cr-member-av" src="' + _crEsc(m.avatar_url) + '" alt=""></div>'
+            : '<div class="cr-member-av-wrap">' + onlineDotHtml + '<span class="cr-member-av" style="background:' + (m.avatar_color || '#8b5cf6') + '">' + initial + '</span></div>';
         var badge = m.is_creator ? ' <span class="cr-creator-badge">👑</span>'
             : m.role === 'admin' ? ' <span class="cr-admin-badge">🛡️</span>' : '';
         var muteInfo = '';
@@ -1454,6 +1456,9 @@ function _crSendHeartbeat() {
     }, 5000).catch(function() {});
 }
 
+var _crOnlineIds = []; // list of user_ids currently online
+var _crMyOnlineHidden = false;
+
 function _crPollOnline() {
     if (!_crCurrentRoom) return;
     var headers = _crAuthHeaders();
@@ -1462,13 +1467,42 @@ function _crPollOnline() {
     fetchWithTimeout('/api/chat-rooms/' + _crCurrentRoom.id + '/online', { headers: headers }, 5000)
         .then(function(r) { return r.json(); })
         .then(function(data) {
+            _crOnlineIds = data.online_ids || [];
+            _crMyOnlineHidden = data.my_hidden || false;
             var count = data.count || 0;
             var membersEl = document.getElementById('crChatRoomMembers');
             if (membersEl) {
-                membersEl.innerHTML = '<span class="cr-online-dot"></span> ' + count + ' online';
+                if (_crMyOnlineHidden) {
+                    membersEl.innerHTML = '<span class="cr-offline-dot"></span> Ẩn danh';
+                } else {
+                    membersEl.innerHTML = '<span class="cr-online-dot"></span> ' + count + ' online';
+                }
+            }
+            // Update online dots on visible messages
+            _crUpdateOnlineDots();
+            // Update menu text
+            var hmOnline = document.getElementById('crHmOnline');
+            if (hmOnline) {
+                hmOnline.textContent = _crMyOnlineHidden ? '🟢 Hiện trạng thái online' : '👻 Ẩn trạng thái online';
             }
         })
         .catch(function() {});
+}
+
+function _crUpdateOnlineDots() {
+    // Add/remove online dot class on message avatars
+    document.querySelectorAll('.cr-msg[data-msg-id]').forEach(function(msgEl) {
+        var avatar = msgEl.querySelector('.cr-msg-avatar');
+        if (!avatar) return;
+        // Get user_id from the message data
+        var msgId = msgEl.getAttribute('data-msg-id');
+        var msg = _crMessages.find(function(m) { return m.id === msgId; });
+        if (msg && _crOnlineIds.indexOf(String(msg.user_id)) >= 0) {
+            avatar.classList.add('cr-avatar-online');
+        } else {
+            avatar.classList.remove('cr-avatar-online');
+        }
+    });
 }
 
 async function crToggleOnlineVisibility() {
@@ -1480,7 +1514,9 @@ async function crToggleOnlineVisibility() {
         }, 5000);
         if (res.ok) {
             var data = await res.json();
-            showToast(data.hidden ? '👻 Đã ẩn trạng thái online' : '🟢 Đã hiện trạng thái online', 2000);
+            _crMyOnlineHidden = data.hidden;
+            showToast(data.hidden ? '👻 Đã ẩn trạng thái online — bạn không thấy ai online' : '🟢 Đã hiện trạng thái online', 3000);
+            _crPollOnline();
         }
     } catch(e) {}
 }
