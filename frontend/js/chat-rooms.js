@@ -257,18 +257,14 @@ function crOpenRoom(roomId) {
 
     // Start polling
     _crStartPolling();
-    _crJumpedToUnread = false;
 
     // Auto mark-as-read when scrolled to bottom
     var area = document.getElementById('crMessagesArea');
     if (area) {
         area.onscroll = function() {
+            _crUpdateScrollBtn();
             if (_crIsAtBottom()) {
-                var btn = document.getElementById('crUnreadBtn');
-                if (btn && !btn.classList.contains('hidden')) {
-                    _crMarkAsRead();
-                    _crJumpedToUnread = false;
-                }
+                _crMarkAsRead();
             }
         };
     }
@@ -287,14 +283,7 @@ function _crLoadMessages() {
             _crUpdateMuteStatus(data.muted_until, data.chat_locked);
             _crUpdateUnreadUI(data);
 
-            // Scroll: if unreads, don't scroll to bottom (let user use the button)
-            var lastRead = data.last_read_at || 0;
-            var hasUnread = _crMessages.some(function(m) {
-                return m.created_at > lastRead && String(m.user_id) !== _crCurrentUserId && String(m.user_id) !== '__system__';
-            });
-            if (!hasUnread) {
-                _crScrollToBottom();
-            }
+            _crScrollToBottom();
             // Update room owner if changed (transfer)
             if (data.created_by && _crCurrentRoom && String(_crCurrentRoom.created_by) !== String(data.created_by)) {
                 _crCurrentRoom.created_by = data.created_by;
@@ -1578,7 +1567,7 @@ function _crPollTyping() {
         .catch(function() {});
 }
 
-// ── Unread & Notification Mute ──
+// ── Unread & Scroll to Bottom ──
 var _crLastReadAt = 0;
 var _crNotifMuted = false;
 
@@ -1588,25 +1577,8 @@ function _crUpdateUnreadUI(data) {
     _crLastReadAt = lastRead;
     _crNotifMuted = notifMuted;
 
-    // Count unread messages
-    var unreadCount = 0;
-    _crMessages.forEach(function(m) {
-        if (m.created_at > lastRead && String(m.user_id) !== _crCurrentUserId && String(m.user_id) !== '__system__') {
-            unreadCount++;
-        }
-    });
-
-    // Show/hide unread button
-    var btn = document.getElementById('crUnreadBtn');
-    var btnText = document.getElementById('crUnreadBtnText');
-    if (btn) {
-        if (unreadCount > 0) {
-            btn.classList.remove('hidden');
-            if (btnText) btnText.textContent = '↓ ' + unreadCount + ' tin nhắn mới';
-        } else {
-            btn.classList.add('hidden');
-        }
-    }
+    // Show/hide scroll-to-bottom button based on scroll position
+    _crUpdateScrollBtn();
 
     // Update mute menu text
     var hmNotif = document.getElementById('crHmNotif');
@@ -1615,34 +1587,22 @@ function _crUpdateUnreadUI(data) {
     }
 }
 
-var _crJumpedToUnread = false;
+function _crUpdateScrollBtn() {
+    var btn = document.getElementById('crUnreadBtn');
+    var btnText = document.getElementById('crUnreadBtnText');
+    if (!btn) return;
 
-function crJumpToUnread() {
-    if (!_crJumpedToUnread) {
-        // First click: jump to first unread message
-        var firstUnread = null;
-        for (var i = 0; i < _crMessages.length; i++) {
-            var m = _crMessages[i];
-            if (m.created_at > _crLastReadAt && String(m.user_id) !== _crCurrentUserId && String(m.user_id) !== '__system__') {
-                firstUnread = m;
-                break;
-            }
-        }
-        if (firstUnread) {
-            crScrollToMessage(firstUnread.id);
-        } else {
-            _crScrollToBottom();
-        }
-        _crJumpedToUnread = true;
-        // Change button text to "go to bottom"
-        var btnText = document.getElementById('crUnreadBtnText');
+    if (!_crIsAtBottom()) {
+        btn.classList.remove('hidden');
         if (btnText) btnText.textContent = '↓ Xuống cuối';
     } else {
-        // Second click: scroll to bottom + mark as read
-        _crScrollToBottom();
-        _crMarkAsRead();
-        _crJumpedToUnread = false;
+        btn.classList.add('hidden');
     }
+}
+
+function crJumpToUnread() {
+    _crScrollToBottom();
+    _crMarkAsRead();
 }
 
 function _crMarkAsRead() {
