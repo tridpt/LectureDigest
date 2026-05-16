@@ -111,11 +111,14 @@ function _dismissToast(el) {
 }
 
 function goHome() {
-    // If results, playlist, or loading are showing, go back to hero
-    const resultsVisible = !document.getElementById('resultsSection')?.classList.contains('hidden');
-    const loadingVisible = !document.getElementById('loadingSection')?.classList.contains('hidden');
-    const playlistVisible = !document.getElementById('playlistSection')?.classList.contains('hidden');
-    if (resultsVisible || loadingVisible || playlistVisible) resetToHero();
+    // Always go back to hero from any section
+    resetToHero();
+    // Close any open modals/overlays
+    var footer = document.querySelector('.footer');
+    if (footer) footer.style.display = '';
+    // Stop chat polling if active
+    if (typeof _crStopPolling === 'function') _crStopPolling();
+    if (typeof _srStopPolling === 'function') _srStopPolling();
 }
 
 function resetToHero() {

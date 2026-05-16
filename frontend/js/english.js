@@ -18,7 +18,6 @@ function openEnglish() {
     showSection('englishSection');
     engLoadStats();
     engLoadToday();
-    engLoadSavedWords(1);
     var footer = document.querySelector('.footer');
     if (footer) footer.style.display = 'none';
 }
@@ -291,7 +290,7 @@ function engAnswer(selected, correct) {
 
 // ── Tabs ──
 function engShowTab(tab) {
-    ['words', 'review', 'quiz'].forEach(function(t) {
+    ['words', 'saved', 'review', 'quiz'].forEach(function(t) {
         var panel = document.getElementById('engPanel_' + t);
         var btn = document.getElementById('engTab_' + t);
         if (panel) panel.style.display = t === tab ? '' : 'none';

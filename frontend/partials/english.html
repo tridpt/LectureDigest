@@ -17,7 +17,8 @@
 
             <!-- Tabs -->
             <div class="eng-tabs">
-                <button class="eng-tab eng-tab-active" id="engTab_words" onclick="engShowTab('words')">📚 Từ vựng</button>
+                <button class="eng-tab eng-tab-active" id="engTab_words" onclick="engShowTab('words')">✨ Tạo từ</button>
+                <button class="eng-tab" id="engTab_saved" onclick="engShowTab('saved');engLoadSavedWords(1)">📖 Đã học</button>
                 <button class="eng-tab" id="engTab_review" onclick="engStartReview()">🔄 Ôn tập</button>
                 <button class="eng-tab" id="engTab_quiz" onclick="engStartQuiz()">🧠 Quiz</button>
             </div>
@@ -76,13 +77,12 @@
                 <div class="eng-word-list" id="engWordList">
                     <div class="eng-empty">Chọn chủ đề và bấm "Tạo từ vựng" để bắt đầu!</div>
                 </div>
+            </div>
 
-                <!-- All saved words with pagination -->
-                <div class="eng-saved-section">
-                    <h3 class="eng-saved-title">📖 Danh sách từ đã học</h3>
-                    <div class="eng-saved-list" id="engSavedList"></div>
-                    <div class="eng-pagination" id="engPagination"></div>
-                </div>
+            <!-- Panel: Saved words -->
+            <div id="engPanel_saved" style="display:none">
+                <div class="eng-saved-list" id="engSavedList"></div>
+                <div class="eng-pagination" id="engPagination"></div>
             </div>
 
             <!-- Panel: Review -->
