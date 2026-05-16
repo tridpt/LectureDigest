@@ -488,7 +488,7 @@ function _crRenderMessages() {
             html += '<div class="cr-msg-image"><img src="' + _crEsc(msg.image_url) + '" alt="Ảnh" onclick="crViewImage(\'' + _crEsc(msg.image_url) + '\')"></div>';
         }
         if (msg.content) {
-            html += '<div class="cr-msg-content">' + _crEsc(msg.content) + '</div>';
+            html += '<div class="cr-msg-content">' + _crFormatMentions(_crEsc(msg.content)) + '</div>';
         }
         html += '<div class="cr-msg-time">' + timeStr + '</div>';
         html += '</div>';
@@ -2077,6 +2077,89 @@ function _crEsc(str) {
     var div = document.createElement('div');
     div.textContent = str;
     return div.innerHTML;
+}
+
+function _crFormatMentions(escapedText) {
+    // Highlight @mentions in message content (already escaped)
+    return escapedText.replace(/@(\S+)/g, '<span class="cr-mention">@$1</span>');
+}
+
+// ── @ Mention Autocomplete ──
+var _crMentionDropdown = null;
+
+function _crOnInputForMention(e) {
+    var input = document.getElementById('crMessageInput');
+    if (!input) return;
+    var val = input.value;
+    var cursorPos = input.selectionStart;
+    
+    // Find @ before cursor
+    var textBefore = val.substring(0, cursorPos);
+    var atMatch = textBefore.match(/@(\S*)$/);
+    
+    if (atMatch) {
+        var query = atMatch[1].toLowerCase();
+        _crShowMentionDropdown(query, cursorPos - atMatch[0].length);
+    } else {
+        _crHideMentionDropdown();
+    }
+}
+
+function _crShowMentionDropdown(query, atPos) {
+    if (!_crCurrentRoom) return;
+    
+    // Get members from cached room data or fetch
+    var headers = _crAuthHeaders();
+    if (!headers) return;
+    
+    fetchWithTimeout('/api/chat-rooms/' + _crCurrentRoom.id + '/members', { headers: headers }, 5000)
+        .then(function(r) { return r.json(); })
+        .then(function(data) {
+            var members = (data.members || []).filter(function(m) {
+                return String(m.user_id) !== _crCurrentUserId;
+            });
+            if (query) {
+                members = members.filter(function(m) {
+                    return (m.display_name || '').toLowerCase().indexOf(query) >= 0;
+                });
+            }
+            if (members.length === 0) { _crHideMentionDropdown(); return; }
+            
+            // Build dropdown
+            var input = document.getElementById('crMessageInput');
+            if (!input) return;
+            
+            if (!_crMentionDropdown) {
+                _crMentionDropdown = document.createElement('div');
+                _crMentionDropdown.className = 'cr-mention-dropdown';
+                input.parentElement.appendChild(_crMentionDropdown);
+            }
+            
+            _crMentionDropdown.innerHTML = members.slice(0, 5).map(function(m) {
+                return '<div class="cr-mention-item" onmousedown="crSelectMention(\'' + _crEsc(m.display_name) + '\',' + atPos + ')">'
+                    + _crEsc(m.display_name) + '</div>';
+            }).join('');
+            _crMentionDropdown.style.display = '';
+        })
+        .catch(function() {});
+}
+
+function _crHideMentionDropdown() {
+    if (_crMentionDropdown) _crMentionDropdown.style.display = 'none';
+}
+
+function crSelectMention(name, atPos) {
+    var input = document.getElementById('crMessageInput');
+    if (!input) return;
+    var val = input.value;
+    // Replace @query with @name
+    var before = val.substring(0, atPos);
+    var after = val.substring(input.selectionStart);
+    input.value = before + '@' + name + ' ' + after;
+    input.focus();
+    var newPos = atPos + name.length + 2;
+    input.selectionStart = input.selectionEnd = newPos;
+    _crHideMentionDropdown();
 }
 
 function crViewImage(url) {

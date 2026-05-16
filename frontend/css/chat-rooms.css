@@ -1829,3 +1829,56 @@ img.cr-member-av {
     padding: 0 4px;
     margin-left: 8px;
 }
+
+/* ── @Mention highlight ── */
+.cr-mention {
+    color: #a78bfa;
+    font-weight: 600;
+    background: rgba(139, 92, 246, 0.1);
+    padding: 1px 4px;
+    border-radius: 4px;
+}
+
+.cr-msg-own .cr-mention {
+    color: #e9d5ff;
+    background: rgba(255, 255, 255, 0.15);
+}
+
+/* ── Mention autocomplete dropdown ── */
+.cr-mention-dropdown {
+    position: absolute;
+    bottom: calc(100% + 4px);
+    left: 50px;
+    background: #1e1e3a;
+    border: 1px solid rgba(139, 92, 246, 0.2);
+    border-radius: 10px;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+    z-index: 9999;
+    padding: 4px;
+    min-width: 150px;
+    max-width: 250px;
+}
+
+.cr-mention-item {
+    padding: 8px 12px;
+    font-size: 13px;
+    color: var(--text-primary, #f1f5f9);
+    cursor: pointer;
+    border-radius: 6px;
+    transition: background 0.15s;
+}
+
+.cr-mention-item:hover {
+    background: rgba(139, 92, 246, 0.15);
+}
+
+.light-mode .cr-mention-dropdown {
+    background: #fff;
+    border-color: rgba(0, 0, 0, 0.1);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+}
+
+.light-mode .cr-mention {
+    color: #7c3aed;
+    background: rgba(139, 92, 246, 0.08);
+}

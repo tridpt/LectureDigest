@@ -884,6 +884,31 @@ async def send_message(room_id: str, body: SendMessageBody, request: Request):
     room_typing = _typing_status.get(room_id, {})
     room_typing.pop(str(user["id"]), None)
 
+    # Detect @mentions and notify
+    import re
+    mentions = re.findall(r'@(\S+)', body.content)
+    if mentions:
+        # Find mentioned users by display_name
+        sender_name = user.get("display_name", "Ai đó")
+        room = _get_room(room_id)
+        room_name = room["name"] if room else "phòng chat"
+        members = conn.execute(
+            "SELECT user_id, display_name FROM users u JOIN chat_room_members crm ON u.id = crm.user_id WHERE crm.room_id = ?",
+            (room_id,)
+        ).fetchall()
+        for member in members:
+            member_name = (member["display_name"] or "").lower()
+            for mention in mentions:
+                if mention.lower() == member_name.lower() or mention.lower() in member_name.lower():
+                    if str(member["user_id"]) != str(user["id"]):
+                        create_notification(
+                            member["user_id"], "chat_mention",
+                            f"💬 {sender_name} đã nhắc đến bạn",
+                            body.content[:100],
+                            "/chat/" + room_id
+                        )
+                        break
+
     user_info = _get_user_info(user["id"])
     return {
         "ok": True,
