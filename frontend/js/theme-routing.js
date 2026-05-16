@@ -69,13 +69,7 @@ function toggleTheme() {
 // SPA ROUTING — URL changes per page
 // ══════════════════════════════════════════════════════════
 
-const SPA_ROUTES = {
-    hero:           '/',
-    loadingSection: null,   // no URL change while loading
-    errorSection:   null,   // no URL change on error
-    resultsSection: null,   // set dynamically with video id
-    badgesSection:  '/badges',
-};
+// SPA_ROUTES is defined in core.js (loaded first)
 
 // Called from showSection() to update URL
 function pushSpaRoute(sectionId) {

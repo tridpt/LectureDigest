@@ -34,6 +34,15 @@ const chatState = {
 // ──────────────────────────────────────
 const SECTION_IDS = ['hero', 'loadingSection', 'errorSection', 'resultsSection', 'playlistSection'];
 
+// SPA Routes mapping (section → URL path). Modules add their routes here.
+const SPA_ROUTES = {
+    hero:           '/',
+    loadingSection: null,
+    errorSection:   null,
+    resultsSection: null,
+    badgesSection:  '/badges',
+};
+
 function showSection(id) {
     SECTION_IDS.forEach(sid => {
         const el = document.getElementById(sid);
