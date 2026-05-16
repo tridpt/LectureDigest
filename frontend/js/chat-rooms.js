@@ -2080,8 +2080,9 @@ function _crEsc(str) {
 }
 
 function _crFormatMentions(escapedText) {
-    // Highlight @mentions in message content (already escaped)
-    return escapedText.replace(/@(\S+)/g, '<span class="cr-mention">@$1</span>');
+    // Highlight @mentions — match @Name where name is everything until end, next @, or newline
+    // Since names are inserted by autocomplete as "@Full Name ", we match greedily
+    return escapedText.replace(/@([^\n@]+)/g, '<span class="cr-mention">@$1</span>');
 }
 
 // ── @ Mention Autocomplete ──

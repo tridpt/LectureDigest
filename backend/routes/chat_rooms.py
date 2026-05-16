@@ -905,7 +905,7 @@ async def send_message(room_id: str, body: SendMessageBody, request: Request):
                             member["user_id"], "chat_mention",
                             f"💬 {sender_name} đã nhắc đến bạn",
                             body.content[:100],
-                            "/chat/" + room_id
+                            "/chat/" + room_id + "#msg_" + msg_id
                         )
                         break
 
@@ -1136,7 +1136,7 @@ async def get_members(room_id: str, request: Request):
 
 @router.post("/{room_id}/pin/{msg_id}")
 async def pin_message(room_id: str, msg_id: str, request: Request):
-    """Pin/unpin a message (creator only)."""
+    """Pin/unpin a message. Members limited to 3 pins, creator unlimited."""
     user = get_current_user(request)
     if not user:
         raise HTTPException(status_code=401, detail="Not authenticated")
@@ -1149,6 +1149,15 @@ async def pin_message(room_id: str, msg_id: str, request: Request):
         raise HTTPException(status_code=404, detail="Message not found")
 
     new_val = 0 if msg["pinned"] else 1
+
+    # Limit: non-creators can only pin up to 3 messages
+    if new_val == 1 and not _is_room_creator(room_id, user["id"]):
+        pin_count = conn.execute(
+            "SELECT COUNT(*) as c FROM chat_messages WHERE room_id = ? AND pinned = 1", (room_id,)
+        ).fetchone()["c"]
+        if pin_count >= 3:
+            raise HTTPException(status_code=400, detail="Tối đa 3 tin nhắn được ghim (chỉ chủ phòng mới ghim không giới hạn)")
+
     conn.execute("UPDATE chat_messages SET pinned = ? WHERE id = ?", (new_val, msg_id))
     conn.commit()
     return {"ok": True, "pinned": bool(new_val)}

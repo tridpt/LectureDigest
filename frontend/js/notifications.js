@@ -176,6 +176,24 @@ async function notifClick(id, link) {
         if (typeof openSrsReview === 'function') openSrsReview();
     } else if (link === '/study-plan') {
         if (typeof openStudyPlan === 'function') openStudyPlan();
+    } else if (link && link.indexOf('/chat/') === 0) {
+        // Chat room link, possibly with #msg_id
+        var parts = link.split('#');
+        var roomPath = parts[0];
+        var msgHash = parts[1] || '';
+        var roomId = roomPath.replace('/chat/', '');
+        if (typeof _crOpenRoomById === 'function') {
+            _crOpenRoomById(roomId).then(function() {
+                if (msgHash && msgHash.indexOf('msg_') === 0) {
+                    var msgId = msgHash.replace('msg_', '');
+                    setTimeout(function() { if (typeof crScrollToMessage === 'function') crScrollToMessage(msgId); }, 1000);
+                }
+            });
+        } else if (typeof openChatRooms === 'function') {
+            openChatRooms();
+        }
+    } else if (link === '/chat') {
+        if (typeof openChatRooms === 'function') openChatRooms();
     }
 }
 
