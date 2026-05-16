@@ -2087,6 +2087,9 @@ function _crFormatMentions(escapedText) {
 // ── @ Mention Autocomplete ──
 var _crMentionDropdown = null;
 
+var _crCachedMembers = null;
+var _crCachedMembersTs = 0;
+
 function _crOnInputForMention(e) {
     var input = document.getElementById('crMessageInput');
     if (!input) return;
@@ -2107,41 +2110,54 @@ function _crOnInputForMention(e) {
 
 function _crShowMentionDropdown(query, atPos) {
     if (!_crCurrentRoom) return;
-    
-    // Get members from cached room data or fetch
-    var headers = _crAuthHeaders();
-    if (!headers) return;
-    
-    fetchWithTimeout('/api/chat-rooms/' + _crCurrentRoom.id + '/members', { headers: headers }, 5000)
+
+    // Use cached members (refresh every 30s)
+    if (_crCachedMembers && Date.now() - _crCachedMembersTs < 30000) {
+        _crRenderMentionDropdown(_crCachedMembers, query, atPos);
+        return;
+    }
+
+    var token = localStorage.getItem('ld_auth_token') || '';
+    if (!token) return;
+
+    fetchWithTimeout('/api/chat-rooms/' + _crCurrentRoom.id + '/members', {
+        headers: { 'Authorization': 'Bearer ' + token }
+    }, 5000)
         .then(function(r) { return r.json(); })
         .then(function(data) {
-            var members = (data.members || []).filter(function(m) {
+            _crCachedMembers = (data.members || []).filter(function(m) {
                 return String(m.user_id) !== _crCurrentUserId;
             });
-            if (query) {
-                members = members.filter(function(m) {
-                    return (m.display_name || '').toLowerCase().indexOf(query) >= 0;
-                });
-            }
-            if (members.length === 0) { _crHideMentionDropdown(); return; }
-            
-            // Build dropdown
-            var input = document.getElementById('crMessageInput');
-            if (!input) return;
-            
-            if (!_crMentionDropdown) {
-                _crMentionDropdown = document.createElement('div');
-                _crMentionDropdown.className = 'cr-mention-dropdown';
-                input.parentElement.appendChild(_crMentionDropdown);
-            }
-            
-            _crMentionDropdown.innerHTML = members.slice(0, 5).map(function(m) {
-                return '<div class="cr-mention-item" onmousedown="crSelectMention(\'' + _crEsc(m.display_name) + '\',' + atPos + ')">'
-                    + _crEsc(m.display_name) + '</div>';
-            }).join('');
-            _crMentionDropdown.style.display = '';
+            _crCachedMembersTs = Date.now();
+            _crRenderMentionDropdown(_crCachedMembers, query, atPos);
         })
         .catch(function() {});
+}
+
+function _crRenderMentionDropdown(members, query, atPos) {
+    var filtered = members;
+    if (query) {
+        filtered = members.filter(function(m) {
+            return (m.display_name || '').toLowerCase().indexOf(query) >= 0;
+        });
+    }
+    if (filtered.length === 0) { _crHideMentionDropdown(); return; }
+
+    var input = document.getElementById('crMessageInput');
+    if (!input) return;
+
+    if (!_crMentionDropdown) {
+        _crMentionDropdown = document.createElement('div');
+        _crMentionDropdown.className = 'cr-mention-dropdown';
+        input.parentElement.appendChild(_crMentionDropdown);
+    }
+
+    _crMentionDropdown.innerHTML = filtered.slice(0, 5).map(function(m) {
+        var safeName = _crEsc(m.display_name).replace(/'/g, "\\'");
+        return '<div class="cr-mention-item" onmousedown="crSelectMention(\'' + safeName + '\',' + atPos + ')">'
+            + _crEsc(m.display_name) + '</div>';
+    }).join('');
+    _crMentionDropdown.style.display = '';
 }
 
 function _crHideMentionDropdown() {

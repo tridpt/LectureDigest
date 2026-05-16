@@ -893,7 +893,7 @@ async def send_message(room_id: str, body: SendMessageBody, request: Request):
         room = _get_room(room_id)
         room_name = room["name"] if room else "phòng chat"
         members = conn.execute(
-            "SELECT user_id, display_name FROM users u JOIN chat_room_members crm ON u.id = crm.user_id WHERE crm.room_id = ?",
+            "SELECT u.id as user_id, u.display_name FROM users u JOIN chat_room_members crm ON u.id = crm.user_id WHERE crm.room_id = ?",
             (room_id,)
         ).fetchall()
         for member in members:

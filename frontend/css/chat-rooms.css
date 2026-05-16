@@ -411,6 +411,7 @@
     padding: 0.5rem 1rem;
     border-top: 1px solid rgba(255,255,255,0.08);
     flex-shrink: 0;
+    position: relative;
 }
 
 .cr-message-input {
@@ -1731,32 +1732,30 @@ img.cr-member-av {
     background: rgba(0, 0, 0, 0.06);
 }
 
-/* ── Unread messages button ── */
-.cr-unread-btn {
-    position: absolute;
-    bottom: 12px;
-    left: 50%;
-    transform: translateX(-50%);
-    background: var(--accent, #8b5cf6);
-    color: #fff;
+/* ── Scroll to bottom button ── */
+.cr-scroll-bottom-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    padding: 8px;
+    background: rgba(139, 92, 246, 0.12);
     border: none;
-    border-radius: 20px;
-    padding: 8px 16px;
+    border-top: 1px solid rgba(139, 92, 246, 0.2);
+    color: #a78bfa;
     font-size: 13px;
     font-weight: 600;
     cursor: pointer;
-    box-shadow: 0 4px 16px rgba(139, 92, 246, 0.4);
-    z-index: 10;
-    transition: transform 0.2s, box-shadow 0.2s;
+    flex-shrink: 0;
+    transition: background 0.15s;
 }
 
-.cr-unread-btn:hover {
-    transform: translateX(-50%) translateY(-2px);
-    box-shadow: 0 6px 20px rgba(139, 92, 246, 0.5);
+.cr-scroll-bottom-btn:hover {
+    background: rgba(139, 92, 246, 0.2);
 }
 
-.cr-messages-area {
-    position: relative;
+.cr-scroll-bottom-btn.hidden {
+    display: none;
 }
 
 /* ── Lock chat member picker ── */
@@ -1847,16 +1846,16 @@ img.cr-member-av {
 /* ── Mention autocomplete dropdown ── */
 .cr-mention-dropdown {
     position: absolute;
-    bottom: calc(100% + 4px);
-    left: 50px;
+    bottom: 100%;
+    left: 0;
+    right: 0;
     background: #1e1e3a;
     border: 1px solid rgba(139, 92, 246, 0.2);
     border-radius: 10px;
-    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+    box-shadow: 0 -4px 16px rgba(0, 0, 0, 0.4);
     z-index: 9999;
     padding: 4px;
-    min-width: 150px;
-    max-width: 250px;
+    margin-bottom: 4px;
 }
 
 .cr-mention-item {
