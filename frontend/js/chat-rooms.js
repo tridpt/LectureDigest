@@ -484,7 +484,7 @@ function _crRenderMessages() {
         html += '<div class="cr-msg-bubble">';
         html += pinnedBadge;
         if (!isOwn) {
-            html += '<div class="cr-msg-name">' + _crEsc(msg.username) + '</div>';
+            html += '<div class="cr-msg-name" onclick="crShowUserProfile(' + msg.user_id + ')" style="cursor:pointer">' + _crEsc(msg.username) + '</div>';
         }
         if (msg.image_url) {
             html += '<div class="cr-msg-image"><img src="' + _crEsc(msg.image_url) + '" alt="Ảnh" onclick="crViewImage(\'' + _crEsc(msg.image_url) + '\')"></div>';
@@ -2087,9 +2087,24 @@ function _crEsc(str) {
 }
 
 function _crFormatMentions(escapedText) {
-    // Highlight @mentions — match @Name where name is everything until end, next @, or newline
-    // Since names are inserted by autocomplete as "@Full Name ", we match greedily
-    return escapedText.replace(/@([^\n@]+)/g, '<span class="cr-mention">@$1</span>');
+    // Highlight @mentions and make them clickable
+    return escapedText.replace(/@([^\n@]+)/g, function(match, name) {
+        var trimmed = name.trim();
+        // Try to find user_id from cached members
+        var userId = null;
+        if (_crCachedMembers) {
+            for (var i = 0; i < _crCachedMembers.length; i++) {
+                if ((_crCachedMembers[i].display_name || '').toLowerCase() === trimmed.toLowerCase()) {
+                    userId = _crCachedMembers[i].user_id;
+                    break;
+                }
+            }
+        }
+        if (userId) {
+            return '<span class="cr-mention" onclick="crShowUserProfile(' + userId + ')" style="cursor:pointer">@' + trimmed + '</span>';
+        }
+        return '<span class="cr-mention">@' + trimmed + '</span>';
+    });
 }
 
 // ── @ Mention Autocomplete ──
