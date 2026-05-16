@@ -52,6 +52,22 @@ def _init_english_tables():
             total_words INTEGER DEFAULT 0,
             total_quizzes INTEGER DEFAULT 0
         );
+
+        CREATE TABLE IF NOT EXISTS english_xp (
+            user_id INTEGER PRIMARY KEY,
+            xp INTEGER DEFAULT 0,
+            level INTEGER DEFAULT 1,
+            total_xp INTEGER DEFAULT 0
+        );
+
+        CREATE TABLE IF NOT EXISTS english_xp_log (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            user_id INTEGER NOT NULL,
+            xp_gained INTEGER NOT NULL,
+            source TEXT DEFAULT '',
+            created_at REAL NOT NULL
+        );
+        CREATE INDEX IF NOT EXISTS idx_exl_user ON english_xp_log(user_id, created_at);
     """)
     conn.commit()
 
@@ -413,3 +429,134 @@ def _update_streak(user_id, words_added):
             """, (today, total + words_added, user_id))
 
     conn.commit()
+
+
+# ═══════════════════════════════════════════════════════
+# XP / LEVEL SYSTEM
+# ═══════════════════════════════════════════════════════
+
+# XP required per level: level N requires N*100 XP to reach level N+1
+# Level 1 → 2: 100 XP, Level 2 → 3: 200 XP, etc.
+def _xp_for_level(level):
+    """XP needed to go from `level` to `level+1`."""
+    return level * 100
+
+
+def _add_xp(user_id, amount, source=""):
+    """Add XP to user. Returns dict with xp info and whether leveled up."""
+    conn = get_db()
+    row = conn.execute("SELECT * FROM english_xp WHERE user_id = ?", (user_id,)).fetchone()
+
+    if not row:
+        conn.execute("INSERT INTO english_xp (user_id, xp, level, total_xp) VALUES (?, 0, 1, 0)", (user_id,))
+        conn.commit()
+        row = conn.execute("SELECT * FROM english_xp WHERE user_id = ?", (user_id,)).fetchone()
+
+    xp = row["xp"] + amount
+    level = row["level"]
+    total_xp = row["total_xp"] + amount
+    leveled_up = False
+    new_level = level
+
+    # Check level ups (can level up multiple times)
+    while xp >= _xp_for_level(level):
+        xp -= _xp_for_level(level)
+        level += 1
+        leveled_up = True
+
+    new_level = level
+
+    conn.execute("UPDATE english_xp SET xp = ?, level = ?, total_xp = ? WHERE user_id = ?",
+                 (xp, new_level, total_xp, user_id))
+
+    # Log XP gain
+    conn.execute("INSERT INTO english_xp_log (user_id, xp_gained, source, created_at) VALUES (?, ?, ?, ?)",
+                 (user_id, amount, source, time.time()))
+    conn.commit()
+
+    return {
+        "xp_gained": amount,
+        "current_xp": xp,
+        "level": new_level,
+        "xp_needed": _xp_for_level(new_level),
+        "total_xp": total_xp,
+        "leveled_up": leveled_up,
+        "source": source,
+    }
+
+
+@router.get("/xp")
+async def get_xp(request: Request):
+    """Get user's XP and level info."""
+    user = get_current_user(request)
+    if not user:
+        raise HTTPException(status_code=401, detail="Vui lòng đăng nhập")
+
+    conn = get_db()
+    row = conn.execute("SELECT * FROM english_xp WHERE user_id = ?", (user["id"],)).fetchone()
+
+    if not row:
+        return {"xp": 0, "level": 1, "xp_needed": 100, "total_xp": 0, "progress_pct": 0}
+
+    xp_needed = _xp_for_level(row["level"])
+    progress_pct = round(row["xp"] / xp_needed * 100) if xp_needed > 0 else 0
+
+    # Recent XP log (last 10)
+    logs = conn.execute("""
+        SELECT xp_gained, source, created_at FROM english_xp_log
+        WHERE user_id = ? ORDER BY created_at DESC LIMIT 10
+    """, (user["id"],)).fetchall()
+
+    return {
+        "xp": row["xp"],
+        "level": row["level"],
+        "xp_needed": xp_needed,
+        "total_xp": row["total_xp"],
+        "progress_pct": progress_pct,
+        "recent_xp": [{"xp": l["xp_gained"], "source": l["source"]} for l in logs],
+    }
+
+
+@router.post("/xp/award")
+async def award_xp(request: Request):
+    """Award XP for completing activities. Body: {source, score, total}"""
+    user = get_current_user(request)
+    if not user:
+        raise HTTPException(status_code=401, detail="Vui lòng đăng nhập")
+
+    body = await request.json()
+    source = body.get("source", "")
+    score = body.get("score", 0)
+    total = body.get("total", 0)
+
+    # Calculate XP based on activity
+    xp = 0
+    if source == "review":
+        # 5 XP per card reviewed, bonus for quality
+        quality = body.get("quality", 3)
+        xp = 5 + (quality - 1) * 2  # 5-13 XP per review
+    elif source == "quiz":
+        # Base 10 XP + bonus for correct answers
+        if total > 0:
+            pct = score / total
+            xp = int(10 + pct * 30)  # 10-40 XP per quiz
+    elif source == "game_match":
+        if total > 0:
+            pct = score / total
+            xp = int(15 + pct * 25)  # 15-40 XP
+    elif source == "game_spelling":
+        if total > 0:
+            pct = score / total
+            xp = int(15 + pct * 35)  # 15-50 XP (harder game)
+    elif source == "game_scramble":
+        if total > 0:
+            pct = score / total
+            xp = int(15 + pct * 30)  # 15-45 XP
+    else:
+        xp = 5  # Default small XP
+
+    if xp <= 0:
+        return {"xp_gained": 0}
+
+    result = _add_xp(user["id"], xp, source)
+    return result

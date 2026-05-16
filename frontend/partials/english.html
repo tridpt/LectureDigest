@@ -15,12 +15,16 @@
             <!-- Stats -->
             <div class="eng-stats-grid" id="engStats"></div>
 
+            <!-- XP Bar -->
+            <div class="eng-xp-container" id="engXPBar"></div>
+
             <!-- Tabs -->
             <div class="eng-tabs">
                 <button class="eng-tab eng-tab-active" id="engTab_words" onclick="engShowTab('words')">✨ Tạo từ</button>
                 <button class="eng-tab" id="engTab_saved" onclick="engShowTab('saved');engLoadSavedWords(1)">📖 Đã học</button>
                 <button class="eng-tab" id="engTab_review" onclick="engStartReview()">🔄 Ôn tập</button>
                 <button class="eng-tab" id="engTab_quiz" onclick="engStartQuiz()">🧠 Quiz</button>
+                <button class="eng-tab" id="engTab_games" onclick="engShowTab('games')">🎮 Games</button>
             </div>
 
             <!-- Panel: Words -->
@@ -93,6 +97,31 @@
             <!-- Panel: Quiz -->
             <div id="engPanel_quiz" style="display:none">
                 <div id="engQuizArea"></div>
+            </div>
+
+            <!-- Panel: Games -->
+            <div id="engPanel_games" style="display:none">
+                <div class="eng-games-menu" id="engGamesMenu">
+                    <h3 class="eng-games-title">🎮 Chọn trò chơi</h3>
+                    <div class="eng-games-grid">
+                        <button class="eng-game-card" onclick="engGameStart('match')">
+                            <span class="eng-game-icon">🔗</span>
+                            <span class="eng-game-name">Word Match</span>
+                            <span class="eng-game-desc">Nối từ với nghĩa đúng</span>
+                        </button>
+                        <button class="eng-game-card" onclick="engGameStart('spelling')">
+                            <span class="eng-game-icon">✍️</span>
+                            <span class="eng-game-name">Spelling Bee</span>
+                            <span class="eng-game-desc">Đọc nghĩa, gõ từ tiếng Anh</span>
+                        </button>
+                        <button class="eng-game-card" onclick="engGameStart('scramble')">
+                            <span class="eng-game-icon">🔀</span>
+                            <span class="eng-game-name">Word Scramble</span>
+                            <span class="eng-game-desc">Sắp xếp lại chữ cái</span>
+                        </button>
+                    </div>
+                </div>
+                <div id="engGameArea" style="display:none"></div>
             </div>
         </div>
     </section>

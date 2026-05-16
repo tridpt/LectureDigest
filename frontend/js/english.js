@@ -13,11 +13,13 @@ var _engReviewWords = [];
 var _engQuiz = null;
 var _engQuizIdx = 0;
 var _engQuizScore = 0;
+var _engXP = { xp: 0, level: 1, xp_needed: 100, total_xp: 0, progress_pct: 0 };
 
 function openEnglish() {
     showSection('englishSection');
     engLoadStats();
     engLoadToday();
+    engLoadXP();
     var footer = document.querySelector('.footer');
     if (footer) footer.style.display = 'none';
 }
@@ -54,6 +56,88 @@ async function engLoadStats() {
                 + '<div class="eng-stat"><span class="eng-stat-num">' + data.total_quizzes + '</span><span class="eng-stat-label">🧠 Quiz</span></div>';
         }
     } catch(e) {}
+}
+
+// ── XP / Level ──
+async function engLoadXP() {
+    var headers = _engHeaders();
+    if (!headers) return;
+    try {
+        var res = await fetchWithTimeout('/api/english/xp', { headers: headers }, 10000);
+        if (!res.ok) return;
+        _engXP = await res.json();
+        engRenderXPBar();
+    } catch(e) {}
+}
+
+function engRenderXPBar() {
+    var el = document.getElementById('engXPBar');
+    if (!el) return;
+    var pct = _engXP.progress_pct || 0;
+    el.innerHTML = '<div class="eng-xp-level-badge">Lv.' + _engXP.level + '</div>'
+        + '<div class="eng-xp-bar-wrap">'
+        + '<div class="eng-xp-bar-fill" style="width:' + pct + '%"></div>'
+        + '</div>'
+        + '<div class="eng-xp-text">' + _engXP.xp + ' / ' + _engXP.xp_needed + ' XP</div>'
+        + '<div class="eng-xp-total">Tổng: ' + _engXP.total_xp + ' XP</div>';
+}
+
+async function engAwardXP(source, score, total, quality) {
+    var headers = _engHeaders();
+    if (!headers) return;
+    var body = { source: source, score: score || 0, total: total || 0 };
+    if (quality !== undefined) body.quality = quality;
+    try {
+        var res = await fetchWithTimeout('/api/english/xp/award', {
+            method: 'POST', headers: headers, body: JSON.stringify(body)
+        }, 10000);
+        if (!res.ok) return;
+        var data = await res.json();
+        if (data.xp_gained > 0) {
+            _engXP.xp = data.current_xp;
+            _engXP.level = data.level;
+            _engXP.xp_needed = data.xp_needed;
+            _engXP.total_xp = data.total_xp;
+            _engXP.progress_pct = Math.round(data.current_xp / data.xp_needed * 100);
+            engRenderXPBar();
+            engShowXPGain(data.xp_gained, source, data.leveled_up, data.level);
+        }
+    } catch(e) {}
+}
+
+function engShowXPGain(amount, source, leveledUp, newLevel) {
+    // Floating XP notification
+    var popup = document.createElement('div');
+    popup.className = 'eng-xp-popup';
+    popup.innerHTML = '+' + amount + ' XP';
+    if (leveledUp) {
+        popup.innerHTML += ' <span class="eng-xp-levelup">🎉 Level ' + newLevel + '!</span>';
+        popup.classList.add('eng-xp-popup-levelup');
+    }
+    var bar = document.getElementById('engXPBar');
+    if (bar) {
+        bar.appendChild(popup);
+        setTimeout(function() { popup.remove(); }, 2500);
+    }
+
+    // Level up celebration
+    if (leveledUp) {
+        engShowLevelUpModal(newLevel);
+    }
+}
+
+function engShowLevelUpModal(level) {
+    var overlay = document.createElement('div');
+    overlay.className = 'eng-levelup-overlay';
+    overlay.innerHTML = '<div class="eng-levelup-modal">'
+        + '<div class="eng-levelup-icon">🏆</div>'
+        + '<div class="eng-levelup-title">Level Up!</div>'
+        + '<div class="eng-levelup-level">Level ' + level + '</div>'
+        + '<div class="eng-levelup-msg">Tiếp tục học để lên level tiếp!</div>'
+        + '<button class="eng-btn" onclick="this.closest(\'.eng-levelup-overlay\').remove()">Tuyệt vời! 🎉</button>'
+        + '</div>';
+    document.body.appendChild(overlay);
+    setTimeout(function() { if (overlay.parentNode) overlay.remove(); }, 5000);
 }
 
 // ── Today's words ──
@@ -251,6 +335,8 @@ function engRenderReviewCard() {
     var el = document.getElementById('engReviewArea');
     if (!el || _engReviewIdx >= _engReviewWords.length) {
         if (el) el.innerHTML = '<div class="eng-empty">🎉 Hoàn thành ôn tập!</div>';
+        // Show options panel again after a short delay
+        setTimeout(function() { engStartReview(); }, 1500);
         return;
     }
     var w = _engReviewWords[_engReviewIdx];
@@ -285,6 +371,8 @@ async function engRate(quality) {
             method: 'POST', headers: headers
         }, 5000).catch(function() {});
     }
+    // Award XP for review
+    engAwardXP('review', 0, 0, quality);
     _engReviewIdx++;
     _engFlipped = false;
     engRenderReviewCard();
@@ -374,6 +462,8 @@ function engRenderQuizQ() {
             + '<div>' + _engQuizScore + '/' + _engQuiz.length + ' đúng</div>'
             + '<button class="eng-btn" onclick="engShowTab(\'words\');engLoadStats()">Quay lại</button>'
             + '</div>';
+        // Award XP for quiz completion
+        engAwardXP('quiz', _engQuizScore, _engQuiz.length);
         return;
     }
     var q = _engQuiz[_engQuizIdx];
@@ -401,12 +491,19 @@ function engAnswer(selected, correct) {
 
 // ── Tabs ──
 function engShowTab(tab) {
-    ['words', 'saved', 'review', 'quiz'].forEach(function(t) {
+    ['words', 'saved', 'review', 'quiz', 'games'].forEach(function(t) {
         var panel = document.getElementById('engPanel_' + t);
         var btn = document.getElementById('engTab_' + t);
         if (panel) panel.style.display = t === tab ? '' : 'none';
         if (btn) btn.classList.toggle('eng-tab-active', t === tab);
     });
+    // Reset games menu when switching to games tab
+    if (tab === 'games') {
+        var menu = document.getElementById('engGamesMenu');
+        var area = document.getElementById('engGameArea');
+        if (menu) menu.style.display = '';
+        if (area) area.style.display = 'none';
+    }
 }
 
 async function _engLoadWordPicker(container, mode) {
@@ -456,4 +553,345 @@ function _engEsc(str) {
     var div = document.createElement('div');
     div.textContent = str;
     return div.innerHTML;
+}
+
+
+// ══════════════════════════════════════════════════════════════
+// ── GAMES ──
+// ══════════════════════════════════════════════════════════════
+
+var _engGameWords = [];
+var _engGameType = '';
+var _engGameScore = 0;
+var _engGameTotal = 0;
+var _engGameRound = 0;
+var _engGameTimer = null;
+var _engGameTimeLeft = 0;
+
+async function engGameStart(type) {
+    _engGameType = type;
+    var headers = _engHeaders();
+    if (!headers) return;
+
+    // Load words for game
+    try {
+        var res = await fetchWithTimeout('/api/english/all?page=1&per_page=100', { headers: headers }, 10000);
+        if (!res.ok) return;
+        var data = await res.json();
+        var words = data.words || [];
+        if (words.length < 4) {
+            showToast('Cần ít nhất 4 từ đã học để chơi game!', 3000);
+            return;
+        }
+        _engGameWords = words.sort(function() { return Math.random() - 0.5; });
+        _engGameScore = 0;
+        _engGameRound = 0;
+
+        var menu = document.getElementById('engGamesMenu');
+        var area = document.getElementById('engGameArea');
+        if (menu) menu.style.display = 'none';
+        if (area) area.style.display = '';
+
+        if (type === 'match') engGameMatch();
+        else if (type === 'spelling') engGameSpelling();
+        else if (type === 'scramble') engGameScramble();
+    } catch(e) { showToast('Lỗi tải từ vựng', 3000); }
+}
+
+function engGameBack() {
+    if (_engGameTimer) { clearInterval(_engGameTimer); _engGameTimer = null; }
+    var menu = document.getElementById('engGamesMenu');
+    var area = document.getElementById('engGameArea');
+    if (menu) menu.style.display = '';
+    if (area) { area.style.display = 'none'; area.innerHTML = ''; }
+}
+
+function engGameResult() {
+    var area = document.getElementById('engGameArea');
+    if (!area) return;
+    var pct = Math.round(_engGameScore / _engGameTotal * 100);
+    var emoji = pct >= 80 ? '🏆' : pct >= 50 ? '👍' : '💪';
+    area.innerHTML = '<div class="eng-game-result">'
+        + '<div class="eng-game-result-emoji">' + emoji + '</div>'
+        + '<div class="eng-game-result-score">' + _engGameScore + '/' + _engGameTotal + '</div>'
+        + '<div class="eng-game-result-pct">' + pct + '% đúng</div>'
+        + '<div class="eng-game-result-btns">'
+        + '<button class="eng-btn" onclick="engGameStart(\'' + _engGameType + '\')">🔄 Chơi lại</button>'
+        + '<button class="eng-btn eng-btn-outline" onclick="engGameBack()">← Quay lại</button>'
+        + '</div></div>';
+    // Award XP for game completion
+    engAwardXP('game_' + _engGameType, _engGameScore, _engGameTotal);
+}
+
+// ═══════════════════════════════════════
+// GAME 1: Word Match (nối từ - nghĩa)
+// ═══════════════════════════════════════
+function engGameMatch() {
+    var pool = _engGameWords.slice(0, Math.min(6, _engGameWords.length));
+    _engGameTotal = pool.length;
+    _engGameScore = 0;
+    _engGameTimeLeft = pool.length * 10; // 10s per word
+
+    var area = document.getElementById('engGameArea');
+    if (!area) return;
+
+    // Shuffle left (words) and right (meanings) independently
+    var leftItems = pool.map(function(w, i) { return { id: i, word: w.word }; });
+    var rightItems = pool.map(function(w, i) { return { id: i, meaning: w.meaning }; });
+    rightItems.sort(function() { return Math.random() - 0.5; });
+
+    var html = '<div class="eng-game-header">'
+        + '<button class="eng-game-back-btn" onclick="engGameBack()">← Quay lại</button>'
+        + '<span class="eng-game-label">🔗 Word Match</span>'
+        + '<span class="eng-game-timer" id="engMatchTimer">⏱ ' + _engGameTimeLeft + 's</span>'
+        + '</div>'
+        + '<p class="eng-game-instruction">Bấm vào từ bên trái, rồi bấm nghĩa bên phải để nối</p>'
+        + '<div class="eng-match-board">'
+        + '<div class="eng-match-col eng-match-left">';
+    leftItems.forEach(function(item) {
+        html += '<button class="eng-match-item eng-match-word" data-id="' + item.id + '">' + _engEsc(item.word) + '</button>';
+    });
+    html += '</div><div class="eng-match-col eng-match-right">';
+    rightItems.forEach(function(item) {
+        html += '<button class="eng-match-item eng-match-meaning" data-id="' + item.id + '">' + _engEsc(item.meaning) + '</button>';
+    });
+    html += '</div></div>'
+        + '<div class="eng-match-score" id="engMatchScore">Đã nối: 0/' + _engGameTotal + '</div>';
+
+    area.innerHTML = html;
+
+    // Timer
+    _engGameTimer = setInterval(function() {
+        _engGameTimeLeft--;
+        var timerEl = document.getElementById('engMatchTimer');
+        if (timerEl) timerEl.textContent = '⏱ ' + _engGameTimeLeft + 's';
+        if (_engGameTimeLeft <= 0) {
+            clearInterval(_engGameTimer);
+            _engGameTimer = null;
+            engGameResult();
+        }
+    }, 1000);
+
+    // Match logic
+    var selectedWord = null;
+    area.addEventListener('click', function(e) {
+        var btn = e.target.closest('.eng-match-item');
+        if (!btn || btn.classList.contains('eng-match-done')) return;
+
+        if (btn.classList.contains('eng-match-word')) {
+            // Select word
+            area.querySelectorAll('.eng-match-word').forEach(function(b) { b.classList.remove('eng-match-selected'); });
+            btn.classList.add('eng-match-selected');
+            selectedWord = btn;
+        } else if (btn.classList.contains('eng-match-meaning') && selectedWord) {
+            // Try to match
+            var wordId = parseInt(selectedWord.getAttribute('data-id'));
+            var meaningId = parseInt(btn.getAttribute('data-id'));
+
+            if (wordId === meaningId) {
+                // Correct
+                _engGameScore++;
+                selectedWord.classList.add('eng-match-done', 'eng-match-correct');
+                btn.classList.add('eng-match-done', 'eng-match-correct');
+                selectedWord.classList.remove('eng-match-selected');
+                selectedWord = null;
+                var scoreEl = document.getElementById('engMatchScore');
+                if (scoreEl) scoreEl.textContent = 'Đã nối: ' + _engGameScore + '/' + _engGameTotal;
+                if (_engGameScore >= _engGameTotal) {
+                    clearInterval(_engGameTimer);
+                    _engGameTimer = null;
+                    setTimeout(engGameResult, 600);
+                }
+            } else {
+                // Wrong - flash red
+                selectedWord.classList.add('eng-match-wrong');
+                btn.classList.add('eng-match-wrong');
+                var sw = selectedWord;
+                setTimeout(function() {
+                    sw.classList.remove('eng-match-wrong', 'eng-match-selected');
+                    btn.classList.remove('eng-match-wrong');
+                }, 500);
+                selectedWord = null;
+            }
+        }
+    });
+}
+
+// ═══════════════════════════════════════
+// GAME 2: Spelling Bee (đọc nghĩa, gõ từ)
+// ═══════════════════════════════════════
+function engGameSpelling() {
+    var pool = _engGameWords.slice(0, Math.min(8, _engGameWords.length));
+    _engGameTotal = pool.length;
+    _engGameScore = 0;
+    _engGameRound = 0;
+    engSpellingRound(pool);
+}
+
+function engSpellingRound(pool) {
+    var area = document.getElementById('engGameArea');
+    if (!area) return;
+
+    if (_engGameRound >= pool.length) {
+        engGameResult();
+        return;
+    }
+
+    var w = pool[_engGameRound];
+    var hint = w.word.charAt(0) + '_ '.repeat(w.word.length - 1).trim();
+
+    area.innerHTML = '<div class="eng-game-header">'
+        + '<button class="eng-game-back-btn" onclick="engGameBack()">← Quay lại</button>'
+        + '<span class="eng-game-label">✍️ Spelling Bee</span>'
+        + '<span class="eng-game-progress">' + (_engGameRound + 1) + '/' + _engGameTotal + '</span>'
+        + '</div>'
+        + '<div class="eng-spelling-card">'
+        + '<div class="eng-spelling-meaning">' + _engEsc(w.meaning) + '</div>'
+        + '<div class="eng-spelling-hint">Gợi ý: <strong>' + hint + '</strong> (' + w.word.length + ' chữ cái)</div>'
+        + '<input type="text" class="eng-spelling-input" id="engSpellingInput" placeholder="Gõ từ tiếng Anh..." autocomplete="off" autofocus>'
+        + '<div class="eng-spelling-feedback" id="engSpellingFeedback"></div>'
+        + '<button class="eng-btn" id="engSpellingSubmit" onclick="engSpellingCheck()">Kiểm tra</button>'
+        + '</div>'
+        + '<div class="eng-game-score-bar">Điểm: ' + _engGameScore + '/' + _engGameTotal + '</div>';
+
+    var input = document.getElementById('engSpellingInput');
+    if (input) {
+        input.focus();
+        input.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter') engSpellingCheck();
+        });
+    }
+}
+
+function engSpellingCheck() {
+    var input = document.getElementById('engSpellingInput');
+    var feedback = document.getElementById('engSpellingFeedback');
+    if (!input || !feedback) return;
+
+    var pool = _engGameWords.slice(0, Math.min(8, _engGameWords.length));
+    var w = pool[_engGameRound];
+    var answer = input.value.trim().toLowerCase();
+    var correct = w.word.toLowerCase();
+
+    input.disabled = true;
+    document.getElementById('engSpellingSubmit').disabled = true;
+
+    if (answer === correct) {
+        _engGameScore++;
+        feedback.innerHTML = '<span class="eng-spelling-correct">✅ Chính xác!</span>';
+        feedback.className = 'eng-spelling-feedback eng-fb-correct';
+    } else {
+        feedback.innerHTML = '<span class="eng-spelling-wrong">❌ Sai! Đáp án: <strong>' + _engEsc(w.word) + '</strong></span>';
+        feedback.className = 'eng-spelling-feedback eng-fb-wrong';
+    }
+
+    _engGameRound++;
+    setTimeout(function() { engSpellingRound(pool); }, 1500);
+}
+
+// ═══════════════════════════════════════
+// GAME 3: Word Scramble (xáo chữ cái)
+// ═══════════════════════════════════════
+function engGameScramble() {
+    var pool = _engGameWords.filter(function(w) { return w.word.length >= 4; }).slice(0, Math.min(8, _engGameWords.length));
+    if (pool.length < 3) {
+        pool = _engGameWords.slice(0, Math.min(8, _engGameWords.length));
+    }
+    _engGameTotal = pool.length;
+    _engGameScore = 0;
+    _engGameRound = 0;
+    engScrambleRound(pool);
+}
+
+function _engScrambleWord(word) {
+    var arr = word.split('');
+    for (var i = arr.length - 1; i > 0; i--) {
+        var j = Math.floor(Math.random() * (i + 1));
+        var tmp = arr[i]; arr[i] = arr[j]; arr[j] = tmp;
+    }
+    var scrambled = arr.join('');
+    // Make sure it's actually different
+    if (scrambled === word && word.length > 1) {
+        return word.charAt(word.length - 1) + word.slice(1, -1) + word.charAt(0);
+    }
+    return scrambled;
+}
+
+function engScrambleRound(pool) {
+    var area = document.getElementById('engGameArea');
+    if (!area) return;
+
+    if (_engGameRound >= pool.length) {
+        engGameResult();
+        return;
+    }
+
+    var w = pool[_engGameRound];
+    var scrambled = _engScrambleWord(w.word.toLowerCase());
+
+    area.innerHTML = '<div class="eng-game-header">'
+        + '<button class="eng-game-back-btn" onclick="engGameBack()">← Quay lại</button>'
+        + '<span class="eng-game-label">🔀 Word Scramble</span>'
+        + '<span class="eng-game-progress">' + (_engGameRound + 1) + '/' + _engGameTotal + '</span>'
+        + '</div>'
+        + '<div class="eng-scramble-card">'
+        + '<div class="eng-scramble-meaning">💡 ' + _engEsc(w.meaning) + '</div>'
+        + '<div class="eng-scramble-letters">' + scrambled.split('').map(function(c) {
+            return '<span class="eng-scramble-letter">' + c.toUpperCase() + '</span>';
+        }).join('') + '</div>'
+        + '<input type="text" class="eng-spelling-input" id="engScrambleInput" placeholder="Sắp xếp lại thành từ đúng..." autocomplete="off" autofocus>'
+        + '<div class="eng-spelling-feedback" id="engScrambleFeedback"></div>'
+        + '<div class="eng-scramble-btns">'
+        + '<button class="eng-btn" onclick="engScrambleCheck()">Kiểm tra</button>'
+        + '<button class="eng-btn eng-btn-outline" onclick="engScrambleSkip()">Bỏ qua</button>'
+        + '</div>'
+        + '</div>'
+        + '<div class="eng-game-score-bar">Điểm: ' + _engGameScore + '/' + _engGameTotal + '</div>';
+
+    var input = document.getElementById('engScrambleInput');
+    if (input) {
+        input.focus();
+        input.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter') engScrambleCheck();
+        });
+    }
+}
+
+function engScrambleCheck() {
+    var input = document.getElementById('engScrambleInput');
+    var feedback = document.getElementById('engScrambleFeedback');
+    if (!input || !feedback) return;
+
+    var pool = _engGameWords.filter(function(w) { return w.word.length >= 4; }).slice(0, Math.min(8, _engGameWords.length));
+    if (pool.length < 3) pool = _engGameWords.slice(0, Math.min(8, _engGameWords.length));
+    var w = pool[_engGameRound];
+    var answer = input.value.trim().toLowerCase();
+    var correct = w.word.toLowerCase();
+
+    input.disabled = true;
+
+    if (answer === correct) {
+        _engGameScore++;
+        feedback.innerHTML = '<span class="eng-spelling-correct">✅ Chính xác!</span>';
+        feedback.className = 'eng-spelling-feedback eng-fb-correct';
+    } else {
+        feedback.innerHTML = '<span class="eng-spelling-wrong">❌ Sai! Đáp án: <strong>' + _engEsc(w.word) + '</strong></span>';
+        feedback.className = 'eng-spelling-feedback eng-fb-wrong';
+    }
+
+    _engGameRound++;
+    setTimeout(function() { engScrambleRound(pool); }, 1500);
+}
+
+function engScrambleSkip() {
+    var pool = _engGameWords.filter(function(w) { return w.word.length >= 4; }).slice(0, Math.min(8, _engGameWords.length));
+    if (pool.length < 3) pool = _engGameWords.slice(0, Math.min(8, _engGameWords.length));
+    var w = pool[_engGameRound];
+    var feedback = document.getElementById('engScrambleFeedback');
+    if (feedback) {
+        feedback.innerHTML = '<span class="eng-spelling-wrong">Đáp án: <strong>' + _engEsc(w.word) + '</strong></span>';
+        feedback.className = 'eng-spelling-feedback eng-fb-wrong';
+    }
+    _engGameRound++;
+    setTimeout(function() { engScrambleRound(pool); }, 1200);
 }
