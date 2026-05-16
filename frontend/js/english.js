@@ -240,11 +240,49 @@ async function engLoadSavedWords(page) {
     if (!headers) return;
     _engSavedPage = page || 1;
 
+    var topic = document.getElementById('engFilterTopic')?.value || '';
+    var pos = document.getElementById('engFilterPos')?.value || '';
+    var mastery = document.getElementById('engFilterMastery')?.value || '';
+
+    var url = '/api/english/all?page=' + _engSavedPage + '&per_page=15';
+    if (topic) url += '&topic=' + encodeURIComponent(topic);
+    if (pos) url += '&pos=' + encodeURIComponent(pos);
+    if (mastery) url += '&mastery=' + mastery;
+
     try {
-        var res = await fetchWithTimeout('/api/english/all?page=' + _engSavedPage + '&per_page=15', { headers: headers }, 10000);
+        var res = await fetchWithTimeout(url, { headers: headers }, 10000);
         if (!res.ok) return;
         var data = await res.json();
         engRenderSavedList(data.words || [], data.total, data.page, data.total_pages);
+    } catch(e) {}
+
+    // Load topics for filter (only once)
+    _engLoadFilterTopics();
+}
+
+function engApplyFilters() {
+    engLoadSavedWords(1);
+}
+
+var _engFilterTopicsLoaded = false;
+async function _engLoadFilterTopics() {
+    if (_engFilterTopicsLoaded) return;
+    var headers = _engHeaders();
+    if (!headers) return;
+    try {
+        var res = await fetchWithTimeout('/api/english/topics', { headers: headers }, 5000);
+        if (!res.ok) return;
+        var data = await res.json();
+        var sel = document.getElementById('engFilterTopic');
+        if (sel && data.topics) {
+            data.topics.forEach(function(t) {
+                var opt = document.createElement('option');
+                opt.value = t;
+                opt.textContent = t;
+                sel.appendChild(opt);
+            });
+            _engFilterTopicsLoaded = true;
+        }
     } catch(e) {}
 }
 

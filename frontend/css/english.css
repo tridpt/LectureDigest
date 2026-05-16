@@ -311,3 +311,14 @@
 .light-mode .eng-word-detail-inner { background: rgba(255,255,255,0.8); border-color: rgba(139,92,246,0.1); }
 .light-mode .eng-saved-clickable:hover { background: rgba(139,92,246,0.04); }
 .light-mode .eng-saved-expanded { background: rgba(139,92,246,0.06); }
+
+
+/* ════════════════════════════════════════════════
+   Saved Words Filter Bar
+   ════════════════════════════════════════════════ */
+.eng-saved-filters { display: flex; gap: 8px; margin-bottom: 12px; flex-wrap: wrap; }
+.eng-filter-select { padding: 8px 12px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.1); background: rgba(15,15,30,0.5); color: var(--text-primary, #f1f5f9); font-size: 12px; font-weight: 600; outline: none; cursor: pointer; flex: 1; min-width: 120px; }
+.eng-filter-select:focus { border-color: rgba(139,92,246,0.4); }
+.eng-filter-select option { background: #1e1e3a; color: #f1f5f9; }
+.light-mode .eng-filter-select { background: #f8fafc; border-color: rgba(0,0,0,0.1); color: #1e293b; }
+.light-mode .eng-filter-select option { background: #fff; color: #1e293b; }

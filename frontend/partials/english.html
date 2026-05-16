@@ -85,6 +85,27 @@
 
             <!-- Panel: Saved words -->
             <div id="engPanel_saved" style="display:none">
+                <div class="eng-saved-filters" id="engSavedFilters">
+                    <select class="eng-filter-select" id="engFilterTopic" onchange="engApplyFilters()">
+                        <option value="">📁 Tất cả chủ đề</option>
+                    </select>
+                    <select class="eng-filter-select" id="engFilterPos" onchange="engApplyFilters()">
+                        <option value="">📝 Tất cả loại từ</option>
+                        <option value="noun">Noun</option>
+                        <option value="verb">Verb</option>
+                        <option value="adjective">Adjective</option>
+                        <option value="adverb">Adverb</option>
+                        <option value="phrase">Phrase</option>
+                    </select>
+                    <select class="eng-filter-select" id="engFilterMastery" onchange="engApplyFilters()">
+                        <option value="">⭐ Tất cả mức độ</option>
+                        <option value="1">Mới</option>
+                        <option value="2">Quen</option>
+                        <option value="3">Khá</option>
+                        <option value="4">Giỏi</option>
+                        <option value="5">Thành thạo</option>
+                    </select>
+                </div>
                 <div class="eng-saved-list" id="engSavedList"></div>
                 <div class="eng-pagination" id="engPagination"></div>
             </div>

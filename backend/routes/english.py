@@ -213,19 +213,43 @@ async def get_today_words(request: Request):
 
 
 @router.get("/all")
-async def get_all_words(request: Request, page: int = 1, per_page: int = 20):
-    """Get all saved words with pagination."""
+async def get_all_words(request: Request, page: int = 1, per_page: int = 20, topic: str = '', pos: str = '', mastery: int = 0):
+    """Get all saved words with pagination and filters."""
     user = get_current_user(request)
     if not user:
         raise HTTPException(status_code=401, detail="Vui lòng đăng nhập")
 
     conn = get_db()
-    total = conn.execute("SELECT COUNT(*) as c FROM english_vocab WHERE user_id = ?", (user["id"],)).fetchone()["c"]
+
+    # Build query with filters
+    where = "WHERE user_id = ?"
+    params = [user["id"]]
+
+    if topic:
+        where += " AND topic = ?"
+        params.append(topic)
+    if pos:
+        where += " AND LOWER(part_of_speech) LIKE ?"
+        params.append(f"%{pos.lower()}%")
+    if mastery > 0:
+        # Mastery levels: 1=0 correct, 2=1-2, 3=3-5, 4=6-9, 5=10+
+        if mastery == 1:
+            where += " AND (correct_count IS NULL OR correct_count = 0)"
+        elif mastery == 2:
+            where += " AND correct_count >= 1 AND correct_count <= 2"
+        elif mastery == 3:
+            where += " AND correct_count >= 3 AND correct_count <= 5"
+        elif mastery == 4:
+            where += " AND correct_count >= 6 AND correct_count <= 9"
+        elif mastery == 5:
+            where += " AND correct_count >= 10"
+
+    total = conn.execute(f"SELECT COUNT(*) as c FROM english_vocab {where}", params).fetchone()["c"]
     offset = (page - 1) * per_page
-    rows = conn.execute("""
-        SELECT * FROM english_vocab WHERE user_id = ?
+    rows = conn.execute(f"""
+        SELECT * FROM english_vocab {where}
         ORDER BY learned_at DESC LIMIT ? OFFSET ?
-    """, (user["id"], per_page, offset)).fetchall()
+    """, params + [per_page, offset]).fetchall()
 
     return {
         "words": [{
