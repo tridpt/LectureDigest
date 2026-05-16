@@ -139,7 +139,7 @@ Rules:
                 INSERT INTO english_vocab (user_id, word, meaning, example, phonetic, topic, level, learned_at, next_review)
                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
             """, (user["id"], w.get("word", ""), w.get("meaning", ""), w.get("example", ""),
-                  w.get("phonetic", ""), req.topic, req.level, now, now + 86400))
+                  w.get("phonetic", ""), req.topic, req.level, now, now))
             saved.append(w)
         conn.commit()
 
@@ -213,7 +213,7 @@ async def get_review_words(request: Request):
     conn = get_db()
     now = time.time()
     rows = conn.execute("""
-        SELECT * FROM english_vocab WHERE user_id = ? AND next_review <= ?
+        SELECT * FROM english_vocab WHERE user_id = ? AND (next_review <= ? OR repetitions = 0)
         ORDER BY next_review ASC LIMIT 20
     """, (user["id"], now)).fetchall()
 
@@ -279,7 +279,7 @@ async def get_stats(request: Request):
     streak = conn.execute("SELECT * FROM english_streak WHERE user_id = ?", (user["id"],)).fetchone()
     total_words = conn.execute("SELECT COUNT(*) as c FROM english_vocab WHERE user_id = ?", (user["id"],)).fetchone()["c"]
     due_count = conn.execute(
-        "SELECT COUNT(*) as c FROM english_vocab WHERE user_id = ? AND next_review <= ?",
+        "SELECT COUNT(*) as c FROM english_vocab WHERE user_id = ? AND (next_review <= ? OR repetitions = 0)",
         (user["id"], time.time())
     ).fetchone()["c"]
 
