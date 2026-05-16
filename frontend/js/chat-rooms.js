@@ -257,6 +257,21 @@ function crOpenRoom(roomId) {
 
     // Start polling
     _crStartPolling();
+    _crJumpedToUnread = false;
+
+    // Auto mark-as-read when scrolled to bottom
+    var area = document.getElementById('crMessagesArea');
+    if (area) {
+        area.onscroll = function() {
+            if (_crIsAtBottom()) {
+                var btn = document.getElementById('crUnreadBtn');
+                if (btn && !btn.classList.contains('hidden')) {
+                    _crMarkAsRead();
+                    _crJumpedToUnread = false;
+                }
+            }
+        };
+    }
 }
 
 function _crLoadMessages() {
@@ -269,9 +284,17 @@ function _crLoadMessages() {
         .then(function(data) {
             _crMessages = data.messages || [];
             _crRenderMessages();
-            _crScrollToBottom();
             _crUpdateMuteStatus(data.muted_until, data.chat_locked);
             _crUpdateUnreadUI(data);
+
+            // Scroll: if unreads, don't scroll to bottom (let user use the button)
+            var lastRead = data.last_read_at || 0;
+            var hasUnread = _crMessages.some(function(m) {
+                return m.created_at > lastRead && String(m.user_id) !== _crCurrentUserId && String(m.user_id) !== '__system__';
+            });
+            if (!hasUnread) {
+                _crScrollToBottom();
+            }
             // Update room owner if changed (transfer)
             if (data.created_by && _crCurrentRoom && String(_crCurrentRoom.created_by) !== String(data.created_by)) {
                 _crCurrentRoom.created_by = data.created_by;
@@ -1592,26 +1615,34 @@ function _crUpdateUnreadUI(data) {
     }
 }
 
+var _crJumpedToUnread = false;
+
 function crJumpToUnread() {
-    // Find first unread message and scroll to it
-    var firstUnread = null;
-    for (var i = 0; i < _crMessages.length; i++) {
-        var m = _crMessages[i];
-        if (m.created_at > _crLastReadAt && String(m.user_id) !== _crCurrentUserId && String(m.user_id) !== '__system__') {
-            firstUnread = m;
-            break;
+    if (!_crJumpedToUnread) {
+        // First click: jump to first unread message
+        var firstUnread = null;
+        for (var i = 0; i < _crMessages.length; i++) {
+            var m = _crMessages[i];
+            if (m.created_at > _crLastReadAt && String(m.user_id) !== _crCurrentUserId && String(m.user_id) !== '__system__') {
+                firstUnread = m;
+                break;
+            }
         }
-    }
-
-    if (firstUnread) {
-        crScrollToMessage(firstUnread.id);
+        if (firstUnread) {
+            crScrollToMessage(firstUnread.id);
+        } else {
+            _crScrollToBottom();
+        }
+        _crJumpedToUnread = true;
+        // Change button text to "go to bottom"
+        var btnText = document.getElementById('crUnreadBtnText');
+        if (btnText) btnText.textContent = '↓ Xuống cuối';
     } else {
-        // No unread, scroll to bottom
+        // Second click: scroll to bottom + mark as read
         _crScrollToBottom();
+        _crMarkAsRead();
+        _crJumpedToUnread = false;
     }
-
-    // Mark as read
-    _crMarkAsRead();
 }
 
 function _crMarkAsRead() {
