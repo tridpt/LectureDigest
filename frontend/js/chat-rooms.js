@@ -254,6 +254,7 @@ function crOpenRoom(roomId) {
     // Load messages
     _crLoadMessages();
     _crLoadPinnedMessages();
+    _crPreloadMembers();
 
     // Start polling
     _crStartPolling();
@@ -2112,6 +2113,23 @@ var _crMentionDropdown = null;
 
 var _crCachedMembers = null;
 var _crCachedMembersTs = 0;
+
+function _crPreloadMembers() {
+    if (!_crCurrentRoom) return;
+    var token = localStorage.getItem('ld_auth_token') || '';
+    if (!token) return;
+    fetchWithTimeout('/api/chat-rooms/' + _crCurrentRoom.id + '/members', {
+        headers: { 'Authorization': 'Bearer ' + token }
+    }, 5000)
+        .then(function(r) { return r.json(); })
+        .then(function(data) {
+            _crCachedMembers = (data.members || []).filter(function(m) {
+                return String(m.user_id) !== _crCurrentUserId;
+            });
+            _crCachedMembersTs = Date.now();
+        })
+        .catch(function() {});
+}
 
 function _crOnInputForMention(e) {
     var input = document.getElementById('crMessageInput');
