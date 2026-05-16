@@ -204,18 +204,37 @@ async def get_all_words(request: Request, page: int = 1, per_page: int = 20):
 
 
 @router.get("/review")
-async def get_review_words(request: Request):
-    """Get words due for review (spaced repetition)."""
+async def get_review_words(request: Request, limit: int = 20, topic: str = '', type: str = 'due'):
+    """Get words for review. type: due/new/all."""
     user = get_current_user(request)
     if not user:
         raise HTTPException(status_code=401, detail="Vui lòng đăng nhập")
 
     conn = get_db()
     now = time.time()
-    rows = conn.execute("""
-        SELECT * FROM english_vocab WHERE user_id = ? AND (next_review <= ? OR repetitions = 0)
-        ORDER BY next_review ASC LIMIT 20
-    """, (user["id"], now)).fetchall()
+    limit = min(max(limit, 1), 50)
+
+    if type == 'new':
+        query = "SELECT * FROM english_vocab WHERE user_id = ? AND repetitions = 0"
+        params = [user["id"]]
+    elif type == 'all':
+        query = "SELECT * FROM english_vocab WHERE user_id = ?"
+        params = [user["id"]]
+    else:  # due
+        query = "SELECT * FROM english_vocab WHERE user_id = ? AND (next_review <= ? OR repetitions = 0)"
+        params = [user["id"], now]
+
+    if topic:
+        query += " AND topic = ?"
+        params.append(topic)
+
+    if type == 'all':
+        query += " ORDER BY RANDOM() LIMIT ?"
+    else:
+        query += " ORDER BY next_review ASC LIMIT ?"
+    params.append(limit)
+
+    rows = conn.execute(query, params).fetchall()
 
     return {"words": [{
         "id": r["id"], "word": r["word"], "meaning": r["meaning"],
@@ -268,6 +287,20 @@ async def review_word(word_id: int, request: Request, quality: int = 3):
     return {"ok": True, "next_review_days": interval}
 
 
+@router.get("/topics")
+async def get_topics(request: Request):
+    """Get list of topics the user has studied."""
+    user = get_current_user(request)
+    if not user:
+        raise HTTPException(status_code=401, detail="Vui lòng đăng nhập")
+    conn = get_db()
+    rows = conn.execute(
+        "SELECT DISTINCT topic FROM english_vocab WHERE user_id = ? AND topic != '' ORDER BY topic",
+        (user["id"],)
+    ).fetchall()
+    return {"topics": [r["topic"] for r in rows]}
+
+
 @router.get("/stats")
 async def get_stats(request: Request):
     """Get learning statistics."""
@@ -293,24 +326,32 @@ async def get_stats(request: Request):
 
 
 @router.post("/quiz")
-async def generate_quiz(request: Request):
+async def generate_quiz(request: Request, count: int = 5, topic: str = ''):
     """Generate a quiz from learned words."""
     user = get_current_user(request)
     if not user:
         raise HTTPException(status_code=401, detail="Vui lòng đăng nhập")
 
+    count = min(max(count, 3), 20)
     conn = get_db()
-    rows = conn.execute("""
-        SELECT word, meaning FROM english_vocab WHERE user_id = ?
-        ORDER BY RANDOM() LIMIT 10
-    """, (user["id"],)).fetchall()
+
+    if topic:
+        rows = conn.execute("""
+            SELECT word, meaning FROM english_vocab WHERE user_id = ? AND topic = ?
+            ORDER BY RANDOM() LIMIT ?
+        """, (user["id"], topic, count + 5)).fetchall()
+    else:
+        rows = conn.execute("""
+            SELECT word, meaning FROM english_vocab WHERE user_id = ?
+            ORDER BY RANDOM() LIMIT ?
+        """, (user["id"], count + 5)).fetchall()
 
     if len(rows) < 4:
         raise HTTPException(status_code=400, detail="Cần ít nhất 4 từ đã học để tạo quiz")
 
     import random
     questions = []
-    for i, row in enumerate(rows):
+    for i, row in enumerate(rows[:count]):
         # Create multiple choice: correct + 3 wrong
         correct = row["meaning"]
         wrong_pool = [r["meaning"] for r in rows if r["word"] != row["word"]]

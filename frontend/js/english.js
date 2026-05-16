@@ -169,20 +169,59 @@ var _engReviewIdx = 0;
 var _engFlipped = false;
 
 async function engStartReview() {
+    engShowTab('review');
+    // Show options first
+    var el = document.getElementById('engReviewArea');
+    if (!el) return;
+    el.innerHTML = '<div class="eng-options-panel">'
+        + '<h3 style="margin:0 0 12px;color:var(--text-primary,#f1f5f9)">🔄 Tùy chọn ôn tập</h3>'
+        + '<div class="eng-opt-row"><label>Số từ:</label><input type="number" id="engReviewCount" value="10" min="1" max="50" class="eng-count-input"></div>'
+        + '<div class="eng-opt-row"><label>Chủ đề:</label><select id="engReviewTopic" class="eng-select" style="flex:1"><option value="">Tất cả</option></select></div>'
+        + '<div class="eng-opt-row"><label>Loại:</label><select id="engReviewType" class="eng-select" style="flex:1">'
+        + '<option value="due">Đến hạn ôn</option><option value="new">Chưa ôn lần nào</option><option value="all">Tất cả (ngẫu nhiên)</option></select></div>'
+        + '<button class="eng-btn" style="width:100%;margin-top:12px" onclick="engDoReview()">▶️ Bắt đầu ôn tập</button>'
+        + '</div>';
+    // Load topics for dropdown
+    _engLoadTopicOptions('engReviewTopic');
+}
+
+async function _engLoadTopicOptions(selectId) {
     var headers = _engHeaders();
     if (!headers) return;
     try {
-        var res = await fetchWithTimeout('/api/english/review', { headers: headers }, 10000);
+        var res = await fetchWithTimeout('/api/english/topics', { headers: headers }, 5000);
+        if (!res.ok) return;
+        var data = await res.json();
+        var sel = document.getElementById(selectId);
+        if (sel && data.topics) {
+            data.topics.forEach(function(t) {
+                sel.innerHTML += '<option value="' + _engEsc(t) + '">' + _engEsc(t) + '</option>';
+            });
+        }
+    } catch(e) {}
+}
+
+async function engDoReview() {
+    var count = parseInt(document.getElementById('engReviewCount')?.value) || 10;
+    var topic = document.getElementById('engReviewTopic')?.value || '';
+    var type = document.getElementById('engReviewType')?.value || 'due';
+    var headers = _engHeaders();
+    if (!headers) return;
+
+    var url = '/api/english/review?limit=' + count + '&type=' + type;
+    if (topic) url += '&topic=' + encodeURIComponent(topic);
+
+    try {
+        var res = await fetchWithTimeout(url, { headers: headers }, 10000);
         if (!res.ok) return;
         var data = await res.json();
         _engReviewWords = data.words || [];
         if (_engReviewWords.length === 0) {
-            showToast('Không có từ nào cần ôn tập!', 2000);
+            showToast('Không có từ nào phù hợp!', 2000);
             return;
         }
         _engReviewIdx = 0;
         _engFlipped = false;
-        engShowTab('review');
         engRenderReviewCard();
     } catch(e) {}
 }
@@ -235,10 +274,29 @@ async function engRate(quality) {
 
 // ── Quiz ──
 async function engStartQuiz() {
+    engShowTab('quiz');
+    var el = document.getElementById('engQuizArea');
+    if (!el) return;
+    el.innerHTML = '<div class="eng-options-panel">'
+        + '<h3 style="margin:0 0 12px;color:var(--text-primary,#f1f5f9)">🧠 Tùy chọn Quiz</h3>'
+        + '<div class="eng-opt-row"><label>Số câu:</label><input type="number" id="engQuizCount" value="5" min="3" max="20" class="eng-count-input"></div>'
+        + '<div class="eng-opt-row"><label>Chủ đề:</label><select id="engQuizTopic" class="eng-select" style="flex:1"><option value="">Tất cả</option></select></div>'
+        + '<button class="eng-btn" style="width:100%;margin-top:12px" onclick="engDoQuiz()">▶️ Bắt đầu Quiz</button>'
+        + '</div>';
+    _engLoadTopicOptions('engQuizTopic');
+}
+
+async function engDoQuiz() {
+    var count = parseInt(document.getElementById('engQuizCount')?.value) || 5;
+    var topic = document.getElementById('engQuizTopic')?.value || '';
     var headers = _engHeaders();
     if (!headers) return;
+
+    var url = '/api/english/quiz?count=' + count;
+    if (topic) url += '&topic=' + encodeURIComponent(topic);
+
     try {
-        var res = await fetchWithTimeout('/api/english/quiz', { method: 'POST', headers: headers }, 10000);
+        var res = await fetchWithTimeout(url, { method: 'POST', headers: headers }, 10000);
         if (!res.ok) {
             var err = await res.json().catch(function() { return {}; });
             showToast(err.detail || 'Lỗi', 3000);
@@ -248,7 +306,6 @@ async function engStartQuiz() {
         _engQuiz = data.questions || [];
         _engQuizIdx = 0;
         _engQuizScore = 0;
-        engShowTab('quiz');
         engRenderQuizQ();
     } catch(e) { showToast('Lỗi', 3000); }
 }

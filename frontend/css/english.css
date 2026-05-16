@@ -90,3 +90,8 @@
 .eng-pag-info { font-size: 12px; color: var(--text-secondary, #94a3b8); }
 .eng-pag-btn { padding: 6px 14px; border-radius: 8px; border: 1px solid rgba(139,92,246,0.3); background: transparent; color: #a78bfa; font-size: 12px; cursor: pointer; transition: background 0.15s; }
 .eng-pag-btn:hover { background: rgba(139,92,246,0.1); }
+
+/* Options panel */
+.eng-options-panel { background: rgba(30,30,58,0.5); border: 1px solid rgba(139,92,246,0.15); border-radius: 14px; padding: 20px; max-width: 400px; margin: 0 auto; }
+.eng-opt-row { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+.eng-opt-row label { font-size: 13px; color: var(--text-secondary, #94a3b8); min-width: 60px; }
