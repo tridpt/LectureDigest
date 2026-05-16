@@ -144,6 +144,10 @@ window.addEventListener('popstate', function(e) {
         if (typeof openStudyPlan === 'function') openStudyPlan();
     } else if (path === '/rooms') {
         if (typeof openStudyRooms === 'function') openStudyRooms();
+    } else if (path.indexOf('/rooms/') === 0) {
+        var srRoomId = path.replace('/rooms/', '');
+        if (typeof openStudyRooms === 'function') openStudyRooms();
+        if (srRoomId && typeof srOpenRoom === 'function') setTimeout(function() { srOpenRoom(srRoomId); }, 300);
     } else if (path === '/knowledge-graph') {
         if (typeof openKnowledgeGraph === 'function') openKnowledgeGraph();
     } else if (path === '/exam') {
@@ -230,6 +234,22 @@ window.addEventListener('popstate', function(e) {
                 if (_initRoomId && typeof _crOpenRoomById === 'function') _crOpenRoomById(_initRoomId);
                 else if (typeof openChatRooms === 'function') openChatRooms();
             }, 500);
+        }, { once: true });
+    } else if (path === '/rooms') {
+        window.addEventListener('DOMContentLoaded', function() {
+            if (typeof openStudyRooms === 'function') openStudyRooms();
+        }, { once: true });
+    } else if (path.indexOf('/rooms/') === 0) {
+        var _initSrRoomId = path.replace('/rooms/', '');
+        window.addEventListener('DOMContentLoaded', function() {
+            setTimeout(function() {
+                if (typeof openStudyRooms === 'function') openStudyRooms();
+                if (_initSrRoomId && typeof srOpenRoom === 'function') setTimeout(function() { srOpenRoom(_initSrRoomId); }, 300);
+            }, 500);
+        }, { once: true });
+    } else if (path === '/study-plan') {
+        window.addEventListener('DOMContentLoaded', function() {
+            if (typeof openStudyPlan === 'function') openStudyPlan();
         }, { once: true });
     }
 })();

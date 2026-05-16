@@ -38,6 +38,9 @@ function srBackToList() {
     _srCurrentRoom = null;
     showSection('studyRoomsSection');
     srLoadRooms();
+    if (location.pathname !== '/rooms') {
+        history.pushState({}, '', '/rooms');
+    }
 }
 
 // ══════════════════════════════════════════════════════
@@ -140,6 +143,11 @@ async function srOpenRoom(roomId) {
     showSection('roomDetailSection');
     srSwitchTab('discussion');
     _srStartPolling();
+
+    // Push URL for this room
+    if (location.pathname !== '/rooms/' + roomId) {
+        history.pushState({ section: 'roomDetailSection', roomId: roomId }, '', '/rooms/' + roomId);
+    }
 }
 
 function _srRenderRoomDetail() {
