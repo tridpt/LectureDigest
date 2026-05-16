@@ -420,7 +420,17 @@ function _authShowError(msg) {
 }
 
 // ── Logout ──
-function authLogout() {
+async function authLogout() {
+    // Confirm before logout
+    var overlay = document.getElementById('authModalOverlay');
+    var isModalOpen = overlay && !overlay.classList.contains('hidden');
+    if (!isModalOpen && typeof _crConfirmModal === 'function') {
+        var result = await _crConfirmModal('🚪 Đăng xuất', 'Bạn có chắc muốn đăng xuất?', [
+            { label: 'Ở lại' }, { label: 'Đăng xuất', danger: true }
+        ]);
+        if (result !== '1') return;
+    }
+
     // ── Push data to server BEFORE clearing localStorage ──
     var token = localStorage.getItem('ld_auth_token');
     if (token) {
