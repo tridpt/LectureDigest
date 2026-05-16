@@ -20,6 +20,7 @@ function openEnglish() {
     engLoadStats();
     engLoadToday();
     engLoadXP();
+    engLoadMissions();
     _engLoadCustomTopics();
     var footer = document.querySelector('.footer');
     if (footer) footer.style.display = 'none';
@@ -146,6 +147,78 @@ function engShowXPGain(amount, source, leveledUp, leveledDown, newLevel) {
     if (leveledDown) {
         showToast('⚠️ Bạn đã rớt xuống Level ' + newLevel + '!', 3000);
     }
+}
+
+// ── Daily Missions ──
+async function engLoadMissions() {
+    var headers = _engHeaders();
+    if (!headers) return;
+    try {
+        var res = await fetchWithTimeout('/api/english/missions', { headers: headers }, 10000);
+        if (!res.ok) return;
+        var data = await res.json();
+        engRenderMissions(data.missions || []);
+    } catch(e) {}
+}
+
+function engRenderMissions(missions) {
+    var el = document.getElementById('engMissions');
+    if (!el) return;
+    if (missions.length === 0) { el.innerHTML = ''; return; }
+
+    var completedCount = missions.filter(function(m) { return m.completed; }).length;
+    var html = '<div class="eng-missions-header">'
+        + '<span class="eng-missions-title">🎯 Nhiệm vụ hôm nay</span>'
+        + '<span class="eng-missions-count">' + completedCount + '/' + missions.length + '</span>'
+        + '</div>'
+        + '<div class="eng-missions-list">';
+
+    missions.forEach(function(m) {
+        var pct = Math.min(100, Math.round(m.progress / m.target * 100));
+        var statusClass = m.claimed ? 'eng-mission-claimed' : m.completed ? 'eng-mission-done' : '';
+        var btnHtml = '';
+        if (m.claimed) {
+            btnHtml = '<span class="eng-mission-claimed-label">✅</span>';
+        } else if (m.completed) {
+            btnHtml = '<button class="eng-mission-claim-btn" onclick="engClaimMission(' + m.id + ')">+' + m.xp_reward + ' XP</button>';
+        }
+
+        html += '<div class="eng-mission-item ' + statusClass + '">'
+            + '<span class="eng-mission-icon">' + m.icon + '</span>'
+            + '<div class="eng-mission-info">'
+            + '<div class="eng-mission-label">' + _engEsc(m.desc) + '</div>'
+            + '<div class="eng-mission-bar"><div class="eng-mission-bar-fill" style="width:' + pct + '%"></div></div>'
+            + '</div>'
+            + '<span class="eng-mission-progress-text">' + m.progress + '/' + m.target + '</span>'
+            + btnHtml
+            + '</div>';
+    });
+
+    html += '</div>';
+    el.innerHTML = html;
+}
+
+async function engClaimMission(missionId) {
+    var headers = _engHeaders();
+    if (!headers) return;
+    try {
+        var res = await fetchWithTimeout('/api/english/missions/claim/' + missionId, {
+            method: 'POST', headers: headers
+        }, 10000);
+        if (!res.ok) return;
+        var data = await res.json();
+        if (data.ok && data.xp_data) {
+            _engXP.xp = data.xp_data.current_xp;
+            _engXP.level = data.xp_data.level;
+            _engXP.xp_needed = data.xp_data.xp_needed;
+            _engXP.progress_pct = Math.round(data.xp_data.current_xp / data.xp_data.xp_needed * 100);
+            _engXP.can_hint = (data.xp_data.current_xp > 0 || data.xp_data.level > 1);
+            engRenderXPBar();
+            engShowXPGain(data.xp_awarded, 'mission', data.xp_data.leveled_up, data.xp_data.leveled_down, data.xp_data.level);
+        }
+        engLoadMissions();
+        showToast('🎯 Nhận thưởng +' + data.xp_awarded + ' XP!', 2000);
+    } catch(e) {}
 }
 
 function engShowLevelUpModal(level) {

@@ -71,6 +71,19 @@ def _init_english_tables():
             created_at REAL NOT NULL
         );
         CREATE INDEX IF NOT EXISTS idx_exl_user ON english_xp_log(user_id, created_at);
+
+        CREATE TABLE IF NOT EXISTS english_daily_missions (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            user_id INTEGER NOT NULL,
+            date TEXT NOT NULL,
+            mission_key TEXT NOT NULL,
+            target INTEGER DEFAULT 1,
+            progress INTEGER DEFAULT 0,
+            completed INTEGER DEFAULT 0,
+            xp_reward INTEGER DEFAULT 10,
+            claimed INTEGER DEFAULT 0
+        );
+        CREATE INDEX IF NOT EXISTS idx_edm_user_date ON english_daily_missions(user_id, date);
     """)
     conn.commit()
 
@@ -181,6 +194,9 @@ Rules:
 
         # Update streak
         _update_streak(user["id"], len(saved))
+
+        # Update daily mission: learn_words
+        _update_mission_progress(user["id"], "learn_words", len(saved))
 
         return {"words": saved, "count": len(saved)}
 
@@ -352,6 +368,7 @@ async def review_word(word_id: int, request: Request, quality: int = 3):
     # Update correct/wrong count
     if quality >= 3:
         conn.execute("UPDATE english_vocab SET correct_count = correct_count + 1 WHERE id = ?", (word_id,))
+        _update_mission_progress(user["id"], "review_cards", 1)
     else:
         conn.execute("UPDATE english_vocab SET wrong_count = wrong_count + 1 WHERE id = ?", (word_id,))
 
@@ -446,6 +463,9 @@ async def generate_quiz(request: Request, count: int = 5, topic: str = ''):
         ON CONFLICT(user_id) DO UPDATE SET total_quizzes = total_quizzes + 1
     """, (user["id"],))
     conn.commit()
+
+    # Update daily mission: quiz_complete
+    _update_mission_progress(user["id"], "quiz_complete", 1)
 
     return {"questions": questions[:5]}
 
@@ -700,5 +720,169 @@ async def award_xp(request: Request):
     if xp == 0:
         return {"xp_gained": 0}
 
+    # Update daily missions based on source
+    if source in ("game_match", "game_spelling", "game_scramble"):
+        _update_mission_progress(user["id"], "game_play", 1)
+    if source == "quiz" and total > 0 and score == total:
+        _update_mission_progress(user["id"], "perfect_quiz", 1)
+
     result = _add_xp(user["id"], xp, source)
     return result
+
+
+# ═══════════════════════════════════════════════════════
+# DAILY MISSIONS
+# ═══════════════════════════════════════════════════════
+
+def _update_mission_progress(user_id, key, amount=1):
+    """Helper to update a mission's progress."""
+    import datetime
+    conn = get_db()
+    today = datetime.date.today().isoformat()
+    row = conn.execute(
+        "SELECT * FROM english_daily_missions WHERE user_id = ? AND date = ? AND mission_key = ?",
+        (user_id, today, key)
+    ).fetchone()
+    if not row or row["completed"]:
+        return
+    new_progress = min(row["progress"] + amount, row["target"])
+    completed = 1 if new_progress >= row["target"] else 0
+    conn.execute("UPDATE english_daily_missions SET progress = ?, completed = ? WHERE id = ?",
+                 (new_progress, completed, row["id"]))
+    conn.commit()
+
+DAILY_MISSIONS = [
+    {"key": "learn_words", "label": "Học từ mới", "icon": "📚", "target": 5, "xp": 15, "desc": "Tạo {target} từ vựng mới"},
+    {"key": "review_cards", "label": "Ôn tập", "icon": "🔄", "target": 5, "xp": 15, "desc": "Ôn tập {target} thẻ flashcard"},
+    {"key": "quiz_complete", "label": "Làm Quiz", "icon": "🧠", "target": 1, "xp": 20, "desc": "Hoàn thành {target} bài quiz"},
+    {"key": "game_play", "label": "Chơi Game", "icon": "🎮", "target": 1, "xp": 20, "desc": "Hoàn thành {target} game"},
+    {"key": "perfect_quiz", "label": "Quiz hoàn hảo", "icon": "🏆", "target": 1, "xp": 30, "desc": "Đạt 100% trong quiz"},
+]
+
+
+def _get_or_create_daily_missions(user_id):
+    """Get today's missions, create if not exist."""
+    import datetime
+    conn = get_db()
+    today = datetime.date.today().isoformat()
+
+    rows = conn.execute(
+        "SELECT * FROM english_daily_missions WHERE user_id = ? AND date = ?",
+        (user_id, today)
+    ).fetchall()
+
+    if rows:
+        return rows
+
+    # Create today's missions
+    for m in DAILY_MISSIONS:
+        conn.execute("""
+            INSERT INTO english_daily_missions (user_id, date, mission_key, target, progress, completed, xp_reward, claimed)
+            VALUES (?, ?, ?, ?, 0, 0, ?, 0)
+        """, (user_id, today, m["key"], m["target"], m["xp"]))
+    conn.commit()
+
+    return conn.execute(
+        "SELECT * FROM english_daily_missions WHERE user_id = ? AND date = ?",
+        (user_id, today)
+    ).fetchall()
+
+
+@router.get("/missions")
+async def get_daily_missions(request: Request):
+    """Get today's daily missions."""
+    user = get_current_user(request)
+    if not user:
+        raise HTTPException(status_code=401, detail="Vui lòng đăng nhập")
+
+    rows = _get_or_create_daily_missions(user["id"])
+
+    # Map mission data
+    mission_map = {m["key"]: m for m in DAILY_MISSIONS}
+    missions = []
+    for r in rows:
+        key = r["mission_key"]
+        info = mission_map.get(key, {})
+        missions.append({
+            "id": r["id"],
+            "key": key,
+            "label": info.get("label", key),
+            "icon": info.get("icon", "📋"),
+            "desc": info.get("desc", "").replace("{target}", str(r["target"])),
+            "target": r["target"],
+            "progress": r["progress"],
+            "completed": bool(r["completed"]),
+            "xp_reward": r["xp_reward"],
+            "claimed": bool(r["claimed"]),
+        })
+
+    return {"missions": missions, "all_completed": all(m["completed"] for m in missions)}
+
+
+@router.post("/missions/progress")
+async def update_mission_progress(request: Request):
+    """Update mission progress. Body: {key: str, amount: int}"""
+    user = get_current_user(request)
+    if not user:
+        raise HTTPException(status_code=401, detail="Vui lòng đăng nhập")
+
+    import datetime
+    body = await request.json()
+    key = body.get("key", "")
+    amount = body.get("amount", 1)
+    today = datetime.date.today().isoformat()
+
+    conn = get_db()
+    # Ensure missions exist
+    _get_or_create_daily_missions(user["id"])
+
+    row = conn.execute(
+        "SELECT * FROM english_daily_missions WHERE user_id = ? AND date = ? AND mission_key = ?",
+        (user["id"], today, key)
+    ).fetchone()
+
+    if not row:
+        return {"ok": False}
+
+    if row["completed"]:
+        return {"ok": True, "already_completed": True}
+
+    new_progress = min(row["progress"] + amount, row["target"])
+    completed = 1 if new_progress >= row["target"] else 0
+
+    conn.execute("""
+        UPDATE english_daily_missions SET progress = ?, completed = ?
+        WHERE id = ?
+    """, (new_progress, completed, row["id"]))
+    conn.commit()
+
+    return {"ok": True, "progress": new_progress, "target": row["target"], "completed": bool(completed)}
+
+
+@router.post("/missions/claim/{mission_id}")
+async def claim_mission_reward(mission_id: int, request: Request):
+    """Claim XP reward for a completed mission."""
+    user = get_current_user(request)
+    if not user:
+        raise HTTPException(status_code=401, detail="Vui lòng đăng nhập")
+
+    conn = get_db()
+    row = conn.execute(
+        "SELECT * FROM english_daily_missions WHERE id = ? AND user_id = ?",
+        (mission_id, user["id"])
+    ).fetchone()
+
+    if not row:
+        raise HTTPException(status_code=404, detail="Mission not found")
+    if not row["completed"]:
+        raise HTTPException(status_code=400, detail="Mission not completed")
+    if row["claimed"]:
+        return {"ok": True, "already_claimed": True}
+
+    # Mark as claimed
+    conn.execute("UPDATE english_daily_missions SET claimed = 1 WHERE id = ?", (mission_id,))
+    conn.commit()
+
+    # Award XP
+    result = _add_xp(user["id"], row["xp_reward"], f"mission_{row['mission_key']}")
+    return {"ok": True, "xp_awarded": row["xp_reward"], "xp_data": result}
