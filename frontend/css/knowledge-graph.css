@@ -8,6 +8,7 @@
 .kg-page {
     position: fixed;
     inset: 0;
+    top: 64px;
     z-index: 9800;
     background: #070712;
     display: flex;
@@ -242,4 +243,9 @@ html.light-mode .kg-page {
     .kg-detail-panel { width: calc(100% - 24px); right: 12px; }
     .kg-controls { gap: 4px; }
     .kg-ctrl-btn { padding: 5px 10px; font-size: 11px; }
+}
+
+
+@media (max-width: 480px) {
+    .kg-page { top: 54px; }
 }
