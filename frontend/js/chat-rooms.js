@@ -493,7 +493,11 @@ function _crRenderMessages() {
         if (msg.content) {
             html += '<div class="cr-msg-content">' + _crFormatMentions(_crEsc(msg.content)) + '</div>';
         }
-        html += '<div class="cr-msg-time">' + timeStr + '</div>';
+        html += '<div class="cr-msg-time">' + timeStr;
+        if (isOwn && msg._sending) html += ' <span class="cr-msg-status cr-msg-sending">⏳</span>';
+        else if (isOwn && msg._failed) html += ' <span class="cr-msg-status cr-msg-failed">❌ Lỗi</span>';
+        else if (isOwn && msg._sent) html += ' <span class="cr-msg-status cr-msg-sent">✓</span>';
+        html += '</div>';
         html += '</div>';
         if (!isOwn) html += menuHtml;
         html += '</div>';
@@ -677,24 +681,51 @@ async function crSendMessage() {
     }
 
     input.value = '';
-    _crLastTypingSent = 0; // Reset so typing indicator clears immediately
+    _crLastTypingSent = 0;
+
+    // Optimistic UI: show message immediately with "sending" status
+    var tempId = 'temp_' + Date.now();
+    var optimisticMsg = {
+        id: tempId,
+        user_id: _crCurrentUserId || _crGetCurrentUserId(),
+        username: (typeof _authUser !== 'undefined' && _authUser && _authUser.display_name) ? _authUser.display_name : 'Bạn',
+        avatar_url: '',
+        content: content,
+        image_url: imageUrl,
+        created_at: Date.now() / 1000,
+        pinned: false,
+        _sending: true
+    };
+    _crMessages.push(optimisticMsg);
+    _crRenderMessages();
+    _crScrollToBottom();
 
     try {
         var res = await fetchWithTimeout('/api/chat-rooms/' + _crCurrentRoom.id + '/messages', {
             method: 'POST',
             headers: headers,
             body: JSON.stringify({ content: content, image_url: imageUrl })
-        }, 10000);
+        }, 15000);
         var data = await res.json();
         if (data.ok && data.message) {
-            _crMessages.push(data.message);
+            // Replace optimistic message with real one
+            var idx = _crMessages.findIndex(function(m) { return m.id === tempId; });
+            if (idx !== -1) {
+                _crMessages[idx] = data.message;
+                _crMessages[idx]._sent = true;
+            }
             _crRenderMessages();
-            _crScrollToBottom();
         }
     } catch(err) {
         console.error('Failed to send message:', err);
+        // Mark as failed
+        var idx = _crMessages.findIndex(function(m) { return m.id === tempId; });
+        if (idx !== -1) {
+            _crMessages[idx]._failed = true;
+            _crMessages[idx]._sending = false;
+        }
+        _crRenderMessages();
         showToast('Không thể gửi tin nhắn', 3000);
-        input.value = content;
     }
 }
 

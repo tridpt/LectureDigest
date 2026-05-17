@@ -1917,3 +1917,11 @@ img.cr-member-av {
     font-size: 13px;
     color: var(--text-secondary, #94a3b8);
 }
+
+
+/* Message send status */
+.cr-msg-status { font-size: 10px; margin-left: 4px; }
+.cr-msg-sending { color: #94a3b8; animation: crPulse 1s infinite; }
+.cr-msg-sent { color: #10b981; }
+.cr-msg-failed { color: #f87171; cursor: pointer; }
+@keyframes crPulse { 0%,100% { opacity: 1; } 50% { opacity: 0.4; } }
