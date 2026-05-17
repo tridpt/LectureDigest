@@ -388,11 +388,14 @@ async def review_word(word_id: int, request: Request, quality: int = 3):
     # Update correct/wrong count
     if quality >= 3:
         conn.execute("UPDATE english_vocab SET correct_count = correct_count + 1 WHERE id = ?", (word_id,))
-        _update_mission_progress(user["id"], "review_cards", 1)
     else:
         conn.execute("UPDATE english_vocab SET wrong_count = wrong_count + 1 WHERE id = ?", (word_id,))
 
     conn.commit()
+
+    # Update daily mission (after commit to avoid DB lock)
+    if quality >= 3:
+        _update_mission_progress(user["id"], "review_cards", 1)
 
     return {"ok": True, "next_review_days": interval}
 
@@ -892,19 +895,22 @@ async def award_xp(request: Request):
 def _update_mission_progress(user_id, key, amount=1):
     """Helper to update a mission's progress."""
     import datetime
-    conn = get_db()
-    today = datetime.date.today().isoformat()
-    row = conn.execute(
-        "SELECT * FROM english_daily_missions WHERE user_id = ? AND date = ? AND mission_key = ?",
-        (user_id, today, key)
-    ).fetchone()
-    if not row or row["completed"]:
-        return
-    new_progress = min(row["progress"] + amount, row["target"])
-    completed = 1 if new_progress >= row["target"] else 0
-    conn.execute("UPDATE english_daily_missions SET progress = ?, completed = ? WHERE id = ?",
-                 (new_progress, completed, row["id"]))
-    conn.commit()
+    try:
+        conn = get_db()
+        today = datetime.date.today().isoformat()
+        row = conn.execute(
+            "SELECT * FROM english_daily_missions WHERE user_id = ? AND date = ? AND mission_key = ?",
+            (user_id, today, key)
+        ).fetchone()
+        if not row or row["completed"]:
+            return
+        new_progress = min(row["progress"] + amount, row["target"])
+        completed = 1 if new_progress >= row["target"] else 0
+        conn.execute("UPDATE english_daily_missions SET progress = ?, completed = ? WHERE id = ?",
+                     (new_progress, completed, row["id"]))
+        conn.commit()
+    except Exception:
+        pass
 
 DAILY_MISSIONS = [
     {"key": "learn_words", "label": "Học từ mới", "icon": "📚", "target": 5, "xp": 15, "desc": "Tạo {target} từ vựng mới"},
