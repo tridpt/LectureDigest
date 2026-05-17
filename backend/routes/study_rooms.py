@@ -197,38 +197,42 @@ async def create_room(req: CreateRoomRequest, request: Request):
     user = _require_auth(request)
     uid = user["id"]
 
-    # Limit rooms per user
-    conn = get_db()
-    count = conn.execute("SELECT COUNT(*) as c FROM study_rooms WHERE owner_id = ?", (uid,)).fetchone()["c"]
-    if count >= 10:
+    try:
+        conn = get_db()
+        count = conn.execute("SELECT COUNT(*) as c FROM study_rooms WHERE owner_id = ?", (uid,)).fetchone()["c"]
+        if count >= 10:
+            conn.close()
+            raise HTTPException(status_code=400, detail="Bạn đã tạo tối đa 10 phòng học")
+
+        room_id = _generate_room_id()
+        invite_code = _generate_invite_code()
+        now = int(time.time() * 1000)
+
+        conn.execute("""
+            INSERT INTO study_rooms (id, name, description, icon, owner_id, invite_code, created_at, updated_at)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+        """, (room_id, req.name, req.description, req.icon, uid, invite_code, now, now))
+
+        conn.execute("""
+            INSERT INTO room_members (room_id, user_id, role, joined_at) VALUES (?, ?, 'owner', ?)
+        """, (room_id, uid, now))
+
+        conn.commit()
         conn.close()
-        raise HTTPException(status_code=400, detail="Bạn đã tạo tối đa 10 phòng học")
 
-    room_id = _generate_room_id()
-    invite_code = _generate_invite_code()
-    now = int(time.time() * 1000)
-
-    conn.execute("""
-        INSERT INTO study_rooms (id, name, description, icon, owner_id, invite_code, created_at, updated_at)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-    """, (room_id, req.name, req.description, req.icon, uid, invite_code, now, now))
-
-    # Owner is automatically a member with 'owner' role
-    conn.execute("""
-        INSERT INTO room_members (room_id, user_id, role, joined_at) VALUES (?, ?, 'owner', ?)
-    """, (room_id, uid, now))
-
-    conn.commit()
-    conn.close()
-
-    return {
-        "id": room_id,
-        "name": req.name,
-        "description": req.description,
-        "icon": req.icon,
-        "invite_code": invite_code,
-        "member_count": 1
-    }
+        return {
+            "id": room_id,
+            "name": req.name,
+            "description": req.description,
+            "icon": req.icon,
+            "invite_code": invite_code,
+            "member_count": 1
+        }
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Create study room error: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
 
 
 @router.get("")
