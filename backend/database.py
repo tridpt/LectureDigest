@@ -138,7 +138,7 @@ def init_db():
 
 def _init_db_postgres(conn):
     """Initialize PostgreSQL tables."""
-    conn.execute("""
+    conn.executescript("""
         CREATE TABLE IF NOT EXISTS history (
             entry_id   TEXT PRIMARY KEY,
             video_id   TEXT NOT NULL,
@@ -257,7 +257,9 @@ def _init_db_postgres(conn):
     """)
     # Ensure gamification row
     try:
-        conn.execute("INSERT INTO gamification (id, data_json, updated_at) VALUES (1, '{}', %s) ON CONFLICT (id) DO NOTHING", (int(time.time() * 1000),))
+        cur = conn._conn.cursor()
+        cur.execute("INSERT INTO gamification (id, data_json, updated_at) VALUES (1, '{}', %s) ON CONFLICT (id) DO NOTHING", (int(time.time() * 1000),))
+        cur.close()
     except:
         pass
     conn.commit()
