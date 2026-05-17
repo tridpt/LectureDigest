@@ -15,6 +15,19 @@
             <!-- Stats -->
             <div class="eng-stats-grid" id="engStats"></div>
 
+            <!-- Study Timer -->
+            <div class="eng-study-timer" id="engStudyTimer">
+                <div class="eng-timer-left">
+                    <span class="eng-timer-icon">⏱️</span>
+                    <span class="eng-timer-time" id="engTimerDisplay">00:00</span>
+                    <span class="eng-timer-label">hôm nay</span>
+                </div>
+                <div class="eng-timer-right">
+                    <span class="eng-timer-goal" id="engTimerGoal">Mục tiêu: --</span>
+                    <button class="eng-timer-set-btn" onclick="engSetStudyGoal()">⚙️</button>
+                </div>
+            </div>
+
             <!-- XP Bar -->
             <div class="eng-xp-container" id="engXPBar"></div>
 
@@ -88,6 +101,31 @@
 
             <!-- Panel: Saved words -->
             <div id="engPanel_saved" style="display:none">
+                <!-- Manual add word -->
+                <div class="eng-add-word-bar">
+                    <button class="eng-add-word-toggle" onclick="engToggleAddWord()">➕ Thêm từ thủ công</button>
+                    <div class="eng-add-word-form hidden" id="engAddWordForm">
+                        <div class="eng-add-row">
+                            <input type="text" class="eng-add-input" id="engAddWord" placeholder="Từ tiếng Anh *">
+                            <input type="text" class="eng-add-input" id="engAddMeaning" placeholder="Nghĩa tiếng Việt *">
+                        </div>
+                        <div class="eng-add-row">
+                            <input type="text" class="eng-add-input" id="engAddPhonetic" placeholder="Phiên âm (tùy chọn)">
+                            <select class="eng-add-input" id="engAddPos">
+                                <option value="">Loại từ</option>
+                                <option value="noun">Noun</option>
+                                <option value="verb">Verb</option>
+                                <option value="adjective">Adjective</option>
+                                <option value="adverb">Adverb</option>
+                                <option value="phrase">Phrase</option>
+                            </select>
+                        </div>
+                        <div class="eng-add-row">
+                            <input type="text" class="eng-add-input eng-add-full" id="engAddExample" placeholder="Câu ví dụ (tùy chọn)">
+                        </div>
+                        <button class="eng-btn" onclick="engAddWordManual()">💾 Lưu từ</button>
+                    </div>
+                </div>
                 <div class="eng-saved-filters" id="engSavedFilters">
                     <select class="eng-filter-select" id="engFilterTopic" onchange="engApplyFilters()">
                         <option value="">📁 Tất cả chủ đề</option>

@@ -15,18 +15,24 @@ var _engQuizIdx = 0;
 var _engQuizScore = 0;
 var _engXP = { xp: 0, level: 1, xp_needed: 100, total_xp: 0, progress_pct: 0, can_hint: false };
 
+var _engStudyTimerInterval = null;
+var _engStudySeconds = 0;
+var _engStudyGoal = 0;
+
 function openEnglish() {
     showSection('englishSection');
     engLoadStats();
     engLoadToday();
     engLoadXP();
     engLoadMissions();
+    engStartStudyTimer();
     _engLoadCustomTopics();
     var footer = document.querySelector('.footer');
     if (footer) footer.style.display = 'none';
 }
 
 function closeEnglish() {
+    engStopStudyTimer();
     showSection('hero');
     var footer = document.querySelector('.footer');
     if (footer) footer.style.display = '';
@@ -58,6 +64,149 @@ async function engLoadStats() {
                 + '<div class="eng-stat"><span class="eng-stat-num">' + data.total_quizzes + '</span><span class="eng-stat-label">🧠 Quiz</span></div>';
         }
     } catch(e) {}
+}
+
+// ── Study Timer ──
+async function engStartStudyTimer() {
+    var headers = _engHeaders();
+    if (!headers) return;
+    // Load today's time from server
+    try {
+        var res = await fetchWithTimeout('/api/english/study-time', { headers: headers }, 5000);
+        if (res.ok) {
+            var data = await res.json();
+            _engStudySeconds = data.today_seconds || 0;
+            _engStudyGoal = data.goal_minutes || 0;
+            engUpdateTimerDisplay();
+        }
+    } catch(e) {}
+    // Start counting
+    if (_engStudyTimerInterval) clearInterval(_engStudyTimerInterval);
+    _engStudyTimerInterval = setInterval(function() {
+        _engStudySeconds++;
+        engUpdateTimerDisplay();
+        // Save every 30 seconds
+        if (_engStudySeconds % 30 === 0) engSaveStudyTime();
+    }, 1000);
+}
+
+function engStopStudyTimer() {
+    if (_engStudyTimerInterval) {
+        clearInterval(_engStudyTimerInterval);
+        _engStudyTimerInterval = null;
+        engSaveStudyTime();
+    }
+}
+
+function engUpdateTimerDisplay() {
+    var el = document.getElementById('engTimerDisplay');
+    if (el) {
+        var m = Math.floor(_engStudySeconds / 60);
+        var s = _engStudySeconds % 60;
+        el.textContent = (m < 10 ? '0' : '') + m + ':' + (s < 10 ? '0' : '') + s;
+    }
+    var goalEl = document.getElementById('engTimerGoal');
+    if (goalEl) {
+        if (_engStudyGoal > 0) {
+            var pct = Math.min(100, Math.round(_engStudySeconds / (_engStudyGoal * 60) * 100));
+            goalEl.textContent = 'Mục tiêu: ' + _engStudyGoal + ' phút (' + pct + '%)';
+            if (pct >= 100) goalEl.style.color = '#10b981';
+            else goalEl.style.color = '';
+        } else {
+            goalEl.textContent = 'Mục tiêu: chưa đặt';
+        }
+    }
+}
+
+function engSaveStudyTime() {
+    var headers = _engHeaders();
+    if (!headers) return;
+    fetchWithTimeout('/api/english/study-time', {
+        method: 'POST', headers: headers,
+        body: JSON.stringify({ seconds: _engStudySeconds })
+    }, 5000).catch(function() {});
+}
+
+function engSetStudyGoal() {
+    var current = _engStudyGoal || 15;
+    var html = '<div class="eng-goal-modal">'
+        + '<h3 style="margin:0 0 12px;color:var(--text-primary,#f1f5f9)">⏱️ Đặt mục tiêu học</h3>'
+        + '<p style="font-size:13px;color:var(--text-secondary,#94a3b8);margin:0 0 12px">Mỗi ngày bạn muốn học bao lâu?</p>'
+        + '<div class="eng-goal-options">'
+        + '<button class="eng-goal-opt" onclick="engSaveGoal(10)">10 phút</button>'
+        + '<button class="eng-goal-opt" onclick="engSaveGoal(15)">15 phút</button>'
+        + '<button class="eng-goal-opt" onclick="engSaveGoal(30)">30 phút</button>'
+        + '<button class="eng-goal-opt" onclick="engSaveGoal(45)">45 phút</button>'
+        + '<button class="eng-goal-opt" onclick="engSaveGoal(60)">60 phút</button>'
+        + '</div>'
+        + '<div style="display:flex;gap:8px;align-items:center;margin-top:10px">'
+        + '<input type="number" id="engGoalCustom" class="eng-count-input" value="' + current + '" min="1" max="480" style="width:70px">'
+        + '<span style="font-size:12px;color:var(--text-secondary,#94a3b8)">phút</span>'
+        + '<button class="eng-btn" onclick="engSaveGoal(parseInt(document.getElementById(\'engGoalCustom\').value)||15)">Lưu</button>'
+        + '</div>'
+        + '</div>';
+    // Show as overlay
+    var overlay = document.createElement('div');
+    overlay.className = 'eng-levelup-overlay';
+    overlay.onclick = function(e) { if (e.target === overlay) overlay.remove(); };
+    overlay.innerHTML = '<div class="eng-levelup-modal" style="max-width:340px">' + html + '</div>';
+    document.body.appendChild(overlay);
+}
+
+function engSaveGoal(minutes) {
+    _engStudyGoal = minutes;
+    engUpdateTimerDisplay();
+    var headers = _engHeaders();
+    if (headers) {
+        fetchWithTimeout('/api/english/study-goal', {
+            method: 'POST', headers: headers,
+            body: JSON.stringify({ minutes: minutes })
+        }, 5000).catch(function() {});
+    }
+    // Close modal
+    var overlay = document.querySelector('.eng-levelup-overlay');
+    if (overlay) overlay.remove();
+    showToast('✅ Mục tiêu: ' + minutes + ' phút/ngày', 2000);
+}
+
+// ── Manual Word Add ──
+function engToggleAddWord() {
+    var form = document.getElementById('engAddWordForm');
+    if (form) form.classList.toggle('hidden');
+}
+
+async function engAddWordManual() {
+    var word = document.getElementById('engAddWord')?.value.trim();
+    var meaning = document.getElementById('engAddMeaning')?.value.trim();
+    if (!word || !meaning) { showToast('Cần nhập từ và nghĩa!', 2000); return; }
+
+    var phonetic = document.getElementById('engAddPhonetic')?.value.trim() || '';
+    var pos = document.getElementById('engAddPos')?.value || '';
+    var example = document.getElementById('engAddExample')?.value.trim() || '';
+
+    var headers = _engHeaders();
+    if (!headers) return;
+
+    try {
+        var res = await fetchWithTimeout('/api/english/add-word', {
+            method: 'POST', headers: headers,
+            body: JSON.stringify({ word: word, meaning: meaning, phonetic: phonetic, part_of_speech: pos, example: example })
+        }, 10000);
+        if (!res.ok) {
+            var err = await res.json().catch(function() { return {}; });
+            showToast(err.detail || 'Lỗi', 3000);
+            return;
+        }
+        showToast('✅ Đã thêm "' + word + '"', 2000);
+        // Clear form
+        document.getElementById('engAddWord').value = '';
+        document.getElementById('engAddMeaning').value = '';
+        document.getElementById('engAddPhonetic').value = '';
+        document.getElementById('engAddPos').value = '';
+        document.getElementById('engAddExample').value = '';
+        engLoadSavedWords(1);
+        engLoadStats();
+    } catch(e) { showToast('Lỗi: ' + e.message, 3000); }
 }
 
 // ── XP / Level ──
@@ -169,7 +318,10 @@ function engRenderMissions(missions) {
     var completedCount = missions.filter(function(m) { return m.completed; }).length;
     var html = '<div class="eng-missions-header">'
         + '<span class="eng-missions-title">🎯 Nhiệm vụ hôm nay</span>'
+        + '<div class="eng-missions-header-right">'
         + '<span class="eng-missions-count">' + completedCount + '/' + missions.length + '</span>'
+        + '<button class="eng-missions-settings" onclick="engCustomizeMissions()" title="Tùy chỉnh">⚙️</button>'
+        + '</div>'
         + '</div>'
         + '<div class="eng-missions-list">';
 
@@ -219,6 +371,47 @@ async function engClaimMission(missionId) {
         engLoadMissions();
         showToast('🎯 Nhận thưởng +' + data.xp_awarded + ' XP!', 2000);
     } catch(e) {}
+}
+
+function engCustomizeMissions() {
+    var overlay = document.createElement('div');
+    overlay.className = 'eng-levelup-overlay';
+    overlay.onclick = function(e) { if (e.target === overlay) overlay.remove(); };
+
+    var html = '<div class="eng-levelup-modal" style="max-width:380px;text-align:left">'
+        + '<h3 style="margin:0 0 12px;color:var(--text-primary,#f1f5f9);text-align:center">⚙️ Tùy chỉnh nhiệm vụ</h3>'
+        + '<p style="font-size:12px;color:var(--text-secondary,#94a3b8);margin:0 0 14px;text-align:center">Đặt mục tiêu cho từng nhiệm vụ hôm nay</p>'
+        + '<div class="eng-custom-missions">'
+        + '<div class="eng-cm-row"><span>📚 Học từ mới</span><input type="number" id="engCM_learn" value="5" min="1" max="50" class="eng-count-input"></div>'
+        + '<div class="eng-cm-row"><span>🔄 Ôn tập</span><input type="number" id="engCM_review" value="5" min="1" max="50" class="eng-count-input"></div>'
+        + '<div class="eng-cm-row"><span>🧠 Làm Quiz</span><input type="number" id="engCM_quiz" value="1" min="1" max="10" class="eng-count-input"></div>'
+        + '<div class="eng-cm-row"><span>🎮 Chơi Game</span><input type="number" id="engCM_game" value="1" min="1" max="10" class="eng-count-input"></div>'
+        + '</div>'
+        + '<button class="eng-btn" style="width:100%;margin-top:14px" onclick="engSaveMissionCustom()">💾 Lưu mục tiêu</button>'
+        + '</div>';
+    overlay.innerHTML = html;
+    document.body.appendChild(overlay);
+}
+
+async function engSaveMissionCustom() {
+    var missions = [
+        { key: 'learn_words', target: parseInt(document.getElementById('engCM_learn')?.value) || 5 },
+        { key: 'review_cards', target: parseInt(document.getElementById('engCM_review')?.value) || 5 },
+        { key: 'quiz_complete', target: parseInt(document.getElementById('engCM_quiz')?.value) || 1 },
+        { key: 'game_play', target: parseInt(document.getElementById('engCM_game')?.value) || 1 },
+    ];
+    var headers = _engHeaders();
+    if (!headers) return;
+    try {
+        await fetchWithTimeout('/api/english/missions/customize', {
+            method: 'POST', headers: headers,
+            body: JSON.stringify({ missions: missions })
+        }, 10000);
+        showToast('✅ Đã cập nhật mục tiêu!', 2000);
+        engLoadMissions();
+    } catch(e) {}
+    var overlay = document.querySelector('.eng-levelup-overlay');
+    if (overlay) overlay.remove();
 }
 
 function engShowLevelUpModal(level) {

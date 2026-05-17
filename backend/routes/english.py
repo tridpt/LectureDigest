@@ -109,6 +109,26 @@ try:
 except:
     pass
 
+# Migration: study time and goal tables
+try:
+    conn = get_db()
+    conn.executescript("""
+        CREATE TABLE IF NOT EXISTS english_study_time (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            user_id INTEGER NOT NULL,
+            date TEXT NOT NULL,
+            seconds INTEGER DEFAULT 0
+        );
+        CREATE INDEX IF NOT EXISTS idx_est_user_date ON english_study_time(user_id, date);
+        CREATE TABLE IF NOT EXISTS english_study_goal (
+            user_id INTEGER PRIMARY KEY,
+            goal_minutes INTEGER DEFAULT 0
+        );
+    """)
+    conn.commit()
+except:
+    pass
+
 
 # ═══════════════════════════════════════════════════════
 # MODELS
@@ -389,6 +409,141 @@ async def get_topics(request: Request):
         (user["id"],)
     ).fetchall()
     return {"topics": [r["topic"] for r in rows]}
+
+
+@router.post("/add-word")
+async def add_word_manual(request: Request):
+    """Manually add a word."""
+    user = get_current_user(request)
+    if not user:
+        raise HTTPException(status_code=401, detail="Vui lòng đăng nhập")
+
+    body = await request.json()
+    word = body.get("word", "").strip()
+    meaning = body.get("meaning", "").strip()
+    if not word or not meaning:
+        raise HTTPException(status_code=400, detail="Cần nhập từ và nghĩa")
+
+    phonetic = body.get("phonetic", "").strip()
+    part_of_speech = body.get("part_of_speech", "").strip()
+    example = body.get("example", "").strip()
+    topic = body.get("topic", "Thủ công").strip()
+
+    conn = get_db()
+    now = time.time()
+    conn.execute("""
+        INSERT INTO english_vocab (user_id, word, meaning, example, phonetic, part_of_speech, topic, level, learned_at, next_review)
+        VALUES (?, ?, ?, ?, ?, ?, ?, 'intermediate', ?, ?)
+    """, (user["id"], word, meaning, example, phonetic, part_of_speech, topic, now, now))
+    conn.commit()
+
+    _update_streak(user["id"], 1)
+    return {"ok": True, "word": word}
+
+
+@router.post("/study-time")
+async def update_study_time(request: Request):
+    """Update study time for today. Body: {seconds: int}"""
+    user = get_current_user(request)
+    if not user:
+        raise HTTPException(status_code=401, detail="Vui lòng đăng nhập")
+
+    import datetime
+    body = await request.json()
+    seconds = body.get("seconds", 0)
+    today = datetime.date.today().isoformat()
+
+    conn = get_db()
+    row = conn.execute(
+        "SELECT * FROM english_study_time WHERE user_id = ? AND date = ?",
+        (user["id"], today)
+    ).fetchone()
+
+    if row:
+        conn.execute("UPDATE english_study_time SET seconds = ? WHERE id = ?", (seconds, row["id"]))
+    else:
+        conn.execute("INSERT INTO english_study_time (user_id, date, seconds) VALUES (?, ?, ?)",
+                     (user["id"], today, seconds))
+    conn.commit()
+    return {"ok": True, "seconds": seconds}
+
+
+@router.get("/study-time")
+async def get_study_time(request: Request):
+    """Get study time stats."""
+    user = get_current_user(request)
+    if not user:
+        raise HTTPException(status_code=401, detail="Vui lòng đăng nhập")
+
+    import datetime
+    conn = get_db()
+    today = datetime.date.today().isoformat()
+
+    row = conn.execute(
+        "SELECT seconds FROM english_study_time WHERE user_id = ? AND date = ?",
+        (user["id"], today)
+    ).fetchone()
+    today_seconds = row["seconds"] if row else 0
+
+    total_row = conn.execute(
+        "SELECT SUM(seconds) as total FROM english_study_time WHERE user_id = ?",
+        (user["id"],)
+    ).fetchone()
+    total_seconds = total_row["total"] if total_row and total_row["total"] else 0
+
+    goal_row = conn.execute(
+        "SELECT goal_minutes FROM english_study_goal WHERE user_id = ?",
+        (user["id"],)
+    ).fetchone()
+    goal_minutes = goal_row["goal_minutes"] if goal_row else 0
+
+    return {"today_seconds": today_seconds, "total_seconds": total_seconds, "goal_minutes": goal_minutes}
+
+
+@router.post("/study-goal")
+async def set_study_goal(request: Request):
+    """Set daily study time goal. Body: {minutes: int}"""
+    user = get_current_user(request)
+    if not user:
+        raise HTTPException(status_code=401, detail="Vui lòng đăng nhập")
+
+    body = await request.json()
+    minutes = max(0, min(480, body.get("minutes", 0)))
+
+    conn = get_db()
+    conn.execute("""
+        INSERT INTO english_study_goal (user_id, goal_minutes) VALUES (?, ?)
+        ON CONFLICT(user_id) DO UPDATE SET goal_minutes = ?
+    """, (user["id"], minutes, minutes))
+    conn.commit()
+    return {"ok": True, "goal_minutes": minutes}
+
+
+@router.post("/missions/customize")
+async def customize_missions(request: Request):
+    """Customize daily mission targets. Body: {missions: [{key, target}]}"""
+    user = get_current_user(request)
+    if not user:
+        raise HTTPException(status_code=401, detail="Vui lòng đăng nhập")
+
+    import datetime
+    body = await request.json()
+    custom = body.get("missions", [])
+    today = datetime.date.today().isoformat()
+
+    conn = get_db()
+    _get_or_create_daily_missions(user["id"])
+
+    for m in custom:
+        key = m.get("key", "")
+        target = max(1, min(50, m.get("target", 1)))
+        conn.execute("""
+            UPDATE english_daily_missions SET target = ?
+            WHERE user_id = ? AND date = ? AND mission_key = ? AND completed = 0
+        """, (target, user["id"], today, key))
+
+    conn.commit()
+    return {"ok": True}
 
 
 @router.get("/stats")
