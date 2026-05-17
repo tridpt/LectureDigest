@@ -1433,8 +1433,17 @@ function engSpellingSkip() {
     }
     var input = document.getElementById('engSpellingInput');
     if (input) input.disabled = true;
+    // Disable other buttons, change skip to "next"
+    var btns = document.querySelector('.eng-spelling-btns');
+    if (btns) {
+        btns.innerHTML = '<button class="eng-btn" onclick="engSpellingNext()">Câu tiếp theo →</button>';
+    }
+}
+
+function engSpellingNext() {
+    var pool = _engGameWords.slice(0, Math.min(8, _engGameWords.length));
     _engGameRound++;
-    setTimeout(function() { engSpellingRound(pool); }, 1500);
+    engSpellingRound(pool);
 }
 
 function engSpellingCheck() {
@@ -1461,8 +1470,11 @@ function engSpellingCheck() {
         _engReportMastery(w.word, false);
     }
 
-    _engGameRound++;
-    setTimeout(function() { engSpellingRound(pool); }, 1500);
+    // Show "next" button instead of auto-advancing
+    var btns = document.querySelector('.eng-spelling-btns');
+    if (btns) {
+        btns.innerHTML = '<button class="eng-btn" onclick="engSpellingNext()">Câu tiếp theo →</button>';
+    }
 }
 
 // ═══════════════════════════════════════
@@ -1615,8 +1627,11 @@ function engScrambleCheck() {
         _engReportMastery(w.word, false);
     }
 
-    _engGameRound++;
-    setTimeout(function() { engScrambleRound(pool); }, 1500);
+    // Show "next" button instead of auto-advancing
+    var btns = document.querySelector('.eng-scramble-btns');
+    if (btns) {
+        btns.innerHTML = '<button class="eng-btn" onclick="engScrambleNext()">Câu tiếp theo →</button>';
+    }
 }
 
 function engScrambleSkip() {
@@ -1628,6 +1643,18 @@ function engScrambleSkip() {
         feedback.innerHTML = '<span class="eng-spelling-wrong">Đáp án: <strong>' + _engEsc(w.word) + '</strong></span>';
         feedback.className = 'eng-spelling-feedback eng-fb-wrong';
     }
+    var input = document.getElementById('engScrambleInput');
+    if (input) input.disabled = true;
+    // Change buttons to "next"
+    var btns = document.querySelector('.eng-scramble-btns');
+    if (btns) {
+        btns.innerHTML = '<button class="eng-btn" onclick="engScrambleNext()">Câu tiếp theo →</button>';
+    }
+}
+
+function engScrambleNext() {
+    var pool = _engGameWords.filter(function(w) { return w.word.length >= 4; }).slice(0, Math.min(8, _engGameWords.length));
+    if (pool.length < 3) pool = _engGameWords.slice(0, Math.min(8, _engGameWords.length));
     _engGameRound++;
-    setTimeout(function() { engScrambleRound(pool); }, 1200);
+    engScrambleRound(pool);
 }
