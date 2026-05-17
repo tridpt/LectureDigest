@@ -494,9 +494,9 @@ function _crRenderMessages() {
             html += '<div class="cr-msg-content">' + _crFormatMentions(_crEsc(msg.content)) + '</div>';
         }
         html += '<div class="cr-msg-time">' + timeStr;
-        if (isOwn && msg._sending) html += ' <span class="cr-msg-status cr-msg-sending">⏳</span>';
-        else if (isOwn && msg._failed) html += ' <span class="cr-msg-status cr-msg-failed">❌ Lỗi</span>';
-        else if (isOwn && msg._sent) html += ' <span class="cr-msg-status cr-msg-sent">✓</span>';
+        if (isOwn && msg._sending) html += ' <span class="cr-msg-status cr-msg-sending">Đang gửi...</span>';
+        else if (isOwn && msg._failed) html += ' <span class="cr-msg-status cr-msg-failed">Gửi lỗi ❌</span>';
+        else if (isOwn) html += ' <span class="cr-msg-status cr-msg-sent">Đã gửi ✓</span>';
         html += '</div>';
         html += '</div>';
         if (!isOwn) html += menuHtml;
