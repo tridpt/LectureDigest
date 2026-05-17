@@ -26,81 +26,95 @@ logger = logging.getLogger("chat-rooms")
 
 def _init_chat_rooms_tables():
     """Create chat room tables if they don't exist."""
+    from database import USE_POSTGRES
     conn = get_db()
 
-    # Drop and recreate to ensure correct schema (safe for fresh DB)
-    from database import USE_POSTGRES
+    # Drop old tables on PostgreSQL to ensure correct schema
     if USE_POSTGRES:
-        conn.executescript("""
-            DROP TABLE IF EXISTS chat_room_mutes CASCADE;
-            DROP TABLE IF EXISTS chat_reports CASCADE;
-            DROP TABLE IF EXISTS chat_room_bans CASCADE;
-            DROP TABLE IF EXISTS chat_messages CASCADE;
-            DROP TABLE IF EXISTS chat_room_members CASCADE;
-            DROP TABLE IF EXISTS chat_rooms CASCADE;
-        """)
+        for tbl in ['chat_room_mutes', 'chat_reports', 'chat_room_bans', 'chat_messages', 'chat_room_members', 'chat_rooms']:
+            try:
+                conn.execute(f"DROP TABLE IF EXISTS {tbl} CASCADE", ())
+            except:
+                pass
 
-    conn.executescript("""
-        CREATE TABLE IF NOT EXISTS chat_rooms (
-            id TEXT PRIMARY KEY,
-            name TEXT NOT NULL,
-            icon TEXT DEFAULT '💬',
-            created_by INTEGER NOT NULL,
-            is_public INTEGER DEFAULT 1,
-            max_members INTEGER DEFAULT 50,
-            created_at REAL NOT NULL,
-            chat_locked INTEGER DEFAULT 0,
-            allowed_users TEXT DEFAULT ''
-        );
-        CREATE TABLE IF NOT EXISTS chat_room_members (
-            room_id TEXT NOT NULL,
-            user_id INTEGER NOT NULL,
-            joined_at REAL NOT NULL,
-            role TEXT DEFAULT 'member',
-            last_read_at REAL DEFAULT 0,
-            notif_muted INTEGER DEFAULT 0,
-            PRIMARY KEY (room_id, user_id)
-        );
-        CREATE TABLE IF NOT EXISTS chat_messages (
-            id TEXT PRIMARY KEY,
-            room_id TEXT NOT NULL,
-            user_id INTEGER NOT NULL,
-            content TEXT NOT NULL DEFAULT '',
-            image_url TEXT DEFAULT '',
-            pinned INTEGER DEFAULT 0,
-            created_at REAL NOT NULL
-        );
-        CREATE INDEX IF NOT EXISTS idx_chat_messages_room ON chat_messages(room_id, created_at);
-        CREATE INDEX IF NOT EXISTS idx_chat_room_members_user ON chat_room_members(user_id);
-        CREATE TABLE IF NOT EXISTS chat_room_bans (
-            room_id TEXT NOT NULL,
-            user_id INTEGER NOT NULL,
-            banned_by INTEGER NOT NULL,
-            reason TEXT DEFAULT '',
-            banned_at REAL NOT NULL,
-            PRIMARY KEY (room_id, user_id)
-        );
-        CREATE TABLE IF NOT EXISTS chat_reports (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            room_id TEXT NOT NULL,
-            msg_id TEXT NOT NULL,
-            reported_by INTEGER NOT NULL,
-            reason TEXT DEFAULT '',
-            status TEXT DEFAULT 'pending',
-            created_at REAL NOT NULL
-        );
-        CREATE INDEX IF NOT EXISTS idx_chat_reports_room ON chat_reports(room_id, status);
-        CREATE TABLE IF NOT EXISTS chat_room_mutes (
-            room_id TEXT NOT NULL,
-            user_id INTEGER NOT NULL,
-            muted_by INTEGER NOT NULL,
-            muted_until REAL NOT NULL,
-            reason TEXT DEFAULT '',
-            created_at REAL NOT NULL,
-            PRIMARY KEY (room_id, user_id)
-        );
-    """)
-    conn.commit()
+        # Create tables one by one
+        tables = [
+            """CREATE TABLE IF NOT EXISTS chat_rooms (
+                id TEXT PRIMARY KEY, name TEXT NOT NULL, icon TEXT DEFAULT '💬',
+                created_by INTEGER NOT NULL, is_public INTEGER DEFAULT 1,
+                max_members INTEGER DEFAULT 50, created_at REAL NOT NULL,
+                chat_locked INTEGER DEFAULT 0, allowed_users TEXT DEFAULT ''
+            )""",
+            """CREATE TABLE IF NOT EXISTS chat_room_members (
+                room_id TEXT NOT NULL, user_id INTEGER NOT NULL, joined_at REAL NOT NULL,
+                role TEXT DEFAULT 'member', last_read_at REAL DEFAULT 0,
+                notif_muted INTEGER DEFAULT 0, PRIMARY KEY (room_id, user_id)
+            )""",
+            """CREATE TABLE IF NOT EXISTS chat_messages (
+                id TEXT PRIMARY KEY, room_id TEXT NOT NULL, user_id INTEGER NOT NULL,
+                content TEXT NOT NULL DEFAULT '', image_url TEXT DEFAULT '',
+                pinned INTEGER DEFAULT 0, created_at REAL NOT NULL
+            )""",
+            "CREATE INDEX IF NOT EXISTS idx_chat_messages_room ON chat_messages(room_id, created_at)",
+            "CREATE INDEX IF NOT EXISTS idx_chat_room_members_user ON chat_room_members(user_id)",
+            """CREATE TABLE IF NOT EXISTS chat_room_bans (
+                room_id TEXT NOT NULL, user_id INTEGER NOT NULL, banned_by INTEGER NOT NULL,
+                reason TEXT DEFAULT '', banned_at REAL NOT NULL, PRIMARY KEY (room_id, user_id)
+            )""",
+            """CREATE TABLE IF NOT EXISTS chat_reports (
+                id SERIAL PRIMARY KEY, room_id TEXT NOT NULL, msg_id TEXT NOT NULL,
+                reported_by INTEGER NOT NULL, reason TEXT DEFAULT '',
+                status TEXT DEFAULT 'pending', created_at REAL NOT NULL
+            )""",
+            "CREATE INDEX IF NOT EXISTS idx_chat_reports_room ON chat_reports(room_id, status)",
+            """CREATE TABLE IF NOT EXISTS chat_room_mutes (
+                room_id TEXT NOT NULL, user_id INTEGER NOT NULL, muted_by INTEGER NOT NULL,
+                muted_until REAL NOT NULL, reason TEXT DEFAULT '',
+                created_at REAL NOT NULL, PRIMARY KEY (room_id, user_id)
+            )""",
+        ]
+        for sql in tables:
+            try:
+                conn.execute(sql, ())
+            except Exception as e:
+                logger.warning(f"Chat table create failed: {e}")
+    else:
+        conn.executescript("""
+            CREATE TABLE IF NOT EXISTS chat_rooms (
+                id TEXT PRIMARY KEY, name TEXT NOT NULL, icon TEXT DEFAULT '💬',
+                created_by INTEGER NOT NULL, is_public INTEGER DEFAULT 1,
+                max_members INTEGER DEFAULT 50, created_at REAL NOT NULL,
+                chat_locked INTEGER DEFAULT 0, allowed_users TEXT DEFAULT ''
+            );
+            CREATE TABLE IF NOT EXISTS chat_room_members (
+                room_id TEXT NOT NULL, user_id INTEGER NOT NULL, joined_at REAL NOT NULL,
+                role TEXT DEFAULT 'member', last_read_at REAL DEFAULT 0,
+                notif_muted INTEGER DEFAULT 0, PRIMARY KEY (room_id, user_id)
+            );
+            CREATE TABLE IF NOT EXISTS chat_messages (
+                id TEXT PRIMARY KEY, room_id TEXT NOT NULL, user_id INTEGER NOT NULL,
+                content TEXT NOT NULL DEFAULT '', image_url TEXT DEFAULT '',
+                pinned INTEGER DEFAULT 0, created_at REAL NOT NULL
+            );
+            CREATE INDEX IF NOT EXISTS idx_chat_messages_room ON chat_messages(room_id, created_at);
+            CREATE INDEX IF NOT EXISTS idx_chat_room_members_user ON chat_room_members(user_id);
+            CREATE TABLE IF NOT EXISTS chat_room_bans (
+                room_id TEXT NOT NULL, user_id INTEGER NOT NULL, banned_by INTEGER NOT NULL,
+                reason TEXT DEFAULT '', banned_at REAL NOT NULL, PRIMARY KEY (room_id, user_id)
+            );
+            CREATE TABLE IF NOT EXISTS chat_reports (
+                id INTEGER PRIMARY KEY AUTOINCREMENT, room_id TEXT NOT NULL, msg_id TEXT NOT NULL,
+                reported_by INTEGER NOT NULL, reason TEXT DEFAULT '',
+                status TEXT DEFAULT 'pending', created_at REAL NOT NULL
+            );
+            CREATE INDEX IF NOT EXISTS idx_chat_reports_room ON chat_reports(room_id, status);
+            CREATE TABLE IF NOT EXISTS chat_room_mutes (
+                room_id TEXT NOT NULL, user_id INTEGER NOT NULL, muted_by INTEGER NOT NULL,
+                muted_until REAL NOT NULL, reason TEXT DEFAULT '',
+                created_at REAL NOT NULL, PRIMARY KEY (room_id, user_id)
+            );
+        """)
+        conn.commit()
     conn.close()
 
 
