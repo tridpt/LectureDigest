@@ -26,7 +26,7 @@ if USE_POSTGRES:
     import psycopg2.pool
 
     # Use a connection pool to avoid exhausting Supabase connection limit
-    _pg_pool = psycopg2.pool.SimpleConnectionPool(1, 10, DATABASE_URL, connect_timeout=5)
+    _pg_pool = psycopg2.pool.SimpleConnectionPool(2, 20, DATABASE_URL, connect_timeout=10)
 
     class PgCursorWrapper:
         """Wraps a psycopg2 cursor to behave like sqlite3 cursor (dict access on rows)."""
@@ -115,14 +115,17 @@ if USE_POSTGRES:
         def close(self):
             try:
                 _pg_pool.putconn(self._conn)
+                self._conn = None
             except:
                 pass
 
         def __del__(self):
-            try:
-                _pg_pool.putconn(self._conn)
-            except:
-                pass
+            if self._conn is not None:
+                try:
+                    _pg_pool.putconn(self._conn)
+                    self._conn = None
+                except:
+                    pass
 
     def get_db():
         """Get a PostgreSQL connection wrapped to behave like sqlite3."""
