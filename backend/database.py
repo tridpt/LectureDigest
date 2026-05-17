@@ -23,7 +23,10 @@ DB_PATH = os.path.join(os.path.dirname(__file__), "lecturedb.sqlite3")
 if USE_POSTGRES:
     import psycopg2
     import psycopg2.extras
-    import psycopg2.extensions
+    import psycopg2.pool
+
+    # Use a connection pool to avoid exhausting Supabase connection limit
+    _pg_pool = psycopg2.pool.SimpleConnectionPool(1, 10, DATABASE_URL, connect_timeout=5)
 
     class PgCursorWrapper:
         """Wraps a psycopg2 cursor to behave like sqlite3 cursor (dict access on rows)."""
@@ -77,7 +80,7 @@ if USE_POSTGRES:
     class PgConnectionWrapper:
         """Wraps psycopg2 connection to mimic sqlite3 connection API."""
         def __init__(self):
-            self._conn = psycopg2.connect(DATABASE_URL, connect_timeout=5)
+            self._conn = _pg_pool.getconn()
             self._conn.autocommit = True
 
         def execute(self, sql, params=None):
@@ -111,12 +114,15 @@ if USE_POSTGRES:
 
         def close(self):
             try:
-                self._conn.close()
+                _pg_pool.putconn(self._conn)
             except:
                 pass
 
         def __del__(self):
-            self.close()
+            try:
+                _pg_pool.putconn(self._conn)
+            except:
+                pass
 
     def get_db():
         """Get a PostgreSQL connection wrapped to behave like sqlite3."""
