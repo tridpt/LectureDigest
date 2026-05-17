@@ -204,6 +204,8 @@ async function engAddWordManual() {
         document.getElementById('engAddPhonetic').value = '';
         document.getElementById('engAddPos').value = '';
         document.getElementById('engAddExample').value = '';
+        // Stay on saved tab
+        engShowTab('saved');
         engLoadSavedWords(1);
         engLoadStats();
     } catch(e) { showToast('Lỗi: ' + e.message, 3000); }
@@ -968,9 +970,10 @@ function engToggleWordDetail(el, idx) {
 // Delete word
 async function engDeleteWord(wordId) {
     if (typeof _crConfirmModal === 'function') {
-        _crConfirmModal('Xóa từ này?', 'Từ sẽ bị xóa vĩnh viễn khỏi danh sách.', async function() {
+        var result = await _crConfirmModal('🗑️ Xóa từ này?', 'Từ sẽ bị xóa vĩnh viễn khỏi danh sách.');
+        if (result === 'ok') {
             await _engDoDelete(wordId);
-        });
+        }
     } else {
         await _engDoDelete(wordId);
     }
