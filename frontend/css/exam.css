@@ -517,6 +517,13 @@ html.light-mode .mexam-page { background: #eef0ff; }
 
 @media (max-width: 640px) {
     .mexam-inner { padding: 0 12px; }
+    .mexam-header {
+        flex-direction: column;
+        align-items: center;
+        gap: 8px;
+        text-align: center;
+    }
+    .mexam-header > div:last-child { display: none; }
     .mexam-title { font-size: 17px; }
     .mexam-q-card { padding: 16px; }
     .mexam-q-text { font-size: 14px; }
