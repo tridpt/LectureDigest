@@ -29,15 +29,9 @@ def _init_chat_rooms_tables():
     from database import USE_POSTGRES
     conn = get_db()
 
-    # Drop old tables on PostgreSQL to ensure correct schema
+    # Drop old tables on PostgreSQL to ensure correct schema (ONLY first time)
     if USE_POSTGRES:
-        for tbl in ['chat_room_mutes', 'chat_reports', 'chat_room_bans', 'chat_messages', 'chat_room_members', 'chat_rooms']:
-            try:
-                conn.execute(f"DROP TABLE IF EXISTS {tbl} CASCADE", ())
-            except:
-                pass
-
-        # Create tables one by one
+        # Only create if not exists - don't drop existing data
         tables = [
             """CREATE TABLE IF NOT EXISTS chat_rooms (
                 id TEXT PRIMARY KEY, name TEXT NOT NULL, icon TEXT DEFAULT '💬',
