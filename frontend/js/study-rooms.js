@@ -189,8 +189,16 @@ async function srLoadComments() {
     var msgEl = document.getElementById('srMessages');
     if (!msgEl) return;
 
+    // Show loading if no comments yet
+    if (!msgEl.querySelector('.sr-msg')) {
+        msgEl.innerHTML = '<div class="sr-comments-loading"><div class="sr-loading-dots"><span></span><span></span><span></span></div><p>Đang tải thảo luận...</p></div>';
+    }
+
     var res = await _srFetch('/api/rooms/' + _srCurrentRoom.id + '/comments?limit=100');
-    if (!res || !res.ok) return;
+    if (!res || !res.ok) {
+        msgEl.innerHTML = '<div class="sr-comments-loading"><p style="color:#f87171">Không thể tải thảo luận</p></div>';
+        return;
+    }
 
     var comments = await res.json();
     comments.reverse(); // oldest first

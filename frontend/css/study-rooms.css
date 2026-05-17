@@ -897,3 +897,13 @@
 .sr-msg-sending .sr-msg-time { color: #a78bfa; animation: srPulse 1s infinite; }
 .sr-msg-failed .sr-msg-time { color: #f87171; }
 @keyframes srPulse { 0%,100% { opacity: 1; } 50% { opacity: 0.4; } }
+
+
+/* Comments loading */
+.sr-comments-loading { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 40px; gap: 12px; }
+.sr-comments-loading p { font-size: 13px; color: var(--text-secondary, #94a3b8); margin: 0; }
+.sr-loading-dots { display: flex; gap: 6px; }
+.sr-loading-dots span { width: 8px; height: 8px; border-radius: 50%; background: #8b5cf6; animation: srDotBounce 1.2s infinite; }
+.sr-loading-dots span:nth-child(2) { animation-delay: 0.2s; }
+.sr-loading-dots span:nth-child(3) { animation-delay: 0.4s; }
+@keyframes srDotBounce { 0%,80%,100% { transform: scale(0.6); opacity: 0.4; } 40% { transform: scale(1); opacity: 1; } }
