@@ -53,40 +53,14 @@
                     <span class="hdr-btn-label">Dashboard</span>
                 </button>
 
-                <!-- More menu (contains secondary nav items) -->
+                <!-- More menu (opens sidebar) -->
                 <div class="hdr-more-wrapper">
-                    <button type="button" class="hdr-more-btn" id="hdrMoreBtn" onclick="toggleHeaderMore()" aria-label="Thêm" title="Thêm tính năng">
+                    <button type="button" class="hdr-more-btn" id="hdrMoreBtn" onclick="toggleSidebar()" aria-label="Menu" title="Menu">
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16">
                             <line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/>
                         </svg>
-                        <span class="hdr-btn-label">Thêm</span>
+                        <span class="hdr-btn-label">Menu</span>
                     </button>
-                    <div class="hdr-more-panel hidden" id="hdrMorePanel">
-                        <button type="button" class="hdr-more-item" onclick="closeHeaderMore();openStudyPlan()">
-                            📅 Lộ trình học tập
-                        </button>
-                        <button type="button" class="hdr-more-item" onclick="closeHeaderMore();openStudyRooms()">
-                            👥 Phòng học nhóm
-                        </button>
-                        <button type="button" class="hdr-more-item" onclick="closeHeaderMore();openChatRooms()">
-                            💬 Phòng chat
-                        </button>
-                        <button type="button" class="hdr-more-item" onclick="closeHeaderMore();openEnglish()">
-                            🇺🇸 Học tiếng Anh
-                        </button>
-                        <button type="button" class="hdr-more-item" onclick="closeHeaderMore();openKnowledgeGraph()">
-                            🕸️ Knowledge Graph
-                        </button>
-                        <button type="button" class="hdr-more-item" onclick="closeHeaderMore();openMexam()">
-                            📋 Multi-Video Exam
-                        </button>
-                        <button type="button" class="hdr-more-item" onclick="closeHeaderMore();if(typeof openSrsReview==='function')openSrsReview()">
-                            🧠 Ôn tập hàng ngày
-                        </button>
-                        <button type="button" class="hdr-more-item" onclick="closeHeaderMore();openShortcutsHelp()">
-                            ⌨️ Phím tắt
-                        </button>
-                    </div>
                 </div>
 
                 <!-- History button -->
@@ -171,17 +145,64 @@
     </header>
 
     <script>
-    // Header "More" menu toggle
-    function toggleHeaderMore() {
-        var panel = document.getElementById('hdrMorePanel');
-        if (panel) panel.classList.toggle('hidden');
+    // Sidebar toggle
+    function toggleSidebar() {
+        var sb = document.getElementById('appSidebar');
+        var overlay = document.getElementById('sidebarOverlay');
+        if (sb) sb.classList.toggle('sidebar-open');
+        if (overlay) overlay.classList.toggle('sidebar-overlay-show');
     }
-    function closeHeaderMore() {
-        var panel = document.getElementById('hdrMorePanel');
-        if (panel) panel.classList.add('hidden');
+    function closeSidebar() {
+        var sb = document.getElementById('appSidebar');
+        var overlay = document.getElementById('sidebarOverlay');
+        if (sb) sb.classList.remove('sidebar-open');
+        if (overlay) overlay.classList.remove('sidebar-overlay-show');
     }
-    document.addEventListener('click', function(e) {
-        var wrapper = document.querySelector('.hdr-more-wrapper');
-        if (wrapper && !wrapper.contains(e.target)) closeHeaderMore();
-    });
     </script>
+
+    <!-- Sidebar Overlay -->
+    <div class="sidebar-overlay" id="sidebarOverlay" onclick="closeSidebar()"></div>
+
+    <!-- Sidebar -->
+    <nav class="app-sidebar" id="appSidebar" aria-label="Menu chính">
+        <div class="sidebar-header">
+            <span class="sidebar-title">📋 Menu</span>
+            <button class="sidebar-close" onclick="closeSidebar()" aria-label="Đóng">✕</button>
+        </div>
+
+        <div class="sidebar-group">
+            <div class="sidebar-group-label">📚 Học tập</div>
+            <button class="sidebar-item" onclick="closeSidebar();openStudyPlan()">
+                <span class="sidebar-icon">📅</span> Lộ trình học tập
+            </button>
+            <button class="sidebar-item" onclick="closeSidebar();openEnglish()">
+                <span class="sidebar-icon">🇺🇸</span> Học tiếng Anh
+            </button>
+            <button class="sidebar-item" onclick="closeSidebar();if(typeof openSrsReview==='function')openSrsReview()">
+                <span class="sidebar-icon">🧠</span> Ôn tập hàng ngày
+            </button>
+        </div>
+
+        <div class="sidebar-group">
+            <div class="sidebar-group-label">👥 Cộng đồng</div>
+            <button class="sidebar-item" onclick="closeSidebar();openStudyRooms()">
+                <span class="sidebar-icon">📖</span> Phòng học nhóm
+            </button>
+            <button class="sidebar-item" onclick="closeSidebar();openChatRooms()">
+                <span class="sidebar-icon">💬</span> Phòng chat
+            </button>
+        </div>
+
+        <div class="sidebar-group">
+            <div class="sidebar-group-label">🛠️ Công cụ</div>
+            <button class="sidebar-item" onclick="closeSidebar();openKnowledgeGraph()">
+                <span class="sidebar-icon">🕸️</span> Knowledge Graph
+            </button>
+            <button class="sidebar-item" onclick="closeSidebar();openMexam()">
+                <span class="sidebar-icon">📋</span> Multi-Video Exam
+            </button>
+            <button class="sidebar-item" onclick="closeSidebar();openShortcutsHelp()">
+                <span class="sidebar-icon">⌨️</span> Phím tắt
+            </button>
+        </div>
+    </nav>
