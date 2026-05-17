@@ -190,3 +190,36 @@
 .feature-desc { font-size: 13px; color: var(--text-secondary); line-height: 1.55; }
 
 
+
+
+/* ═══════════════════════════════════════════════
+   Mobile Responsive
+   ═══════════════════════════════════════════════ */
+@media (max-width: 768px) {
+    .hero { padding: 40px 16px 40px; }
+    .hero-title { font-size: clamp(24px, 6vw, 40px); letter-spacing: -1px; }
+    .hero-subtitle { font-size: 14px; margin-bottom: 28px; }
+    .features { grid-template-columns: 1fr; gap: 12px; margin-top: 32px; }
+    .search-box { padding: 6px 6px 6px 14px; }
+    .search-btn { padding: 10px 16px; font-size: 13px; }
+    .lang-options { gap: 4px; }
+    .lang-btn { padding: 4px 8px; font-size: 11px; }
+    .input-mode-tabs { gap: 4px; }
+    .input-tab { font-size: 12px; padding: 8px 12px; }
+}
+
+@media (max-width: 480px) {
+    .hero { padding: 24px 12px 32px; }
+    .hero-content { margin-bottom: 32px; }
+    .hero-tag { font-size: 10px; padding: 4px 12px; margin-bottom: 16px; }
+    .hero-title { margin-bottom: 14px; }
+    .hero-subtitle { font-size: 13px; line-height: 1.6; }
+    .search-input { font-size: 13px; }
+    .search-btn .btn-text { display: none; }
+    .search-btn { padding: 10px 12px; }
+    .search-hint { font-size: 11px; }
+    .feature-card { padding: 16px 14px; }
+    .feature-icon { font-size: 24px; margin-bottom: 8px; }
+    .feature-title { font-size: 14px; }
+    .feature-desc { font-size: 12px; }
+}

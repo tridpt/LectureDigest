@@ -157,6 +157,23 @@
         padding: 8px;
         gap: 0;
     }
+    .header { padding: 0 10px; }
+    .header-actions { gap: 6px; }
+    .logo-text { font-size: 15px; }
+    .header-left { gap: 2px; }
+}
+
+@media (max-width: 480px) {
+    .header-inner { height: 54px; }
+    .header-actions { gap: 4px; }
+    .logo-icon { width: 30px; height: 30px; padding: 6px; }
+    .logo-text { font-size: 14px; }
+    .history-btn .hdr-btn-label { display: none; }
+    .hist-badge { position: relative; top: 0; right: 0; }
+    .dashboard-nav-btn { display: none; }
+    .gsearch-trigger { width: 32px; height: 32px; }
+    .notif-bell-btn { width: 32px; height: 32px; }
+    .theme-toggle-btn { width: 32px; height: 32px; }
 }
 
 /* Light mode */

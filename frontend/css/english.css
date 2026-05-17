@@ -446,3 +446,40 @@
 .light-mode .eng-games-title { color: #1e293b; }
 .light-mode .eng-game-name { color: #1e293b; }
 .light-mode .eng-empty { color: #64748b; }
+
+
+/* ════════════════════════════════════════════════
+   Mobile Responsive - English Page
+   ════════════════════════════════════════════════ */
+@media (max-width: 640px) {
+    .eng-page { padding: 16px 10px 60px; }
+    .eng-title { font-size: 18px; }
+    .eng-tabs { gap: 2px; padding: 3px; }
+    .eng-tab { padding: 8px 4px; font-size: 11px; }
+    .eng-gen-bar { flex-direction: column; }
+    .eng-gen-bar2 { flex-direction: column; align-items: stretch; }
+    .eng-count-wrap { justify-content: space-between; }
+    .eng-word-card { padding: 12px; }
+    .eng-word-header strong { font-size: 16px; }
+    .eng-review-card { padding: 24px 16px; min-height: 160px; }
+    .eng-review-word { font-size: 22px; }
+    .eng-quiz-word { font-size: 22px; }
+    .eng-quiz-options { max-width: 100%; }
+    .eng-match-board { flex-direction: column; gap: 12px; }
+    .eng-match-col { max-width: 100%; }
+    .eng-spelling-card, .eng-scramble-card { padding: 20px 14px; }
+    .eng-spelling-btns { flex-wrap: wrap; }
+    .eng-scramble-btns { flex-wrap: wrap; justify-content: center; }
+    .eng-games-grid { grid-template-columns: 1fr; }
+    .eng-game-card { padding: 16px; flex-direction: row; gap: 12px; }
+    .eng-game-icon { font-size: 28px; }
+    .eng-saved-item { flex-wrap: wrap; gap: 6px; padding: 8px 10px; }
+    .eng-saved-filters { flex-direction: column; gap: 6px; }
+    .eng-filter-select { min-width: 100%; }
+    .eng-add-row { flex-direction: column; gap: 6px; }
+    .eng-xp-container { flex-wrap: wrap; gap: 8px; padding: 10px 12px; }
+    .eng-xp-total { display: none; }
+    .eng-study-timer { flex-direction: column; gap: 6px; align-items: flex-start; }
+    .eng-missions-header { flex-wrap: wrap; }
+    .eng-mission-item { flex-wrap: wrap; gap: 6px; }
+}

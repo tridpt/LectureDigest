@@ -244,3 +244,9 @@
 .hist-del svg { width: 13px; height: 13px; }
 
 
+
+
+/* Mobile responsive */
+@media (max-width: 640px) {
+    .history-panel { width: calc(100vw - 24px); right: -40px; max-height: 70vh; }
+}
