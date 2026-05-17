@@ -882,3 +882,11 @@
 .light-mode .sr-tabs {
     background: rgba(248, 250, 252, 0.8);
 }
+
+
+.light-mode .sr-join-input {
+    background: #fff;
+    border-color: rgba(139, 92, 246, 0.2);
+    color: #1e293b;
+}
+.light-mode .sr-join-input::placeholder { color: #94a3b8; }
