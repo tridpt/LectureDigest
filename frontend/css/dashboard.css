@@ -428,3 +428,41 @@ html.light-mode .db-skel {
     background-size: 200% 100%;
     animation: dbSkelShimmer 1.5s ease-in-out infinite;
 }
+
+
+/* ════════════════════════════════════════════════
+   Dashboard - Mobile Responsive
+   ════════════════════════════════════════════════ */
+@media (max-width: 768px) {
+    .db-inner { padding: 0 12px 40px; }
+    .db-header {
+        flex-direction: column;
+        align-items: center;
+        gap: 12px;
+        padding: 20px 0 16px;
+    }
+    .db-header-center {
+        position: static;
+        transform: none;
+        order: -1;
+    }
+    .db-title { font-size: 20px; }
+    .db-header-left { order: 0; }
+    .db-header-right { order: 1; }
+    .db-stat-grid { grid-template-columns: repeat(2, 1fr); gap: 10px; }
+}
+
+@media (max-width: 480px) {
+    .db-header { padding: 14px 0 12px; margin-bottom: 16px; }
+    .db-title { font-size: 18px; }
+    .db-stat-grid { grid-template-columns: 1fr 1fr; gap: 8px; }
+    .db-stat-card { padding: 12px 10px; gap: 8px; }
+    .db-stat-num { font-size: 22px; }
+}
+
+/* Light mode */
+.light-mode .db-page { background: #f8fafc; }
+.light-mode .db-title { color: #1e293b; }
+.light-mode .db-date { color: #94a3b8; }
+.light-mode .db-stat-card { background: rgba(255,255,255,0.8); border-color: rgba(0,0,0,0.06); }
+.light-mode .db-header { border-bottom-color: rgba(0,0,0,0.06); }
