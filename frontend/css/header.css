@@ -225,6 +225,7 @@ html.light-mode .hdr-more-item:hover {
 
 
 /* Sidebar toggle button (left of logo) */
+.header-left { display: flex; align-items: center; gap: 8px; }
 .sidebar-toggle-btn { display: flex; align-items: center; justify-content: center; width: 36px; height: 36px; border: none; background: rgba(255,255,255,0.04); border-radius: 8px; color: var(--text-secondary, #94a3b8); cursor: pointer; transition: all 0.2s; flex-shrink: 0; }
 .sidebar-toggle-btn:hover { background: rgba(139,92,246,0.1); color: var(--text-primary, #f1f5f9); }
 .light-mode .sidebar-toggle-btn { background: rgba(0,0,0,0.03); color: #64748b; }

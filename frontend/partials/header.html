@@ -1,22 +1,24 @@
     <!-- ═══════════════════════════ HEADER ═══════════════════════════ -->
     <header class="header" role="banner">
         <div class="header-inner">
-            <!-- Menu button (left side) -->
-            <button type="button" class="sidebar-toggle-btn" onclick="toggleSidebar()" aria-label="Menu" title="Menu">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18">
-                    <line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/>
-                </svg>
-            </button>
-
-            <div class="logo" id="logoBtn" onclick="goHome()" role="button" tabindex="0"
-                 aria-label="Về trang chủ" title="Về trang chủ"
-                 onkeydown="if(event.key==='Enter') goHome()" style="cursor:pointer">
-                <div class="logo-icon" aria-hidden="true">
-                    <svg viewBox="0 0 24 24" fill="none">
-                        <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            <div class="header-left">
+                <!-- Menu button (left side) -->
+                <button type="button" class="sidebar-toggle-btn" onclick="toggleSidebar()" aria-label="Menu" title="Menu">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18">
+                        <line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/>
                     </svg>
+                </button>
+
+                <div class="logo" id="logoBtn" onclick="goHome()" role="button" tabindex="0"
+                     aria-label="Về trang chủ" title="Về trang chủ"
+                     onkeydown="if(event.key==='Enter') goHome()" style="cursor:pointer">
+                    <div class="logo-icon" aria-hidden="true">
+                        <svg viewBox="0 0 24 24" fill="none">
+                            <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                    </div>
+                    <span class="logo-text">Lecture<span class="accent">Digest</span></span>
                 </div>
-                <span class="logo-text">Lecture<span class="accent">Digest</span></span>
             </div>
             <div class="header-actions">
                 <!-- Theme toggle -->
