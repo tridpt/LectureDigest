@@ -1034,12 +1034,22 @@ def db_create_user(email: str, display_name: str, password_hash: str, avatar_col
     conn = get_db()
     now = int(time.time() * 1000)
     try:
-        cur = conn.execute("""
-            INSERT INTO users (email, display_name, password_hash, avatar_color, google_id, avatar_url, created_at, updated_at)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-        """, (email.lower().strip(), display_name.strip(), password_hash, avatar_color, google_id, avatar_url, now, now))
-        conn.commit()
-        user_id = cur.lastrowid
+        if USE_POSTGRES:
+            cur = conn._conn.cursor()
+            cur.execute("""
+                INSERT INTO users (email, display_name, password_hash, avatar_color, google_id, avatar_url, created_at, updated_at)
+                VALUES (%s, %s, %s, %s, %s, %s, %s, %s) RETURNING id
+            """, (email.lower().strip(), display_name.strip(), password_hash, avatar_color, google_id, avatar_url, now, now))
+            row = cur.fetchone()
+            user_id = row[0] if row else None
+            conn.commit()
+        else:
+            cur = conn.execute("""
+                INSERT INTO users (email, display_name, password_hash, avatar_color, google_id, avatar_url, created_at, updated_at)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+            """, (email.lower().strip(), display_name.strip(), password_hash, avatar_color, google_id, avatar_url, now, now))
+            conn.commit()
+            user_id = cur.lastrowid
     except Exception:
         conn.close()
         return None  # Email already exists
