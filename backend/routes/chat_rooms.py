@@ -45,7 +45,7 @@ def _init_chat_rooms_tables():
             id TEXT PRIMARY KEY,
             name TEXT NOT NULL,
             icon TEXT DEFAULT '💬',
-            created_by TEXT NOT NULL,
+            created_by INTEGER NOT NULL,
             is_public INTEGER DEFAULT 1,
             max_members INTEGER DEFAULT 50,
             created_at REAL NOT NULL,
@@ -54,7 +54,7 @@ def _init_chat_rooms_tables():
         );
         CREATE TABLE IF NOT EXISTS chat_room_members (
             room_id TEXT NOT NULL,
-            user_id TEXT NOT NULL,
+            user_id INTEGER NOT NULL,
             joined_at REAL NOT NULL,
             role TEXT DEFAULT 'member',
             last_read_at REAL DEFAULT 0,
@@ -64,7 +64,7 @@ def _init_chat_rooms_tables():
         CREATE TABLE IF NOT EXISTS chat_messages (
             id TEXT PRIMARY KEY,
             room_id TEXT NOT NULL,
-            user_id TEXT NOT NULL,
+            user_id INTEGER NOT NULL,
             content TEXT NOT NULL DEFAULT '',
             image_url TEXT DEFAULT '',
             pinned INTEGER DEFAULT 0,
@@ -74,8 +74,8 @@ def _init_chat_rooms_tables():
         CREATE INDEX IF NOT EXISTS idx_chat_room_members_user ON chat_room_members(user_id);
         CREATE TABLE IF NOT EXISTS chat_room_bans (
             room_id TEXT NOT NULL,
-            user_id TEXT NOT NULL,
-            banned_by TEXT NOT NULL,
+            user_id INTEGER NOT NULL,
+            banned_by INTEGER NOT NULL,
             reason TEXT DEFAULT '',
             banned_at REAL NOT NULL,
             PRIMARY KEY (room_id, user_id)
@@ -84,7 +84,7 @@ def _init_chat_rooms_tables():
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             room_id TEXT NOT NULL,
             msg_id TEXT NOT NULL,
-            reported_by TEXT NOT NULL,
+            reported_by INTEGER NOT NULL,
             reason TEXT DEFAULT '',
             status TEXT DEFAULT 'pending',
             created_at REAL NOT NULL
@@ -92,8 +92,8 @@ def _init_chat_rooms_tables():
         CREATE INDEX IF NOT EXISTS idx_chat_reports_room ON chat_reports(room_id, status);
         CREATE TABLE IF NOT EXISTS chat_room_mutes (
             room_id TEXT NOT NULL,
-            user_id TEXT NOT NULL,
-            muted_by TEXT NOT NULL,
+            user_id INTEGER NOT NULL,
+            muted_by INTEGER NOT NULL,
             muted_until REAL NOT NULL,
             reason TEXT DEFAULT '',
             created_at REAL NOT NULL,
@@ -270,12 +270,12 @@ async def create_room(body: CreateRoomBody, request: Request):
 
         conn.execute(
             "INSERT INTO chat_rooms (id, name, icon, created_by, is_public, max_members, created_at) VALUES (?, ?, ?, ?, ?, ?, ?)",
-            (room_id, body.name.strip(), body.icon, str(user["id"]), int(body.is_public), body.max_members, now)
+            (room_id, body.name.strip(), body.icon, user["id"], int(body.is_public), body.max_members, now)
         )
         # Creator auto-joins
         conn.execute(
             "INSERT INTO chat_room_members (room_id, user_id, joined_at) VALUES (?, ?, ?)",
-            (room_id, str(user["id"]), now)
+            (room_id, user["id"], now)
         )
         conn.commit()
         conn.close()
