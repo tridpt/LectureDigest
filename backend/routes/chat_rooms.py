@@ -263,23 +263,28 @@ async def create_room(body: CreateRoomBody, request: Request):
     if not user:
         raise HTTPException(status_code=401, detail="Not authenticated")
 
-    conn = get_db()
-    room_id = _generate_id()
-    now = time.time()
+    try:
+        conn = get_db()
+        room_id = _generate_id()
+        now = time.time()
 
-    conn.execute(
-        "INSERT INTO chat_rooms (id, name, icon, created_by, is_public, max_members, created_at) VALUES (?, ?, ?, ?, ?, ?, ?)",
-        (room_id, body.name.strip(), body.icon, user["id"], int(body.is_public), body.max_members, now)
-    )
-    # Creator auto-joins
-    conn.execute(
-        "INSERT INTO chat_room_members (room_id, user_id, joined_at) VALUES (?, ?, ?)",
-        (room_id, user["id"], now)
-    )
-    conn.commit()
+        conn.execute(
+            "INSERT INTO chat_rooms (id, name, icon, created_by, is_public, max_members, created_at) VALUES (?, ?, ?, ?, ?, ?, ?)",
+            (room_id, body.name.strip(), body.icon, str(user["id"]), int(body.is_public), body.max_members, now)
+        )
+        # Creator auto-joins
+        conn.execute(
+            "INSERT INTO chat_room_members (room_id, user_id, joined_at) VALUES (?, ?, ?)",
+            (room_id, str(user["id"]), now)
+        )
+        conn.commit()
+        conn.close()
 
-    logger.info(f"Chat room created: {body.name} by user {user['id']}")
-    return {"ok": True, "room_id": room_id}
+        logger.info(f"Chat room created: {body.name} by user {user['id']}")
+        return {"ok": True, "room_id": room_id}
+    except Exception as e:
+        logger.error(f"Create room error: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
 
 
 @router.get("")
