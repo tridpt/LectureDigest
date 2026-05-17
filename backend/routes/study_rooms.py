@@ -31,12 +31,7 @@ def _init_rooms_tables():
     conn = get_db()
 
     if USE_POSTGRES:
-        # Drop tables with wrong INTEGER columns (need BIGINT for timestamps)
-        for tbl in ['room_progress', 'room_comments', 'room_videos', 'room_members', 'study_rooms']:
-            try:
-                conn.execute(f"DROP TABLE IF EXISTS {tbl} CASCADE", ())
-            except:
-                pass
+        # Create tables if not exist (preserve existing data)
         tables = [
             """CREATE TABLE IF NOT EXISTS study_rooms (
                 id TEXT PRIMARY KEY, name TEXT NOT NULL, description TEXT DEFAULT '',
