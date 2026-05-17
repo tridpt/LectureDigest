@@ -91,9 +91,16 @@ if USE_POSTGRES:
             # Remove PRAGMA statements
             import re
             sql = re.sub(r'PRAGMA\s+[^;]+;?', '', sql)
-            # Execute
+            # Execute each statement separately to avoid transaction abort on error
+            statements = [s.strip() for s in sql.split(';') if s.strip()]
             cur = self._conn.cursor()
-            cur.execute(sql)
+            for stmt in statements:
+                try:
+                    cur.execute(stmt)
+                except Exception as e:
+                    # Rollback the failed statement and continue
+                    self._conn.rollback()
+                    logger.debug("executescript skip: %s", str(e)[:100])
             cur.close()
 
         def commit(self):
