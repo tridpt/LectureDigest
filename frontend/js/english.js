@@ -1456,24 +1456,23 @@ function engSpellingCheck() {
     var answer = input.value.trim().toLowerCase();
     var correct = w.word.toLowerCase();
 
-    input.disabled = true;
-    document.getElementById('engSpellingSubmit').disabled = true;
-
     if (answer === correct) {
         _engGameScore++;
+        input.disabled = true;
         feedback.innerHTML = '<span class="eng-spelling-correct">✅ Chính xác!</span>';
         feedback.className = 'eng-spelling-feedback eng-fb-correct';
         _engReportMastery(w.word, true);
+        // Show "next" button
+        var btns = document.querySelector('.eng-spelling-btns');
+        if (btns) {
+            btns.innerHTML = '<button class="eng-btn" onclick="engSpellingNext()">Câu tiếp theo →</button>';
+        }
     } else {
-        feedback.innerHTML = '<span class="eng-spelling-wrong">❌ Sai! Đáp án: <strong>' + _engEsc(w.word) + '</strong></span>';
+        // Wrong - let user try again
+        feedback.innerHTML = '<span class="eng-spelling-wrong">❌ Sai rồi! Thử lại...</span>';
         feedback.className = 'eng-spelling-feedback eng-fb-wrong';
-        _engReportMastery(w.word, false);
-    }
-
-    // Show "next" button instead of auto-advancing
-    var btns = document.querySelector('.eng-spelling-btns');
-    if (btns) {
-        btns.innerHTML = '<button class="eng-btn" onclick="engSpellingNext()">Câu tiếp theo →</button>';
+        input.value = '';
+        input.focus();
     }
 }
 
@@ -1614,23 +1613,23 @@ function engScrambleCheck() {
     var answer = input.value.trim().toLowerCase();
     var correct = w.word.toLowerCase();
 
-    input.disabled = true;
-
     if (answer === correct) {
         _engGameScore++;
+        input.disabled = true;
         feedback.innerHTML = '<span class="eng-spelling-correct">✅ Chính xác!</span>';
         feedback.className = 'eng-spelling-feedback eng-fb-correct';
         _engReportMastery(w.word, true);
+        // Show "next" button
+        var btns = document.querySelector('.eng-scramble-btns');
+        if (btns) {
+            btns.innerHTML = '<button class="eng-btn" onclick="engScrambleNext()">Câu tiếp theo →</button>';
+        }
     } else {
-        feedback.innerHTML = '<span class="eng-spelling-wrong">❌ Sai! Đáp án: <strong>' + _engEsc(w.word) + '</strong></span>';
+        // Wrong - let user try again
+        feedback.innerHTML = '<span class="eng-spelling-wrong">❌ Sai rồi! Thử lại...</span>';
         feedback.className = 'eng-spelling-feedback eng-fb-wrong';
-        _engReportMastery(w.word, false);
-    }
-
-    // Show "next" button instead of auto-advancing
-    var btns = document.querySelector('.eng-scramble-btns');
-    if (btns) {
-        btns.innerHTML = '<button class="eng-btn" onclick="engScrambleNext()">Câu tiếp theo →</button>';
+        input.value = '';
+        input.focus();
     }
 }
 
