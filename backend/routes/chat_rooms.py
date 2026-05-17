@@ -27,6 +27,19 @@ logger = logging.getLogger("chat-rooms")
 def _init_chat_rooms_tables():
     """Create chat room tables if they don't exist."""
     conn = get_db()
+
+    # Drop and recreate to ensure correct schema (safe for fresh DB)
+    from database import USE_POSTGRES
+    if USE_POSTGRES:
+        conn.executescript("""
+            DROP TABLE IF EXISTS chat_room_mutes;
+            DROP TABLE IF EXISTS chat_reports;
+            DROP TABLE IF EXISTS chat_room_bans;
+            DROP TABLE IF EXISTS chat_messages;
+            DROP TABLE IF EXISTS chat_room_members;
+            DROP TABLE IF EXISTS chat_rooms;
+        """)
+
     conn.executescript("""
         CREATE TABLE IF NOT EXISTS chat_rooms (
             id TEXT PRIMARY KEY,
@@ -35,12 +48,17 @@ def _init_chat_rooms_tables():
             created_by TEXT NOT NULL,
             is_public INTEGER DEFAULT 1,
             max_members INTEGER DEFAULT 50,
-            created_at REAL NOT NULL
+            created_at REAL NOT NULL,
+            chat_locked INTEGER DEFAULT 0,
+            allowed_users TEXT DEFAULT ''
         );
         CREATE TABLE IF NOT EXISTS chat_room_members (
             room_id TEXT NOT NULL,
             user_id TEXT NOT NULL,
             joined_at REAL NOT NULL,
+            role TEXT DEFAULT 'member',
+            last_read_at REAL DEFAULT 0,
+            notif_muted INTEGER DEFAULT 0,
             PRIMARY KEY (room_id, user_id)
         );
         CREATE TABLE IF NOT EXISTS chat_messages (
@@ -49,29 +67,11 @@ def _init_chat_rooms_tables():
             user_id TEXT NOT NULL,
             content TEXT NOT NULL DEFAULT '',
             image_url TEXT DEFAULT '',
+            pinned INTEGER DEFAULT 0,
             created_at REAL NOT NULL
         );
         CREATE INDEX IF NOT EXISTS idx_chat_messages_room ON chat_messages(room_id, created_at);
         CREATE INDEX IF NOT EXISTS idx_chat_room_members_user ON chat_room_members(user_id);
-    """)
-    conn.commit()
-
-    # Migration: add image_url column if missing
-    try:
-        conn.execute("ALTER TABLE chat_messages ADD COLUMN image_url TEXT DEFAULT ''")
-        conn.commit()
-    except:
-        pass
-
-    # Migration: add pinned column to messages
-    try:
-        conn.execute("ALTER TABLE chat_messages ADD COLUMN pinned INTEGER DEFAULT 0")
-        conn.commit()
-    except:
-        pass
-
-    # Create banned members table
-    conn.execute("""
         CREATE TABLE IF NOT EXISTS chat_room_bans (
             room_id TEXT NOT NULL,
             user_id TEXT NOT NULL,
@@ -79,11 +79,7 @@ def _init_chat_rooms_tables():
             reason TEXT DEFAULT '',
             banned_at REAL NOT NULL,
             PRIMARY KEY (room_id, user_id)
-        )
-    """)
-
-    # Create reports table
-    conn.execute("""
+        );
         CREATE TABLE IF NOT EXISTS chat_reports (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             room_id TEXT NOT NULL,
@@ -92,34 +88,8 @@ def _init_chat_rooms_tables():
             reason TEXT DEFAULT '',
             status TEXT DEFAULT 'pending',
             created_at REAL NOT NULL
-        )
-    """)
-    try:
-        conn.execute("CREATE INDEX IF NOT EXISTS idx_chat_reports_room ON chat_reports(room_id, status)")
-    except:
-        pass
-
-    # Migration: add role column to chat_room_members
-    try:
-        conn.execute("ALTER TABLE chat_room_members ADD COLUMN role TEXT DEFAULT 'member'")
-        conn.commit()
-    except:
-        pass
-
-    # Migration: add last_read_at and notifications_muted
-    try:
-        conn.execute("ALTER TABLE chat_room_members ADD COLUMN last_read_at REAL DEFAULT 0")
-        conn.commit()
-    except:
-        pass
-    try:
-        conn.execute("ALTER TABLE chat_room_members ADD COLUMN notif_muted INTEGER DEFAULT 0")
-        conn.commit()
-    except:
-        pass
-
-    # Create mute table
-    conn.execute("""
+        );
+        CREATE INDEX IF NOT EXISTS idx_chat_reports_room ON chat_reports(room_id, status);
         CREATE TABLE IF NOT EXISTS chat_room_mutes (
             room_id TEXT NOT NULL,
             user_id TEXT NOT NULL,
@@ -128,22 +98,10 @@ def _init_chat_rooms_tables():
             reason TEXT DEFAULT '',
             created_at REAL NOT NULL,
             PRIMARY KEY (room_id, user_id)
-        )
+        );
     """)
-
-    # Migration: add chat_locked and allowed_users to chat_rooms
-    try:
-        conn.execute("ALTER TABLE chat_rooms ADD COLUMN chat_locked INTEGER DEFAULT 0")
-        conn.commit()
-    except:
-        pass
-    try:
-        conn.execute("ALTER TABLE chat_rooms ADD COLUMN allowed_users TEXT DEFAULT ''")
-        conn.commit()
-    except:
-        pass
-
     conn.commit()
+    conn.close()
 
 
 # Initialize tables on module load
