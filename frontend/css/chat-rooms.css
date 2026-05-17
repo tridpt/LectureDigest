@@ -1925,3 +1925,13 @@ img.cr-member-av {
 .cr-msg-sent { color: rgba(255,255,255,0.85); }
 .cr-msg-failed { color: #fca5a5; cursor: pointer; }
 @keyframes crPulse { 0%,100% { opacity: 1; } 50% { opacity: 0.4; } }
+
+
+/* Chat loading indicator */
+.cr-loading-chat { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 200px; gap: 12px; }
+.cr-loading-chat p { font-size: 13px; color: var(--text-secondary, #94a3b8); margin: 0; }
+.cr-loading-dots { display: flex; gap: 6px; }
+.cr-loading-dots span { width: 8px; height: 8px; border-radius: 50%; background: #8b5cf6; animation: crDotBounce 1.2s infinite; }
+.cr-loading-dots span:nth-child(2) { animation-delay: 0.2s; }
+.cr-loading-dots span:nth-child(3) { animation-delay: 0.4s; }
+@keyframes crDotBounce { 0%,80%,100% { transform: scale(0.6); opacity: 0.4; } 40% { transform: scale(1); opacity: 1; } }

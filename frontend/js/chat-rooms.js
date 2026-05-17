@@ -276,7 +276,13 @@ function _crLoadMessages() {
     var headers = _crAuthHeaders();
     if (!headers) return;
 
-    fetchWithTimeout('/api/chat-rooms/' + _crCurrentRoom.id + '/messages?limit=50', { headers: headers }, 10000)
+    // Show loading indicator
+    var container = document.getElementById('crMessagesList');
+    if (container && _crMessages.length === 0) {
+        container.innerHTML = '<div class="cr-loading-chat"><div class="cr-loading-dots"><span></span><span></span><span></span></div><p>Đang tải tin nhắn...</p></div>';
+    }
+
+    fetchWithTimeout('/api/chat-rooms/' + _crCurrentRoom.id + '/messages?limit=50', { headers: headers }, 15000)
         .then(function(r) { return r.json(); })
         .then(function(data) {
             _crMessages = data.messages || [];
@@ -285,7 +291,6 @@ function _crLoadMessages() {
             _crUpdateUnreadUI(data);
 
             _crScrollToBottom();
-            // Update room owner if changed (transfer)
             if (data.created_by && _crCurrentRoom && String(_crCurrentRoom.created_by) !== String(data.created_by)) {
                 _crCurrentRoom.created_by = data.created_by;
                 _crOnOwnershipChanged();
@@ -293,6 +298,9 @@ function _crLoadMessages() {
         })
         .catch(function(err) {
             console.error('Failed to load messages:', err);
+            if (container) {
+                container.innerHTML = '<div class="cr-loading-chat"><p style="color:#f87171">Không thể tải tin nhắn. Thử lại...</p></div>';
+            }
         });
 }
 
