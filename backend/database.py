@@ -37,15 +37,20 @@ if USE_POSTGRES:
             sql = sql.replace("?", "%s")
             # Convert SQLite-specific INSERT syntax
             if "INSERT OR REPLACE INTO" in sql:
-                # Convert to INSERT ... ON CONFLICT DO UPDATE
                 sql = sql.replace("INSERT OR REPLACE INTO", "INSERT INTO")
-                # Try to add ON CONFLICT for primary key tables
-                # This is a best-effort conversion
             if "INSERT OR IGNORE INTO" in sql:
                 sql = sql.replace("INSERT OR IGNORE INTO", "INSERT INTO")
                 if "ON CONFLICT" not in sql:
                     sql = sql.rstrip().rstrip(";") + " ON CONFLICT DO NOTHING"
-            self._cur.execute(sql, params or ())
+            try:
+                self._cur.execute(sql, params or ())
+            except Exception as e:
+                # Rollback to clear aborted transaction state
+                try:
+                    self._cur.connection.rollback()
+                except:
+                    pass
+                raise e
             self.lastrowid = None
             self.rowcount = self._cur.rowcount
             # Get lastrowid for INSERT statements
@@ -73,7 +78,7 @@ if USE_POSTGRES:
         """Wraps psycopg2 connection to mimic sqlite3 connection API."""
         def __init__(self):
             self._conn = psycopg2.connect(DATABASE_URL)
-            self._conn.autocommit = False
+            self._conn.autocommit = True
 
         def execute(self, sql, params=None):
             cur = self._conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
@@ -91,23 +96,21 @@ if USE_POSTGRES:
             # Remove PRAGMA statements
             import re
             sql = re.sub(r'PRAGMA\s+[^;]+;?', '', sql)
-            # Execute each statement separately
+            # Execute each statement separately (autocommit handles each)
             statements = [s.strip() for s in sql.split(';') if s.strip()]
             for stmt in statements:
                 try:
                     cur = self._conn.cursor()
                     cur.execute(stmt)
-                    self._conn.commit()
                     cur.close()
                 except Exception as e:
-                    self._conn.rollback()
                     logger.debug("executescript skip: %s", str(e)[:100])
 
         def commit(self):
-            self._conn.commit()
+            pass  # autocommit mode, no-op
 
         def rollback(self):
-            self._conn.rollback()
+            pass  # autocommit mode, no-op
 
         def close(self):
             self._conn.close()
