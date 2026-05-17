@@ -631,13 +631,17 @@
     }
 
     .sp-header {
-        flex-wrap: wrap;
+        flex-wrap: nowrap;
+        gap: 0;
+    }
+
+    .sp-header-center {
+        flex: 1;
+        text-align: center;
     }
 
     .sp-header-actions {
-        width: 100%;
-        text-align: center;
-        margin-top: 8px;
+        min-width: auto;
     }
 
     .sp-plan-meta {
