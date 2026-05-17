@@ -22,11 +22,11 @@ var _engStudyGoal = 0;
 function openEnglish() {
     showSection('englishSection');
     engLoadStats();
-    engLoadToday();
     engLoadXP();
     engLoadMissions();
     engStartStudyTimer();
     _engLoadCustomTopics();
+    // Don't load today's words - tab "Tạo từ" starts empty, user generates fresh
     var footer = document.querySelector('.footer');
     if (footer) footer.style.display = 'none';
 }
