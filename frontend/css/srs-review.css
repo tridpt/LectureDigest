@@ -315,6 +315,10 @@
 .light-mode .srs-review-back { background: linear-gradient(135deg, rgba(16,185,129,0.06), rgba(5,150,105,0.04)); border-color: rgba(16,185,129,0.15); }
 .light-mode .srs-review-text { color: #1e293b; }
 .light-mode .srs-rate-btn { border-color: rgba(0,0,0,0.1); background: rgba(255,255,255,0.8); color: #1e293b; }
+.light-mode .srs-rate-btn .srs-rate-sub { color: #64748b; opacity: 1; }
+.light-mode .srs-rate-hard { color: #dc2626; }
+.light-mode .srs-rate-ok { color: #ca8a04; }
+.light-mode .srs-rate-easy { color: #059669; }
 .light-mode .srs-complete { background: rgba(255,255,255,0.8); border-color: rgba(0,0,0,0.08); }
 .light-mode .srs-complete-stat { background: rgba(248,250,252,0.8); border-color: rgba(0,0,0,0.06); }
 .light-mode .srs-banner { background: linear-gradient(135deg, rgba(139,92,246,0.08), rgba(99,102,241,0.05)); border-color: rgba(139,92,246,0.2); }
