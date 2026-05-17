@@ -376,18 +376,31 @@ async function engClaimMission(missionId) {
 }
 
 function engCustomizeMissions() {
+    // Load current config first
+    var headers = _engHeaders();
+    if (!headers) return;
+    fetchWithTimeout('/api/english/missions/config', { headers: headers }, 5000)
+        .then(function(res) { return res.json(); })
+        .then(function(data) {
+            var cfg = data.config || {};
+            _engShowMissionConfigModal(cfg);
+        })
+        .catch(function() { _engShowMissionConfigModal({}); });
+}
+
+function _engShowMissionConfigModal(cfg) {
     var overlay = document.createElement('div');
     overlay.className = 'eng-levelup-overlay';
     overlay.onclick = function(e) { if (e.target === overlay) overlay.remove(); };
 
     var html = '<div class="eng-levelup-modal" style="max-width:380px;text-align:left">'
-        + '<h3 style="margin:0 0 12px;color:var(--text-primary,#f1f5f9);text-align:center">⚙️ Tùy chỉnh nhiệm vụ</h3>'
-        + '<p style="font-size:12px;color:var(--text-secondary,#94a3b8);margin:0 0 14px;text-align:center">Đặt mục tiêu cho từng nhiệm vụ hôm nay</p>'
+        + '<h3 style="margin:0 0 8px;color:var(--text-primary,#f1f5f9);text-align:center">⚙️ Tùy chỉnh nhiệm vụ</h3>'
+        + '<p style="font-size:12px;color:#fbbf24;margin:0 0 14px;text-align:center">⚡ Áp dụng từ ngày mai</p>'
         + '<div class="eng-custom-missions">'
-        + '<div class="eng-cm-row"><span>📚 Học từ mới</span><input type="number" id="engCM_learn" value="5" min="1" max="50" class="eng-count-input"></div>'
-        + '<div class="eng-cm-row"><span>🔄 Ôn tập</span><input type="number" id="engCM_review" value="5" min="1" max="50" class="eng-count-input"></div>'
-        + '<div class="eng-cm-row"><span>🧠 Làm Quiz</span><input type="number" id="engCM_quiz" value="1" min="1" max="10" class="eng-count-input"></div>'
-        + '<div class="eng-cm-row"><span>🎮 Chơi Game</span><input type="number" id="engCM_game" value="1" min="1" max="10" class="eng-count-input"></div>'
+        + '<div class="eng-cm-row"><span>📚 Học từ mới</span><input type="number" id="engCM_learn" value="' + (cfg.learn_words || 5) + '" min="1" max="50" class="eng-count-input"></div>'
+        + '<div class="eng-cm-row"><span>🔄 Ôn tập</span><input type="number" id="engCM_review" value="' + (cfg.review_cards || 5) + '" min="1" max="50" class="eng-count-input"></div>'
+        + '<div class="eng-cm-row"><span>🧠 Làm Quiz</span><input type="number" id="engCM_quiz" value="' + (cfg.quiz_complete || 1) + '" min="1" max="10" class="eng-count-input"></div>'
+        + '<div class="eng-cm-row"><span>🎮 Chơi Game</span><input type="number" id="engCM_game" value="' + (cfg.game_play || 1) + '" min="1" max="10" class="eng-count-input"></div>'
         + '</div>'
         + '<button class="eng-btn" style="width:100%;margin-top:14px" onclick="engSaveMissionCustom()">💾 Lưu mục tiêu</button>'
         + '</div>';
@@ -409,7 +422,7 @@ async function engSaveMissionCustom() {
             method: 'POST', headers: headers,
             body: JSON.stringify({ missions: missions })
         }, 10000);
-        showToast('✅ Đã cập nhật mục tiêu!', 2000);
+        showToast('✅ Đã lưu! Áp dụng từ ngày mai', 2500);
         engLoadMissions();
     } catch(e) {}
     var overlay = document.querySelector('.eng-levelup-overlay');

@@ -124,6 +124,12 @@ try:
             user_id INTEGER PRIMARY KEY,
             goal_minutes INTEGER DEFAULT 0
         );
+        CREATE TABLE IF NOT EXISTS english_mission_config (
+            user_id INTEGER NOT NULL,
+            mission_key TEXT NOT NULL,
+            target INTEGER DEFAULT 1,
+            PRIMARY KEY (user_id, mission_key)
+        );
     """)
     conn.commit()
 except:
@@ -571,29 +577,42 @@ async def set_study_goal(request: Request):
 
 @router.post("/missions/customize")
 async def customize_missions(request: Request):
-    """Customize daily mission targets. Body: {missions: [{key, target}]}"""
+    """Customize daily mission targets. Applies from tomorrow. Body: {missions: [{key, target}]}"""
     user = get_current_user(request)
     if not user:
         raise HTTPException(status_code=401, detail="Vui lòng đăng nhập")
 
-    import datetime
     body = await request.json()
     custom = body.get("missions", [])
-    today = datetime.date.today().isoformat()
 
     conn = get_db()
-    _get_or_create_daily_missions(user["id"])
-
     for m in custom:
         key = m.get("key", "")
         target = max(1, min(50, m.get("target", 1)))
         conn.execute("""
-            UPDATE english_daily_missions SET target = ?
-            WHERE user_id = ? AND date = ? AND mission_key = ? AND completed = 0
-        """, (target, user["id"], today, key))
+            INSERT INTO english_mission_config (user_id, mission_key, target)
+            VALUES (?, ?, ?)
+            ON CONFLICT(user_id, mission_key) DO UPDATE SET target = ?
+        """, (user["id"], key, target, target))
 
     conn.commit()
     return {"ok": True}
+
+
+@router.get("/missions/config")
+async def get_mission_config(request: Request):
+    """Get user's custom mission targets."""
+    user = get_current_user(request)
+    if not user:
+        raise HTTPException(status_code=401, detail="Vui lòng đăng nhập")
+
+    conn = get_db()
+    rows = conn.execute(
+        "SELECT mission_key, target FROM english_mission_config WHERE user_id = ?",
+        (user["id"],)
+    ).fetchall()
+    config = {r["mission_key"]: r["target"] for r in rows}
+    return {"config": config}
 
 
 @router.get("/stats")
@@ -969,7 +988,7 @@ DAILY_MISSIONS = [
 
 
 def _get_or_create_daily_missions(user_id):
-    """Get today's missions, create if not exist."""
+    """Get today's missions, create if not exist. Uses custom config if available."""
     import datetime
     conn = get_db()
     today = datetime.date.today().isoformat()
@@ -982,12 +1001,20 @@ def _get_or_create_daily_missions(user_id):
     if rows:
         return rows
 
-    # Create today's missions
+    # Load user's custom config
+    config_rows = conn.execute(
+        "SELECT mission_key, target FROM english_mission_config WHERE user_id = ?",
+        (user_id,)
+    ).fetchall()
+    custom_targets = {r["mission_key"]: r["target"] for r in config_rows}
+
+    # Create today's missions with custom targets if set
     for m in DAILY_MISSIONS:
+        target = custom_targets.get(m["key"], m["target"])
         conn.execute("""
             INSERT INTO english_daily_missions (user_id, date, mission_key, target, progress, completed, xp_reward, claimed)
             VALUES (?, ?, ?, ?, 0, 0, ?, 0)
-        """, (user_id, today, m["key"], m["target"], m["xp"]))
+        """, (user_id, today, m["key"], target, m["xp"]))
     conn.commit()
 
     return conn.execute(
