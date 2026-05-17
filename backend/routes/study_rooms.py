@@ -31,32 +31,38 @@ def _init_rooms_tables():
     conn = get_db()
 
     if USE_POSTGRES:
+        # Drop tables with wrong INTEGER columns (need BIGINT for timestamps)
+        for tbl in ['room_progress', 'room_comments', 'room_videos', 'room_members', 'study_rooms']:
+            try:
+                conn.execute(f"DROP TABLE IF EXISTS {tbl} CASCADE", ())
+            except:
+                pass
         tables = [
             """CREATE TABLE IF NOT EXISTS study_rooms (
                 id TEXT PRIMARY KEY, name TEXT NOT NULL, description TEXT DEFAULT '',
                 icon TEXT DEFAULT '📚', owner_id INTEGER NOT NULL,
                 invite_code TEXT UNIQUE NOT NULL, max_members INTEGER DEFAULT 20,
-                is_public INTEGER DEFAULT 0, created_at INTEGER NOT NULL, updated_at INTEGER
+                is_public INTEGER DEFAULT 0, created_at BIGINT NOT NULL, updated_at BIGINT
             )""",
             "CREATE INDEX IF NOT EXISTS idx_rooms_owner ON study_rooms(owner_id)",
             "CREATE INDEX IF NOT EXISTS idx_rooms_invite ON study_rooms(invite_code)",
             """CREATE TABLE IF NOT EXISTS room_members (
                 room_id TEXT NOT NULL, user_id INTEGER NOT NULL,
-                role TEXT DEFAULT 'member', joined_at INTEGER NOT NULL,
+                role TEXT DEFAULT 'member', joined_at BIGINT NOT NULL,
                 PRIMARY KEY (room_id, user_id)
             )""",
             "CREATE INDEX IF NOT EXISTS idx_rm_user ON room_members(user_id)",
             """CREATE TABLE IF NOT EXISTS room_videos (
                 room_id TEXT NOT NULL, video_id TEXT NOT NULL,
                 title TEXT DEFAULT '', thumbnail TEXT DEFAULT '',
-                added_by INTEGER, added_at INTEGER NOT NULL,
+                added_by INTEGER, added_at BIGINT NOT NULL,
                 data_json TEXT DEFAULT '', url TEXT DEFAULT '',
                 PRIMARY KEY (room_id, video_id)
             )""",
             """CREATE TABLE IF NOT EXISTS room_comments (
                 id SERIAL PRIMARY KEY, room_id TEXT NOT NULL,
                 video_id TEXT DEFAULT '', chapter TEXT DEFAULT '',
-                user_id INTEGER NOT NULL, content TEXT NOT NULL, created_at INTEGER NOT NULL
+                user_id INTEGER NOT NULL, content TEXT NOT NULL, created_at BIGINT NOT NULL
             )""",
             "CREATE INDEX IF NOT EXISTS idx_rc_room ON room_comments(room_id, video_id)",
             "CREATE INDEX IF NOT EXISTS idx_rc_time ON room_comments(created_at DESC)",
@@ -64,7 +70,7 @@ def _init_rooms_tables():
                 room_id TEXT NOT NULL, user_id INTEGER NOT NULL, video_id TEXT NOT NULL,
                 quiz_score INTEGER DEFAULT -1, quiz_total INTEGER DEFAULT 0,
                 watch_pct INTEGER DEFAULT 0, flashcards_mastered INTEGER DEFAULT 0,
-                flashcards_total INTEGER DEFAULT 0, updated_at INTEGER,
+                flashcards_total INTEGER DEFAULT 0, updated_at BIGINT,
                 PRIMARY KEY (room_id, user_id, video_id)
             )""",
         ]
