@@ -119,3 +119,10 @@ html.light-mode .toast-item {
     color: #1e1b4b !important;
     box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1) !important;
 }
+
+
+/* ── Back button: hide text on mobile, show only arrow ── */
+@media (max-width: 768px) {
+    .bp-back-btn { padding: 8px 10px; gap: 0; font-size: 0; }
+    .bp-back-btn svg { font-size: initial; }
+}

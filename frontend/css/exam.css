@@ -519,9 +519,8 @@ html.light-mode .mexam-page { background: #eef0ff; }
     .mexam-inner { padding: 0 12px; }
     .mexam-header {
         flex-direction: column;
-        align-items: center;
+        align-items: flex-start;
         gap: 8px;
-        text-align: center;
     }
     .mexam-header > div:last-child { display: none; }
     .mexam-title { font-size: 17px; }
