@@ -32,12 +32,12 @@ def _init_chat_rooms_tables():
     from database import USE_POSTGRES
     if USE_POSTGRES:
         conn.executescript("""
-            DROP TABLE IF EXISTS chat_room_mutes;
-            DROP TABLE IF EXISTS chat_reports;
-            DROP TABLE IF EXISTS chat_room_bans;
-            DROP TABLE IF EXISTS chat_messages;
-            DROP TABLE IF EXISTS chat_room_members;
-            DROP TABLE IF EXISTS chat_rooms;
+            DROP TABLE IF EXISTS chat_room_mutes CASCADE;
+            DROP TABLE IF EXISTS chat_reports CASCADE;
+            DROP TABLE IF EXISTS chat_room_bans CASCADE;
+            DROP TABLE IF EXISTS chat_messages CASCADE;
+            DROP TABLE IF EXISTS chat_room_members CASCADE;
+            DROP TABLE IF EXISTS chat_rooms CASCADE;
         """)
 
     conn.executescript("""
