@@ -890,3 +890,10 @@
     color: #1e293b;
 }
 .light-mode .sr-join-input::placeholder { color: #94a3b8; }
+
+
+/* Comment send status */
+.sr-msg-sending { opacity: 0.7; }
+.sr-msg-sending .sr-msg-time { color: #a78bfa; animation: srPulse 1s infinite; }
+.sr-msg-failed .sr-msg-time { color: #f87171; }
+@keyframes srPulse { 0%,100% { opacity: 1; } 50% { opacity: 0.4; } }

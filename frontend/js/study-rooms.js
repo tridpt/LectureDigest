@@ -248,15 +248,55 @@ async function srPostComment() {
     var content = (input.value || '').trim();
     if (!content) return;
 
+    input.value = '';
+
+    // Optimistic UI: show comment immediately
+    var msgEl = document.getElementById('srMessages');
+    if (msgEl) {
+        var noComments = msgEl.querySelector('.sr-no-comments');
+        if (noComments) noComments.remove();
+
+        var userName = (_authUser && _authUser.display_name) || 'Bạn';
+        var initial = userName.charAt(0).toUpperCase();
+        var avatarColor = (_authUser && _authUser.avatar_color) || '#8b5cf6';
+        var tempId = 'temp_' + Date.now();
+
+        var tempHtml = '<div class="sr-msg sr-msg-sending" id="' + tempId + '">'
+            + '<div class="sr-msg-avatar" style="background:' + avatarColor + '">' + initial + '</div>'
+            + '<div class="sr-msg-body">'
+            + '<div class="sr-msg-header">'
+            + '<span class="sr-msg-name">' + _srEsc(userName) + '</span>'
+            + '<span class="sr-msg-time">Đang gửi...</span>'
+            + '</div>'
+            + '<div class="sr-msg-text">' + _srEsc(content) + '</div>'
+            + '</div></div>';
+        msgEl.insertAdjacentHTML('beforeend', tempHtml);
+        msgEl.scrollTop = msgEl.scrollHeight;
+    }
+
     var payload = { content: content, video_id: '', chapter: '' };
     var res = await _srFetch('/api/rooms/' + _srCurrentRoom.id + '/comments', {
         method: 'POST',
         body: JSON.stringify(payload)
     });
 
+    var tempEl = document.getElementById(tempId);
     if (res && res.ok) {
-        input.value = '';
-        srLoadComments();
+        // Update status to sent
+        if (tempEl) {
+            tempEl.classList.remove('sr-msg-sending');
+            var timeEl = tempEl.querySelector('.sr-msg-time');
+            if (timeEl) timeEl.textContent = 'Đã gửi ✓';
+        }
+        // Reload to get proper data after a short delay
+        setTimeout(function() { srLoadComments(); }, 2000);
+    } else {
+        // Mark as failed
+        if (tempEl) {
+            tempEl.classList.add('sr-msg-failed');
+            var timeEl = tempEl.querySelector('.sr-msg-time');
+            if (timeEl) timeEl.textContent = 'Gửi lỗi ❌';
+        }
     }
 }
 
