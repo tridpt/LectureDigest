@@ -85,7 +85,7 @@ html.light-mode ::-webkit-scrollbar-thumb:hover {
 /* ═══════════════════════════════════════════════
    BASE
    ═══════════════════════════════════════════════ */
-html { scroll-behavior: smooth; }
+html { scroll-behavior: smooth; overflow-x: hidden; }
 
 body {
     font-family: var(--font);
@@ -94,6 +94,7 @@ body {
     min-height: 100vh;
     overflow-x: hidden;
     line-height: 1.6;
+    width: 100%;
 }
 
 /* Utility */

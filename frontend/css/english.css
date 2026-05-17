@@ -1,7 +1,7 @@
 /* ════════════════════════════════════════════════
    English Learning Styles
    ════════════════════════════════════════════════ */
-.eng-page { min-height: 100vh; padding: 24px 16px 80px; position: relative; z-index: 1; }
+.eng-page { min-height: 100vh; padding: 24px 16px 80px; position: relative; z-index: 1; max-width: 100vw; overflow-x: hidden; }
 .eng-inner { max-width: 700px; margin: 0 auto; }
 .eng-header { display: flex; align-items: center; gap: 16px; margin-bottom: 20px; }
 .eng-header-center { flex: 1; }

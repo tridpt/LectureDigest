@@ -248,5 +248,5 @@
 
 /* Mobile responsive */
 @media (max-width: 640px) {
-    .history-panel { width: calc(100vw - 24px); right: -40px; max-height: 70vh; }
+    .history-panel { width: calc(100vw - 24px); right: 0; max-height: 70vh; }
 }
