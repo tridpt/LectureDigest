@@ -101,7 +101,7 @@ if USE_POSTGRES:
                     cur.execute(stmt)
                     cur.close()
                 except Exception as e:
-                    logger.debug("executescript skip: %s", str(e)[:100])
+                    logger.warning("executescript FAILED: %s | SQL: %s", str(e)[:80], stmt[:60])
 
         def commit(self):
             pass  # autocommit mode
