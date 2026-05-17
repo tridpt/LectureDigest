@@ -77,7 +77,7 @@ if USE_POSTGRES:
     class PgConnectionWrapper:
         """Wraps psycopg2 connection to mimic sqlite3 connection API."""
         def __init__(self):
-            self._conn = psycopg2.connect(DATABASE_URL)
+            self._conn = psycopg2.connect(DATABASE_URL, connect_timeout=5)
             self._conn.autocommit = True
 
         def execute(self, sql, params=None):
@@ -88,15 +88,12 @@ if USE_POSTGRES:
 
         def executescript(self, sql):
             """Execute multiple SQL statements (for table creation)."""
-            # Convert SQLite syntax to PostgreSQL
             sql = sql.replace("INTEGER PRIMARY KEY AUTOINCREMENT", "SERIAL PRIMARY KEY")
             sql = sql.replace("AUTOINCREMENT", "")
             sql = sql.replace("INSERT OR IGNORE INTO", "INSERT INTO")
             sql = sql.replace("INSERT OR REPLACE INTO", "INSERT INTO")
-            # Remove PRAGMA statements
             import re
             sql = re.sub(r'PRAGMA\s+[^;]+;?', '', sql)
-            # Execute each statement separately (autocommit handles each)
             statements = [s.strip() for s in sql.split(';') if s.strip()]
             for stmt in statements:
                 try:
@@ -107,13 +104,19 @@ if USE_POSTGRES:
                     logger.debug("executescript skip: %s", str(e)[:100])
 
         def commit(self):
-            pass  # autocommit mode, no-op
+            pass  # autocommit mode
 
         def rollback(self):
-            pass  # autocommit mode, no-op
+            pass  # autocommit mode
 
         def close(self):
-            self._conn.close()
+            try:
+                self._conn.close()
+            except:
+                pass
+
+        def __del__(self):
+            self.close()
 
     def get_db():
         """Get a PostgreSQL connection wrapped to behave like sqlite3."""
