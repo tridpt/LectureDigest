@@ -1,6 +1,6 @@
 """
 Database sync module for LectureDigest backend.
-SQLite-based storage with REST API endpoints.
+Dual-mode: SQLite (local dev) or PostgreSQL (production via DATABASE_URL).
 """
 import sqlite3
 import os
@@ -10,20 +10,254 @@ import logging
 
 logger = logging.getLogger("database")
 
+DATABASE_URL = os.getenv("DATABASE_URL", "").strip()
+USE_POSTGRES = DATABASE_URL.startswith("postgresql://") or DATABASE_URL.startswith("postgres://")
+
 DB_PATH = os.path.join(os.path.dirname(__file__), "lecturedb.sqlite3")
 
-def get_db():
-    """Get a database connection with row_factory."""
-    conn = sqlite3.connect(DB_PATH, timeout=10)
-    conn.row_factory = sqlite3.Row
-    conn.execute("PRAGMA journal_mode=WAL")
-    conn.execute("PRAGMA foreign_keys=ON")
-    conn.execute("PRAGMA busy_timeout=10000")
-    return conn
+
+# ══════════════════════════════════════════
+# DUAL-MODE CONNECTION WRAPPER
+# ══════════════════════════════════════════
+
+if USE_POSTGRES:
+    import psycopg2
+    import psycopg2.extras
+    import psycopg2.extensions
+
+    class PgCursorWrapper:
+        """Wraps a psycopg2 cursor to behave like sqlite3 cursor (dict access on rows)."""
+        def __init__(self, cursor):
+            self._cur = cursor
+            self.lastrowid = None
+            self.rowcount = 0
+
+        def execute(self, sql, params=None):
+            # Convert ? to %s
+            sql = sql.replace("?", "%s")
+            # Convert SQLite-specific INSERT syntax
+            if "INSERT OR REPLACE INTO" in sql:
+                # Convert to INSERT ... ON CONFLICT DO UPDATE
+                sql = sql.replace("INSERT OR REPLACE INTO", "INSERT INTO")
+                # Try to add ON CONFLICT for primary key tables
+                # This is a best-effort conversion
+            if "INSERT OR IGNORE INTO" in sql:
+                sql = sql.replace("INSERT OR IGNORE INTO", "INSERT INTO")
+                if "ON CONFLICT" not in sql:
+                    sql = sql.rstrip().rstrip(";") + " ON CONFLICT DO NOTHING"
+            self._cur.execute(sql, params or ())
+            self.lastrowid = None
+            self.rowcount = self._cur.rowcount
+            # Get lastrowid for INSERT statements
+            if sql.strip().upper().startswith("INSERT") and self._cur.description is None:
+                try:
+                    # Try to get the last inserted id
+                    self._cur.execute("SELECT lastval()")
+                    row = self._cur.fetchone()
+                    if row:
+                        self.lastrowid = list(row.values())[0] if isinstance(row, dict) else row[0]
+                except:
+                    pass
+            return self
+
+        def fetchone(self):
+            return self._cur.fetchone()
+
+        def fetchall(self):
+            return self._cur.fetchall()
+
+        def close(self):
+            self._cur.close()
+
+    class PgConnectionWrapper:
+        """Wraps psycopg2 connection to mimic sqlite3 connection API."""
+        def __init__(self):
+            self._conn = psycopg2.connect(DATABASE_URL)
+            self._conn.autocommit = False
+
+        def execute(self, sql, params=None):
+            cur = self._conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+            wrapper = PgCursorWrapper(cur)
+            wrapper.execute(sql, params)
+            return wrapper
+
+        def executescript(self, sql):
+            """Execute multiple SQL statements (for table creation)."""
+            # Convert SQLite syntax to PostgreSQL
+            sql = sql.replace("INTEGER PRIMARY KEY AUTOINCREMENT", "SERIAL PRIMARY KEY")
+            sql = sql.replace("AUTOINCREMENT", "")
+            sql = sql.replace("INSERT OR IGNORE INTO", "INSERT INTO")
+            sql = sql.replace("INSERT OR REPLACE INTO", "INSERT INTO")
+            # Remove PRAGMA statements
+            import re
+            sql = re.sub(r'PRAGMA\s+[^;]+;?', '', sql)
+            # Execute
+            cur = self._conn.cursor()
+            cur.execute(sql)
+            cur.close()
+
+        def commit(self):
+            self._conn.commit()
+
+        def rollback(self):
+            self._conn.rollback()
+
+        def close(self):
+            self._conn.close()
+
+    def get_db():
+        """Get a PostgreSQL connection wrapped to behave like sqlite3."""
+        return PgConnectionWrapper()
+
+else:
+    def get_db():
+        """Get a SQLite connection with row_factory."""
+        conn = sqlite3.connect(DB_PATH, timeout=10)
+        conn.row_factory = sqlite3.Row
+        conn.execute("PRAGMA journal_mode=WAL")
+        conn.execute("PRAGMA foreign_keys=ON")
+        conn.execute("PRAGMA busy_timeout=10000")
+        return conn
 
 def init_db():
     """Create tables if they don't exist."""
     conn = get_db()
+    if USE_POSTGRES:
+        _init_db_postgres(conn)
+    else:
+        _init_db_sqlite(conn)
+    conn.close()
+
+
+def _init_db_postgres(conn):
+    """Initialize PostgreSQL tables."""
+    conn.execute("""
+        CREATE TABLE IF NOT EXISTS history (
+            entry_id   TEXT PRIMARY KEY,
+            video_id   TEXT NOT NULL,
+            url        TEXT,
+            title      TEXT,
+            author     TEXT,
+            thumbnail  TEXT,
+            saved_at   BIGINT,
+            lang       TEXT,
+            data_json  TEXT,
+            transcript_json TEXT,
+            user_id    INTEGER DEFAULT NULL
+        );
+        CREATE INDEX IF NOT EXISTS idx_history_video ON history(video_id);
+        CREATE INDEX IF NOT EXISTS idx_history_saved ON history(saved_at DESC);
+        CREATE INDEX IF NOT EXISTS idx_history_user ON history(user_id);
+
+        CREATE TABLE IF NOT EXISTS notes (
+            id         SERIAL PRIMARY KEY,
+            video_id   TEXT NOT NULL,
+            content    TEXT NOT NULL DEFAULT '',
+            updated_at BIGINT,
+            user_id    INTEGER DEFAULT NULL
+        );
+
+        CREATE TABLE IF NOT EXISTS bookmarks (
+            id         SERIAL PRIMARY KEY,
+            video_id   TEXT NOT NULL,
+            time_secs  INTEGER NOT NULL,
+            label      TEXT,
+            created_at TEXT,
+            summary    TEXT DEFAULT '',
+            user_id    INTEGER DEFAULT NULL
+        );
+        CREATE INDEX IF NOT EXISTS idx_bm_video ON bookmarks(video_id);
+        CREATE INDEX IF NOT EXISTS idx_bookmarks_user ON bookmarks(user_id);
+
+        CREATE TABLE IF NOT EXISTS gamification (
+            id         INTEGER PRIMARY KEY DEFAULT 1,
+            data_json  TEXT NOT NULL DEFAULT '{}',
+            updated_at BIGINT
+        );
+
+        CREATE TABLE IF NOT EXISTS users (
+            id           SERIAL PRIMARY KEY,
+            email        TEXT UNIQUE NOT NULL,
+            display_name TEXT NOT NULL DEFAULT '',
+            password_hash TEXT NOT NULL DEFAULT '',
+            avatar_color TEXT DEFAULT '#8b5cf6',
+            avatar_url   TEXT DEFAULT '',
+            google_id    TEXT DEFAULT '',
+            created_at   BIGINT NOT NULL,
+            updated_at   BIGINT
+        );
+        CREATE INDEX IF NOT EXISTS idx_users_email ON users(email);
+        CREATE INDEX IF NOT EXISTS idx_users_google ON users(google_id);
+
+        CREATE TABLE IF NOT EXISTS shared_notes (
+            share_id    TEXT PRIMARY KEY,
+            video_id    TEXT NOT NULL,
+            title       TEXT DEFAULT '',
+            author      TEXT DEFAULT '',
+            notes       TEXT DEFAULT '',
+            bookmarks   TEXT DEFAULT '[]',
+            overview    TEXT DEFAULT '',
+            shared_by   TEXT DEFAULT '',
+            created_at  BIGINT NOT NULL,
+            view_count  INTEGER DEFAULT 0
+        );
+
+        CREATE TABLE IF NOT EXISTS folders (
+            id         SERIAL PRIMARY KEY,
+            name       TEXT NOT NULL,
+            icon       TEXT DEFAULT '📁',
+            color      TEXT DEFAULT '#8b5cf6',
+            user_id    INTEGER,
+            position   INTEGER DEFAULT 0,
+            created_at BIGINT NOT NULL
+        );
+        CREATE INDEX IF NOT EXISTS idx_folders_user ON folders(user_id);
+
+        CREATE TABLE IF NOT EXISTS folder_videos (
+            folder_id  INTEGER NOT NULL,
+            video_id   TEXT NOT NULL,
+            added_at   BIGINT NOT NULL,
+            PRIMARY KEY (folder_id, video_id)
+        );
+
+        CREATE TABLE IF NOT EXISTS password_reset_tokens (
+            token      TEXT PRIMARY KEY,
+            email      TEXT NOT NULL,
+            created_at DOUBLE PRECISION NOT NULL,
+            expires_at DOUBLE PRECISION NOT NULL
+        );
+
+        CREATE TABLE IF NOT EXISTS login_attempts (
+            ip_or_email TEXT PRIMARY KEY,
+            attempts    INTEGER DEFAULT 0,
+            first_at    DOUBLE PRECISION NOT NULL,
+            blocked_until DOUBLE PRECISION DEFAULT 0
+        );
+
+        CREATE TABLE IF NOT EXISTS user_gamification (
+            user_id    INTEGER PRIMARY KEY,
+            data_json  TEXT NOT NULL DEFAULT '{}',
+            updated_at BIGINT
+        );
+
+        CREATE TABLE IF NOT EXISTS user_kv_store (
+            user_id    INTEGER NOT NULL,
+            data_key   TEXT NOT NULL,
+            data_value TEXT NOT NULL DEFAULT '',
+            updated_at BIGINT,
+            PRIMARY KEY (user_id, data_key)
+        );
+    """)
+    # Ensure gamification row
+    try:
+        conn.execute("INSERT INTO gamification (id, data_json, updated_at) VALUES (1, '{}', %s) ON CONFLICT (id) DO NOTHING", (int(time.time() * 1000),))
+    except:
+        pass
+    conn.commit()
+    logger.info("Database initialized (PostgreSQL)")
+
+
+def _init_db_sqlite(conn):
     conn.executescript("""
         CREATE TABLE IF NOT EXISTS history (
             entry_id   TEXT PRIMARY KEY,
@@ -140,12 +374,13 @@ def init_db():
         pass
 
     conn.commit()
-    conn.close()
     logger.info("Database initialized at %s", DB_PATH)
 
 
 def _migrate_add_user_id(conn):
     """Safely add user_id columns to existing tables (idempotent)."""
+    if USE_POSTGRES:
+        return  # PostgreSQL schema already has all columns
     tables_to_migrate = {
         "history": "user_id INTEGER DEFAULT NULL",
         "notes": "user_id INTEGER DEFAULT NULL",
@@ -155,7 +390,7 @@ def _migrate_add_user_id(conn):
         try:
             conn.execute(f"ALTER TABLE {table} ADD COLUMN {col_def}")
             logger.info("Migration: added user_id to %s", table)
-        except sqlite3.OperationalError:
+        except Exception:
             pass  # Column already exists
 
     # Add Google OAuth columns to users table
@@ -167,14 +402,14 @@ def _migrate_add_user_id(conn):
         try:
             conn.execute(f"ALTER TABLE users ADD COLUMN {col_def}")
             logger.info("Migration: added %s to users", col_name)
-        except sqlite3.OperationalError:
+        except Exception:
             pass  # Column already exists
 
     # Add summary column to bookmarks table
     try:
         conn.execute("ALTER TABLE bookmarks ADD COLUMN summary TEXT DEFAULT ''")
         logger.info("Migration: added summary to bookmarks")
-    except sqlite3.OperationalError:
+    except Exception:
         pass  # Column already exists
 
     # Fix notes table: need composite PK (video_id, user_id) instead of just video_id
@@ -211,6 +446,8 @@ def _migrate_add_user_id(conn):
 
 def _migrate_notes_composite_pk(conn):
     """Recreate notes table so multiple users can have notes for the same video."""
+    if USE_POSTGRES:
+        return  # PostgreSQL schema is created correctly from the start
     # Check current schema
     info = conn.execute("PRAGMA table_info(notes)").fetchall()
     pk_cols = [r[1] for r in info if r[5] > 0]  # r[5] is pk flag
@@ -796,7 +1033,7 @@ def db_create_user(email: str, display_name: str, password_hash: str, avatar_col
         """, (email.lower().strip(), display_name.strip(), password_hash, avatar_color, google_id, avatar_url, now, now))
         conn.commit()
         user_id = cur.lastrowid
-    except sqlite3.IntegrityError:
+    except Exception:
         conn.close()
         return None  # Email already exists
     conn.close()
