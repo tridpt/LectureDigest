@@ -160,6 +160,18 @@ def fetch_transcript_innertube(video_id: str) -> list:
     """
     innertube_url = "https://www.youtube.com/youtubei/v1/player"
 
+    # Setup proxy if configured
+    proxy_url = os.getenv("YOUTUBE_PROXY_URL", "").strip()
+    proxy_handler = None
+    if proxy_url:
+        proxy_handler = urllib.request.ProxyHandler({
+            'http': proxy_url,
+            'https': proxy_url,
+        })
+        opener = urllib.request.build_opener(proxy_handler)
+    else:
+        opener = urllib.request.build_opener()
+
     # Try multiple InnerTube clients — TVHTML5 and WEB are most stable
     clients = [
         {
@@ -203,7 +215,7 @@ def fetch_transcript_innertube(video_id: str) -> list:
         try:
             payload = json.dumps(client["payload"]).encode()
             req = urllib.request.Request(innertube_url, data=payload, headers=client["headers"], method="POST")
-            with urllib.request.urlopen(req, timeout=15) as resp:
+            with opener.open(req, timeout=15) as resp:
                 player_data = json.loads(resp.read())
 
             tracks = (
@@ -224,7 +236,7 @@ def fetch_transcript_innertube(video_id: str) -> list:
 
             caption_url = base_url + "&fmt=json3"
             req2 = urllib.request.Request(caption_url, headers={"User-Agent": "Mozilla/5.0"})
-            with urllib.request.urlopen(req2, timeout=15) as resp2:
+            with opener.open(req2, timeout=15) as resp2:
                 cap_data = json.loads(resp2.read())
 
             snippets = []
