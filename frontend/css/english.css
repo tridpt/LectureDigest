@@ -396,3 +396,18 @@
 .eng-custom-missions { display: flex; flex-direction: column; gap: 8px; }
 .eng-cm-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; font-size: 13px; color: var(--text-primary, #f1f5f9); }
 .eng-cm-row .eng-count-input { width: 55px; }
+
+
+/* ════════════════════════════════════════════════
+   Word Detail Actions (Edit/Delete)
+   ════════════════════════════════════════════════ */
+.eng-detail-actions { display: flex; gap: 8px; margin-top: 10px; padding-top: 10px; border-top: 1px solid rgba(255,255,255,0.06); }
+.eng-detail-btn { padding: 6px 12px; border-radius: 6px; border: none; font-size: 12px; font-weight: 600; cursor: pointer; transition: all 0.2s; }
+.eng-detail-edit { background: rgba(96,165,250,0.1); color: #60a5fa; border: 1px solid rgba(96,165,250,0.2); }
+.eng-detail-edit:hover { background: rgba(96,165,250,0.2); }
+.eng-detail-delete { background: rgba(248,113,113,0.1); color: #f87171; border: 1px solid rgba(248,113,113,0.2); }
+.eng-detail-delete:hover { background: rgba(248,113,113,0.2); }
+.eng-edit-form { animation: engDetailSlide 0.2s ease; }
+.eng-edit-btns { display: flex; gap: 8px; margin-top: 8px; }
+.light-mode .eng-detail-edit { background: rgba(37,99,235,0.06); color: #2563eb; border-color: rgba(37,99,235,0.15); }
+.light-mode .eng-detail-delete { background: rgba(220,38,38,0.06); color: #dc2626; border-color: rgba(220,38,38,0.15); }

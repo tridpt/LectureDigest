@@ -444,6 +444,53 @@ async def add_word_manual(request: Request):
     return {"ok": True, "word": word}
 
 
+@router.delete("/word/{word_id}")
+async def delete_word(word_id: int, request: Request):
+    """Delete a word."""
+    user = get_current_user(request)
+    if not user:
+        raise HTTPException(status_code=401, detail="Vui lòng đăng nhập")
+
+    conn = get_db()
+    row = conn.execute("SELECT id FROM english_vocab WHERE id = ? AND user_id = ?", (word_id, user["id"])).fetchone()
+    if not row:
+        raise HTTPException(status_code=404, detail="Không tìm thấy từ")
+
+    conn.execute("DELETE FROM english_vocab WHERE id = ?", (word_id,))
+    conn.commit()
+    return {"ok": True}
+
+
+@router.put("/word/{word_id}")
+async def update_word(word_id: int, request: Request):
+    """Update a word."""
+    user = get_current_user(request)
+    if not user:
+        raise HTTPException(status_code=401, detail="Vui lòng đăng nhập")
+
+    conn = get_db()
+    row = conn.execute("SELECT id FROM english_vocab WHERE id = ? AND user_id = ?", (word_id, user["id"])).fetchone()
+    if not row:
+        raise HTTPException(status_code=404, detail="Không tìm thấy từ")
+
+    body = await request.json()
+    word = body.get("word", "").strip()
+    meaning = body.get("meaning", "").strip()
+    if not word or not meaning:
+        raise HTTPException(status_code=400, detail="Cần nhập từ và nghĩa")
+
+    phonetic = body.get("phonetic", "").strip()
+    part_of_speech = body.get("part_of_speech", "").strip()
+    example = body.get("example", "").strip()
+
+    conn.execute("""
+        UPDATE english_vocab SET word = ?, meaning = ?, phonetic = ?, part_of_speech = ?, example = ?
+        WHERE id = ?
+    """, (word, meaning, phonetic, part_of_speech, example, word_id))
+    conn.commit()
+    return {"ok": True}
+
+
 @router.post("/study-time")
 async def update_study_time(request: Request):
     """Update study time for today. Body: {seconds: int}"""

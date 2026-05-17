@@ -946,6 +946,11 @@ function engToggleWordDetail(el, idx) {
         + '<span class="eng-mastery-badge" style="--mastery-color:' + mastery.color + '">' + mastery.label + '</span>'
         + '</div>';
 
+    var actionsHtml = '<div class="eng-detail-actions">'
+        + '<button class="eng-detail-btn eng-detail-edit" onclick="engEditWord(' + w.id + ',' + idx + ')">✏️ Sửa</button>'
+        + '<button class="eng-detail-btn eng-detail-delete" onclick="engDeleteWord(' + w.id + ')">🗑️ Xóa</button>'
+        + '</div>';
+
     var detail = document.createElement('div');
     detail.className = 'eng-word-detail';
     detail.innerHTML = '<div class="eng-word-detail-inner">'
@@ -953,10 +958,97 @@ function engToggleWordDetail(el, idx) {
         + '<div class="eng-meaning">' + _engEsc(w.meaning) + '</div>'
         + (w.example ? '<div class="eng-example">"' + _engEsc(w.example) + '"</div>' : '')
         + statsHtml
+        + actionsHtml
         + '</div>';
 
     el.classList.add('eng-saved-expanded');
     el.after(detail);
+}
+
+// Delete word
+async function engDeleteWord(wordId) {
+    if (typeof _crConfirmModal === 'function') {
+        _crConfirmModal('Xóa từ này?', 'Từ sẽ bị xóa vĩnh viễn khỏi danh sách.', async function() {
+            await _engDoDelete(wordId);
+        });
+    } else {
+        await _engDoDelete(wordId);
+    }
+}
+
+async function _engDoDelete(wordId) {
+    var headers = _engHeaders();
+    if (!headers) return;
+    try {
+        var res = await fetchWithTimeout('/api/english/word/' + wordId, {
+            method: 'DELETE', headers: headers
+        }, 10000);
+        if (res.ok) {
+            showToast('🗑️ Đã xóa từ', 2000);
+            engLoadSavedWords(_engSavedPage);
+            engLoadStats();
+        } else {
+            showToast('Lỗi xóa từ', 2000);
+        }
+    } catch(e) { showToast('Lỗi: ' + e.message, 2000); }
+}
+
+// Edit word
+function engEditWord(wordId, idx) {
+    var list = document.getElementById('engSavedList');
+    var words = list?._wordsData;
+    if (!words || !words[idx]) return;
+    var w = words[idx];
+
+    // Replace detail with edit form
+    var detail = list.querySelector('.eng-word-detail');
+    if (!detail) return;
+
+    detail.innerHTML = '<div class="eng-word-detail-inner eng-edit-form">'
+        + '<div class="eng-add-row"><input type="text" class="eng-add-input" id="engEditWord" value="' + _engEsc(w.word) + '" placeholder="Từ *">'
+        + '<input type="text" class="eng-add-input" id="engEditMeaning" value="' + _engEsc(w.meaning) + '" placeholder="Nghĩa *"></div>'
+        + '<div class="eng-add-row"><input type="text" class="eng-add-input" id="engEditPhonetic" value="' + _engEsc(w.phonetic) + '" placeholder="Phiên âm">'
+        + '<select class="eng-add-input" id="engEditPos">'
+        + '<option value="">Loại từ</option>'
+        + '<option value="noun"' + (w.part_of_speech === 'noun' ? ' selected' : '') + '>Noun</option>'
+        + '<option value="verb"' + (w.part_of_speech === 'verb' ? ' selected' : '') + '>Verb</option>'
+        + '<option value="adjective"' + (w.part_of_speech === 'adjective' ? ' selected' : '') + '>Adjective</option>'
+        + '<option value="adverb"' + (w.part_of_speech === 'adverb' ? ' selected' : '') + '>Adverb</option>'
+        + '<option value="phrase"' + (w.part_of_speech === 'phrase' ? ' selected' : '') + '>Phrase</option>'
+        + '</select></div>'
+        + '<div class="eng-add-row"><input type="text" class="eng-add-input eng-add-full" id="engEditExample" value="' + _engEsc(w.example || '') + '" placeholder="Câu ví dụ"></div>'
+        + '<div class="eng-edit-btns">'
+        + '<button class="eng-btn" onclick="engSaveEdit(' + wordId + ')">💾 Lưu</button>'
+        + '<button class="eng-btn eng-btn-outline" onclick="engLoadSavedWords(' + _engSavedPage + ')">Hủy</button>'
+        + '</div></div>';
+}
+
+async function engSaveEdit(wordId) {
+    var word = document.getElementById('engEditWord')?.value.trim();
+    var meaning = document.getElementById('engEditMeaning')?.value.trim();
+    if (!word || !meaning) { showToast('Cần nhập từ và nghĩa!', 2000); return; }
+
+    var headers = _engHeaders();
+    if (!headers) return;
+
+    try {
+        var res = await fetchWithTimeout('/api/english/word/' + wordId, {
+            method: 'PUT', headers: headers,
+            body: JSON.stringify({
+                word: word,
+                meaning: meaning,
+                phonetic: document.getElementById('engEditPhonetic')?.value.trim() || '',
+                part_of_speech: document.getElementById('engEditPos')?.value || '',
+                example: document.getElementById('engEditExample')?.value.trim() || ''
+            })
+        }, 10000);
+        if (res.ok) {
+            showToast('✅ Đã cập nhật', 2000);
+            engLoadSavedWords(_engSavedPage);
+        } else {
+            showToast('Lỗi cập nhật', 2000);
+        }
+    } catch(e) { showToast('Lỗi: ' + e.message, 2000); }
 }
 
 // Add custom topic to dropdown select
