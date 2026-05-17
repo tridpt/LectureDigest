@@ -691,6 +691,15 @@ async function authExportData() {
         return;
     }
 
+    // Show confirmation with details about what will be exported
+    if (typeof _crConfirmModal === 'function') {
+        var result = await _crConfirmModal(
+            '📦 Tải dữ liệu',
+            'File JSON sẽ bao gồm:\n• Lịch sử phân tích video\n• Ghi chú & bookmark\n• Từ vựng tiếng Anh\n• Tiến độ ôn tập & quiz\n• Thống kê học tập'
+        );
+        if (result !== 'ok') return;
+    }
+
     showToast('📦 Đang chuẩn bị dữ liệu...', 2000);
 
     try {
