@@ -247,7 +247,7 @@ function _renderSrsPage() {
             + '</div></div></div>';
 
         // Rate buttons
-        var rateOpacity = _srsFlipped ? '1' : '0.3';
+        var rateOpacity = _srsFlipped ? '1' : '0.45';
         var hardResult = typeof sm2Calculate === 'function' ? sm2Calculate(card.sm2 || {ef:2.5, interval:0, repetitions:0}, 1) : {interval: 1};
         var okResult   = typeof sm2Calculate === 'function' ? sm2Calculate(card.sm2 || {ef:2.5, interval:0, repetitions:0}, 3) : {interval: 3};
         var easyResult = typeof sm2Calculate === 'function' ? sm2Calculate(card.sm2 || {ef:2.5, interval:0, repetitions:0}, 5) : {interval: 7};
@@ -321,7 +321,7 @@ function srsFlipCard() {
     var inner = document.getElementById('srsCardInner');
     if (inner) inner.style.transform = _srsFlipped ? 'rotateY(180deg)' : 'rotateY(0deg)';
     var rateRow = document.getElementById('srsRateRow');
-    if (rateRow) rateRow.style.opacity = _srsFlipped ? '1' : '0.3';
+    if (rateRow) rateRow.style.opacity = _srsFlipped ? '1' : '0.45';
 }
 
 function srsRateCard(rating) {
