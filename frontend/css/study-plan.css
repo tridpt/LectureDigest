@@ -683,3 +683,12 @@
     background: rgba(139, 92, 246, 0.04);
     border-color: rgba(139, 92, 246, 0.15);
 }
+
+
+@media (max-width: 480px) {
+    .sp-page-title { font-size: 18px; }
+    .sp-regen-btn { font-size: 11px; padding: 6px 10px; }
+    .sp-task-card { padding: 12px; }
+    .sp-task-title { font-size: 13px; }
+    .sp-week-nav { flex-wrap: wrap; gap: 6px; }
+}

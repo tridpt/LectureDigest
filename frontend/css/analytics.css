@@ -239,3 +239,36 @@ html.light-mode .an-empty { color: #bbb; }
     .an-tm-row { flex-wrap: wrap; }
     .an-hm-cell { width: 10px; height: 10px; }
 }
+
+
+/* ════════════════════════════════════════════════
+   Mobile Responsive
+   ════════════════════════════════════════════════ */
+@media (max-width: 768px) {
+    .an-inner { padding: 0 12px 40px; }
+    .an-header {
+        flex-direction: row;
+        align-items: center;
+    }
+    .an-header > div:last-child { display: none; }
+    .an-header-center { flex: 1; text-align: center; }
+    .an-title { font-size: 18px; }
+    .an-grid-2 { grid-template-columns: 1fr; }
+    .an-stat-grid { grid-template-columns: repeat(2, 1fr); }
+}
+
+@media (max-width: 480px) {
+    .an-title { font-size: 16px; }
+    .an-subtitle { font-size: 11px; }
+    .an-card { padding: 14px 12px; }
+    .an-card-title { font-size: 13px; }
+    .an-stat-grid { grid-template-columns: 1fr 1fr; gap: 8px; }
+    .an-hm-wrap { overflow-x: auto; }
+    .an-hm-grid { min-width: 500px; }
+}
+
+/* Light mode */
+.light-mode .an-page { background: #f8fafc; }
+.light-mode .an-title { color: #1e293b; }
+.light-mode .an-card { background: rgba(255,255,255,0.8); border-color: rgba(0,0,0,0.06); }
+.light-mode .an-card-title { color: #1e293b; }

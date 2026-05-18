@@ -630,3 +630,23 @@
     transform: scale(1.1);
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
 }
+
+
+/* ════════════════════════════════════════════════
+   Mobile Responsive
+   ════════════════════════════════════════════════ */
+@media (max-width: 480px) {
+    .auth-modal { padding: 24px 16px; max-width: 100%; border-radius: 16px; }
+    .auth-modal-icon { font-size: 32px; }
+    .auth-modal-title { font-size: 20px; }
+    .auth-input-wrapper { padding: 10px 12px; }
+    .auth-submit-btn { padding: 12px; font-size: 14px; }
+    .auth-modal-overlay { padding: 12px; }
+
+    /* Profile modal */
+    .profile-modal { max-width: 100%; padding: 20px 14px; }
+    .profile-avatar-section { flex-direction: column; align-items: center; }
+    .profile-form-grid { grid-template-columns: 1fr; }
+    .profile-tabs { flex-wrap: wrap; gap: 4px; }
+    .profile-tab { font-size: 12px; padding: 6px 10px; }
+}
