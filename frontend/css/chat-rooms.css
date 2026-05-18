@@ -1935,3 +1935,26 @@ img.cr-member-av {
 .cr-loading-dots span:nth-child(2) { animation-delay: 0.2s; }
 .cr-loading-dots span:nth-child(3) { animation-delay: 0.4s; }
 @keyframes crDotBounce { 0%,80%,100% { transform: scale(0.6); opacity: 0.4; } 40% { transform: scale(1); opacity: 1; } }
+
+
+/* Chat Search */
+.cr-search-panel { padding: 8px 12px; border-bottom: 1px solid rgba(255,255,255,0.06); background: rgba(15,15,30,0.5); }
+.cr-search-input-wrap { display: flex; gap: 8px; align-items: center; }
+.cr-search-input { flex: 1; padding: 8px 12px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.1); background: rgba(255,255,255,0.04); color: var(--text-primary, #f1f5f9); font-size: 13px; outline: none; }
+.cr-search-input:focus { border-color: rgba(139,92,246,0.4); }
+.cr-search-close { background: none; border: none; color: var(--text-secondary, #94a3b8); font-size: 16px; cursor: pointer; padding: 4px; }
+.cr-search-results { max-height: 200px; overflow-y: auto; margin-top: 6px; }
+.cr-search-result { padding: 8px 10px; border-radius: 6px; cursor: pointer; transition: background 0.15s; }
+.cr-search-result:hover { background: rgba(139,92,246,0.08); }
+.cr-search-result-name { font-size: 11px; color: var(--text-secondary, #94a3b8); margin-bottom: 2px; }
+.cr-search-result-name span { color: var(--text-muted, #64748b); }
+.cr-search-result-text { font-size: 13px; color: var(--text-primary, #f1f5f9); }
+.cr-search-result-text mark { background: rgba(251,191,36,0.3); color: inherit; border-radius: 2px; padding: 0 2px; }
+.cr-search-hint { font-size: 12px; color: var(--text-secondary, #94a3b8); text-align: center; padding: 12px; }
+.cr-msg-highlight { animation: crHighlight 2s ease; }
+@keyframes crHighlight { 0%,30% { background: rgba(139,92,246,0.15); } 100% { background: transparent; } }
+
+.light-mode .cr-search-panel { background: rgba(248,250,252,0.9); border-bottom-color: rgba(0,0,0,0.06); }
+.light-mode .cr-search-input { background: #fff; border-color: rgba(0,0,0,0.1); color: #1e293b; }
+.light-mode .cr-search-result:hover { background: rgba(139,92,246,0.04); }
+.light-mode .cr-search-result-text { color: #1e293b; }

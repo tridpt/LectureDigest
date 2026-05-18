@@ -2298,3 +2298,76 @@ function crViewImage(url) {
     overlay.innerHTML = '<img src="' + url + '" alt="Ảnh"><button class="cr-img-viewer-close" onclick="this.parentElement.remove()">✕</button>';
     document.body.appendChild(overlay);
 }
+
+
+// ══════════════════════════════════════════════════════
+// SEARCH MESSAGES
+// ══════════════════════════════════════════════════════
+
+var _crSearchTimer = null;
+
+function crToggleSearch() {
+    var panel = document.getElementById('crSearchPanel');
+    if (!panel) return;
+    panel.classList.toggle('hidden');
+    if (!panel.classList.contains('hidden')) {
+        var input = document.getElementById('crSearchInput');
+        if (input) { input.value = ''; input.focus(); }
+        document.getElementById('crSearchResults').innerHTML = '';
+    }
+}
+
+function crSearchMessages() {
+    if (_crSearchTimer) clearTimeout(_crSearchTimer);
+    _crSearchTimer = setTimeout(function() {
+        var input = document.getElementById('crSearchInput');
+        var q = (input && input.value || '').trim();
+        if (q.length < 2) {
+            document.getElementById('crSearchResults').innerHTML = '<div class="cr-search-hint">Nhập ít nhất 2 ký tự</div>';
+            return;
+        }
+        _crDoSearch(q);
+    }, 400);
+}
+
+async function _crDoSearch(q) {
+    if (!_crCurrentRoom) return;
+    var headers = _crAuthHeaders();
+    if (!headers) return;
+    var resultsEl = document.getElementById('crSearchResults');
+    if (!resultsEl) return;
+
+    resultsEl.innerHTML = '<div class="cr-search-hint">Đang tìm...</div>';
+
+    try {
+        var res = await fetchWithTimeout('/api/chat-rooms/' + _crCurrentRoom.id + '/search?q=' + encodeURIComponent(q) + '&limit=20', { headers: headers }, 10000);
+        var data = await res.json();
+        var results = data.results || [];
+
+        if (results.length === 0) {
+            resultsEl.innerHTML = '<div class="cr-search-hint">Không tìm thấy kết quả</div>';
+            return;
+        }
+
+        resultsEl.innerHTML = results.map(function(r) {
+            var time = new Date(r.created_at * 1000).toLocaleString('vi-VN', { hour: '2-digit', minute: '2-digit', day: '2-digit', month: '2-digit' });
+            var highlighted = _crEsc(r.content).replace(new RegExp('(' + _crEsc(q).replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + ')', 'gi'), '<mark>$1</mark>');
+            return '<div class="cr-search-result" onclick="crScrollToMessage(\'' + r.id + '\')">'
+                + '<div class="cr-search-result-name">' + _crEsc(r.username) + ' · <span>' + time + '</span></div>'
+                + '<div class="cr-search-result-text">' + highlighted + '</div>'
+                + '</div>';
+        }).join('');
+    } catch(e) {
+        resultsEl.innerHTML = '<div class="cr-search-hint" style="color:#f87171">Lỗi tìm kiếm</div>';
+    }
+}
+
+function crScrollToMessage(msgId) {
+    var el = document.querySelector('[data-msg-id="' + msgId + '"]');
+    if (el) {
+        el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        el.classList.add('cr-msg-highlight');
+        setTimeout(function() { el.classList.remove('cr-msg-highlight'); }, 2000);
+    }
+    crToggleSearch();
+}

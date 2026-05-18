@@ -625,6 +625,40 @@ async def get_messages(room_id: str, request: Request, limit: int = 50, before: 
     }
 
 
+@router.get("/{room_id}/search")
+async def search_messages(room_id: str, request: Request, q: str = '', limit: int = 20):
+    """Search messages in a chat room."""
+    user = get_current_user(request)
+    if not user:
+        raise HTTPException(status_code=401, detail="Not authenticated")
+
+    if not _is_room_member(room_id, user["id"]):
+        raise HTTPException(status_code=403, detail="Not a member")
+
+    if not q or len(q.strip()) < 2:
+        return {"results": []}
+
+    conn = get_db()
+    rows = conn.execute(
+        "SELECT id, user_id, content, created_at FROM chat_messages WHERE room_id = ? AND LOWER(content) LIKE ? ORDER BY created_at DESC LIMIT ?",
+        (room_id, f"%{q.lower()}%", min(limit, 50))
+    ).fetchall()
+
+    results = []
+    for row in rows:
+        user_info = _get_user_info(row["user_id"])
+        results.append({
+            "id": row["id"],
+            "user_id": row["user_id"],
+            "username": user_info["username"],
+            "content": row["content"],
+            "created_at": row["created_at"],
+        })
+
+    conn.close()
+    return {"results": results, "query": q}
+
+
 # ═══════════════════════════════════════════════════════
 # TYPING INDICATOR (in-memory, ephemeral)
 # ═══════════════════════════════════════════════════════
