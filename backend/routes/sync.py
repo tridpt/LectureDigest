@@ -60,7 +60,7 @@ async def share_notes(req: ShareNotesRequest):
             shared_by=req.shared_by,
         )
 
-        base_url = os.getenv("APP_BASE_URL", "http://localhost:8000").rstrip("/")
+        base_url = os.getenv("APP_BASE_URL", "").rstrip("/") or os.getenv("RENDER_EXTERNAL_URL", "").rstrip("/") or "http://localhost:8000"
         share_url = f"{base_url}/shared-notes?id={share_id}"
 
         logger.info(f"Created shared notes: {share_id} for video {req.video_id}")
