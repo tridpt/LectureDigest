@@ -1,0 +1,48 @@
+/* ════════════════════════════════════════════════
+   About Page
+   ════════════════════════════════════════════════ */
+.about-page { min-height: 100vh; padding: 24px 16px 80px; }
+.about-inner { max-width: 600px; margin: 0 auto; }
+.about-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 24px; }
+.about-title { font-size: 20px; font-weight: 800; color: var(--text-primary, #f1f5f9); }
+
+.about-hero { text-align: center; padding: 32px 0; margin-bottom: 24px; }
+.about-logo { display: inline-flex; align-items: center; justify-content: center; width: 80px; height: 80px; background: linear-gradient(135deg, #8b5cf6, #6d28d9); border-radius: 20px; color: #fff; margin-bottom: 16px; box-shadow: 0 8px 32px rgba(139,92,246,0.3); }
+.about-app-name { font-size: 28px; font-weight: 900; color: var(--text-primary, #f1f5f9); margin: 0; }
+.about-accent { color: #a78bfa; }
+.about-tagline { font-size: 14px; color: var(--text-secondary, #94a3b8); margin: 6px 0 0; }
+.about-version { font-size: 12px; color: var(--text-muted, #64748b); margin-top: 8px; }
+
+.about-section { margin-bottom: 24px; }
+.about-section h3 { font-size: 16px; font-weight: 700; color: var(--text-primary, #f1f5f9); margin: 0 0 10px; }
+.about-section p { font-size: 14px; color: var(--text-secondary, #94a3b8); line-height: 1.7; margin: 0; }
+
+.about-features { display: flex; flex-direction: column; gap: 8px; }
+.about-feature { font-size: 13px; color: var(--text-secondary, #cbd5e1); padding: 10px 14px; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.05); border-radius: 10px; }
+
+.about-tech-grid { display: flex; flex-wrap: wrap; gap: 8px; }
+.about-tech { font-size: 12px; font-weight: 600; color: #a78bfa; background: rgba(139,92,246,0.1); border: 1px solid rgba(139,92,246,0.2); padding: 5px 12px; border-radius: 6px; }
+
+.about-dev { padding: 16px; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.06); border-radius: 12px; }
+.about-dev-name { font-size: 16px; font-weight: 700; color: var(--text-primary, #f1f5f9); margin-bottom: 6px; }
+.about-dev-links { display: flex; gap: 10px; }
+.about-link { font-size: 13px; color: #a78bfa; text-decoration: none; font-weight: 600; }
+.about-link:hover { text-decoration: underline; }
+
+.about-footer { text-align: center; padding: 24px 0; font-size: 13px; color: var(--text-muted, #64748b); }
+
+/* Light mode */
+.light-mode .about-title { color: #1e293b; }
+.light-mode .about-app-name { color: #1e293b; }
+.light-mode .about-section h3 { color: #1e293b; }
+.light-mode .about-section p { color: #475569; }
+.light-mode .about-feature { background: rgba(255,255,255,0.8); border-color: rgba(0,0,0,0.06); color: #475569; }
+.light-mode .about-dev { background: rgba(255,255,255,0.8); border-color: rgba(0,0,0,0.06); }
+.light-mode .about-dev-name { color: #1e293b; }
+
+@media (max-width: 480px) {
+    .about-hero { padding: 20px 0; }
+    .about-app-name { font-size: 22px; }
+    .about-logo { width: 64px; height: 64px; }
+    .about-logo svg { width: 36px; height: 36px; }
+}

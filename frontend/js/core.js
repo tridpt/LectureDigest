@@ -32,7 +32,7 @@ const chatState = {
 // ──────────────────────────────────────
 // SECTION MANAGEMENT
 // ──────────────────────────────────────
-const SECTION_IDS = ['hero', 'loadingSection', 'errorSection', 'resultsSection', 'playlistSection'];
+const SECTION_IDS = ['hero', 'loadingSection', 'errorSection', 'resultsSection', 'playlistSection', 'aboutSection'];
 
 // SPA Routes mapping (section → URL path). Modules add their routes here.
 const SPA_ROUTES = {
@@ -41,6 +41,7 @@ const SPA_ROUTES = {
     errorSection:   null,
     resultsSection: null,
     badgesSection:  '/badges',
+    aboutSection:   '/about',
 };
 
 function showSection(id) {
@@ -351,3 +352,16 @@ document.addEventListener('DOMContentLoaded', () => {
         }, 150);
     }, { passive: true });
 })();
+
+
+// ── About Page ──
+function openAbout() {
+    showSection('aboutSection');
+    var footer = document.querySelector('.footer');
+    if (footer) footer.style.display = 'none';
+}
+function closeAbout() {
+    showSection('hero');
+    var footer = document.querySelector('.footer');
+    if (footer) footer.style.display = '';
+}
