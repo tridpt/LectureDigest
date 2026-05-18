@@ -19,6 +19,7 @@ var _mexam = {
 
 function openMexam() {
     document.getElementById('mexamSection').classList.remove('hidden');
+    document.documentElement.style.overflow = 'hidden';
     document.body.style.overflow = 'hidden';
     _mexam.selectedVideos = [];
     _mexam.examData = null;
@@ -36,6 +37,7 @@ function openMexam() {
 
 function closeMexam() {
     document.getElementById('mexamSection').classList.add('hidden');
+    document.documentElement.style.overflow = '';
     document.body.style.overflow = '';
     _mexamStopTimer();
     if (location.pathname === '/exam') {
