@@ -19,6 +19,7 @@ var KG_COLORS = [
 function openKnowledgeGraph() {
     var section = document.getElementById('kgSection');
     if (section) section.classList.remove('hidden');
+    document.body.style.overflow = 'hidden'; // Prevent background scroll
     renderKnowledgeGraph();
     if (location.pathname !== '/knowledge-graph') {
         history.pushState({}, '', '/knowledge-graph');
@@ -28,6 +29,7 @@ function openKnowledgeGraph() {
 function closeKnowledgeGraph() {
     var section = document.getElementById('kgSection');
     if (section) section.classList.add('hidden');
+    document.body.style.overflow = '';
     if (_kgSimulation) { _kgSimulation.stop(); _kgSimulation = null; }
     closeKgDetail();
     if (location.pathname === '/knowledge-graph') {
