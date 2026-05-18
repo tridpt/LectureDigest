@@ -1486,8 +1486,9 @@ _ALLOWED_TYPES = {"image/jpeg", "image/png", "image/gif", "image/webp"}
 
 @router.post("/upload-image")
 async def upload_chat_image(request: Request, file: UploadFile = File(...)):
-    """Upload an image for chat. Returns base64 data URL (works on all deployments)."""
+    """Upload an image for chat. Auto-compresses if too large. Returns base64 data URL."""
     import base64
+    from io import BytesIO
     user = get_current_user(request)
     if not user:
         raise HTTPException(status_code=401, detail="Not authenticated")
@@ -1496,15 +1497,40 @@ async def upload_chat_image(request: Request, file: UploadFile = File(...)):
     if file.content_type not in _ALLOWED_TYPES:
         raise HTTPException(status_code=400, detail="Chỉ hỗ trợ JPEG, PNG, GIF, WebP")
 
-    # Read and validate size (limit 2MB for base64 storage)
+    # Read file (max 10MB raw upload)
     data = await file.read()
-    if len(data) > 2 * 1024 * 1024:
-        raise HTTPException(status_code=400, detail="Ảnh tối đa 2MB")
+    if len(data) > 10 * 1024 * 1024:
+        raise HTTPException(status_code=400, detail="Ảnh tối đa 10MB")
 
-    # Convert to base64 data URL
-    ext = file.content_type.split('/')[-1]
-    if ext == 'jpeg':
+    # Compress if > 1MB using Pillow (if available) or just limit
+    max_b64_size = 2 * 1024 * 1024  # 2MB after base64
+    try:
+        from PIL import Image
+        img = Image.open(BytesIO(data))
+        # Convert RGBA to RGB for JPEG
+        if img.mode in ('RGBA', 'P'):
+            img = img.convert('RGB')
+        # Resize if too large
+        max_dim = 1200
+        if img.width > max_dim or img.height > max_dim:
+            img.thumbnail((max_dim, max_dim), Image.LANCZOS)
+        # Compress to JPEG with decreasing quality until under limit
+        quality = 85
+        while quality >= 30:
+            buf = BytesIO()
+            img.save(buf, format='JPEG', quality=quality, optimize=True)
+            data = buf.getvalue()
+            if len(data) <= max_b64_size:
+                break
+            quality -= 15
         ext = 'jpeg'
+    except ImportError:
+        # Pillow not installed — just check size
+        if len(data) > max_b64_size:
+            raise HTTPException(status_code=400, detail="Ảnh quá lớn. Vui lòng chọn ảnh nhỏ hơn 2MB")
+        ext = file.content_type.split('/')[-1]
+        if ext == 'jpeg': ext = 'jpeg'
+
     b64 = base64.b64encode(data).decode('utf-8')
     image_url = f"data:image/{ext};base64,{b64}"
 
