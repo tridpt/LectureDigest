@@ -680,12 +680,41 @@ async function crSendMessage() {
     if (!headers) return;
 
     var imageUrl = '';
+    var localImagePreview = '';
 
-    // Upload image first if pending
+    // Get local preview for optimistic UI
     if (_crPendingImage) {
+        // Create local preview URL for immediate display
+        localImagePreview = URL.createObjectURL(_crPendingImage);
+    }
+
+    var pendingFile = _crPendingImage;
+    crCancelImage();
+    input.value = '';
+    _crLastTypingSent = 0;
+
+    // Optimistic UI: show message immediately with "sending" status
+    var tempId = 'temp_' + Date.now();
+    var optimisticMsg = {
+        id: tempId,
+        user_id: _crCurrentUserId || _crGetCurrentUserId(),
+        username: (typeof _authUser !== 'undefined' && _authUser && _authUser.display_name) ? _authUser.display_name : 'Bạn',
+        avatar_url: '',
+        content: content,
+        image_url: localImagePreview,
+        created_at: Date.now() / 1000,
+        pinned: false,
+        _sending: true
+    };
+    _crMessages.push(optimisticMsg);
+    _crRenderMessages();
+    _crScrollToBottom();
+
+    // Upload image if pending
+    if (pendingFile) {
         try {
             var formData = new FormData();
-            formData.append('file', _crPendingImage);
+            formData.append('file', pendingFile);
             var token = localStorage.getItem('ld_auth_token') || '';
             var uploadRes = await fetchWithTimeout('/api/chat-rooms/upload-image', {
                 method: 'POST',
@@ -699,31 +728,14 @@ async function crSendMessage() {
             var uploadData = await uploadRes.json();
             imageUrl = uploadData.image_url || '';
         } catch(e) {
+            // Mark as failed
+            var idx = _crMessages.findIndex(function(m) { return m.id === tempId; });
+            if (idx !== -1) { _crMessages[idx]._failed = true; _crMessages[idx]._sending = false; }
+            _crRenderMessages();
             showToast('Không thể tải ảnh: ' + e.message, 3000);
             return;
         }
-        crCancelImage();
     }
-
-    input.value = '';
-    _crLastTypingSent = 0;
-
-    // Optimistic UI: show message immediately with "sending" status
-    var tempId = 'temp_' + Date.now();
-    var optimisticMsg = {
-        id: tempId,
-        user_id: _crCurrentUserId || _crGetCurrentUserId(),
-        username: (typeof _authUser !== 'undefined' && _authUser && _authUser.display_name) ? _authUser.display_name : 'Bạn',
-        avatar_url: '',
-        content: content,
-        image_url: imageUrl,
-        created_at: Date.now() / 1000,
-        pinned: false,
-        _sending: true
-    };
-    _crMessages.push(optimisticMsg);
-    _crRenderMessages();
-    _crScrollToBottom();
 
     try {
         var res = await fetchWithTimeout('/api/chat-rooms/' + _crCurrentRoom.id + '/messages', {
