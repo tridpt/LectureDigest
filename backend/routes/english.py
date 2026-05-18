@@ -649,7 +649,7 @@ async def get_mission_config(request: Request):
 
 @router.get("/stats")
 async def get_stats(request: Request):
-    """Get learning statistics."""
+    """Get detailed learning statistics."""
     user = get_current_user(request)
     if not user:
         raise HTTPException(status_code=401, detail="Vui lòng đăng nhập")
@@ -662,12 +662,58 @@ async def get_stats(request: Request):
         (user["id"], time.time())
     ).fetchone()["c"]
 
+    # Accuracy rate
+    total_correct = conn.execute("SELECT COALESCE(SUM(correct_count), 0) as s FROM english_vocab WHERE user_id = ?", (user["id"],)).fetchone()["s"]
+    total_wrong = conn.execute("SELECT COALESCE(SUM(wrong_count), 0) as s FROM english_vocab WHERE user_id = ?", (user["id"],)).fetchone()["s"]
+    total_attempts = total_correct + total_wrong
+    accuracy = round(total_correct / total_attempts * 100) if total_attempts > 0 else 0
+
+    # Mastery distribution
+    mastery_new = conn.execute("SELECT COUNT(*) as c FROM english_vocab WHERE user_id = ? AND (correct_count IS NULL OR correct_count = 0)", (user["id"],)).fetchone()["c"]
+    mastery_familiar = conn.execute("SELECT COUNT(*) as c FROM english_vocab WHERE user_id = ? AND correct_count >= 1 AND correct_count <= 2", (user["id"],)).fetchone()["c"]
+    mastery_good = conn.execute("SELECT COUNT(*) as c FROM english_vocab WHERE user_id = ? AND correct_count >= 3 AND correct_count <= 5", (user["id"],)).fetchone()["c"]
+    mastery_great = conn.execute("SELECT COUNT(*) as c FROM english_vocab WHERE user_id = ? AND correct_count >= 6 AND correct_count <= 9", (user["id"],)).fetchone()["c"]
+    mastery_master = conn.execute("SELECT COUNT(*) as c FROM english_vocab WHERE user_id = ? AND correct_count >= 10", (user["id"],)).fetchone()["c"]
+
+    # Words by topic (top 5)
+    topic_rows = conn.execute(
+        "SELECT topic, COUNT(*) as c FROM english_vocab WHERE user_id = ? AND topic != '' GROUP BY topic ORDER BY c DESC LIMIT 5",
+        (user["id"],)
+    ).fetchall()
+    topics_breakdown = [{"topic": r["topic"], "count": r["c"]} for r in topic_rows]
+
+    # Total study time
+    total_time_row = conn.execute("SELECT COALESCE(SUM(seconds), 0) as s FROM english_study_time WHERE user_id = ?", (user["id"],)).fetchone()
+    total_study_seconds = total_time_row["s"] if total_time_row else 0
+
+    # Words learned this week (last 7 days)
+    week_ago = time.time() - 7 * 86400
+    words_this_week = conn.execute(
+        "SELECT COUNT(*) as c FROM english_vocab WHERE user_id = ? AND learned_at > ?",
+        (user["id"], week_ago)
+    ).fetchone()["c"]
+
+    conn.close()
+
     return {
         "current_streak": streak["current_streak"] if streak else 0,
         "longest_streak": streak["longest_streak"] if streak else 0,
         "total_words": total_words,
         "due_count": due_count,
         "total_quizzes": streak["total_quizzes"] if streak else 0,
+        "accuracy": accuracy,
+        "total_correct": total_correct,
+        "total_wrong": total_wrong,
+        "mastery": {
+            "new": mastery_new,
+            "familiar": mastery_familiar,
+            "good": mastery_good,
+            "great": mastery_great,
+            "mastered": mastery_master,
+        },
+        "topics_breakdown": topics_breakdown,
+        "total_study_minutes": round(total_study_seconds / 60),
+        "words_this_week": words_this_week,
     }
 
 

@@ -61,7 +61,11 @@ async function engLoadStats() {
             el.innerHTML = '<div class="eng-stat"><span class="eng-stat-num">' + data.current_streak + '</span><span class="eng-stat-label">🔥 Streak</span></div>'
                 + '<div class="eng-stat"><span class="eng-stat-num">' + data.total_words + '</span><span class="eng-stat-label">📚 Từ đã học</span></div>'
                 + '<div class="eng-stat"><span class="eng-stat-num">' + data.due_count + '</span><span class="eng-stat-label">🔄 Cần ôn</span></div>'
-                + '<div class="eng-stat"><span class="eng-stat-num">' + data.total_quizzes + '</span><span class="eng-stat-label">🧠 Quiz</span></div>';
+                + '<div class="eng-stat"><span class="eng-stat-num">' + data.total_quizzes + '</span><span class="eng-stat-label">🧠 Quiz</span></div>'
+                + '<div class="eng-stat"><span class="eng-stat-num">' + data.accuracy + '%</span><span class="eng-stat-label">🎯 Chính xác</span></div>'
+                + '<div class="eng-stat"><span class="eng-stat-num">' + data.words_this_week + '</span><span class="eng-stat-label">📅 Tuần này</span></div>'
+                + '<div class="eng-stat"><span class="eng-stat-num">' + data.total_study_minutes + '</span><span class="eng-stat-label">⏱️ Phút học</span></div>'
+                + '<div class="eng-stat"><span class="eng-stat-num">' + (data.mastery ? data.mastery.mastered : 0) + '</span><span class="eng-stat-label">🏆 Thành thạo</span></div>';
         }
     } catch(e) {}
 }
