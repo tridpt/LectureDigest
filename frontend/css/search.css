@@ -283,3 +283,15 @@
     100% { background: rgba(139, 92, 246, 0.35); }
 }
 
+
+
+/* ── Light mode ── */
+.light-mode .gsearch-modal { background: #fff; border-color: rgba(139,92,246,0.15); box-shadow: 0 20px 60px rgba(0,0,0,0.15); }
+.light-mode .gsearch-input { background: #f8fafc; border-color: rgba(0,0,0,0.08); color: #1e293b; }
+.light-mode .gsearch-input::placeholder { color: #94a3b8; }
+.light-mode .gsearch-result { color: #1e293b; }
+.light-mode .gsearch-result:hover { background: rgba(139,92,246,0.04); }
+.light-mode .gsearch-result-title { color: #1e293b; }
+.light-mode .gsearch-result-sub { color: #64748b; }
+.light-mode .gsearch-empty { color: #64748b; }
+.light-mode .gsearch-footer { border-color: rgba(0,0,0,0.06); color: #94a3b8; }
