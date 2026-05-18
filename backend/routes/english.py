@@ -973,6 +973,47 @@ async def get_xp(request: Request):
     }
 
 
+@router.get("/leaderboard")
+async def english_leaderboard(request: Request):
+    """Get English learning leaderboard (top users by level + XP)."""
+    user = get_current_user(request)
+    if not user:
+        raise HTTPException(status_code=401, detail="Vui lòng đăng nhập")
+
+    conn = get_db()
+    rows = conn.execute("""
+        SELECT ex.user_id, ex.xp, ex.level, ex.total_xp,
+               u.display_name, u.avatar_color, u.avatar_url
+        FROM english_xp ex
+        JOIN users u ON ex.user_id = u.id
+        WHERE ex.level > 0
+        ORDER BY ex.level DESC, ex.xp DESC
+        LIMIT 20
+    """).fetchall()
+
+    entries = []
+    for r in rows:
+        uid = r["user_id"]
+        wc = conn.execute("SELECT COUNT(*) as c FROM english_vocab WHERE user_id = ?", (uid,)).fetchone()
+        sr = conn.execute("SELECT current_streak FROM english_streak WHERE user_id = ?", (uid,)).fetchone()
+        entries.append({
+            "user_id": uid, "display_name": r["display_name"],
+            "avatar_color": r["avatar_color"], "avatar_url": r["avatar_url"] or "",
+            "level": r["level"], "xp": r["xp"], "total_xp": r["total_xp"],
+            "total_words": wc["c"] if wc else 0,
+            "streak": sr["current_streak"] if sr else 0,
+        })
+
+    my_rank = None
+    for i, e in enumerate(entries):
+        if e["user_id"] == user["id"]:
+            my_rank = i + 1
+            break
+
+    conn.close()
+    return {"leaderboard": entries, "my_rank": my_rank}
+
+
 @router.post("/xp/award")
 async def award_xp(request: Request):
     """Award XP for completing activities. Body: {source, score, total}"""

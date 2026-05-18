@@ -1757,3 +1757,60 @@ function engScrambleNext() {
     _engGameRound++;
     engScrambleRound(pool);
 }
+
+
+// ── English Leaderboard ──
+async function engShowLeaderboard() {
+    var headers = _engHeaders();
+    if (!headers) return;
+
+    var overlay = document.createElement('div');
+    overlay.className = 'eng-levelup-overlay';
+    overlay.onclick = function(e) { if (e.target === overlay) overlay.remove(); };
+    overlay.innerHTML = '<div class="eng-levelup-modal" style="max-width:420px;text-align:left;max-height:80vh;overflow-y:auto">'
+        + '<h3 style="text-align:center;margin:0 0 16px;color:var(--text-primary,#f1f5f9)">🏆 Bảng xếp hạng tiếng Anh</h3>'
+        + '<div id="engLbContent" style="text-align:center;color:var(--text-secondary,#94a3b8);font-size:13px">Đang tải...</div>'
+        + '</div>';
+    document.body.appendChild(overlay);
+
+    try {
+        var res = await fetchWithTimeout('/api/english/leaderboard', { headers: headers }, 10000);
+        if (!res.ok) throw new Error('Failed');
+        var data = await res.json();
+        var entries = data.leaderboard || [];
+        var myRank = data.my_rank;
+
+        var contentEl = overlay.querySelector('#engLbContent');
+        if (entries.length === 0) {
+            contentEl.innerHTML = '<p>Chưa có ai trên bảng xếp hạng</p>';
+            return;
+        }
+
+        var html = '<div class="eng-lb-list">';
+        entries.forEach(function(e, i) {
+            var rank = i + 1;
+            var medal = rank === 1 ? '🥇' : rank === 2 ? '🥈' : rank === 3 ? '🥉' : rank + '.';
+            var isMe = myRank === rank;
+            var initial = (e.display_name || '?').charAt(0).toUpperCase();
+            var avatarHtml = e.avatar_url
+                ? '<img src="' + e.avatar_url + '" class="eng-lb-avatar-img">'
+                : '<div class="eng-lb-avatar" style="background:' + (e.avatar_color || '#8b5cf6') + '">' + initial + '</div>';
+
+            html += '<div class="eng-lb-row' + (isMe ? ' eng-lb-me' : '') + '">'
+                + '<span class="eng-lb-rank">' + medal + '</span>'
+                + avatarHtml
+                + '<div class="eng-lb-info">'
+                + '<div class="eng-lb-name">' + _engEsc(e.display_name) + '</div>'
+                + '<div class="eng-lb-meta">Lv.' + e.level + ' · ' + e.total_words + ' từ · 🔥' + e.streak + '</div>'
+                + '</div>'
+                + '<div class="eng-lb-xp">Lv.' + e.level + '</div>'
+                + '</div>';
+        });
+        html += '</div>';
+        if (myRank) html += '<div style="text-align:center;margin-top:12px;font-size:12px;color:#a78bfa">Bạn đang ở vị trí #' + myRank + '</div>';
+        contentEl.innerHTML = html;
+    } catch(e) {
+        var contentEl = overlay.querySelector('#engLbContent');
+        if (contentEl) contentEl.innerHTML = '<p style="color:#f87171">Không thể tải bảng xếp hạng</p>';
+    }
+}
