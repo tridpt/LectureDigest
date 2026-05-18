@@ -368,7 +368,12 @@ function _srRenderVideos() {
 
 async function srRemoveVideo(videoId) {
     if (!_srCurrentRoom) return;
-    if (!confirm('Xóa video này khỏi phòng?')) return;
+    if (typeof _crConfirmModal === 'function') {
+        var result = await _crConfirmModal('🗑️ Xóa video', 'Xóa video này khỏi phòng?', [
+            { label: 'Hủy' }, { label: 'Xóa', danger: true }
+        ]);
+        if (result !== '1') return;
+    }
 
     var res = await _srFetch('/api/rooms/' + _srCurrentRoom.id + '/videos/' + videoId, { method: 'DELETE' });
     if (res && res.ok) {
@@ -663,7 +668,12 @@ function _srRenderMembers() {
 
 async function srKickMember(userId, name) {
     if (!_srCurrentRoom) return;
-    if (!confirm('Kick "' + name + '" khỏi phòng?')) return;
+    if (typeof _crConfirmModal === 'function') {
+        var result = await _crConfirmModal('🚪 Kick thành viên', 'Kick "' + name + '" khỏi phòng?', [
+            { label: 'Hủy' }, { label: 'Kick', danger: true }
+        ]);
+        if (result !== '1') return;
+    }
 
     var res = await _srFetch('/api/rooms/' + _srCurrentRoom.id + '/kick/' + userId, { method: 'POST' });
     if (res && res.ok) {
