@@ -46,6 +46,15 @@ const STATIC_ASSETS = [
   '/css/pwa-install.css',
   '/css/utilities.css',
   '/css/mobile.css',
+  '/css/study-rooms.css',
+  '/css/chat-rooms.css',
+  '/css/english.css',
+  '/css/notifications.css',
+  '/css/study-plan.css',
+  '/css/analytics.css',
+  '/css/offline.css',
+  '/css/folders.css',
+  '/css/shortcuts-help.css',
   '/js/core.js',
   '/js/auth.js',
   '/js/youtube.js',
@@ -83,9 +92,11 @@ const STATIC_ASSETS = [
   '/js/pwa-install.js',
   '/js/offline-indicator.js',
   '/js/shortcuts-help.js',
-  '/css/offline.css',
-  '/css/folders.css',
-  '/css/shortcuts-help.css',
+  '/js/study-rooms.js',
+  '/js/chat-rooms.js',
+  '/js/english.js',
+  '/js/notifications.js',
+  '/js/study-plan.js',
   '/dashboard.js',
   '/concept-explainer.js',
   '/manifest.json',
@@ -123,11 +134,11 @@ self.addEventListener('fetch', event => {
   // Skip non-GET
   if (event.request.method !== 'GET') return;
 
-  // API calls — network only (don't cache)
+  // API calls — network only, return offline JSON if failed
   if (url.pathname.startsWith('/api/')) {
     event.respondWith(
       fetch(event.request).catch(() =>
-        new Response(JSON.stringify({ error: 'Offline' }), {
+        new Response(JSON.stringify({ error: 'Offline', detail: 'Không có kết nối mạng' }), {
           status: 503,
           headers: { 'Content-Type': 'application/json' }
         })
@@ -136,7 +147,24 @@ self.addEventListener('fetch', event => {
     return;
   }
 
-  // External resources (fonts, YouTube) — network with cache fallback
+  // Google Fonts — cache with stale-while-revalidate
+  if (url.hostname.includes('fonts.googleapis.com') || url.hostname.includes('fonts.gstatic.com')) {
+    event.respondWith(
+      caches.match(event.request).then(cached => {
+        const fetchPromise = fetch(event.request).then(response => {
+          if (response.ok) {
+            const clone = response.clone();
+            caches.open(CACHE_NAME).then(cache => cache.put(event.request, clone));
+          }
+          return response;
+        }).catch(() => cached);
+        return cached || fetchPromise;
+      })
+    );
+    return;
+  }
+
+  // External resources — network with cache fallback
   if (url.origin !== location.origin) {
     event.respondWith(
       caches.match(event.request).then(cached => {
@@ -153,11 +181,11 @@ self.addEventListener('fetch', event => {
     return;
   }
 
-  // Static assets — cache-first, network fallback
+  // Static assets — cache-first, network fallback (stale-while-revalidate)
   event.respondWith(
     caches.match(event.request).then(cached => {
       if (cached) {
-        // Update cache in background (stale-while-revalidate)
+        // Update cache in background
         fetch(event.request).then(response => {
           if (response.ok) {
             caches.open(CACHE_NAME).then(cache => cache.put(event.request, response));
