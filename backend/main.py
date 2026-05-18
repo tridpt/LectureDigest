@@ -176,6 +176,42 @@ async def global_exception_handler(request, exc):
     )
 
 
+# ── Rate Limiting Middleware (in-memory, per IP) ─────────────────────────
+from collections import defaultdict
+
+_rate_limit_store = defaultdict(list)  # {ip: [timestamps]}
+_RATE_LIMIT_MAX = 60  # max requests per window
+_RATE_LIMIT_WINDOW = 60  # window in seconds
+
+class RateLimitMiddleware(BaseHTTPMiddleware):
+    async def dispatch(self, request: Request, call_next):
+        # Only rate-limit API calls
+        if not request.url.path.startswith("/api/"):
+            return await call_next(request)
+
+        # Skip health check
+        if request.url.path == "/health":
+            return await call_next(request)
+
+        ip = request.client.host if request.client else "unknown"
+        now = time.time()
+
+        # Clean old entries
+        _rate_limit_store[ip] = [t for t in _rate_limit_store[ip] if now - t < _RATE_LIMIT_WINDOW]
+
+        if len(_rate_limit_store[ip]) >= _RATE_LIMIT_MAX:
+            return JSONResponse(
+                status_code=429,
+                content={"detail": "Quá nhiều yêu cầu. Vui lòng thử lại sau."},
+                headers={"Retry-After": str(_RATE_LIMIT_WINDOW)}
+            )
+
+        _rate_limit_store[ip].append(now)
+        return await call_next(request)
+
+app.add_middleware(RateLimitMiddleware)
+
+
 # ── Security Headers Middleware ──────────────────────────
 class SecurityHeadersMiddleware(BaseHTTPMiddleware):
     """
