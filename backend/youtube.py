@@ -314,6 +314,64 @@ def get_transcript(video_id: str, language: str = "en") -> list:
     )
 
 
+def get_transcript_with_gemini_fallback(video_id: str, language: str = "en") -> dict:
+    """Try to get transcript normally. If all methods fail, use Gemini to analyze video directly.
+    Returns: {"transcript": list, "gemini_direct": bool}
+    """
+    try:
+        transcript = get_transcript(video_id, language)
+        return {"transcript": transcript, "gemini_direct": False}
+    except Exception:
+        pass
+
+    # All transcript methods failed — try Gemini direct video analysis
+    logger.info("All transcript methods failed for %s, trying Gemini direct analysis...", video_id)
+    try:
+        from gemini_client import call_gemini
+        import os
+        if not os.getenv("GEMINI_API_KEY"):
+            raise ValueError("GEMINI_API_KEY not configured")
+
+        url = f"https://www.youtube.com/watch?v={video_id}"
+        prompt = f"""Analyze this YouTube video and provide a detailed transcript/content summary.
+Video URL: {url}
+
+Please provide the content in this JSON format (return ONLY valid JSON, no markdown fences):
+[
+  {{"text": "content of what is said/shown at this point", "start": 0}},
+  {{"text": "next segment of content", "start": 30}},
+  ...
+]
+
+Rules:
+- Break the video content into segments of roughly 20-40 seconds each
+- Include all key information, explanations, and important details
+- The "start" field should be approximate timestamps in seconds
+- Provide at least 15-30 segments for a typical video
+- Language: provide content in the original language of the video
+- If you cannot access the video, return an empty array []"""
+
+        import re as _re
+        text = call_gemini(prompt)
+        text = text.strip()
+        if text.startswith('```'):
+            text = _re.sub(r'^```(?:json)?\s*\n?', '', text)
+            text = _re.sub(r'\n?\s*```$', '', text)
+
+        import json as _json
+        segments = _json.loads(text)
+        if segments and len(segments) > 0:
+            logger.info("Gemini direct analysis: got %d segments for %s", len(segments), video_id)
+            return {"transcript": segments, "gemini_direct": True}
+    except Exception as e:
+        logger.warning("Gemini direct analysis failed: %s", e)
+
+    raise HTTPException(
+        status_code=404,
+        detail="Could not fetch transcript and Gemini fallback also failed. Try another video.",
+    )
+
+
 def extract_playlist_id(url: str) -> str:
     """Extract playlist ID from a YouTube URL containing list= parameter."""
     match = re.search(r'[?&]list=([a-zA-Z0-9_-]+)', url)

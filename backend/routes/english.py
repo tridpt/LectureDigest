@@ -24,68 +24,86 @@ logger = logging.getLogger("english")
 # ═══════════════════════════════════════════════════════
 
 def _init_english_tables():
+    from database import USE_POSTGRES
     conn = get_db()
-    conn.executescript("""
-        CREATE TABLE IF NOT EXISTS english_vocab (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            user_id INTEGER NOT NULL,
-            word TEXT NOT NULL,
-            meaning TEXT DEFAULT '',
-            example TEXT DEFAULT '',
-            phonetic TEXT DEFAULT '',
-            part_of_speech TEXT DEFAULT '',
-            topic TEXT DEFAULT '',
-            level TEXT DEFAULT 'intermediate',
-            learned_at REAL NOT NULL,
-            next_review REAL DEFAULT 0,
-            ease_factor REAL DEFAULT 2.5,
-            interval INTEGER DEFAULT 0,
-            repetitions INTEGER DEFAULT 0,
-            correct_count INTEGER DEFAULT 0,
-            wrong_count INTEGER DEFAULT 0
-        );
-        CREATE INDEX IF NOT EXISTS idx_ev_user ON english_vocab(user_id);
-        CREATE INDEX IF NOT EXISTS idx_ev_review ON english_vocab(user_id, next_review);
-
-        CREATE TABLE IF NOT EXISTS english_streak (
-            user_id INTEGER PRIMARY KEY,
-            current_streak INTEGER DEFAULT 0,
-            longest_streak INTEGER DEFAULT 0,
-            last_study_date TEXT DEFAULT '',
-            total_words INTEGER DEFAULT 0,
-            total_quizzes INTEGER DEFAULT 0
-        );
-
-        CREATE TABLE IF NOT EXISTS english_xp (
-            user_id INTEGER PRIMARY KEY,
-            xp INTEGER DEFAULT 0,
-            level INTEGER DEFAULT 1,
-            total_xp INTEGER DEFAULT 0
-        );
-
-        CREATE TABLE IF NOT EXISTS english_xp_log (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            user_id INTEGER NOT NULL,
-            xp_gained INTEGER NOT NULL,
-            source TEXT DEFAULT '',
-            created_at REAL NOT NULL
-        );
-        CREATE INDEX IF NOT EXISTS idx_exl_user ON english_xp_log(user_id, created_at);
-
-        CREATE TABLE IF NOT EXISTS english_daily_missions (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            user_id INTEGER NOT NULL,
-            date TEXT NOT NULL,
-            mission_key TEXT NOT NULL,
-            target INTEGER DEFAULT 1,
-            progress INTEGER DEFAULT 0,
-            completed INTEGER DEFAULT 0,
-            xp_reward INTEGER DEFAULT 10,
-            claimed INTEGER DEFAULT 0
-        );
-        CREATE INDEX IF NOT EXISTS idx_edm_user_date ON english_daily_missions(user_id, date);
-    """)
-    conn.commit()
+    if USE_POSTGRES:
+        tables = [
+            """CREATE TABLE IF NOT EXISTS english_vocab (
+                id SERIAL PRIMARY KEY, user_id INTEGER NOT NULL, word TEXT NOT NULL,
+                meaning TEXT DEFAULT '', example TEXT DEFAULT '', phonetic TEXT DEFAULT '',
+                part_of_speech TEXT DEFAULT '', topic TEXT DEFAULT '',
+                level TEXT DEFAULT 'intermediate', learned_at DOUBLE PRECISION NOT NULL,
+                next_review DOUBLE PRECISION DEFAULT 0, ease_factor DOUBLE PRECISION DEFAULT 2.5,
+                interval INTEGER DEFAULT 0, repetitions INTEGER DEFAULT 0,
+                correct_count INTEGER DEFAULT 0, wrong_count INTEGER DEFAULT 0
+            )""",
+            "CREATE INDEX IF NOT EXISTS idx_ev_user ON english_vocab(user_id)",
+            "CREATE INDEX IF NOT EXISTS idx_ev_review ON english_vocab(user_id, next_review)",
+            """CREATE TABLE IF NOT EXISTS english_streak (
+                user_id INTEGER PRIMARY KEY, current_streak INTEGER DEFAULT 0,
+                longest_streak INTEGER DEFAULT 0, last_study_date TEXT DEFAULT '',
+                total_words INTEGER DEFAULT 0, total_quizzes INTEGER DEFAULT 0
+            )""",
+            """CREATE TABLE IF NOT EXISTS english_xp (
+                user_id INTEGER PRIMARY KEY, xp INTEGER DEFAULT 0,
+                level INTEGER DEFAULT 1, total_xp INTEGER DEFAULT 0
+            )""",
+            """CREATE TABLE IF NOT EXISTS english_xp_log (
+                id SERIAL PRIMARY KEY, user_id INTEGER NOT NULL,
+                xp_gained INTEGER NOT NULL, source TEXT DEFAULT '',
+                created_at DOUBLE PRECISION NOT NULL
+            )""",
+            "CREATE INDEX IF NOT EXISTS idx_exl_user ON english_xp_log(user_id, created_at)",
+            """CREATE TABLE IF NOT EXISTS english_daily_missions (
+                id SERIAL PRIMARY KEY, user_id INTEGER NOT NULL, date TEXT NOT NULL,
+                mission_key TEXT NOT NULL, target INTEGER DEFAULT 1,
+                progress INTEGER DEFAULT 0, completed INTEGER DEFAULT 0,
+                xp_reward INTEGER DEFAULT 10, claimed INTEGER DEFAULT 0
+            )""",
+            "CREATE INDEX IF NOT EXISTS idx_edm_user_date ON english_daily_missions(user_id, date)",
+        ]
+        for sql in tables:
+            try:
+                conn.execute(sql, ())
+            except Exception as e:
+                logger.warning(f"English table: {e}")
+    else:
+        conn.executescript("""
+            CREATE TABLE IF NOT EXISTS english_vocab (
+                id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER NOT NULL, word TEXT NOT NULL,
+                meaning TEXT DEFAULT '', example TEXT DEFAULT '', phonetic TEXT DEFAULT '',
+                part_of_speech TEXT DEFAULT '', topic TEXT DEFAULT '',
+                level TEXT DEFAULT 'intermediate', learned_at REAL NOT NULL,
+                next_review REAL DEFAULT 0, ease_factor REAL DEFAULT 2.5,
+                interval INTEGER DEFAULT 0, repetitions INTEGER DEFAULT 0,
+                correct_count INTEGER DEFAULT 0, wrong_count INTEGER DEFAULT 0
+            );
+            CREATE INDEX IF NOT EXISTS idx_ev_user ON english_vocab(user_id);
+            CREATE INDEX IF NOT EXISTS idx_ev_review ON english_vocab(user_id, next_review);
+            CREATE TABLE IF NOT EXISTS english_streak (
+                user_id INTEGER PRIMARY KEY, current_streak INTEGER DEFAULT 0,
+                longest_streak INTEGER DEFAULT 0, last_study_date TEXT DEFAULT '',
+                total_words INTEGER DEFAULT 0, total_quizzes INTEGER DEFAULT 0
+            );
+            CREATE TABLE IF NOT EXISTS english_xp (
+                user_id INTEGER PRIMARY KEY, xp INTEGER DEFAULT 0,
+                level INTEGER DEFAULT 1, total_xp INTEGER DEFAULT 0
+            );
+            CREATE TABLE IF NOT EXISTS english_xp_log (
+                id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER NOT NULL,
+                xp_gained INTEGER NOT NULL, source TEXT DEFAULT '', created_at REAL NOT NULL
+            );
+            CREATE INDEX IF NOT EXISTS idx_exl_user ON english_xp_log(user_id, created_at);
+            CREATE TABLE IF NOT EXISTS english_daily_missions (
+                id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER NOT NULL, date TEXT NOT NULL,
+                mission_key TEXT NOT NULL, target INTEGER DEFAULT 1,
+                progress INTEGER DEFAULT 0, completed INTEGER DEFAULT 0,
+                xp_reward INTEGER DEFAULT 10, claimed INTEGER DEFAULT 0
+            );
+            CREATE INDEX IF NOT EXISTS idx_edm_user_date ON english_daily_missions(user_id, date);
+        """)
+        conn.commit()
+    conn.close()
 
 try:
     _init_english_tables()
@@ -111,27 +129,41 @@ except:
 
 # Migration: study time and goal tables
 try:
+    from database import USE_POSTGRES as _USE_PG
     conn = get_db()
-    conn.executescript("""
-        CREATE TABLE IF NOT EXISTS english_study_time (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            user_id INTEGER NOT NULL,
-            date TEXT NOT NULL,
-            seconds INTEGER DEFAULT 0
-        );
-        CREATE INDEX IF NOT EXISTS idx_est_user_date ON english_study_time(user_id, date);
-        CREATE TABLE IF NOT EXISTS english_study_goal (
-            user_id INTEGER PRIMARY KEY,
-            goal_minutes INTEGER DEFAULT 0
-        );
-        CREATE TABLE IF NOT EXISTS english_mission_config (
-            user_id INTEGER NOT NULL,
-            mission_key TEXT NOT NULL,
-            target INTEGER DEFAULT 1,
-            PRIMARY KEY (user_id, mission_key)
-        );
-    """)
-    conn.commit()
+    if _USE_PG:
+        for sql in [
+            "CREATE TABLE IF NOT EXISTS english_study_time (id SERIAL PRIMARY KEY, user_id INTEGER NOT NULL, date TEXT NOT NULL, seconds INTEGER DEFAULT 0)",
+            "CREATE INDEX IF NOT EXISTS idx_est_user_date ON english_study_time(user_id, date)",
+            "CREATE TABLE IF NOT EXISTS english_study_goal (user_id INTEGER PRIMARY KEY, goal_minutes INTEGER DEFAULT 0)",
+            "CREATE TABLE IF NOT EXISTS english_mission_config (user_id INTEGER NOT NULL, mission_key TEXT NOT NULL, target INTEGER DEFAULT 1, PRIMARY KEY (user_id, mission_key))",
+        ]:
+            try:
+                conn.execute(sql, ())
+            except:
+                pass
+    else:
+        conn.executescript("""
+            CREATE TABLE IF NOT EXISTS english_study_time (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                user_id INTEGER NOT NULL,
+                date TEXT NOT NULL,
+                seconds INTEGER DEFAULT 0
+            );
+            CREATE INDEX IF NOT EXISTS idx_est_user_date ON english_study_time(user_id, date);
+            CREATE TABLE IF NOT EXISTS english_study_goal (
+                user_id INTEGER PRIMARY KEY,
+                goal_minutes INTEGER DEFAULT 0
+            );
+            CREATE TABLE IF NOT EXISTS english_mission_config (
+                user_id INTEGER NOT NULL,
+                mission_key TEXT NOT NULL,
+                target INTEGER DEFAULT 1,
+                PRIMARY KEY (user_id, mission_key)
+            );
+        """)
+        conn.commit()
+    conn.close()
 except:
     pass
 

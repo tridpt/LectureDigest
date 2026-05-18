@@ -21,21 +21,36 @@ logger = logging.getLogger("notifications")
 # ═══════════════════════════════════════════════════════
 
 def _init_notifications_table():
+    from database import USE_POSTGRES
     conn = get_db()
-    conn.executescript("""
-        CREATE TABLE IF NOT EXISTS notifications (
-            id         INTEGER PRIMARY KEY AUTOINCREMENT,
-            user_id    INTEGER NOT NULL,
-            type       TEXT NOT NULL,
-            title      TEXT NOT NULL,
-            message    TEXT DEFAULT '',
-            link       TEXT DEFAULT '',
-            is_read    INTEGER DEFAULT 0,
-            created_at INTEGER NOT NULL
-        );
-        CREATE INDEX IF NOT EXISTS idx_notif_user ON notifications(user_id, is_read, created_at DESC);
-    """)
-    conn.commit()
+    if USE_POSTGRES:
+        try:
+            conn.execute("""CREATE TABLE IF NOT EXISTS notifications (
+                id SERIAL PRIMARY KEY, user_id INTEGER NOT NULL, type TEXT NOT NULL,
+                title TEXT NOT NULL, message TEXT DEFAULT '', link TEXT DEFAULT '',
+                is_read INTEGER DEFAULT 0, created_at BIGINT NOT NULL
+            )""", ())
+        except Exception as e:
+            logger.warning(f"Notifications table: {e}")
+        try:
+            conn.execute("CREATE INDEX IF NOT EXISTS idx_notif_user ON notifications(user_id, is_read, created_at DESC)", ())
+        except:
+            pass
+    else:
+        conn.executescript("""
+            CREATE TABLE IF NOT EXISTS notifications (
+                id         INTEGER PRIMARY KEY AUTOINCREMENT,
+                user_id    INTEGER NOT NULL,
+                type       TEXT NOT NULL,
+                title      TEXT NOT NULL,
+                message    TEXT DEFAULT '',
+                link       TEXT DEFAULT '',
+                is_read    INTEGER DEFAULT 0,
+                created_at INTEGER NOT NULL
+            );
+            CREATE INDEX IF NOT EXISTS idx_notif_user ON notifications(user_id, is_read, created_at DESC);
+        """)
+        conn.commit()
     conn.close()
 
 _init_notifications_table()

@@ -14,7 +14,7 @@ from fastapi import APIRouter, HTTPException, UploadFile, File, Form, Request, D
 from pydantic import BaseModel
 
 from gemini_client import get_genai_client, call_gemini, call_gemini_multi, PRIMARY_MODEL
-from youtube import extract_video_id, get_video_info, get_transcript, format_seconds
+from youtube import extract_video_id, get_video_info, get_transcript, get_transcript_with_gemini_fallback, format_seconds
 from database import db_check_rate_limit
 
 router = APIRouter(prefix="/api", tags=["analyze"])
@@ -364,7 +364,10 @@ async def analyze_video(request: VideoRequest):
         logger.info("Using client-provided transcript (%d segments)", len(request.transcript))
         transcript_data = request.transcript
     else:
-        transcript_data = get_transcript(video_id, request.language)
+        result = get_transcript_with_gemini_fallback(video_id, request.language)
+        transcript_data = result["transcript"]
+        if result.get("gemini_direct"):
+            logger.info("Using Gemini direct analysis for %s", video_id)
 
     # 3. Format and truncate transcript
     full_transcript = _format_transcript_lines(transcript_data)
