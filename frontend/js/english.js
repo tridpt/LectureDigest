@@ -73,7 +73,60 @@ async function engLoadStats() {
                 + '<div class="eng-stat"><span class="eng-stat-num">' + data.total_study_minutes + '</span><span class="eng-stat-label">⏱️ Phút học</span></div>'
                 + '<div class="eng-stat"><span class="eng-stat-num">' + (data.mastery ? data.mastery.mastered : 0) + '</span><span class="eng-stat-label">🏆 Thành thạo</span></div>';
         }
+        // Render charts
+        if (data.mastery && data.total_words > 0) {
+            engRenderCharts(data);
+        }
     } catch(e) {}
+}
+
+// ── Charts ──
+function engRenderCharts(data) {
+    var chartsEl = document.getElementById('engCharts');
+    if (!chartsEl) return;
+    chartsEl.style.display = '';
+
+    // Mastery donut chart (CSS conic-gradient)
+    var m = data.mastery;
+    var total = data.total_words || 1;
+    var segments = [
+        { label: 'Mới', count: m.new, color: '#94a3b8' },
+        { label: 'Quen', count: m.familiar, color: '#a78bfa' },
+        { label: 'Khá', count: m.good, color: '#60a5fa' },
+        { label: 'Giỏi', count: m.great, color: '#10b981' },
+        { label: 'Thành thạo', count: m.mastered, color: '#fbbf24' },
+    ];
+
+    var gradientParts = [];
+    var cumPct = 0;
+    segments.forEach(function(s) {
+        var pct = (s.count / total) * 100;
+        gradientParts.push(s.color + ' ' + cumPct + '% ' + (cumPct + pct) + '%');
+        cumPct += pct;
+    });
+
+    var donutEl = document.getElementById('engMasteryDonut');
+    if (donutEl) {
+        donutEl.innerHTML = '<div class="eng-donut" style="background:conic-gradient(' + gradientParts.join(',') + ')"></div>'
+            + '<div class="eng-donut-legend">' + segments.map(function(s) {
+                return '<div class="eng-legend-item"><span class="eng-legend-dot" style="background:' + s.color + '"></span>' + s.label + ' <strong>' + s.count + '</strong></div>';
+            }).join('') + '</div>';
+    }
+
+    // Topic bars
+    var barsEl = document.getElementById('engTopicBars');
+    if (barsEl && data.topics_breakdown && data.topics_breakdown.length > 0) {
+        var maxCount = data.topics_breakdown[0].count;
+        barsEl.innerHTML = data.topics_breakdown.map(function(t) {
+            var pct = Math.round(t.count / maxCount * 100);
+            return '<div class="eng-bar-item">'
+                + '<div class="eng-bar-label">' + _engEsc(t.topic) + ' <span>' + t.count + '</span></div>'
+                + '<div class="eng-bar-track"><div class="eng-bar-fill" style="width:' + pct + '%"></div></div>'
+                + '</div>';
+        }).join('');
+    } else if (barsEl) {
+        barsEl.innerHTML = '<div style="text-align:center;color:var(--text-secondary,#94a3b8);font-size:12px;padding:16px">Chưa có dữ liệu chủ đề</div>';
+    }
 }
 
 // ── Study Timer ──
