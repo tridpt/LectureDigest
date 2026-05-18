@@ -1486,7 +1486,8 @@ _ALLOWED_TYPES = {"image/jpeg", "image/png", "image/gif", "image/webp"}
 
 @router.post("/upload-image")
 async def upload_chat_image(request: Request, file: UploadFile = File(...)):
-    """Upload an image for chat. Returns the URL to use in messages."""
+    """Upload an image for chat. Returns base64 data URL (works on all deployments)."""
+    import base64
     user = get_current_user(request)
     if not user:
         raise HTTPException(status_code=401, detail="Not authenticated")
@@ -1495,25 +1496,16 @@ async def upload_chat_image(request: Request, file: UploadFile = File(...)):
     if file.content_type not in _ALLOWED_TYPES:
         raise HTTPException(status_code=400, detail="Chỉ hỗ trợ JPEG, PNG, GIF, WebP")
 
-    # Read and validate size
+    # Read and validate size (limit 2MB for base64 storage)
     data = await file.read()
-    if len(data) > _MAX_IMAGE_SIZE:
-        raise HTTPException(status_code=400, detail="Ảnh tối đa 5MB")
+    if len(data) > 2 * 1024 * 1024:
+        raise HTTPException(status_code=400, detail="Ảnh tối đa 2MB")
 
-    # Ensure upload directory exists
-    os.makedirs(_CHAT_UPLOAD_DIR, exist_ok=True)
+    # Convert to base64 data URL
+    ext = file.content_type.split('/')[-1]
+    if ext == 'jpeg':
+        ext = 'jpeg'
+    b64 = base64.b64encode(data).decode('utf-8')
+    image_url = f"data:image/{ext};base64,{b64}"
 
-    # Generate unique filename
-    ext = file.filename.rsplit('.', 1)[-1].lower() if '.' in file.filename else 'jpg'
-    if ext not in ('jpg', 'jpeg', 'png', 'gif', 'webp'):
-        ext = 'jpg'
-    filename = f"{secrets.token_hex(16)}.{ext}"
-    filepath = os.path.join(_CHAT_UPLOAD_DIR, filename)
-
-    # Save file
-    with open(filepath, 'wb') as f:
-        f.write(data)
-
-    # Return URL (served as static file)
-    image_url = f"/uploads/chat/{filename}"
     return {"ok": True, "image_url": image_url}
