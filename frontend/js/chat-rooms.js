@@ -116,7 +116,13 @@ function crLoadRooms() {
     var headers = _crAuthHeaders();
     if (!headers) return;
 
-    fetchWithTimeout('/api/chat-rooms', { headers: headers }, 10000)
+    // Show skeleton while loading
+    var listEl = document.getElementById('crRoomList');
+    if (listEl && _crRooms.length === 0) {
+        listEl.innerHTML = _crSkeletonRooms();
+    }
+
+    fetchWithTimeout('/api/chat-rooms', { headers: headers }, 15000)
         .then(function(r) { return r.json(); })
         .then(function(data) {
             _crRooms = data.rooms || [];
@@ -125,8 +131,19 @@ function crLoadRooms() {
         })
         .catch(function(err) {
             console.error('Failed to load chat rooms:', err);
-            showToast('Không thể tải phòng chat', 3000);
+            if (listEl) listEl.innerHTML = '<div style="text-align:center;padding:20px;color:var(--text-secondary,#94a3b8)">Không thể tải phòng chat</div>';
         });
+}
+
+function _crSkeletonRooms() {
+    var html = '';
+    for (var i = 0; i < 3; i++) {
+        html += '<div class="skeleton-card skeleton"><div style="display:flex;gap:12px;align-items:center">'
+            + '<div class="skeleton skeleton-circle" style="width:40px;height:40px"></div>'
+            + '<div style="flex:1"><div class="skeleton skeleton-text medium"></div><div class="skeleton skeleton-text short"></div></div>'
+            + '</div></div>';
+    }
+    return html;
 }
 
 function _crUpdateHeaderBadge(totalUnread) {

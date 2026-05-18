@@ -52,6 +52,12 @@ function _engHeaders() {
 async function engLoadStats() {
     var headers = _engHeaders();
     if (!headers) return;
+    // Show skeleton while loading
+    var el = document.getElementById('engStats');
+    if (el && !el.querySelector('.eng-stat')) {
+        el.innerHTML = '<div class="skeleton-card skeleton" style="height:60px"></div>'.repeat(4).split('</div><div').join('</div><div');
+        el.innerHTML = Array(4).fill('<div class="eng-stat skeleton" style="height:70px"></div>').join('');
+    }
     try {
         var res = await fetchWithTimeout('/api/english/stats', { headers: headers }, 10000);
         if (!res.ok) return;

@@ -91,7 +91,7 @@ async function _srFetch(url, opts) {
 async function srLoadRooms() {
     var listEl = document.getElementById('srRoomList');
     var emptyEl = document.getElementById('srEmpty');
-    if (listEl) listEl.innerHTML = '<div class="sr-loading">Đang tải...</div>';
+    if (listEl) listEl.innerHTML = '<div class="skeleton-card skeleton"><div style="display:flex;gap:12px;align-items:center"><div class="skeleton skeleton-circle" style="width:40px;height:40px"></div><div style="flex:1"><div class="skeleton skeleton-text medium"></div><div class="skeleton skeleton-text short"></div></div></div></div>'.repeat(2);
     if (emptyEl) emptyEl.classList.add('hidden');
 
     var res = await _srFetch('/api/rooms');

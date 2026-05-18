@@ -123,3 +123,20 @@ html.light-mode .toast-item {
 
 /* ── Back button: icon only ── */
 .bp-back-btn { padding: 8px 10px; }
+
+
+/* ════════════════════════════════════════════════
+   Skeleton Loading
+   ════════════════════════════════════════════════ */
+.skeleton { position: relative; overflow: hidden; background: rgba(255,255,255,0.04); border-radius: 8px; }
+.skeleton::after { content: ''; position: absolute; inset: 0; background: linear-gradient(90deg, transparent, rgba(255,255,255,0.04), transparent); animation: skeletonShimmer 1.5s infinite; }
+@keyframes skeletonShimmer { 0% { transform: translateX(-100%); } 100% { transform: translateX(100%); } }
+.skeleton-text { height: 14px; margin-bottom: 8px; border-radius: 4px; }
+.skeleton-text.short { width: 40%; }
+.skeleton-text.medium { width: 70%; }
+.skeleton-text.long { width: 90%; }
+.skeleton-circle { border-radius: 50%; }
+.skeleton-card { padding: 16px; border: 1px solid rgba(255,255,255,0.05); border-radius: 12px; margin-bottom: 10px; }
+.light-mode .skeleton { background: rgba(0,0,0,0.04); }
+.light-mode .skeleton::after { background: linear-gradient(90deg, transparent, rgba(0,0,0,0.03), transparent); }
+.light-mode .skeleton-card { border-color: rgba(0,0,0,0.05); }
