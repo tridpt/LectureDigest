@@ -552,7 +552,7 @@ async def delete_room(room_id: str, request: Request):
     room = _get_room(room_id)
     if not room:
         raise HTTPException(status_code=404, detail="Room not found")
-    if room["created_by"] != user["id"]:
+    if str(room["created_by"]) != str(user["id"]):
         raise HTTPException(status_code=403, detail="Only the creator can delete this room")
 
     conn = get_db()
