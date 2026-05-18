@@ -8,7 +8,6 @@
 .kg-page {
     position: fixed;
     inset: 0;
-    top: 64px;
     z-index: 9800;
     background: #070712;
     display: flex;
@@ -247,5 +246,5 @@ html.light-mode .kg-page {
 
 
 @media (max-width: 480px) {
-    .kg-page { top: 54px; }
+    .kg-page { }
 }
