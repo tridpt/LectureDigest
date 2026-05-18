@@ -178,6 +178,7 @@ async def global_exception_handler(request, exc):
 
 # ── Rate Limiting Middleware (in-memory, per IP) ─────────────────────────
 from collections import defaultdict
+import time as _rl_time
 
 _rate_limit_store = defaultdict(list)  # {ip: [timestamps]}
 _RATE_LIMIT_MAX = 60  # max requests per window
@@ -194,7 +195,7 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
             return await call_next(request)
 
         ip = request.client.host if request.client else "unknown"
-        now = time.time()
+        now = _rl_time.time()
 
         # Clean old entries
         _rate_limit_store[ip] = [t for t in _rate_limit_store[ip] if now - t < _RATE_LIMIT_WINDOW]
