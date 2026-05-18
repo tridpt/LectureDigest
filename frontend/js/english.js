@@ -13,6 +13,10 @@ var _engReviewWords = [];
 var _engQuiz = null;
 var _engQuizIdx = 0;
 var _engQuizScore = 0;
+var _engQuizTimer = null;
+var _engQuizTimeLeft = 0;
+var _engQuizTimerMode = false;
+var _engQuizSecsPerQ = 15;
 var _engXP = { xp: 0, level: 1, xp_needed: 100, total_xp: 0, progress_pct: 0, can_hint: false };
 
 var _engStudyTimerInterval = null;
@@ -815,6 +819,8 @@ async function engStartQuiz() {
         + '<div class="eng-opt-row"><label>Chủ đề:</label><select id="engQuizTopic" class="eng-select" style="flex:1"><option value="">Tất cả</option></select></div>'
         + '<div class="eng-opt-row"><label></label><label style="min-width:auto"><input type="checkbox" id="engQuizPickMode"> Chọn từ cụ thể</label></div>'
         + '<div id="engQuizPickWrap" style="display:none"></div>'
+        + '<div class="eng-opt-row"><label></label><label style="min-width:auto"><input type="checkbox" id="engQuizTimerMode"> ⏱️ Chế độ thi thử</label></div>'
+        + '<div class="eng-opt-row eng-timer-opt" id="engQuizTimerOpt" style="display:none"><label>Giây/câu:</label><input type="number" id="engQuizTimerSec" value="15" min="5" max="60" class="eng-count-input"></div>'
         + '<button class="eng-btn" style="width:100%;margin-top:12px" onclick="engDoQuiz()">▶️ Bắt đầu Quiz</button>'
         + '</div>';
     _engLoadTopicOptions('engQuizTopic');
@@ -830,12 +836,17 @@ async function engStartQuiz() {
             if (countInput) countInput.closest('.eng-opt-row').style.display = '';
         }
     });
+    document.getElementById('engQuizTimerMode').addEventListener('change', function() {
+        document.getElementById('engQuizTimerOpt').style.display = this.checked ? '' : 'none';
+    });
 }
 
 async function engDoQuiz() {
     var count = parseInt(document.getElementById('engQuizCount')?.value) || 5;
     var topic = document.getElementById('engQuizTopic')?.value || '';
     var pickMode = document.getElementById('engQuizPickMode')?.checked;
+    _engQuizTimerMode = document.getElementById('engQuizTimerMode')?.checked || false;
+    _engQuizSecsPerQ = parseInt(document.getElementById('engQuizTimerSec')?.value) || 15;
     var headers = _engHeaders();
     if (!headers) return;
 
@@ -881,11 +892,16 @@ async function engDoQuiz() {
 function engRenderQuizQ() {
     var el = document.getElementById('engQuizArea');
     if (!el) return;
+
+    // Clear timer
+    if (_engQuizTimer) { clearInterval(_engQuizTimer); _engQuizTimer = null; }
+
     if (_engQuizIdx >= _engQuiz.length) {
         var pct = Math.round(_engQuizScore / _engQuiz.length * 100);
         el.innerHTML = '<div class="eng-quiz-result">'
             + '<div class="eng-quiz-score">' + pct + '%</div>'
             + '<div>' + _engQuizScore + '/' + _engQuiz.length + ' đúng</div>'
+            + (_engQuizTimerMode ? '<div style="font-size:12px;color:var(--text-secondary,#94a3b8);margin:8px 0">⏱️ Chế độ thi thử · ' + _engQuizSecsPerQ + 's/câu</div>' : '')
             + '<button class="eng-btn" onclick="engShowTab(\'words\');engLoadStats()">Quay lại</button>'
             + '</div>';
         // Award XP for quiz completion
@@ -894,7 +910,9 @@ function engRenderQuizQ() {
     }
     var q = _engQuiz[_engQuizIdx];
     var posHtml = q.part_of_speech ? '<div class="eng-quiz-pos">' + _engEsc(q.part_of_speech) + '</div>' : '';
+    var timerHtml = _engQuizTimerMode ? '<div class="eng-quiz-timer" id="engQuizTimerDisplay">⏱️ ' + _engQuizSecsPerQ + 's</div>' : '';
     var html = '<div class="eng-quiz-card">'
+        + timerHtml
         + '<div class="eng-quiz-word">' + _engEsc(q.word) + '</div>'
         + posHtml
         + '<div class="eng-quiz-prompt">Nghĩa là gì?</div>'
@@ -904,6 +922,25 @@ function engRenderQuizQ() {
     });
     html += '</div><div class="eng-quiz-progress">Câu ' + (_engQuizIdx + 1) + '/' + _engQuiz.length + '</div></div>';
     el.innerHTML = html;
+
+    // Start timer if in exam mode
+    if (_engQuizTimerMode) {
+        _engQuizTimeLeft = _engQuizSecsPerQ;
+        _engQuizTimer = setInterval(function() {
+            _engQuizTimeLeft--;
+            var timerEl = document.getElementById('engQuizTimerDisplay');
+            if (timerEl) {
+                timerEl.textContent = '⏱️ ' + _engQuizTimeLeft + 's';
+                if (_engQuizTimeLeft <= 5) timerEl.classList.add('eng-quiz-timer-danger');
+            }
+            if (_engQuizTimeLeft <= 0) {
+                clearInterval(_engQuizTimer);
+                _engQuizTimer = null;
+                // Time's up — auto skip (wrong answer)
+                engAnswer(-1, _engQuiz[_engQuizIdx].correct_index);
+            }
+        }, 1000);
+    }
 }
 
 function engAnswer(selected, correct) {

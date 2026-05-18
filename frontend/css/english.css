@@ -519,3 +519,9 @@
     .eng-chart-row { grid-template-columns: 1fr; }
     .eng-donut-wrap { flex-direction: column; align-items: flex-start; }
 }
+
+
+/* Quiz Timer */
+.eng-quiz-timer { font-size: 16px; font-weight: 700; color: #a78bfa; text-align: center; margin-bottom: 12px; padding: 6px 14px; background: rgba(139,92,246,0.1); border-radius: 8px; display: inline-block; }
+.eng-quiz-timer-danger { color: #f87171 !important; background: rgba(248,113,113,0.1) !important; animation: engTimerPulse 0.5s infinite; }
+@keyframes engTimerPulse { 0%,100% { opacity: 1; } 50% { opacity: 0.5; } }
