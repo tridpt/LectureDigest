@@ -121,6 +121,29 @@ init_db()
 # Auto-backup database on startup (keeps last 7)
 db_create_backup()
 
+# ── Self-ping to keep Render free tier awake ──
+import asyncio
+import httpx as _httpx
+
+async def _keep_alive_ping():
+    """Ping own health endpoint every 10 minutes to prevent Render sleep."""
+    render_url = os.getenv("RENDER_EXTERNAL_URL", "").strip()
+    if not render_url:
+        return  # Only run on Render (not local)
+    await asyncio.sleep(60)  # Wait 1 min after startup
+    while True:
+        try:
+            async with _httpx.AsyncClient() as client:
+                await client.get(f"{render_url}/health", timeout=10)
+        except:
+            pass
+        await asyncio.sleep(600)  # Every 10 minutes
+
+@app.on_event("startup")
+async def _start_keep_alive():
+    if os.getenv("RENDER_EXTERNAL_URL"):
+        asyncio.create_task(_keep_alive_ping())
+
 # CORS: read allowed origins from env, default to localhost for development
 _allowed_origins = [
     o.strip() for o in os.getenv("ALLOWED_ORIGINS", "").split(",") if o.strip()
