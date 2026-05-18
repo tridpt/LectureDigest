@@ -587,14 +587,28 @@ async def get_messages(room_id: str, request: Request, limit: int = 50, before: 
         ).fetchall()
 
     messages = []
+    # Batch fetch user info for all unique user_ids (avoid N+1 queries)
+    user_ids = list(set(row["user_id"] for row in rows if str(row["user_id"]) != '__system__'))
+    user_info_cache = {}
+    for uid in user_ids:
+        u = conn.execute("SELECT display_name, avatar_url, avatar_color FROM users WHERE id = ?", (uid,)).fetchone()
+        if u:
+            user_info_cache[uid] = {"username": u["display_name"] or "User", "avatar_url": u["avatar_url"] or None, "avatar_color": u["avatar_color"] or "#8b5cf6"}
+        else:
+            user_info_cache[uid] = {"username": "Unknown", "avatar_url": None, "avatar_color": "#8b5cf6"}
+
     for row in rows:
-        user_info = _get_user_info(row["user_id"])
+        uid = row["user_id"]
+        if str(uid) == '__system__':
+            uinfo = {"username": "", "avatar_url": None, "avatar_color": "#8b5cf6"}
+        else:
+            uinfo = user_info_cache.get(uid, {"username": "Unknown", "avatar_url": None, "avatar_color": "#8b5cf6"})
         messages.append({
             "id": row["id"],
             "room_id": row["room_id"],
-            "user_id": row["user_id"],
-            "username": user_info["username"],
-            "avatar_url": user_info["avatar_url"],
+            "user_id": uid,
+            "username": uinfo["username"],
+            "avatar_url": uinfo["avatar_url"],
             "content": row["content"],
             "image_url": row["image_url"] if "image_url" in row.keys() else "",
             "pinned": bool(row["pinned"]) if "pinned" in row.keys() else False,
