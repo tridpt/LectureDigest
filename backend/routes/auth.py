@@ -327,6 +327,44 @@ async def update_profile(req: UpdateProfileRequest, request: Request):
         raise HTTPException(status_code=500, detail="Lỗi cập nhật hồ sơ")
 
 
+@router.post("/avatar-upload")
+async def upload_avatar(request: Request):
+    """Upload avatar image. Accepts multipart form with 'file' field."""
+    from fastapi import UploadFile, File
+    import base64
+
+    user = get_current_user(request)
+    if not user:
+        raise HTTPException(status_code=401, detail="Chưa đăng nhập")
+
+    # Parse multipart form
+    form = await request.form()
+    file = form.get("file")
+    if not file:
+        raise HTTPException(status_code=400, detail="Không có file")
+
+    # Validate
+    content_type = getattr(file, 'content_type', '') or ''
+    if not content_type.startswith('image/'):
+        raise HTTPException(status_code=400, detail="File phải là ảnh")
+
+    data = await file.read()
+    if len(data) > 2 * 1024 * 1024:  # 2MB max
+        raise HTTPException(status_code=400, detail="Ảnh tối đa 2MB")
+
+    # Save as base64 data URL (simple, no external storage needed)
+    ext = content_type.split('/')[-1]
+    if ext not in ('png', 'jpeg', 'jpg', 'gif', 'webp'):
+        ext = 'png'
+    b64 = base64.b64encode(data).decode('utf-8')
+    avatar_url = f"data:image/{ext};base64,{b64}"
+
+    # Update user
+    db_update_user(user["id"], avatar_url=avatar_url)
+
+    return {"ok": True, "avatar_url": avatar_url}
+
+
 @router.post("/google")
 async def google_login(req: GoogleAuthRequest):
     """Login/register via Google One Tap or Sign-In button."""

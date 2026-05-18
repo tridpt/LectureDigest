@@ -650,3 +650,13 @@
     .profile-tabs { flex-wrap: wrap; gap: 4px; }
     .profile-tab { font-size: 12px; padding: 6px 10px; }
 }
+
+
+/* Avatar Upload */
+.profile-avatar-upload { display: flex; align-items: center; gap: 14px; margin-bottom: 16px; }
+.profile-avatar-preview { width: 56px; height: 56px; border-radius: 50%; background: #8b5cf6; display: flex; align-items: center; justify-content: center; color: #fff; font-size: 22px; font-weight: 700; overflow: hidden; flex-shrink: 0; }
+.profile-avatar-actions { display: flex; flex-direction: column; gap: 4px; }
+.profile-upload-btn { display: inline-block; padding: 6px 14px; border-radius: 8px; background: rgba(139,92,246,0.1); border: 1px solid rgba(139,92,246,0.3); color: #a78bfa; font-size: 12px; font-weight: 600; cursor: pointer; transition: all 0.2s; }
+.profile-upload-btn:hover { background: rgba(139,92,246,0.2); }
+.profile-avatar-hint { font-size: 11px; color: var(--text-muted, #64748b); }
+.light-mode .profile-upload-btn { background: rgba(139,92,246,0.06); color: #7c3aed; }

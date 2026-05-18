@@ -26,8 +26,21 @@
                     </div>
                 </div>
 
+                <!-- Avatar Upload -->
+                <div class="profile-color-label">Ảnh đại diện</div>
+                <div class="profile-avatar-upload">
+                    <div class="profile-avatar-preview" id="profileAvatarPreview">
+                        <span id="profileAvatarInitial">?</span>
+                    </div>
+                    <div class="profile-avatar-actions">
+                        <label class="profile-upload-btn" for="profileAvatarInput">📷 Tải ảnh lên</label>
+                        <input type="file" id="profileAvatarInput" accept="image/*" style="display:none" onchange="profileUploadAvatar(this)">
+                        <span class="profile-avatar-hint">PNG, JPG, GIF · Tối đa 2MB</span>
+                    </div>
+                </div>
+
                 <!-- Avatar Color -->
-                <div class="profile-color-label">Màu avatar</div>
+                <div class="profile-color-label">Màu avatar (khi không có ảnh)</div>
                 <div class="profile-color-grid">
                     <div class="profile-color-option" data-color="#8b5cf6" style="background:#8b5cf6" role="button" aria-label="Chọn màu" onclick="selectProfileColor(this)"></div>
                     <div class="profile-color-option" data-color="#6366f1" style="background:#6366f1" role="button" aria-label="Chọn màu" onclick="selectProfileColor(this)"></div>

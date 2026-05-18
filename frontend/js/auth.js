@@ -542,6 +542,16 @@ function openProfileModal() {
     document.getElementById('profileCurrentPw').value = '';
     document.getElementById('profileNewPw').value = '';
 
+    // Show avatar preview
+    var preview = document.getElementById('profileAvatarPreview');
+    var initial = document.getElementById('profileAvatarInitial');
+    if (preview && _authUser.avatar_url) {
+        preview.innerHTML = '<img src="' + _authUser.avatar_url + '" alt="Avatar" style="width:100%;height:100%;object-fit:cover;border-radius:50%">';
+    } else if (preview && initial) {
+        preview.style.background = _authUser.avatar_color || '#8b5cf6';
+        initial.textContent = (_authUser.display_name || '?').charAt(0).toUpperCase();
+    }
+
     // Set active color
     document.querySelectorAll('.profile-color-option').forEach(function(el) {
         el.classList.toggle('active', el.dataset.color === _authUser.avatar_color);
@@ -576,6 +586,51 @@ function closeProfileModal() {
 function selectProfileColor(el) {
     document.querySelectorAll('.profile-color-option').forEach(function(o) { o.classList.remove('active'); });
     el.classList.add('active');
+}
+
+async function profileUploadAvatar(input) {
+    if (!input.files || !input.files[0]) return;
+    var file = input.files[0];
+    if (file.size > 2 * 1024 * 1024) {
+        showToast('Ảnh tối đa 2MB', 3000);
+        return;
+    }
+    if (!file.type.startsWith('image/')) {
+        showToast('File phải là ảnh', 3000);
+        return;
+    }
+
+    var token = localStorage.getItem('ld_auth_token');
+    if (!token) return;
+
+    var formData = new FormData();
+    formData.append('file', file);
+
+    showToast('Đang tải ảnh...', 2000);
+
+    try {
+        var res = await fetchWithTimeout(API_BASE + '/api/auth/avatar-upload', {
+            method: 'POST',
+            headers: { 'Authorization': 'Bearer ' + token },
+            body: formData
+        }, 15000);
+        var data = await res.json();
+        if (!res.ok) throw new Error(data.detail || 'Upload failed');
+
+        // Update local user
+        _authUser.avatar_url = data.avatar_url;
+        _authUpdateUI();
+
+        // Update preview
+        var preview = document.getElementById('profileAvatarPreview');
+        if (preview) {
+            preview.innerHTML = '<img src="' + data.avatar_url + '" alt="Avatar" style="width:100%;height:100%;object-fit:cover;border-radius:50%">';
+        }
+
+        showToast('✅ Đã cập nhật ảnh đại diện!', 2000);
+    } catch(e) {
+        showToast('❌ ' + e.message, 3000);
+    }
 }
 
 function selectAccentColor(el) {
