@@ -10,6 +10,18 @@
     font-size: 13px; color: var(--text-muted);
     border-top: 1px solid var(--border);
 }
+.footer-inner { max-width: 600px; margin: 0 auto; }
+.footer-brand { margin: 0 0 10px; font-size: 14px; font-weight: 600; color: var(--text-secondary, #94a3b8); }
+.footer-accent { color: #a78bfa; }
+.footer-links { display: flex; justify-content: center; gap: 16px; margin-bottom: 10px; flex-wrap: wrap; }
+.footer-link { display: inline-flex; align-items: center; gap: 5px; color: var(--text-secondary, #94a3b8); text-decoration: none; font-size: 12px; font-weight: 500; transition: color 0.2s; }
+.footer-link:hover { color: #a78bfa; }
+.footer-link svg { flex-shrink: 0; }
+.footer-copy { margin: 0; font-size: 11px; color: var(--text-muted, #64748b); }
+.light-mode .footer-brand { color: #475569; }
+.light-mode .footer-link { color: #64748b; }
+.light-mode .footer-link:hover { color: #7c3aed; }
+.light-mode .footer-copy { color: #94a3b8; }
 
 /* ═══════════════════════════════════════════════
    UTILITIES
