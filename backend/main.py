@@ -157,9 +157,23 @@ app.add_middleware(
     CORSMiddleware,
     allow_origins=_allowed_origins,
     allow_credentials=True,
-    allow_methods=["GET", "POST", "OPTIONS"],
+    allow_methods=["GET", "POST", "OPTIONS", "PUT", "DELETE"],
     allow_headers=["*"],
 )
+
+
+# ── Global Exception Handler ─────────────────────────────
+from fastapi.responses import JSONResponse
+
+@app.exception_handler(Exception)
+async def global_exception_handler(request, exc):
+    """Catch all unhandled exceptions and return JSON instead of plain text 500."""
+    import traceback
+    logger.error("Unhandled error: %s\n%s", str(exc), traceback.format_exc())
+    return JSONResponse(
+        status_code=500,
+        content={"detail": str(exc) if str(exc) else "Internal server error"}
+    )
 
 
 # ── Security Headers Middleware ──────────────────────────
