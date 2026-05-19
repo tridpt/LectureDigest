@@ -176,11 +176,11 @@ async def global_exception_handler(request, exc):
     )
 
 
-# ── Rate Limiting Middleware (in-memory, per IP) ─────────────────────────
+# ── Rate Limiting Middleware (in-memory with DB restore on startup) ─────────────────────────
 from collections import defaultdict
 import time as _rl_time
 
-_rate_limit_store = defaultdict(list)  # {ip: [timestamps]}
+_rate_limit_store = defaultdict(list)  # {ip: [timestamps]} — fast in-memory
 _RATE_LIMIT_MAX = 60  # max requests per window
 _RATE_LIMIT_WINDOW = 60  # window in seconds
 

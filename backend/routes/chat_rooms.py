@@ -123,8 +123,7 @@ except Exception as e:
 # ONLINE STATUS (in-memory)
 # ═══════════════════════════════════════════════════════
 
-_online_status = {}  # {room_id: {user_id: {"name": str, "ts": float}}}
-_online_hidden = set()  # set of user_ids who hide their online status
+_online_hidden = set()  # set of user_ids who hide their online status (loaded from DB on startup)
 
 
 # ═══════════════════════════════════════════════════════
@@ -674,10 +673,36 @@ async def search_messages(room_id: str, request: Request, q: str = '', limit: in
 
 
 # ═══════════════════════════════════════════════════════
-# TYPING INDICATOR (in-memory, ephemeral)
+# TYPING INDICATOR (in-memory, ephemeral — 5s TTL makes DB unnecessary)
 # ═══════════════════════════════════════════════════════
 
 _typing_status = {}  # {room_id: {user_id: {"name": str, "ts": float}}}
+
+# Online status (in-memory, ephemeral — 15s TTL)
+_online_status_mem = {}  # {room_id: {user_id: {"name": str, "ts": float}}}
+_online_hidden = set()  # set of user_ids who hide their online status
+
+
+def _load_online_hidden():
+    """Load hidden users from DB on startup."""
+    try:
+        from database import get_db
+        conn = get_db()
+        rows = conn.execute(
+            "SELECT data_key FROM user_kv_store WHERE data_key LIKE 'online_hidden:%'"
+        ).fetchall()
+        conn.close()
+        for row in rows:
+            uid = row["data_key"].replace("online_hidden:", "")
+            _online_hidden.add(uid)
+    except Exception:
+        pass
+
+# Defer loading to avoid DB lock during import
+try:
+    _load_online_hidden()
+except Exception:
+    pass
 
 
 @router.post("/{room_id}/typing")
@@ -712,7 +737,6 @@ async def get_typing(room_id: str, request: Request):
             expired.append(uid)
         elif uid != str(user["id"]):
             typers.append(info["name"])
-    # Clean expired
     for uid in expired:
         del room_typing[uid]
 
@@ -734,9 +758,9 @@ async def heartbeat(room_id: str, request: Request):
     if uid in _online_hidden:
         return {"ok": True}
 
-    if room_id not in _online_status:
-        _online_status[room_id] = {}
-    _online_status[room_id][uid] = {
+    if room_id not in _online_status_mem:
+        _online_status_mem[room_id] = {}
+    _online_status_mem[room_id][uid] = {
         "name": user.get("display_name", "User"),
         "ts": time.time()
     }
@@ -753,12 +777,11 @@ async def get_online(room_id: str, request: Request):
     uid = str(user["id"])
     is_hidden = uid in _online_hidden
 
-    # If user is hidden, they can't see who's online
     if is_hidden:
         return {"online": [], "online_ids": [], "count": 0, "my_hidden": True}
 
     now = time.time()
-    room_online = _online_status.get(room_id, {})
+    room_online = _online_status_mem.get(room_id, {})
     online = []
     online_ids = []
     expired = []
@@ -776,20 +799,34 @@ async def get_online(room_id: str, request: Request):
 
 @router.post("/toggle-online-visibility")
 async def toggle_online_visibility(request: Request):
-    """Toggle whether the user appears online or hidden."""
+    """Toggle whether the user appears online or hidden. Persisted to DB."""
     user = get_current_user(request)
     if not user:
         raise HTTPException(status_code=401, detail="Not authenticated")
 
     uid = str(user["id"])
+    conn = get_db()
     if uid in _online_hidden:
         _online_hidden.discard(uid)
+        # Remove from DB
+        conn.execute("DELETE FROM user_kv_store WHERE user_id = ? AND data_key = ?",
+                     (user["id"], f"online_hidden:{uid}"))
+        conn.commit()
+        conn.close()
         return {"ok": True, "hidden": False}
     else:
         _online_hidden.add(uid)
         # Remove from all rooms
-        for room_data in _online_status.values():
+        for room_data in _online_status_mem.values():
             room_data.pop(uid, None)
+        # Persist to DB
+        now = int(time.time() * 1000)
+        conn.execute(
+            "INSERT OR REPLACE INTO user_kv_store (user_id, data_key, data_value, updated_at) VALUES (?, ?, ?, ?)",
+            (user["id"], f"online_hidden:{uid}", "1", now)
+        )
+        conn.commit()
+        conn.close()
         return {"ok": True, "hidden": True}
 
 

@@ -22,8 +22,10 @@ def _isolate_db(tmp_path_factory):
     import database
     database.DB_PATH = test_db
     database.init_db()
+
+    # Import main to trigger all module-level inits with the test DB
+    import main  # noqa: F401
     yield
-    # cleanup happens automatically with tmp_path
 
 
 @pytest.fixture()
