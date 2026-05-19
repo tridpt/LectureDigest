@@ -1599,8 +1599,8 @@ _ALLOWED_TYPES = {"image/jpeg", "image/png", "image/gif", "image/webp"}
 
 @router.post("/upload-image")
 async def upload_chat_image(request: Request, file: UploadFile = File(...)):
-    """Upload an image for chat. Auto-compresses if too large. Returns base64 data URL."""
-    import base64
+    """Upload an image for chat. Compresses and saves to disk. Returns file URL."""
+    import secrets
     from io import BytesIO
     user = get_current_user(request)
     if not user:
@@ -1615,8 +1615,8 @@ async def upload_chat_image(request: Request, file: UploadFile = File(...)):
     if len(data) > 10 * 1024 * 1024:
         raise HTTPException(status_code=400, detail="Ảnh tối đa 10MB")
 
-    # Compress if > 1MB using Pillow (if available) or just limit
-    max_b64_size = 2 * 1024 * 1024  # 2MB after base64
+    # Compress using Pillow
+    ext = 'jpg'
     try:
         from PIL import Image
         img = Image.open(BytesIO(data))
@@ -1627,24 +1627,25 @@ async def upload_chat_image(request: Request, file: UploadFile = File(...)):
         max_dim = 1200
         if img.width > max_dim or img.height > max_dim:
             img.thumbnail((max_dim, max_dim), Image.LANCZOS)
-        # Compress to JPEG with decreasing quality until under limit
-        quality = 85
-        while quality >= 30:
-            buf = BytesIO()
-            img.save(buf, format='JPEG', quality=quality, optimize=True)
-            data = buf.getvalue()
-            if len(data) <= max_b64_size:
-                break
-            quality -= 15
-        ext = 'jpeg'
+        # Compress to JPEG
+        buf = BytesIO()
+        img.save(buf, format='JPEG', quality=80, optimize=True)
+        data = buf.getvalue()
+        ext = 'jpg'
     except ImportError:
-        # Pillow not installed — just check size
-        if len(data) > max_b64_size:
-            raise HTTPException(status_code=400, detail="Ảnh quá lớn. Vui lòng chọn ảnh nhỏ hơn 2MB")
-        ext = file.content_type.split('/')[-1]
-        if ext == 'jpeg': ext = 'jpeg'
+        # Pillow not installed — use original
+        ext_map = {'image/jpeg': 'jpg', 'image/png': 'png', 'image/gif': 'gif', 'image/webp': 'webp'}
+        ext = ext_map.get(file.content_type, 'jpg')
 
-    b64 = base64.b64encode(data).decode('utf-8')
-    image_url = f"data:image/{ext};base64,{b64}"
+    # Save to disk
+    os.makedirs(_CHAT_UPLOAD_DIR, exist_ok=True)
+    filename = f"{secrets.token_hex(12)}.{ext}"
+    filepath = os.path.join(_CHAT_UPLOAD_DIR, filename)
+    with open(filepath, 'wb') as f:
+        f.write(data)
 
+    # Return URL path (served by /uploads/ route in main.py)
+    image_url = f"/uploads/chat/{filename}"
+
+    logger.info("Chat image uploaded: %s (%d KB) by user %s", filename, len(data) // 1024, user["id"])
     return {"ok": True, "image_url": image_url}
