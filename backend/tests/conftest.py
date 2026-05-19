@@ -38,6 +38,11 @@ def client():
         conn.close()
     except Exception:
         pass
+
+    # Clear in-memory rate limiter
+    from main import _rate_limit_store
+    _rate_limit_store.clear()
+
     from main import app
     with TestClient(app) as c:
         yield c
@@ -46,12 +51,14 @@ def client():
 @pytest.fixture()
 def auth_headers(client):
     """Register a test user and return Authorization headers."""
+    import time
+    email = f"testuser_{int(time.time() * 1000000)}@test.com"
     resp = client.post("/api/auth/register", json={
-        "email": f"testuser_{id(client)}@test.com",
+        "email": email,
         "password": "testpass123",
         "display_name": "Test User",
     })
-    assert resp.status_code == 200
+    assert resp.status_code == 200, f"Register failed: {resp.text}"
     token = resp.json()["token"]
     return {"Authorization": f"Bearer {token}"}
 
@@ -59,13 +66,14 @@ def auth_headers(client):
 @pytest.fixture()
 def registered_user(client):
     """Register a user and return (user_dict, token, headers)."""
-    email = f"user_{id(client)}@test.com"
+    import time
+    email = f"user_{int(time.time() * 1000000)}@test.com"
     resp = client.post("/api/auth/register", json={
         "email": email,
         "password": "securepass123",
         "display_name": "Test User",
     })
-    assert resp.status_code == 200
+    assert resp.status_code == 200, f"Register failed: {resp.text}"
     data = resp.json()
     headers = {"Authorization": f"Bearer {data['token']}"}
     return data["user"], data["token"], headers
