@@ -74,6 +74,19 @@ def _init_rooms_tables():
                 conn.execute(sql, ())
             except Exception as e:
                 logger.warning(f"Study room table create: {e}")
+        # Migration: ensure timestamp columns are BIGINT (may have been INTEGER)
+        for alter_sql in [
+            "ALTER TABLE study_rooms ALTER COLUMN created_at TYPE BIGINT",
+            "ALTER TABLE study_rooms ALTER COLUMN updated_at TYPE BIGINT",
+            "ALTER TABLE room_members ALTER COLUMN joined_at TYPE BIGINT",
+            "ALTER TABLE room_videos ALTER COLUMN added_at TYPE BIGINT",
+            "ALTER TABLE room_comments ALTER COLUMN created_at TYPE BIGINT",
+            "ALTER TABLE room_progress ALTER COLUMN updated_at TYPE BIGINT",
+        ]:
+            try:
+                conn.execute(alter_sql, ())
+            except:
+                pass
     else:
         conn.executescript("""
             CREATE TABLE IF NOT EXISTS study_rooms (
@@ -422,14 +435,17 @@ async def join_room(invite_code: str, request: Request):
     conn.commit()
     conn.close()
 
-    # Notify room members about new member
-    display_name = user.get("display_name", "Ai đó")
-    create_notification_for_room_members(
-        room["id"], "room_join",
-        f"👋 {display_name} đã tham gia phòng",
-        f"{display_name} vừa tham gia phòng \"{room['name']}\"",
-        "/rooms", exclude_user_id=uid
-    )
+    # Notify room members about new member (non-blocking — don't fail the join)
+    try:
+        display_name = user.get("display_name", "Ai đó")
+        create_notification_for_room_members(
+            room["id"], "room_join",
+            f"👋 {display_name} đã tham gia phòng",
+            f"{display_name} vừa tham gia phòng \"{room['name']}\"",
+            "/rooms", exclude_user_id=uid
+        )
+    except Exception as e:
+        logger.warning(f"Failed to notify room members on join: {e}")
 
     return {"ok": True, "room_id": room["id"], "room_name": room["name"]}
 

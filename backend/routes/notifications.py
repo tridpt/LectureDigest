@@ -36,6 +36,11 @@ def _init_notifications_table():
             conn.execute("CREATE INDEX IF NOT EXISTS idx_notif_user ON notifications(user_id, is_read, created_at DESC)", ())
         except:
             pass
+        # Migration: ensure created_at is BIGINT (may have been INTEGER in older schema)
+        try:
+            conn.execute("ALTER TABLE notifications ALTER COLUMN created_at TYPE BIGINT", ())
+        except:
+            pass
     else:
         conn.executescript("""
             CREATE TABLE IF NOT EXISTS notifications (
