@@ -38,7 +38,7 @@
 @media (max-width: 900px) {
     .results-grid { grid-template-columns: 1fr; }
     .video-column { position: static; }
-    .video-header-inner { flex-direction: column; gap: 12px; }
+    .video-header-top { flex-wrap: wrap; }
     .new-video-btn { align-self: flex-start; }
 }
 

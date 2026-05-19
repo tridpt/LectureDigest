@@ -24,9 +24,14 @@
 }
 .video-header-inner {
     display: flex;
-    align-items: flex-start;
+    flex-direction: column;
+    gap: 16px;
+}
+.video-header-top {
+    display: flex;
+    align-items: center;
     justify-content: space-between;
-    gap: 20px;
+    gap: 16px;
 }
 .video-meta { flex: 1; min-width: 0; }
 
