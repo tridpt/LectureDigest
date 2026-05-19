@@ -184,7 +184,7 @@ class GenerateVocabRequest(BaseModel):
 
 @router.post("/generate-vocab")
 async def generate_vocab(req: GenerateVocabRequest, request: Request):
-    """Generate new vocabulary words using AI."""
+    """Generate new vocabulary words using AI, avoiding duplicates with existing words."""
     user = get_current_user(request)
     if not user:
         raise HTTPException(status_code=401, detail="Vui lòng đăng nhập")
@@ -199,10 +199,25 @@ async def generate_vocab(req: GenerateVocabRequest, request: Request):
         raise HTTPException(status_code=429, detail="Quá nhiều yêu cầu")
 
     count = min(max(req.count, 1), 100)
+
+    # Fetch user's existing words to avoid duplicates
+    conn = get_db()
+    existing_rows = conn.execute(
+        "SELECT word FROM english_vocab WHERE user_id = ? ORDER BY learned_at DESC LIMIT 500",
+        (user["id"],)
+    ).fetchall()
+    conn.close()
+    existing_words = [r["word"].lower().strip() for r in existing_rows]
+    # Send up to 200 existing words in the prompt to avoid duplicates
+    exclude_list = ", ".join(existing_words[:200]) if existing_words else "(none)"
+
     prompt = f"""Generate {count} English vocabulary words for a Vietnamese learner preparing for English proficiency exams.
 
 Exam/Topic: {req.topic}
 Target Level: {req.level}
+
+⚠️ IMPORTANT — DO NOT generate any of these words (the learner already knows them):
+{exclude_list}
 
 Return ONLY a valid JSON array (no markdown fences):
 [
@@ -226,7 +241,8 @@ Rules:
 - Meanings in Vietnamese should be clear and exam-relevant
 - exam_tip: brief Vietnamese tip about how/where this word appears in exams
 - Avoid basic words — focus on B2-C1 level vocabulary
-- Include a mix of single words and useful phrases/collocations"""
+- Include a mix of single words and useful phrases/collocations
+- NEVER repeat words from the exclusion list above"""
 
     try:
         import re
@@ -237,26 +253,41 @@ Rules:
             text = re.sub(r'\n?\s*```$', '', text)
         words = json.loads(text)
 
+        # Filter out any duplicates that AI might still generate
+        existing_set = set(existing_words)
+        unique_words = [w for w in words if w.get("word", "").lower().strip() not in existing_set]
+
         # Save to database
         conn = get_db()
         now = time.time()
         saved = []
-        for w in words:
+        for w in unique_words:
+            word_text = w.get("word", "").strip()
+            if not word_text:
+                continue
+            # Double-check no duplicate in DB (race condition safety)
+            exists = conn.execute(
+                "SELECT 1 FROM english_vocab WHERE user_id = ? AND LOWER(word) = ?",
+                (user["id"], word_text.lower())
+            ).fetchone()
+            if exists:
+                continue
             conn.execute("""
                 INSERT INTO english_vocab (user_id, word, meaning, example, phonetic, part_of_speech, topic, level, learned_at, next_review)
                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-            """, (user["id"], w.get("word", ""), w.get("meaning", ""), w.get("example", ""),
+            """, (user["id"], word_text, w.get("meaning", ""), w.get("example", ""),
                   w.get("phonetic", ""), w.get("part_of_speech", ""), req.topic, req.level, now, now))
             saved.append(w)
         conn.commit()
+        conn.close()
 
         # Update streak
-        _update_streak(user["id"], len(saved))
+        if saved:
+            _update_streak(user["id"], len(saved))
+            _update_mission_progress(user["id"], "learn_words", len(saved))
 
-        # Update daily mission: learn_words
-        _update_mission_progress(user["id"], "learn_words", len(saved))
-
-        return {"words": saved, "count": len(saved)}
+        skipped = len(words) - len(saved)
+        return {"words": saved, "count": len(saved), "skipped_duplicates": skipped}
 
     except json.JSONDecodeError as e:
         raise HTTPException(status_code=500, detail=f"AI response parse error: {e}")
