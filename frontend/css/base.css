@@ -95,6 +95,7 @@ body {
     overflow-x: hidden;
     line-height: 1.6;
     width: 100%;
+    padding-top: 64px; /* space for fixed header */
 }
 
 /* Utility */
