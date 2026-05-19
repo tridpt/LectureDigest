@@ -256,6 +256,15 @@ def _init_db_postgres(conn):
             blocked_until DOUBLE PRECISION DEFAULT 0
         );
 
+        CREATE TABLE IF NOT EXISTS analysis_cache (
+            cache_key   TEXT PRIMARY KEY,
+            video_id    TEXT NOT NULL,
+            language    TEXT NOT NULL,
+            result_json TEXT NOT NULL,
+            created_at  BIGINT NOT NULL
+        );
+        CREATE INDEX IF NOT EXISTS idx_cache_video_lang ON analysis_cache(video_id, language);
+
         CREATE TABLE IF NOT EXISTS user_gamification (
             user_id    INTEGER PRIMARY KEY,
             data_json  TEXT NOT NULL DEFAULT '{}',
@@ -381,6 +390,15 @@ def _init_db_sqlite(conn):
             first_at    REAL NOT NULL,
             blocked_until REAL DEFAULT 0
         );
+
+        CREATE TABLE IF NOT EXISTS analysis_cache (
+            cache_key   TEXT PRIMARY KEY,
+            video_id    TEXT NOT NULL,
+            language    TEXT NOT NULL,
+            result_json TEXT NOT NULL,
+            created_at  INTEGER NOT NULL
+        );
+        CREATE INDEX IF NOT EXISTS idx_cache_video_lang ON analysis_cache(video_id, language);
     """)
     # Ensure gamification row exists
     conn.execute(
@@ -1596,3 +1614,51 @@ def db_create_backup():
     return backup_path
 
 
+
+
+# ══════════════════════════════════════════
+# ANALYSIS CACHE
+# ══════════════════════════════════════════
+
+def db_get_analysis_cache(video_id: str, language: str):
+    """Get cached analysis result for a video+language combo. Returns dict or None."""
+    conn = get_db()
+    cache_key = f"{video_id}:{language}"
+    row = conn.execute(
+        "SELECT result_json, created_at FROM analysis_cache WHERE cache_key = ?",
+        (cache_key,)
+    ).fetchone()
+    conn.close()
+    if row:
+        try:
+            return json.loads(row["result_json"])
+        except (json.JSONDecodeError, TypeError):
+            return None
+    return None
+
+
+def db_set_analysis_cache(video_id: str, language: str, result: dict):
+    """Store analysis result in cache."""
+    conn = get_db()
+    cache_key = f"{video_id}:{language}"
+    result_json = json.dumps(result, ensure_ascii=False)
+    now = int(time.time() * 1000)
+    conn.execute(
+        "INSERT OR REPLACE INTO analysis_cache (cache_key, video_id, language, result_json, created_at) VALUES (?, ?, ?, ?, ?)",
+        (cache_key, video_id, language, result_json, now)
+    )
+    conn.commit()
+    conn.close()
+    logger.info("Cache: stored analysis for %s [%s]", video_id, language)
+
+
+def db_delete_analysis_cache(video_id: str, language: str = None):
+    """Delete cached analysis. If language is None, delete all languages for this video."""
+    conn = get_db()
+    if language:
+        cache_key = f"{video_id}:{language}"
+        conn.execute("DELETE FROM analysis_cache WHERE cache_key = ?", (cache_key,))
+    else:
+        conn.execute("DELETE FROM analysis_cache WHERE video_id = ?", (video_id,))
+    conn.commit()
+    conn.close()

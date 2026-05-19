@@ -15,7 +15,7 @@ from pydantic import BaseModel
 
 from gemini_client import get_genai_client, call_gemini, call_gemini_multi, PRIMARY_MODEL
 from youtube import extract_video_id, get_video_info, get_transcript, get_transcript_with_gemini_fallback, format_seconds
-from database import db_check_rate_limit
+from database import db_check_rate_limit, db_get_analysis_cache, db_set_analysis_cache
 
 router = APIRouter(prefix="/api", tags=["analyze"])
 logger = logging.getLogger("analyze")
@@ -46,6 +46,7 @@ class VideoRequest(BaseModel):
     language: str = 'en'
     output_language: str = 'English'
     transcript: list | None = None   # pre-fetched by browser — skips server-side YT fetch
+    force_reanalyze: bool = False    # skip cache and re-analyze from scratch
 
 
 # ── Supported upload formats ──
@@ -357,7 +358,14 @@ async def analyze_video(request: VideoRequest):
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
 
-    # 2. Fetch metadata & transcript
+    # 2. Check cache — same video + same output language = reuse result
+    if not request.force_reanalyze:
+        cached = db_get_analysis_cache(video_id, request.output_language)
+        if cached:
+            logger.info("Cache HIT for %s [%s]", video_id, request.output_language)
+            return cached
+
+    # 3. Fetch metadata & transcript
     video_info = get_video_info(video_id)
 
     if request.transcript:
@@ -369,11 +377,11 @@ async def analyze_video(request: VideoRequest):
         if result.get("gemini_direct"):
             logger.info("Using Gemini direct analysis for %s", video_id)
 
-    # 3. Format and truncate transcript
+    # 4. Format and truncate transcript
     full_transcript = _format_transcript_lines(transcript_data)
     full_transcript = _truncate_transcript(full_transcript)
 
-    # 4. Build AI prompt and call Gemini
+    # 5. Build AI prompt and call Gemini
     prompt = _build_analyze_prompt(
         title=video_info.get("title", "Unknown"),
         author=video_info.get("author", "Unknown"),
@@ -394,6 +402,11 @@ async def analyze_video(request: VideoRequest):
             result["author"] = video_info["author"]
 
         result["transcript"] = transcript_data
+
+        # 6. Save to cache for future requests (any user, same video+language)
+        db_set_analysis_cache(video_id, request.output_language, result)
+        logger.info("Cache MISS — stored result for %s [%s]", video_id, request.output_language)
+
         return result
 
     except json.JSONDecodeError as e:
