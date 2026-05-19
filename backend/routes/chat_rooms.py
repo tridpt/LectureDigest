@@ -315,53 +315,67 @@ async def list_my_rooms(request: Request):
         conn.close()
         return {"rooms": [], "total_unread": 0}
 
-    # Batch: get member counts for all rooms in one query
     room_ids = [row["id"] for row in rows]
-    member_counts = {}
-    for rid in room_ids:
-        mc = conn.execute("SELECT COUNT(*) as c FROM chat_room_members WHERE room_id = ?", (rid,)).fetchone()
-        member_counts[rid] = mc["c"] if mc else 0
 
-    # Batch: get last messages for all rooms
-    last_messages = {}
-    for rid in room_ids:
-        lm = conn.execute(
-            "SELECT content, user_id, created_at FROM chat_messages WHERE room_id = ? ORDER BY created_at DESC LIMIT 1",
-            (rid,)
-        ).fetchone()
-        if lm:
-            last_messages[rid] = {"content": lm["content"], "user_id": lm["user_id"], "created_at": lm["created_at"]}
+    # Batch: member counts via GROUP BY
+    mc_rows = conn.execute(f"""
+        SELECT room_id, COUNT(*) as c FROM chat_room_members
+        WHERE room_id IN ({','.join('?' * len(room_ids))})
+        GROUP BY room_id
+    """, room_ids).fetchall()
+    member_counts = {r["room_id"]: r["c"] for r in mc_rows}
 
-    # Batch: get creator info for all unique creators
+    # Batch: last message per room
+    lm_rows = conn.execute(f"""
+        SELECT cm.room_id, cm.content, cm.user_id, cm.created_at
+        FROM chat_messages cm
+        INNER JOIN (
+            SELECT room_id, MAX(created_at) as max_ts
+            FROM chat_messages
+            WHERE room_id IN ({','.join('?' * len(room_ids))})
+            GROUP BY room_id
+        ) latest ON cm.room_id = latest.room_id AND cm.created_at = latest.max_ts
+    """, room_ids).fetchall()
+    last_messages = {r["room_id"]: r for r in lm_rows}
+
+    # Batch: creator display names
     creator_ids = list(set(row["created_by"] for row in rows))
-    creator_infos = {}
-    for cid in creator_ids:
-        u = conn.execute("SELECT display_name, avatar_url, avatar_color FROM users WHERE id = ?", (cid,)).fetchone()
-        if u:
-            creator_infos[cid] = u["display_name"] or "User"
-        else:
-            creator_infos[cid] = "Unknown"
+    creator_rows = conn.execute(f"""
+        SELECT id, display_name FROM users
+        WHERE id IN ({','.join('?' * len(creator_ids))})
+    """, creator_ids).fetchall()
+    creator_names = {r["id"]: r["display_name"] or "Unknown" for r in creator_rows}
 
-    # Get usernames for last message senders
-    sender_ids = list(set(lm["user_id"] for lm in last_messages.values() if lm.get("user_id")))
+    # Batch: sender names for last messages
+    sender_ids = list(set(r["user_id"] for r in lm_rows if r["user_id"] and r["user_id"] != '__system__'))
     sender_names = {}
-    for sid in sender_ids:
-        u = conn.execute("SELECT display_name FROM users WHERE id = ?", (sid,)).fetchone()
-        sender_names[sid] = u["display_name"] if u else "Unknown"
+    if sender_ids:
+        sn_rows = conn.execute(f"""
+            SELECT id, display_name FROM users
+            WHERE id IN ({','.join('?' * len(sender_ids))})
+        """, sender_ids).fetchall()
+        sender_names = {r["id"]: r["display_name"] or "" for r in sn_rows}
 
+    # Batch: unread counts per room
+    # Build a query that counts messages after last_read_at for each room
     total_unread = 0
-    rooms = []
+    unread_counts = {}
     for row in rows:
         room_id = row["id"]
         last_read = row["last_read_at"] if "last_read_at" in row.keys() else 0
-        # Count unread using same connection
         unread_row = conn.execute(
             "SELECT COUNT(*) as c FROM chat_messages WHERE room_id = ? AND created_at > ? AND user_id != ?",
             (room_id, last_read or 0, user["id"])
         ).fetchone()
         unread = unread_row["c"] if unread_row else 0
+        unread_counts[room_id] = unread
         total_unread += unread
 
+    conn.close()
+
+    rooms = []
+    for row in rows:
+        room_id = row["id"]
         lm = last_messages.get(room_id)
         last_msg = None
         if lm:
@@ -373,11 +387,10 @@ async def list_my_rooms(request: Request):
             "max_members": row["max_members"], "created_at": row["created_at"],
             "member_count": member_counts.get(room_id, 0),
             "last_message": last_msg,
-            "unread": unread,
-            "creator_name": creator_infos.get(row["created_by"], "Unknown"),
+            "unread": unread_counts.get(room_id, 0),
+            "creator_name": creator_names.get(row["created_by"], "Unknown"),
         })
 
-    conn.close()
     return {"rooms": rooms, "total_unread": total_unread}
 
 
@@ -397,28 +410,76 @@ async def list_public_rooms(request: Request):
         LIMIT 50
     """).fetchall()
 
+    if not rows:
+        conn.close()
+        return {"rooms": []}
+
+    room_ids = [row["id"] for row in rows]
+
+    # Batch: member counts via GROUP BY
+    mc_rows = conn.execute(f"""
+        SELECT room_id, COUNT(*) as c FROM chat_room_members
+        WHERE room_id IN ({','.join('?' * len(room_ids))})
+        GROUP BY room_id
+    """, room_ids).fetchall()
+    member_counts = {r["room_id"]: r["c"] for r in mc_rows}
+
+    # Batch: check which rooms the current user is a member of
+    my_rooms = conn.execute(f"""
+        SELECT room_id FROM chat_room_members
+        WHERE user_id = ? AND room_id IN ({','.join('?' * len(room_ids))})
+    """, [user["id"]] + room_ids).fetchall()
+    my_room_set = {r["room_id"] for r in my_rooms}
+
+    # Batch: creator display names
+    creator_ids = list(set(row["created_by"] for row in rows))
+    creator_rows = conn.execute(f"""
+        SELECT id, display_name FROM users
+        WHERE id IN ({','.join('?' * len(creator_ids))})
+    """, creator_ids).fetchall()
+    creator_names = {r["id"]: r["display_name"] or "Unknown" for r in creator_rows}
+
+    # Batch: last message per room using a correlated approach
+    # (get all recent messages and pick the latest per room)
+    lm_rows = conn.execute(f"""
+        SELECT cm.room_id, cm.content, cm.user_id, cm.created_at
+        FROM chat_messages cm
+        INNER JOIN (
+            SELECT room_id, MAX(created_at) as max_ts
+            FROM chat_messages
+            WHERE room_id IN ({','.join('?' * len(room_ids))})
+            GROUP BY room_id
+        ) latest ON cm.room_id = latest.room_id AND cm.created_at = latest.max_ts
+    """, room_ids).fetchall()
+    last_messages = {r["room_id"]: r for r in lm_rows}
+
+    # Batch: sender names for last messages
+    sender_ids = list(set(r["user_id"] for r in lm_rows if r["user_id"] and r["user_id"] != '__system__'))
+    sender_names = {}
+    if sender_ids:
+        sn_rows = conn.execute(f"""
+            SELECT id, display_name FROM users
+            WHERE id IN ({','.join('?' * len(sender_ids))})
+        """, sender_ids).fetchall()
+        sender_names = {r["id"]: r["display_name"] or "" for r in sn_rows}
+
+    conn.close()
+
     rooms = []
     for row in rows:
         room_id = row["id"]
-        mc = conn.execute("SELECT COUNT(*) as c FROM chat_room_members WHERE room_id = ?", (room_id,)).fetchone()
-        member_count = mc["c"] if mc else 0
-        is_member_row = conn.execute("SELECT 1 FROM chat_room_members WHERE room_id = ? AND user_id = ?", (room_id, user["id"])).fetchone()
-        is_member = is_member_row is not None
-        creator = conn.execute("SELECT display_name FROM users WHERE id = ?", (row["created_by"],)).fetchone()
-        creator_name = creator["display_name"] if creator else "Unknown"
-        lm = conn.execute("SELECT content, user_id, created_at FROM chat_messages WHERE room_id = ? ORDER BY created_at DESC LIMIT 1", (room_id,)).fetchone()
+        lm = last_messages.get(room_id)
         last_msg = None
         if lm:
-            sender = conn.execute("SELECT display_name FROM users WHERE id = ?", (lm["user_id"],)).fetchone()
-            last_msg = {"content": lm["content"], "username": sender["display_name"] if sender else "", "created_at": lm["created_at"]}
+            last_msg = {"content": lm["content"], "username": sender_names.get(lm["user_id"], ""), "created_at": lm["created_at"]}
 
         rooms.append({
             "id": room_id, "name": row["name"], "icon": row["icon"],
             "created_by": row["created_by"], "is_public": True,
             "max_members": row["max_members"], "created_at": row["created_at"],
-            "member_count": member_count,
-            "is_member": is_member,
-            "creator_name": creator_name,
+            "member_count": member_counts.get(room_id, 0),
+            "is_member": room_id in my_room_set,
+            "creator_name": creator_names.get(row["created_by"], "Unknown"),
             "last_message": last_msg,
         })
 
@@ -586,15 +647,16 @@ async def get_messages(room_id: str, request: Request, limit: int = 50, before: 
         ).fetchall()
 
     messages = []
-    # Batch fetch user info for all unique user_ids (avoid N+1 queries)
+    # Batch fetch user info for all unique user_ids in one query
     user_ids = list(set(row["user_id"] for row in rows if str(row["user_id"]) != '__system__'))
     user_info_cache = {}
-    for uid in user_ids:
-        u = conn.execute("SELECT display_name, avatar_url, avatar_color FROM users WHERE id = ?", (uid,)).fetchone()
-        if u:
-            user_info_cache[uid] = {"username": u["display_name"] or "User", "avatar_url": u["avatar_url"] or None, "avatar_color": u["avatar_color"] or "#8b5cf6"}
-        else:
-            user_info_cache[uid] = {"username": "Unknown", "avatar_url": None, "avatar_color": "#8b5cf6"}
+    if user_ids:
+        u_rows = conn.execute(f"""
+            SELECT id, display_name, avatar_url, avatar_color FROM users
+            WHERE id IN ({','.join('?' * len(user_ids))})
+        """, user_ids).fetchall()
+        for u in u_rows:
+            user_info_cache[u["id"]] = {"username": u["display_name"] or "User", "avatar_url": u["avatar_url"] or None, "avatar_color": u["avatar_color"] or "#8b5cf6"}
 
     for row in rows:
         uid = row["user_id"]
