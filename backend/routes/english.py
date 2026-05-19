@@ -793,7 +793,7 @@ async def generate_quiz(request: Request, count: int = 5, topic: str = ''):
     # Update quiz count
     conn.execute("""
         INSERT INTO english_streak (user_id, total_quizzes) VALUES (?, 1)
-        ON CONFLICT(user_id) DO UPDATE SET total_quizzes = total_quizzes + 1
+        ON CONFLICT(user_id) DO UPDATE SET total_quizzes = english_streak.total_quizzes + 1
     """, (user["id"],))
     conn.commit()
 
