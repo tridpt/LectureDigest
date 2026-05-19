@@ -518,17 +518,37 @@ def _migrate_notes_composite_pk(conn):
 # ══════════════════════════════════════════
 # HISTORY
 # ══════════════════════════════════════════
-def db_get_history(limit=50, user_id=None):
+def db_get_history(limit=50, user_id=None, before=None):
+    """Get history with cursor-based pagination. `before` is a saved_at timestamp."""
     conn = get_db()
     if user_id:
-        rows = conn.execute(
-            "SELECT * FROM history WHERE user_id = ? ORDER BY saved_at DESC LIMIT ?", (user_id, limit)
-        ).fetchall()
+        if before:
+            rows = conn.execute(
+                "SELECT * FROM history WHERE user_id = ? AND saved_at < ? ORDER BY saved_at DESC LIMIT ?",
+                (user_id, before, limit + 1)
+            ).fetchall()
+        else:
+            rows = conn.execute(
+                "SELECT * FROM history WHERE user_id = ? ORDER BY saved_at DESC LIMIT ?",
+                (user_id, limit + 1)
+            ).fetchall()
     else:
-        rows = conn.execute(
-            "SELECT * FROM history WHERE user_id IS NULL ORDER BY saved_at DESC LIMIT ?", (limit,)
-        ).fetchall()
+        if before:
+            rows = conn.execute(
+                "SELECT * FROM history WHERE user_id IS NULL AND saved_at < ? ORDER BY saved_at DESC LIMIT ?",
+                (before, limit + 1)
+            ).fetchall()
+        else:
+            rows = conn.execute(
+                "SELECT * FROM history WHERE user_id IS NULL ORDER BY saved_at DESC LIMIT ?",
+                (limit + 1,)
+            ).fetchall()
     conn.close()
+
+    has_more = len(rows) > limit
+    if has_more:
+        rows = rows[:limit]
+
     result = []
     for r in rows:
         entry = {
@@ -550,7 +570,9 @@ def db_get_history(limit=50, user_id=None):
         except:
             entry["transcript"] = None
         result.append(entry)
-    return result
+
+    next_cursor = result[-1]["savedAt"] if result and has_more else None
+    return {"items": result, "has_more": has_more, "next_cursor": next_cursor}
 
 def db_save_history(entry: dict, user_id=None):
     conn = get_db()

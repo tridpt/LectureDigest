@@ -98,12 +98,15 @@ async def get_shared_notes(share_id: str):
 # ═══════════════════════════════════════════════════════
 
 @router.get("/db/history")
-async def api_get_history(request: Request):
-    """Get all analysis history from database."""
+async def api_get_history(request: Request, limit: int = 50, before: int = None):
+    """Get analysis history with cursor-based pagination.
+    Query params: limit (default 50), before (saved_at timestamp cursor).
+    Returns: {items: [...], has_more: bool, next_cursor: int|null}
+    """
     try:
         user = get_current_user(request)
         uid = user["id"] if user else None
-        return db_get_history(limit=100, user_id=uid)
+        return db_get_history(limit=min(limit, 100), user_id=uid, before=before)
     except Exception as e:
         logger.error(f"get_history error: {e}")
         raise HTTPException(status_code=500, detail="Không thể tải lịch sử")

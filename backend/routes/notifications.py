@@ -94,17 +94,25 @@ def create_notification_for_room_members(room_id: str, notif_type: str, title: s
 # ═══════════════════════════════════════════════════════
 
 @router.get("")
-async def get_notifications(request: Request, limit: int = 30):
-    """Get user's notifications (newest first)."""
+async def get_notifications(request: Request, limit: int = 30, before: int = None):
+    """Get user's notifications with cursor-based pagination.
+    Query params: limit (default 30), before (created_at timestamp cursor).
+    """
     user = get_current_user(request)
     if not user:
         raise HTTPException(status_code=401, detail="Vui lòng đăng nhập")
 
     conn = get_db()
-    rows = conn.execute("""
-        SELECT * FROM notifications WHERE user_id = ?
-        ORDER BY created_at DESC LIMIT ?
-    """, (user["id"], limit)).fetchall()
+    if before:
+        rows = conn.execute("""
+            SELECT * FROM notifications WHERE user_id = ? AND created_at < ?
+            ORDER BY created_at DESC LIMIT ?
+        """, (user["id"], before, limit + 1)).fetchall()
+    else:
+        rows = conn.execute("""
+            SELECT * FROM notifications WHERE user_id = ?
+            ORDER BY created_at DESC LIMIT ?
+        """, (user["id"], limit + 1)).fetchall()
 
     unread = conn.execute(
         "SELECT COUNT(*) as c FROM notifications WHERE user_id = ? AND is_read = 0",
@@ -113,17 +121,27 @@ async def get_notifications(request: Request, limit: int = 30):
 
     conn.close()
 
+    has_more = len(rows) > limit
+    if has_more:
+        rows = rows[:limit]
+
+    notifications = [{
+        "id": r["id"],
+        "type": r["type"],
+        "title": r["title"],
+        "message": r["message"],
+        "link": r["link"],
+        "is_read": bool(r["is_read"]),
+        "created_at": r["created_at"],
+    } for r in rows]
+
+    next_cursor = notifications[-1]["created_at"] if notifications and has_more else None
+
     return {
         "unread_count": unread,
-        "notifications": [{
-            "id": r["id"],
-            "type": r["type"],
-            "title": r["title"],
-            "message": r["message"],
-            "link": r["link"],
-            "is_read": bool(r["is_read"]),
-            "created_at": r["created_at"],
-        } for r in rows]
+        "notifications": notifications,
+        "has_more": has_more,
+        "next_cursor": next_cursor,
     }
 
 

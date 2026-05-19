@@ -665,34 +665,60 @@ async def remove_video_from_room(room_id: str, video_id: str, request: Request):
 # ═══════════════════════════════════════════════════════
 
 @router.get("/{room_id}/comments")
-async def get_comments(room_id: str, request: Request, video_id: str = '', limit: int = 50):
-    """Get comments for a room, optionally filtered by video."""
+async def get_comments(room_id: str, request: Request, video_id: str = '', limit: int = 50, before: int = None):
+    """Get comments with cursor-based pagination.
+    Query params: video_id (filter), limit (default 50), before (created_at cursor).
+    """
     user = _require_auth(request)
     uid = user["id"]
     _require_member(room_id, uid)
 
     conn = get_db()
     if video_id:
-        rows = conn.execute("""
-            SELECT rc.*, u.display_name, u.avatar_color, u.avatar_url
-            FROM room_comments rc
-            JOIN users u ON rc.user_id = u.id
-            WHERE rc.room_id = ? AND rc.video_id = ?
-            ORDER BY rc.created_at DESC
-            LIMIT ?
-        """, (room_id, video_id, limit)).fetchall()
+        if before:
+            rows = conn.execute("""
+                SELECT rc.*, u.display_name, u.avatar_color, u.avatar_url
+                FROM room_comments rc
+                JOIN users u ON rc.user_id = u.id
+                WHERE rc.room_id = ? AND rc.video_id = ? AND rc.created_at < ?
+                ORDER BY rc.created_at DESC
+                LIMIT ?
+            """, (room_id, video_id, before, limit + 1)).fetchall()
+        else:
+            rows = conn.execute("""
+                SELECT rc.*, u.display_name, u.avatar_color, u.avatar_url
+                FROM room_comments rc
+                JOIN users u ON rc.user_id = u.id
+                WHERE rc.room_id = ? AND rc.video_id = ?
+                ORDER BY rc.created_at DESC
+                LIMIT ?
+            """, (room_id, video_id, limit + 1)).fetchall()
     else:
-        rows = conn.execute("""
-            SELECT rc.*, u.display_name, u.avatar_color, u.avatar_url
-            FROM room_comments rc
-            JOIN users u ON rc.user_id = u.id
-            WHERE rc.room_id = ?
-            ORDER BY rc.created_at DESC
-            LIMIT ?
-        """, (room_id, limit)).fetchall()
+        if before:
+            rows = conn.execute("""
+                SELECT rc.*, u.display_name, u.avatar_color, u.avatar_url
+                FROM room_comments rc
+                JOIN users u ON rc.user_id = u.id
+                WHERE rc.room_id = ? AND rc.created_at < ?
+                ORDER BY rc.created_at DESC
+                LIMIT ?
+            """, (room_id, before, limit + 1)).fetchall()
+        else:
+            rows = conn.execute("""
+                SELECT rc.*, u.display_name, u.avatar_color, u.avatar_url
+                FROM room_comments rc
+                JOIN users u ON rc.user_id = u.id
+                WHERE rc.room_id = ?
+                ORDER BY rc.created_at DESC
+                LIMIT ?
+            """, (room_id, limit + 1)).fetchall()
     conn.close()
 
-    return [{
+    has_more = len(rows) > limit
+    if has_more:
+        rows = rows[:limit]
+
+    comments = [{
         "id": r["id"],
         "video_id": r["video_id"],
         "chapter": r["chapter"],
@@ -703,6 +729,10 @@ async def get_comments(room_id: str, request: Request, video_id: str = '', limit
         "content": r["content"],
         "created_at": r["created_at"],
     } for r in rows]
+
+    next_cursor = comments[-1]["created_at"] if comments and has_more else None
+
+    return {"comments": comments, "has_more": has_more, "next_cursor": next_cursor}
 
 
 @router.post("/{room_id}/comments")

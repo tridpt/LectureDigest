@@ -11,7 +11,11 @@ class TestHistory:
     def test_get_history_empty(self, client):
         resp = client.get("/api/db/history")
         assert resp.status_code == 200
-        assert isinstance(resp.json(), list)
+        data = resp.json()
+        assert "items" in data
+        assert "has_more" in data
+        assert data["items"] == []
+        assert data["has_more"] is False
 
     def test_save_and_get_history(self, client):
         entry = {
@@ -31,7 +35,7 @@ class TestHistory:
 
         # Verify it's in the list
         resp = client.get("/api/db/history")
-        items = resp.json()
+        items = resp.json()["items"]
         assert any(h["entry_id"] == "test_vid_001" for h in items)
 
     def test_delete_history(self, client):
@@ -83,7 +87,7 @@ class TestHistory:
 
         # User should only see their own
         resp = client.get("/api/db/history", headers=headers)
-        entries = resp.json()
+        entries = resp.json()["items"]
         entry_ids = [e["entry_id"] for e in entries]
         assert "user_entry" in entry_ids
         assert "anon_entry" not in entry_ids

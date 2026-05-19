@@ -242,9 +242,11 @@ class TestRoomComments:
         # Get comments
         resp = client.get(f"/api/rooms/{room['id']}/comments", headers=headers)
         assert resp.status_code == 200
-        comments = resp.json()
-        assert len(comments) >= 1
-        assert comments[0]["content"] == "Hello everyone!"
+        data = resp.json()
+        assert "comments" in data
+        assert "has_more" in data
+        assert len(data["comments"]) >= 1
+        assert data["comments"][0]["content"] == "Hello everyone!"
 
     def test_delete_own_comment(self, client, registered_user):
         _, _, headers = registered_user

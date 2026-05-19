@@ -34,6 +34,7 @@ class TestNotifications:
         data = resp.json()
         assert "notifications" in data
         assert "unread_count" in data
+        assert "has_more" in data
         assert data["unread_count"] == 0
 
     def test_create_and_get_notification(self, client, registered_user):

@@ -635,16 +635,21 @@ async def get_messages(room_id: str, request: Request, limit: int = 50, before: 
         raise HTTPException(status_code=403, detail="Not a member of this room")
 
     conn = get_db()
+    effective_limit = min(limit, 100)
     if before:
         rows = conn.execute(
             "SELECT id, room_id, user_id, content, image_url, pinned, created_at FROM chat_messages WHERE room_id = ? AND created_at < ? ORDER BY created_at DESC LIMIT ?",
-            (room_id, before, min(limit, 100))
+            (room_id, before, effective_limit + 1)
         ).fetchall()
     else:
         rows = conn.execute(
             "SELECT id, room_id, user_id, content, image_url, pinned, created_at FROM chat_messages WHERE room_id = ? ORDER BY created_at DESC LIMIT ?",
-            (room_id, min(limit, 100))
+            (room_id, effective_limit + 1)
         ).fetchall()
+
+    has_more = len(rows) > effective_limit
+    if has_more:
+        rows = rows[:effective_limit]
 
     messages = []
     # Batch fetch user info for all unique user_ids in one query
@@ -692,6 +697,8 @@ async def get_messages(room_id: str, request: Request, limit: int = 50, before: 
 
     return {
         "messages": messages,
+        "has_more": has_more,
+        "next_cursor": messages[0]["created_at"] if messages and has_more else None,
         "muted_until": muted_until,
         "created_by": room["created_by"] if room else None,
         "chat_locked": room.get("chat_locked", False) if room else False,
