@@ -553,7 +553,21 @@ async function engGenerateWords() {
     if (!headers) return;
 
     var btn = document.getElementById('engGenBtn');
-    if (btn) { btn.disabled = true; btn.textContent = 'Đang tạo ' + count + ' từ...'; }
+    if (btn) {
+        btn.disabled = true;
+        btn.innerHTML = '<span class="eng-spinner"></span> Đang tạo ' + count + ' từ...';
+        btn.classList.add('eng-btn-loading');
+    }
+
+    // Show skeleton loading in the word list area
+    var wordList = document.getElementById('engWordList');
+    if (wordList) {
+        var skeletons = '';
+        for (var i = 0; i < Math.min(count, 5); i++) {
+            skeletons += '<div class="eng-word-skeleton"><div class="eng-skel-word"></div><div class="eng-skel-meaning"></div><div class="eng-skel-example"></div></div>';
+        }
+        wordList.innerHTML = skeletons;
+    }
 
     try {
         var res = await fetchWithTimeout('/api/english/generate-vocab', {
@@ -563,6 +577,7 @@ async function engGenerateWords() {
         if (!res.ok) {
             var err = await res.json().catch(function() { return {}; });
             showToast(err.detail || 'Lỗi', 3000);
+            if (wordList) wordList.innerHTML = '';
             return;
         }
         var data = await res.json();
@@ -576,8 +591,14 @@ async function engGenerateWords() {
             _engAddCustomTopic(customTopic);
             document.getElementById('engCustomTopic').value = '';
         }
-    } catch(e) { showToast('Lỗi: ' + e.message, 3000); }
-    finally { if (btn) { btn.disabled = false; btn.textContent = '✨ Tạo từ vựng'; } }
+    } catch(e) { showToast('Lỗi: ' + e.message, 3000); if (wordList) wordList.innerHTML = ''; }
+    finally {
+        if (btn) {
+            btn.disabled = false;
+            btn.innerHTML = '✨ Tạo từ vựng';
+            btn.classList.remove('eng-btn-loading');
+        }
+    }
 }
 
 // ── Saved words with pagination ──

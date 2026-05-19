@@ -544,3 +544,75 @@
 .light-mode .eng-lb-row { background: rgba(0,0,0,0.02); }
 .light-mode .eng-lb-name { color: #1e293b; }
 .light-mode .eng-lb-btn { color: #7c3aed; border-color: rgba(139,92,246,0.2); }
+
+/* ── Generate button loading state ── */
+.eng-spinner {
+    display: inline-block;
+    width: 14px;
+    height: 14px;
+    border: 2px solid rgba(255,255,255,0.3);
+    border-top-color: #fff;
+    border-radius: 50%;
+    animation: engSpin 0.6s linear infinite;
+    vertical-align: middle;
+    margin-right: 6px;
+}
+@keyframes engSpin {
+    to { transform: rotate(360deg); }
+}
+.eng-btn-loading {
+    background: linear-gradient(135deg, #6d28d9, #4c1d95) !important;
+    animation: engPulse 1.5s ease-in-out infinite;
+}
+@keyframes engPulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.7; }
+}
+
+/* ── Skeleton loading for word cards ── */
+.eng-word-skeleton {
+    background: rgba(30,30,58,0.5);
+    border: 1px solid rgba(255,255,255,0.06);
+    border-radius: 14px;
+    padding: 16px;
+    margin-bottom: 10px;
+}
+.eng-skel-word {
+    width: 40%;
+    height: 20px;
+    background: linear-gradient(90deg, rgba(255,255,255,0.04) 25%, rgba(255,255,255,0.08) 50%, rgba(255,255,255,0.04) 75%);
+    background-size: 200% 100%;
+    animation: engShimmer 1.5s infinite;
+    border-radius: 6px;
+    margin-bottom: 10px;
+}
+.eng-skel-meaning {
+    width: 70%;
+    height: 14px;
+    background: linear-gradient(90deg, rgba(255,255,255,0.04) 25%, rgba(255,255,255,0.08) 50%, rgba(255,255,255,0.04) 75%);
+    background-size: 200% 100%;
+    animation: engShimmer 1.5s infinite 0.2s;
+    border-radius: 4px;
+    margin-bottom: 8px;
+}
+.eng-skel-example {
+    width: 90%;
+    height: 12px;
+    background: linear-gradient(90deg, rgba(255,255,255,0.04) 25%, rgba(255,255,255,0.08) 50%, rgba(255,255,255,0.04) 75%);
+    background-size: 200% 100%;
+    animation: engShimmer 1.5s infinite 0.4s;
+    border-radius: 4px;
+}
+@keyframes engShimmer {
+    0% { background-position: 200% 0; }
+    100% { background-position: -200% 0; }
+}
+
+/* Light mode */
+.light-mode .eng-word-skeleton { background: rgba(0,0,0,0.03); border-color: rgba(0,0,0,0.06); }
+.light-mode .eng-skel-word,
+.light-mode .eng-skel-meaning,
+.light-mode .eng-skel-example {
+    background: linear-gradient(90deg, rgba(0,0,0,0.04) 25%, rgba(0,0,0,0.08) 50%, rgba(0,0,0,0.04) 75%);
+    background-size: 200% 100%;
+}
