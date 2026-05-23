@@ -113,12 +113,30 @@ body {
     to   { opacity: 0; transform: translateY(-8px) scale(0.95); }
 }
 
+/* Toast base styles (moved from inline JS for theme support) */
+.toast-item {
+    background: #1e1e3a;
+    border: 1px solid rgba(139, 92, 246, 0.4);
+    color: #f1f5f9;
+    padding: 12px 20px;
+    border-radius: 12px;
+    font-size: 14px;
+    font-weight: 500;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+    pointer-events: auto;
+    cursor: pointer;
+    max-width: 400px;
+    text-align: center;
+    word-break: break-word;
+    animation: toastIn 0.3s ease forwards;
+}
+
 /* Light mode toast */
 html.light-mode .toast-item {
-    background: #fff !important;
-    border-color: rgba(109, 40, 217, 0.2) !important;
-    color: #1e1b4b !important;
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1) !important;
+    background: #fff;
+    border-color: rgba(109, 40, 217, 0.2);
+    color: #1e1b4b;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
 }
 
 

@@ -5,6 +5,7 @@ Provides call_gemini() and call_gemini_multi() with automatic model fallback and
 
 import os
 import time
+import asyncio
 import logging
 from google import genai
 from dotenv import load_dotenv
@@ -123,4 +124,72 @@ def call_gemini_multi(contents: list, retries: int = 4) -> str:
         return resp.text
 
     return _call_with_retry(_gen, retries=retries)
+
+
+# ═══════════════════════════════════════════════════════
+# ASYNC VERSIONS (non-blocking for FastAPI async routes)
+# ═══════════════════════════════════════════════════════
+
+async def _async_call_with_retry(generate_fn, retries: int = 4) -> str:
+    """
+    Async retry logic — uses asyncio.sleep instead of blocking time.sleep.
+    generate_fn(client, model) should call client.models.generate_content.
+    """
+    client = get_genai_client()
+    models = [PRIMARY_MODEL, FALLBACK_MODEL]
+
+    for model in models:
+        last_err = None
+        for attempt in range(retries):
+            try:
+                text = generate_fn(client, model)
+                if model != PRIMARY_MODEL:
+                    logger.warning("Used fallback model: %s", model)
+                return text
+            except Exception as e:
+                last_err = e
+                err_str = str(e)
+
+                if _is_quota_error(err_str):
+                    logger.warning("Quota exhausted for %s, trying fallback...", model)
+                    break  # → try next model
+
+                if _is_retryable(err_str):
+                    retry_after = _parse_retry_after(err_str)
+                    wait = retry_after if retry_after else (2 ** attempt)
+                    logger.info("%s retry %d/%d in %ds: %s", model, attempt+1, retries, wait, err_str[:80])
+                    await asyncio.sleep(wait)
+                    continue
+
+                # Non-retryable error → propagate immediately
+                raise
+        else:
+            # Exhausted all retries for this model
+            if model == FALLBACK_MODEL:
+                raise Exception(f"All models exhausted after {retries} retries. Last error: {last_err}")
+            # else continue to fallback model
+
+    raise Exception("Gemini call failed across all models")
+
+
+async def async_call_gemini(prompt: str, retries: int = 4) -> str:
+    """
+    Async version of call_gemini — non-blocking retries for FastAPI.
+    """
+    def _gen(client, model):
+        resp = client.models.generate_content(model=model, contents=prompt)
+        return resp.text
+
+    return await _async_call_with_retry(_gen, retries=retries)
+
+
+async def async_call_gemini_multi(contents: list, retries: int = 4) -> str:
+    """
+    Async version of call_gemini_multi — non-blocking retries for FastAPI.
+    """
+    def _gen(client, model):
+        resp = client.models.generate_content(model=model, contents=contents)
+        return resp.text
+
+    return await _async_call_with_retry(_gen, retries=retries)
 

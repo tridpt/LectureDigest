@@ -6,6 +6,7 @@ import os
 import re
 import json
 import time
+import asyncio
 import hashlib
 import secrets
 import logging
@@ -230,7 +231,7 @@ async def upload_analyze(
         max_wait = 120  # seconds
         waited = 0
         while gemini_file.state.name == "PROCESSING" and waited < max_wait:
-            time.sleep(3)
+            await asyncio.sleep(3)
             waited += 3
             gemini_file = client.files.get(name=gemini_file.name)
             logger.info("Upload: processing... (%ds)", waited)

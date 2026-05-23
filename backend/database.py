@@ -7,6 +7,7 @@ import os
 import json
 import time
 import logging
+from contextlib import contextmanager
 
 logger = logging.getLogger("database")
 
@@ -116,30 +117,67 @@ if USE_POSTGRES:
             try:
                 _pg_pool.putconn(self._conn)
                 self._conn = None
-            except:
-                pass
+            except Exception as e:
+                logger.debug("PG close error: %s", e)
+
+        def __enter__(self):
+            return self
+
+        def __exit__(self, exc_type, exc_val, exc_tb):
+            self.close()
+            return False
 
         def __del__(self):
             if self._conn is not None:
                 try:
                     _pg_pool.putconn(self._conn)
                     self._conn = None
-                except:
-                    pass
+                except Exception as e:
+                    logger.debug("PG __del__ cleanup error: %s", e)
 
     def get_db():
         """Get a PostgreSQL connection wrapped to behave like sqlite3."""
         return PgConnectionWrapper()
 
 else:
+    class _SqliteConnectionWrapper:
+        """Wraps sqlite3 connection to support context manager protocol."""
+        def __init__(self):
+            self._conn = sqlite3.connect(DB_PATH, timeout=10)
+            self._conn.row_factory = sqlite3.Row
+            self._conn.execute("PRAGMA journal_mode=WAL")
+            self._conn.execute("PRAGMA foreign_keys=ON")
+            self._conn.execute("PRAGMA busy_timeout=10000")
+
+        def execute(self, sql, params=None):
+            if params:
+                return self._conn.execute(sql, params)
+            return self._conn.execute(sql)
+
+        def executescript(self, sql):
+            return self._conn.executescript(sql)
+
+        def commit(self):
+            return self._conn.commit()
+
+        def rollback(self):
+            return self._conn.rollback()
+
+        def close(self):
+            self._conn.close()
+
+        def __enter__(self):
+            return self
+
+        def __exit__(self, exc_type, exc_val, exc_tb):
+            if exc_type:
+                self._conn.rollback()
+            self._conn.close()
+            return False
+
     def get_db():
-        """Get a SQLite connection with row_factory."""
-        conn = sqlite3.connect(DB_PATH, timeout=10)
-        conn.row_factory = sqlite3.Row
-        conn.execute("PRAGMA journal_mode=WAL")
-        conn.execute("PRAGMA foreign_keys=ON")
-        conn.execute("PRAGMA busy_timeout=10000")
-        return conn
+        """Get a SQLite connection with row_factory. Supports context manager."""
+        return _SqliteConnectionWrapper()
 
 def init_db():
     """Create tables if they don't exist."""
@@ -861,8 +899,8 @@ def db_migrate_anonymous_to_user(user_id: int):
                 """, (user_id, anon_gamif["data_json"], now, anon_gamif["data_json"], now))
                 # Reset anonymous gamification
                 conn.execute("UPDATE gamification SET data_json = '{}', updated_at = ? WHERE id = 1", (now,))
-        except:
-            pass
+        except Exception as e:
+            logger.warning("Failed to migrate gamification for user %d: %s", user_id, e)
 
     conn.commit()
     conn.close()
@@ -984,9 +1022,9 @@ def db_full_sync(user_id, local_history, local_notes, local_bookmarks, local_gam
                      "title": r["title"], "author": r["author"], "thumbnail": r["thumbnail"],
                      "savedAt": r["saved_at"], "lang": r["lang"]}
             try: entry["data"] = json.loads(r["data_json"]) if r["data_json"] else {}
-            except: entry["data"] = {}
+            except Exception: entry["data"] = {}
             try: entry["transcript"] = json.loads(r["transcript_json"]) if r["transcript_json"] else None
-            except: entry["transcript"] = None
+            except Exception: entry["transcript"] = None
             result_history.append(entry)
 
         # Gamification

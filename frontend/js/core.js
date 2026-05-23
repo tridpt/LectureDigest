@@ -92,11 +92,6 @@ function showToast(message, duration) {
 
     var toast = document.createElement('div');
     toast.className = 'toast-item';
-    toast.style.cssText = 'background:#1e1e3a;border:1px solid rgba(139,92,246,0.4);' +
-        'color:#f1f5f9;padding:12px 20px;border-radius:12px;font-size:14px;font-weight:500;' +
-        'box-shadow:0 8px 32px rgba(0,0,0,0.5);pointer-events:auto;cursor:pointer;' +
-        'max-width:400px;text-align:center;word-break:break-word;' +
-        'animation:toastIn 0.3s ease forwards;';
     toast.textContent = message;
     toast.onclick = function() { _dismissToast(toast); };
 

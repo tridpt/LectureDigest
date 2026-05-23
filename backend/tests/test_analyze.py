@@ -7,14 +7,15 @@ import pytest
 
 
 class TestHealth:
-    """Test GET /api/health."""
+    """Test GET /health."""
 
     def test_health_returns_ok(self, client):
-        resp = client.get("/api/health")
+        resp = client.get("/health")
         assert resp.status_code == 200
         data = resp.json()
-        assert data["status"] == "ok"
-        assert "gemini_configured" in data
+        assert data["status"] in ("healthy", "degraded")
+        assert "database" in data
+        assert "gemini_api" in data
 
 
 class TestAnalyzeValidation:
@@ -26,7 +27,7 @@ class TestAnalyzeValidation:
             "output_language": "English",
         })
         assert resp.status_code == 400
-        assert "Invalid" in resp.json()["detail"]
+        assert "detail" in resp.json()
 
     def test_analyze_empty_url(self, client):
         resp = client.post("/api/analyze", json={

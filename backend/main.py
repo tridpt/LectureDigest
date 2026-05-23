@@ -18,6 +18,8 @@ Route modules:
 
 import os
 import sys
+import asyncio
+from contextlib import asynccontextmanager
 import time as _startup_time
 import logging
 from dotenv import load_dotenv
@@ -113,16 +115,8 @@ _env_ok = _validate_environment()
 
 _startup_ts = _startup_time.time()
 
-app = FastAPI(title="LectureDigest API", version="1.0.0")
-
-# Initialize SQLite database
-init_db()
-
-# Auto-backup database on startup (keeps last 7)
-db_create_backup()
 
 # ── Self-ping to keep Render free tier awake ──
-import asyncio
 import httpx as _httpx
 
 async def _keep_alive_ping():
@@ -135,14 +129,26 @@ async def _keep_alive_ping():
         try:
             async with _httpx.AsyncClient() as client:
                 await client.get(f"{render_url}/health", timeout=10)
-        except:
-            pass
+        except Exception as e:
+            logger.debug("Keep-alive ping failed: %s", e)
         await asyncio.sleep(600)  # Every 10 minutes
 
-@app.on_event("startup")
-async def _start_keep_alive():
+
+@asynccontextmanager
+async def lifespan(app):
+    """FastAPI lifespan: startup and shutdown events."""
+    # ── Startup ──
+    init_db()
+    db_create_backup()
     if os.getenv("RENDER_EXTERNAL_URL"):
         asyncio.create_task(_keep_alive_ping())
+    logger.info(f"🚀 LectureDigest API ready (startup: {_startup_time.time() - _startup_ts:.2f}s)")
+    yield
+    # ── Shutdown ──
+    logger.info("LectureDigest API shutting down")
+
+
+app = FastAPI(title="LectureDigest API", version="1.0.0", lifespan=lifespan)
 
 # CORS: read allowed origins from env, default to localhost for development
 _allowed_origins = [
@@ -163,7 +169,6 @@ app.add_middleware(
 
 
 # ── Global Exception Handler ─────────────────────────────
-from fastapi.responses import JSONResponse
 
 @app.exception_handler(Exception)
 async def global_exception_handler(request, exc):
@@ -346,9 +351,6 @@ async def health_check():
         "gemini_api": "configured" if gemini_ok else "missing",
         "environment": "ok" if _env_ok else "issues",
     })
-
-
-logger.info(f"🚀 LectureDigest API ready (startup: {_startup_time.time() - _startup_ts:.2f}s)")
 
 
 # ═══════════════════════════════════════════════════════
