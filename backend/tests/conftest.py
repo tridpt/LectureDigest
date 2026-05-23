@@ -20,7 +20,9 @@ def _isolate_db(tmp_path_factory):
     test_db = str(tmp / "test.sqlite3")
 
     import database
+    import db.connection
     database.DB_PATH = test_db
+    db.connection.DB_PATH = test_db
     database.init_db()
 
     # Import main to trigger all module-level inits with the test DB
