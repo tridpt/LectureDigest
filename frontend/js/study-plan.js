@@ -721,10 +721,40 @@ function spDeleteArchivedPlan(idx) {
     if (!_spPlanHistory[idx]) return;
 
     var title = _spPlanHistory[idx].plan.plan_title || 'Lộ trình';
-    if (!confirm('Xoá bản lưu trữ "' + title + '"?')) return;
+
+    // Show inline confirm instead of browser dialog
+    var item = document.querySelectorAll('.sp-history-item')[idx];
+    if (!item) return;
+
+    // Check if already showing confirm
+    if (item.querySelector('.sp-delete-confirm')) return;
+
+    var confirmHtml = '<div class="sp-delete-confirm">'
+        + '<span>Xoá "' + _spEsc(title) + '"?</span>'
+        + '<div class="sp-delete-confirm-btns">'
+        + '<button class="sp-delete-yes" onclick="spConfirmDelete(' + idx + ')">Xoá</button>'
+        + '<button class="sp-delete-no" onclick="spCancelDelete(' + idx + ')">Huỷ</button>'
+        + '</div></div>';
+
+    item.insertAdjacentHTML('beforeend', confirmHtml);
+    item.classList.add('sp-history-item-confirming');
+}
+
+function spConfirmDelete(idx) {
+    _spLoadSaved();
+    if (!_spPlanHistory[idx]) return;
 
     _spPlanHistory.splice(idx, 1);
     _spSaveHistory();
     spShowHistory(); // Re-render list
     showToast('🗑️ Đã xoá bản lưu trữ', 2000);
+}
+
+function spCancelDelete(idx) {
+    var items = document.querySelectorAll('.sp-history-item');
+    if (items[idx]) {
+        var confirm = items[idx].querySelector('.sp-delete-confirm');
+        if (confirm) confirm.remove();
+        items[idx].classList.remove('sp-history-item-confirming');
+    }
 }
