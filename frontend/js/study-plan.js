@@ -688,19 +688,23 @@ function spRestorePlan(idx) {
     _spLoadSaved();
     if (!_spPlanHistory[idx]) return;
 
-    // Archive current plan first (if exists)
+    // Grab the entry BEFORE any modifications to the array
+    var entry = _spPlanHistory[idx];
+
+    // Remove from history first (before archive adds to it)
+    _spPlanHistory.splice(idx, 1);
+
+    // Archive current plan (if exists) — this may unshift into _spPlanHistory
     if (_spCurrentPlan) {
         _spArchiveCurrentPlan();
     }
 
     // Restore selected plan
-    var entry = _spPlanHistory[idx];
     _spCurrentPlan = entry.plan;
     _spCompletedTasks = entry.completed || {};
     _spCurrentWeek = 0;
 
-    // Remove from history (it's now the active plan)
-    _spPlanHistory.splice(idx, 1);
+    // Save all
     _spSaveHistory();
     _spSavePlan();
     _spSaveCompleted();
