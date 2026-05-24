@@ -28,7 +28,7 @@ function saveToHistory(data) {
         data,
         transcript:  data.transcript || null,
     };
-    if (playlistState && playlistState.data) {
+    if (typeof playlistState !== 'undefined' && playlistState && playlistState.data) {
         entry.playlist_id = playlistState.data.playlist_id;
         entry.playlist_title = playlistState.data.title;
     }
