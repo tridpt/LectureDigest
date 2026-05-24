@@ -13,6 +13,9 @@
                     <p class="sp-page-sub" id="spSubtitle">AI tạo lộ trình cá nhân hóa</p>
                 </div>
                 <div class="sp-header-actions">
+                    <button type="button" class="sp-history-btn" onclick="spShowHistory()" title="Xem lộ trình đã lưu">
+                        📦 Lịch sử
+                    </button>
                     <button type="button" class="sp-regen-btn" onclick="openStudyPlanConfig()" title="Tạo lộ trình mới">
                         🔄 Tạo mới
                     </button>
@@ -104,6 +107,17 @@
                 <button type="button" class="sp-generate-btn" onclick="openStudyPlanConfig()">
                     📅 Tạo lộ trình đầu tiên
                 </button>
+            </div>
+
+            <!-- History overlay -->
+            <div class="sp-history-overlay hidden" id="spHistoryOverlay">
+                <div class="sp-history-modal">
+                    <div class="sp-history-header">
+                        <h2 class="sp-history-title">📦 Lộ trình đã lưu</h2>
+                        <button type="button" class="sp-history-close" onclick="spCloseHistory()" aria-label="Đóng">✕</button>
+                    </div>
+                    <div class="sp-history-list" id="spHistoryList"></div>
+                </div>
             </div>
         </div>
     </section>

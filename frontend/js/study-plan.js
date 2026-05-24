@@ -12,10 +12,12 @@ if (typeof SPA_ROUTES !== 'undefined') SPA_ROUTES['studyPlanSection'] = '/study-
 
 var SP_STORAGE_KEY = 'lectureDigest_studyPlan';
 var SP_COMPLETED_KEY = 'lectureDigest_studyPlan_completed';
+var SP_HISTORY_KEY = 'lectureDigest_studyPlan_history';
 
 var _spCurrentPlan = null;
 var _spCurrentWeek = 0;
 var _spCompletedTasks = {};
+var _spPlanHistory = []; // Array of { plan, completed, archivedAt }
 
 // ══════════════════════════════════════════════════════
 // OPEN / CLOSE
@@ -196,6 +198,12 @@ async function generateStudyPlan() {
         }
 
         var plan = await res.json();
+
+        // Archive old plan before replacing
+        if (_spCurrentPlan) {
+            _spArchiveCurrentPlan();
+        }
+
         _spCurrentPlan = plan;
         _spCurrentWeek = 0;
         _spCompletedTasks = {};
@@ -464,6 +472,11 @@ function _spLoadSaved() {
         var raw2 = localStorage.getItem(SP_COMPLETED_KEY);
         if (raw2) _spCompletedTasks = JSON.parse(raw2);
     } catch(e) { _spCompletedTasks = {}; }
+
+    try {
+        var raw3 = localStorage.getItem(SP_HISTORY_KEY);
+        if (raw3) _spPlanHistory = JSON.parse(raw3);
+    } catch(e) { _spPlanHistory = []; }
 }
 
 // ══════════════════════════════════════════════════════
@@ -572,4 +585,142 @@ function renderStudyPlanBanner(containerId) {
         + '<div class="sp-banner-arrow">→</div>'
         + '</div>';
     container.classList.remove('hidden');
+}
+
+
+// ══════════════════════════════════════════════════════
+// PLAN HISTORY (Archive & Restore)
+// ══════════════════════════════════════════════════════
+
+function _spArchiveCurrentPlan() {
+    if (!_spCurrentPlan) return;
+
+    var entry = {
+        plan: _spCurrentPlan,
+        completed: Object.assign({}, _spCompletedTasks),
+        archivedAt: Date.now()
+    };
+
+    _spPlanHistory.unshift(entry); // newest first
+
+    // Keep max 10 archived plans
+    if (_spPlanHistory.length > 10) {
+        _spPlanHistory = _spPlanHistory.slice(0, 10);
+    }
+
+    _spSaveHistory();
+}
+
+function _spSaveHistory() {
+    try {
+        safeLsSet(SP_HISTORY_KEY, JSON.stringify(_spPlanHistory));
+    } catch(e) {}
+}
+
+function spShowHistory() {
+    _spLoadSaved();
+    var overlay = document.getElementById('spHistoryOverlay');
+    if (!overlay) return;
+    overlay.classList.remove('hidden');
+
+    var listEl = document.getElementById('spHistoryList');
+    if (!listEl) return;
+
+    if (!_spPlanHistory || _spPlanHistory.length === 0) {
+        listEl.innerHTML = '<div class="sp-history-empty">'
+            + '<div class="sp-history-empty-icon">📭</div>'
+            + '<p>Chưa có lộ trình nào được lưu trữ.</p>'
+            + '<p class="sp-history-empty-hint">Khi bạn tạo lộ trình mới, bản cũ sẽ tự động được lưu tại đây.</p>'
+            + '</div>';
+        return;
+    }
+
+    listEl.innerHTML = _spPlanHistory.map(function(entry, idx) {
+        var plan = entry.plan;
+        var archivedDate = new Date(entry.archivedAt).toLocaleDateString('vi-VN', {
+            day: 'numeric', month: 'short', year: 'numeric'
+        });
+        var createdDate = plan.generated_at
+            ? new Date(plan.generated_at).toLocaleDateString('vi-VN', { day: 'numeric', month: 'short', year: 'numeric' })
+            : '';
+
+        // Calculate completion
+        var totalTasks = 0, completedCount = 0;
+        var schedule = plan.weekly_schedule || [];
+        for (var w = 0; w < schedule.length; w++) {
+            var days = schedule[w].days || [];
+            for (var d = 0; d < days.length; d++) {
+                var tasks = days[d].tasks || [];
+                for (var t = 0; t < tasks.length; t++) {
+                    totalTasks++;
+                    if (entry.completed && entry.completed[w + '-' + d + '-' + t]) completedCount++;
+                }
+            }
+        }
+        var pct = totalTasks > 0 ? Math.round(completedCount / totalTasks * 100) : 0;
+
+        return '<div class="sp-history-item">'
+            + '<div class="sp-history-item-header">'
+            + '<div class="sp-history-item-title">' + _spEsc(plan.plan_title || 'Lộ trình học tập') + '</div>'
+            + '<div class="sp-history-item-meta">'
+            + (createdDate ? '<span>📅 Tạo: ' + createdDate + '</span>' : '')
+            + '<span>📦 Lưu: ' + archivedDate + '</span>'
+            + '<span>📚 ' + (plan.total_videos || 0) + ' videos</span>'
+            + '<span>⏱️ ' + (plan.plan_duration_weeks || 2) + ' tuần</span>'
+            + '</div></div>'
+            + '<div class="sp-history-item-progress">'
+            + '<div class="sp-history-bar-track"><div class="sp-history-bar-fill" style="width:' + pct + '%"></div></div>'
+            + '<span class="sp-history-pct">' + pct + '% (' + completedCount + '/' + totalTasks + ')</span>'
+            + '</div>'
+            + '<div class="sp-history-item-actions">'
+            + '<button class="sp-history-btn sp-history-restore" onclick="spRestorePlan(' + idx + ')" title="Khôi phục lộ trình này">↩️ Khôi phục</button>'
+            + '<button class="sp-history-btn sp-history-delete" onclick="spDeleteArchivedPlan(' + idx + ')" title="Xoá bản lưu trữ này">🗑️ Xoá</button>'
+            + '</div></div>';
+    }).join('');
+}
+
+function spCloseHistory() {
+    var overlay = document.getElementById('spHistoryOverlay');
+    if (overlay) overlay.classList.add('hidden');
+}
+
+function spRestorePlan(idx) {
+    _spLoadSaved();
+    if (!_spPlanHistory[idx]) return;
+
+    // Archive current plan first (if exists)
+    if (_spCurrentPlan) {
+        _spArchiveCurrentPlan();
+    }
+
+    // Restore selected plan
+    var entry = _spPlanHistory[idx];
+    _spCurrentPlan = entry.plan;
+    _spCompletedTasks = entry.completed || {};
+    _spCurrentWeek = 0;
+
+    // Remove from history (it's now the active plan)
+    _spPlanHistory.splice(idx, 1);
+    _spSaveHistory();
+    _spSavePlan();
+    _spSaveCompleted();
+
+    // Render
+    spCloseHistory();
+    _spRenderPlan();
+    _spShowContent();
+    showToast('✅ Đã khôi phục lộ trình!', 3000);
+}
+
+function spDeleteArchivedPlan(idx) {
+    _spLoadSaved();
+    if (!_spPlanHistory[idx]) return;
+
+    var title = _spPlanHistory[idx].plan.plan_title || 'Lộ trình';
+    if (!confirm('Xoá bản lưu trữ "' + title + '"?')) return;
+
+    _spPlanHistory.splice(idx, 1);
+    _spSaveHistory();
+    spShowHistory(); // Re-render list
+    showToast('🗑️ Đã xoá bản lưu trữ', 2000);
 }

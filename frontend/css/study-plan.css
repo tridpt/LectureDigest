@@ -692,3 +692,221 @@
     .sp-task-title { font-size: 13px; }
     .sp-week-nav { flex-wrap: wrap; gap: 6px; }
 }
+
+/* ── History Button ── */
+.sp-header-actions {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+}
+
+.sp-history-btn {
+    background: rgba(139, 92, 246, 0.15);
+    border: 1px solid rgba(139, 92, 246, 0.3);
+    color: #c4b5fd;
+    padding: 8px 14px;
+    border-radius: 10px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    white-space: nowrap;
+}
+.sp-history-btn:hover {
+    background: rgba(139, 92, 246, 0.25);
+    border-color: rgba(139, 92, 246, 0.5);
+    color: #e9d5ff;
+}
+
+/* ── History Overlay ── */
+.sp-history-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.7);
+    backdrop-filter: blur(4px);
+    z-index: 9999;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    animation: spHistFadeIn 0.2s ease;
+}
+.sp-history-overlay.hidden { display: none; }
+
+@keyframes spHistFadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+.sp-history-modal {
+    background: var(--bg-secondary, #1a1a2e);
+    border-radius: 20px;
+    border: 1px solid rgba(139, 92, 246, 0.2);
+    width: 100%;
+    max-width: 640px;
+    max-height: 80vh;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    box-shadow: 0 24px 48px rgba(0, 0, 0, 0.4);
+}
+
+.sp-history-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 20px 24px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.sp-history-title {
+    font-size: 18px;
+    font-weight: 700;
+    color: #fff;
+    margin: 0;
+}
+
+.sp-history-close {
+    background: rgba(255, 255, 255, 0.06);
+    border: none;
+    color: #94a3b8;
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+    font-size: 16px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+}
+.sp-history-close:hover {
+    background: rgba(239, 68, 68, 0.2);
+    color: #fca5a5;
+}
+
+.sp-history-list {
+    overflow-y: auto;
+    padding: 16px 24px 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+}
+
+/* ── History Item ── */
+.sp-history-item {
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    border-radius: 14px;
+    padding: 16px;
+    transition: all 0.2s;
+}
+.sp-history-item:hover {
+    background: rgba(139, 92, 246, 0.06);
+    border-color: rgba(139, 92, 246, 0.2);
+}
+
+.sp-history-item-header {
+    margin-bottom: 10px;
+}
+
+.sp-history-item-title {
+    font-size: 15px;
+    font-weight: 700;
+    color: #e2e8f0;
+    margin-bottom: 6px;
+}
+
+.sp-history-item-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    font-size: 12px;
+    color: #64748b;
+}
+
+.sp-history-item-progress {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 12px;
+}
+
+.sp-history-bar-track {
+    flex: 1;
+    height: 6px;
+    background: rgba(255, 255, 255, 0.06);
+    border-radius: 99px;
+    overflow: hidden;
+}
+
+.sp-history-bar-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #8b5cf6, #a78bfa);
+    border-radius: 99px;
+    transition: width 0.3s ease;
+}
+
+.sp-history-pct {
+    font-size: 12px;
+    color: #94a3b8;
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+.sp-history-item-actions {
+    display: flex;
+    gap: 8px;
+}
+
+.sp-history-btn {
+    padding: 6px 12px;
+    border-radius: 8px;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    border: 1px solid transparent;
+    transition: all 0.2s;
+}
+
+.sp-history-restore {
+    background: rgba(16, 185, 129, 0.12);
+    color: #6ee7b7;
+    border-color: rgba(16, 185, 129, 0.3);
+}
+.sp-history-restore:hover {
+    background: rgba(16, 185, 129, 0.2);
+    border-color: rgba(16, 185, 129, 0.5);
+}
+
+.sp-history-delete {
+    background: rgba(239, 68, 68, 0.1);
+    color: #fca5a5;
+    border-color: rgba(239, 68, 68, 0.2);
+}
+.sp-history-delete:hover {
+    background: rgba(239, 68, 68, 0.2);
+    border-color: rgba(239, 68, 68, 0.4);
+}
+
+/* ── Empty History ── */
+.sp-history-empty {
+    text-align: center;
+    padding: 40px 20px;
+}
+
+.sp-history-empty-icon {
+    font-size: 48px;
+    margin-bottom: 12px;
+}
+
+.sp-history-empty p {
+    color: #94a3b8;
+    font-size: 14px;
+    margin: 4px 0;
+}
+
+.sp-history-empty-hint {
+    color: #64748b !important;
+    font-size: 13px !important;
+}
