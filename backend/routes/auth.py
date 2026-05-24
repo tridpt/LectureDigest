@@ -452,9 +452,6 @@ async def forgot_password(req: ForgotPasswordRequest):
 
     user = db_get_user_by_email(email)
     if user:
-        if not user.get("password_hash"):
-            return {"ok": True, "message": "Nếu email tồn tại, chúng tôi đã gửi link đặt lại mật khẩu."}
-
         now = time.time()
         token = secrets.token_urlsafe(48)
         db_save_reset_token(token, email, now + _RESET_TOKEN_EXPIRY)

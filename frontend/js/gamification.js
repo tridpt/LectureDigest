@@ -15,16 +15,22 @@ const BADGES = [
     { id: 'videos_5',       cat: 'videos',   icon: '🎓', name: 'Học viên tích cực',   desc: 'Phân tích 5 videos',                check: g => g.totalVideos >= 5 },
     { id: 'videos_10',      cat: 'videos',   icon: '📚', name: 'Thư viện tri thức',   desc: 'Phân tích 10 videos',               check: g => g.totalVideos >= 10 },
     { id: 'videos_25',      cat: 'videos',   icon: '🏛️', name: 'Giáo sư',            desc: 'Phân tích 25 videos',               check: g => g.totalVideos >= 25 },
+    { id: 'videos_50',      cat: 'videos',   icon: '🧙', name: 'Phù thủy kiến thức', desc: 'Phân tích 50 videos',               check: g => g.totalVideos >= 50 },
+    { id: 'videos_100',     cat: 'videos',   icon: '👑', name: 'Bách khoa toàn thư',  desc: 'Phân tích 100 videos',              check: g => g.totalVideos >= 100 },
     // 🧠 Quiz
     { id: 'first_quiz',     cat: 'quiz',     icon: '🧪', name: 'Bắt đầu kiểm tra',  desc: 'Hoàn thành quiz đầu tiên',          check: g => g.totalQuizzes >= 1 },
     { id: 'quiz_ace',       cat: 'quiz',     icon: '⭐', name: 'Điểm hoàn hảo',      desc: 'Đạt 100% trong một quiz',           check: g => g.perfectQuizzes >= 1 },
     { id: 'quizzes_10',     cat: 'quiz',     icon: '🏆', name: 'Quiz Master',         desc: 'Hoàn thành 10 quizzes',             check: g => g.totalQuizzes >= 10 },
     { id: 'quizzes_25',     cat: 'quiz',     icon: '🎯', name: 'Chiến binh câu hỏi', desc: 'Hoàn thành 25 quizzes',             check: g => g.totalQuizzes >= 25 },
+    { id: 'quizzes_50',     cat: 'quiz',     icon: '🧬', name: 'Bộ não siêu việt',   desc: 'Hoàn thành 50 quizzes',             check: g => g.totalQuizzes >= 50 },
+    { id: 'perfect_5',      cat: 'quiz',     icon: '💯', name: 'Hoàn hảo tuyệt đối', desc: 'Đạt 100% trong 5 quizzes',          check: g => g.perfectQuizzes >= 5 },
     // 🔥 Streaks
     { id: 'streak_3',       cat: 'streak',   icon: '🔥', name: 'Khởi động',          desc: 'Học 3 ngày liên tiếp',              check: g => g.longestStreak >= 3 },
     { id: 'streak_7',       cat: 'streak',   icon: '💥', name: 'Bùng cháy',          desc: 'Học 7 ngày liên tiếp',              check: g => g.longestStreak >= 7 },
     { id: 'streak_14',      cat: 'streak',   icon: '🌊', name: 'Không thể ngăn cản', desc: 'Học 14 ngày liên tiếp',             check: g => g.longestStreak >= 14 },
     { id: 'streak_30',      cat: 'streak',   icon: '🌟', name: 'Huyền thoại',        desc: 'Học 30 ngày liên tiếp',             check: g => g.longestStreak >= 30 },
+    { id: 'streak_60',      cat: 'streak',   icon: '⚡', name: 'Siêu nhân',          desc: 'Học 60 ngày liên tiếp',             check: g => g.longestStreak >= 60 },
+    { id: 'streak_100',     cat: 'streak',   icon: '🐉', name: 'Rồng bất tử',        desc: 'Học 100 ngày liên tiếp',            check: g => g.longestStreak >= 100 },
     // 🛠 Features
     { id: 'bookmarker',     cat: 'feature',  icon: '🔖', name: 'Người đánh dấu',     desc: 'Tạo bookmark đầu tiên',             check: g => g.usedBookmark },
     { id: 'translator',     cat: 'feature',  icon: '🌐', name: 'Đa ngôn ngữ',        desc: 'Dịch transcript lần đầu',           check: g => g.usedTranslation },
@@ -32,14 +38,29 @@ const BADGES = [
     { id: 'note_taker',     cat: 'feature',  icon: '📝', name: 'Người ghi chép',     desc: 'Viết ghi chú đầu tiên',             check: g => g.usedNotes },
     { id: 'flashcard_fan',  cat: 'feature',  icon: '🃏', name: 'Flashcard Fan',       desc: 'Ôn tập với flashcards',             check: g => g.usedFlashcards },
     { id: 'all_features',   cat: 'feature',  icon: '🚀', name: 'Người khám phá',     desc: 'Dùng tất cả tính năng',             check: g => g.usedBookmark && g.usedTranslation && g.usedMindMap && g.usedNotes && g.usedFlashcards },
+    { id: 'chat_user',      cat: 'feature',  icon: '💬', name: 'Người hỏi han',      desc: 'Chat với AI lần đầu',               check: g => g.usedChat },
+    { id: 'pdf_exporter',   cat: 'feature',  icon: '📄', name: 'Người xuất bản',     desc: 'Export PDF lần đầu',                check: g => g.usedPdfExport },
+    // 🍅 Pomodoro
+    { id: 'first_pomo',     cat: 'pomodoro', icon: '🍅', name: 'Focus đầu tiên',     desc: 'Hoàn thành 1 phiên Pomodoro',       check: g => (g.pomoSessions || 0) >= 1 },
+    { id: 'pomo_10',        cat: 'pomodoro', icon: '🍊', name: 'Người tập trung',    desc: 'Hoàn thành 10 phiên Pomodoro',      check: g => (g.pomoSessions || 0) >= 10 },
+    { id: 'pomo_25',        cat: 'pomodoro', icon: '🔴', name: 'Pomodoro Pro',        desc: 'Hoàn thành 25 phiên Pomodoro',      check: g => (g.pomoSessions || 0) >= 25 },
+    { id: 'pomo_50',        cat: 'pomodoro', icon: '🎯', name: 'Deep Work Master',   desc: 'Hoàn thành 50 phiên Pomodoro',      check: g => (g.pomoSessions || 0) >= 50 },
+    { id: 'pomo_2h',        cat: 'pomodoro', icon: '⏰', name: '2 giờ focus',         desc: 'Tích luỹ 120 phút Pomodoro',        check: g => (g.pomoTotalMin || 0) >= 120 },
+    { id: 'pomo_10h',       cat: 'pomodoro', icon: '🧘', name: 'Thiền gia',           desc: 'Tích luỹ 600 phút Pomodoro',        check: g => (g.pomoTotalMin || 0) >= 600 },
     // 🧠 SRS Review
     { id: 'first_review',   cat: 'srs',      icon: '🧠', name: 'Bắt đầu ôn tập',    desc: 'Hoàn thành phiên ôn tập đầu tiên',  check: g => (g.totalSrsReviews || 0) >= 1 },
     { id: 'review_50',      cat: 'srs',      icon: '📖', name: 'Siêng ôn bài',       desc: 'Ôn tập 50 thẻ flashcard',           check: g => (g.totalCardsReviewed || 0) >= 50 },
     { id: 'review_100',     cat: 'srs',      icon: '💎', name: 'Trí nhớ vàng',       desc: 'Ôn tập 100 thẻ flashcard',          check: g => (g.totalCardsReviewed || 0) >= 100 },
     { id: 'review_10sess',  cat: 'srs',      icon: '🔬', name: 'Nhà nghiên cứu',     desc: 'Hoàn thành 10 phiên ôn tập',        check: g => (g.totalSrsReviews || 0) >= 10 },
+    { id: 'review_500',     cat: 'srs',      icon: '🏅', name: 'Siêu trí nhớ',       desc: 'Ôn tập 500 thẻ flashcard',          check: g => (g.totalCardsReviewed || 0) >= 500 },
+    // 📅 Study Days
+    { id: 'days_7',         cat: 'days',     icon: '📅', name: 'Tuần đầu tiên',      desc: 'Học tổng cộng 7 ngày',              check: g => (g.totalStudyDays || 0) >= 7 },
+    { id: 'days_30',        cat: 'days',     icon: '📆', name: 'Một tháng nỗ lực',   desc: 'Học tổng cộng 30 ngày',             check: g => (g.totalStudyDays || 0) >= 30 },
+    { id: 'days_100',       cat: 'days',     icon: '🗓️', name: 'Trăm ngày kiên trì', desc: 'Học tổng cộng 100 ngày',           check: g => (g.totalStudyDays || 0) >= 100 },
+    { id: 'days_365',       cat: 'days',     icon: '🎊', name: 'Một năm không nghỉ', desc: 'Học tổng cộng 365 ngày',            check: g => (g.totalStudyDays || 0) >= 365 },
 ];
 
-const CAT_LABELS = { videos: '📚 Video', quiz: '🧠 Quiz', streak: '🔥 Streak', feature: '🛠 Tính năng', srs: '🧠 Ôn tập' };
+const CAT_LABELS = { videos: '📚 Video', quiz: '🧠 Quiz', streak: '🔥 Streak', feature: '🛠 Tính năng', pomodoro: '🍅 Pomodoro', srs: '🧠 Ôn tập', days: '📅 Ngày học' };
 
 function defaultGamif() {
     return {

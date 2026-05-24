@@ -20,10 +20,22 @@ function openDashboard() {
     _dashShowSkeleton();
     showSection('dashboardSection');
     window.scrollTo({ top: 0, behavior: 'instant' });
-    // Render real data on next frame so skeleton is visible first
-    requestAnimationFrame(function() {
+    // Load weekly goals module, then render dashboard
+    var loadPromises = [
+        typeof loadFeature === 'function' ? loadFeature('weeklyGoals') : Promise.resolve(),
+        typeof loadFeature === 'function' ? loadFeature('analytics') : Promise.resolve(),
+    ];
+    Promise.all(loadPromises).then(function() {
         requestAnimationFrame(function() {
-            renderDashboard();
+            requestAnimationFrame(function() {
+                renderDashboard();
+            });
+        });
+    }).catch(function() {
+        requestAnimationFrame(function() {
+            requestAnimationFrame(function() {
+                renderDashboard();
+            });
         });
     });
 }
@@ -70,7 +82,7 @@ function renderDashboard() {
 
     var renders = [
         ['renderDbStats',     'dbStatGrid',      function() { renderDbStats(g, history); }],
-        ['renderWeeklyGoals', null,               function() { if (typeof renderWeeklyGoals === 'function') renderWeeklyGoals(); }],
+        ['renderWeeklyGoals', 'dbWeeklyGoals',   function() { if (typeof renderWeeklyGoals === 'function') renderWeeklyGoals(); }],
         ['renderDbStreak',    'dbCalendar',       function() { renderDbStreak(g); }],
         ['renderDbPomodoro',  'dbPomoStats',      function() { renderDbPomodoro(g); }],
         ['renderDbVideos',    'dbVideoList',      function() { renderDbVideos(history); }],
