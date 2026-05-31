@@ -35,16 +35,35 @@ logger = logging.getLogger("auth")
 # JWT CONFIG
 # ═══════════════════════════════════════════════════════
 
-_JWT_SECRET = os.getenv("JWT_SECRET", "")
+_JWT_SECRET = os.getenv("JWT_SECRET", "").strip()
+
 if not _JWT_SECRET:
-    _JWT_SECRET = secrets.token_hex(32)
+    # No env var set. For local dev convenience, persist a generated secret to a
+    # dedicated gitignored file so users don't get logged out on every restart.
+    # In production, JWT_SECRET MUST be provided via environment variable.
+    _secret_file = os.path.join(os.path.dirname(os.path.dirname(__file__)), ".jwt_secret")
     try:
-        env_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), ".env")
-        with open(env_path, "a", encoding="utf-8") as f:
-            f.write(f"\nJWT_SECRET={_JWT_SECRET}\n")
-        logger.info("Generated and saved JWT_SECRET")
+        if os.path.isfile(_secret_file):
+            with open(_secret_file, "r", encoding="utf-8") as f:
+                _JWT_SECRET = f.read().strip()
     except Exception:
-        logger.info("Generated JWT_SECRET (not saved to .env)")
+        _JWT_SECRET = ""
+
+    if not _JWT_SECRET:
+        _JWT_SECRET = secrets.token_hex(32)
+        try:
+            with open(_secret_file, "w", encoding="utf-8") as f:
+                f.write(_JWT_SECRET)
+            logger.warning(
+                "JWT_SECRET not set — generated a local one in .jwt_secret. "
+                "For production, set JWT_SECRET as an environment variable!"
+            )
+        except Exception:
+            # Read-only filesystem (e.g. some container platforms) — keep in memory only.
+            logger.warning(
+                "JWT_SECRET not set and could not persist a generated secret. "
+                "Tokens will be invalidated on restart — set JWT_SECRET env var for production!"
+            )
 
 _JWT_EXPIRY = 7 * 24 * 3600  # 7 days
 

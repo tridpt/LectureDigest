@@ -13,6 +13,7 @@ build/
 .env
 *.env
 !.env.example
+.jwt_secret
 
 # Virtual environments
 venv/
@@ -36,6 +37,9 @@ uvicorn.log
 *.sqlite3
 *.sqlite3-shm
 *.sqlite3-wal
+*.db
+*.db-shm
+*.db-wal
 
 # Uploads (temp files)
 uploads/
