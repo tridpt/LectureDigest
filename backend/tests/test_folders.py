@@ -154,3 +154,49 @@ class TestFolderUserIsolation:
         assert "B's Folder" not in a_names
         assert "B's Folder" in b_names
         assert "A's Folder" not in b_names
+
+    def test_cannot_add_video_to_other_users_folder(self, client):
+        """IDOR: User B must not be able to add videos to User A's folder."""
+        reg_a = client.post("/api/auth/register", json={
+            "email": "idor_a@test.com", "password": "password123", "display_name": "A",
+        })
+        headers_a = {"Authorization": f"Bearer {reg_a.json()['token']}"}
+        reg_b = client.post("/api/auth/register", json={
+            "email": "idor_b@test.com", "password": "password123", "display_name": "B",
+        })
+        headers_b = {"Authorization": f"Bearer {reg_b.json()['token']}"}
+
+        # User A creates a folder
+        fid = client.post("/api/folders", json={"name": "A private"}, headers=headers_a).json()["folder_id"]
+
+        # User B tries to add a video to A's folder → must be rejected
+        resp = client.post(f"/api/folders/{fid}/videos", json={"video_id": "sneaky"}, headers=headers_b)
+        assert resp.status_code == 404
+
+        # Confirm the video did NOT get added to A's folder
+        a_folders = client.get("/api/folders", headers=headers_a).json()["folders"]
+        folder = next(f for f in a_folders if f["id"] == fid)
+        assert "sneaky" not in folder.get("video_ids", [])
+
+    def test_cannot_remove_video_from_other_users_folder(self, client):
+        """IDOR: User B must not be able to remove videos from User A's folder."""
+        reg_a = client.post("/api/auth/register", json={
+            "email": "idor_rm_a@test.com", "password": "password123", "display_name": "A",
+        })
+        headers_a = {"Authorization": f"Bearer {reg_a.json()['token']}"}
+        reg_b = client.post("/api/auth/register", json={
+            "email": "idor_rm_b@test.com", "password": "password123", "display_name": "B",
+        })
+        headers_b = {"Authorization": f"Bearer {reg_b.json()['token']}"}
+
+        fid = client.post("/api/folders", json={"name": "A keep"}, headers=headers_a).json()["folder_id"]
+        client.post(f"/api/folders/{fid}/videos", json={"video_id": "keepme"}, headers=headers_a)
+
+        # User B tries to remove A's video → rejected
+        resp = client.delete(f"/api/folders/{fid}/videos/keepme", headers=headers_b)
+        assert resp.status_code == 404
+
+        # Video should still be there
+        a_folders = client.get("/api/folders", headers=headers_a).json()["folders"]
+        folder = next(f for f in a_folders if f["id"] == fid)
+        assert "keepme" in folder.get("video_ids", [])

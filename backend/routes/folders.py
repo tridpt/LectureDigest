@@ -116,7 +116,11 @@ async def delete_folder(folder_id: int, request: Request):
 async def add_video(folder_id: int, req: FolderVideoRequest, request: Request):
     """Add a video to a folder."""
     try:
-        db_add_video_to_folder(folder_id, req.video_id)
+        user = get_current_user(request)
+        uid = user["id"] if user else None
+        ok = db_add_video_to_folder(folder_id, req.video_id, user_id=uid)
+        if not ok:
+            raise HTTPException(status_code=404, detail="Folder không tồn tại hoặc không thuộc về bạn")
         return {"ok": True}
     except HTTPException:
         raise
@@ -129,7 +133,11 @@ async def add_video(folder_id: int, req: FolderVideoRequest, request: Request):
 async def remove_video(folder_id: int, video_id: str, request: Request):
     """Remove a video from a folder."""
     try:
-        db_remove_video_from_folder(folder_id, video_id)
+        user = get_current_user(request)
+        uid = user["id"] if user else None
+        ok = db_remove_video_from_folder(folder_id, video_id, user_id=uid)
+        if not ok:
+            raise HTTPException(status_code=404, detail="Folder không tồn tại hoặc không thuộc về bạn")
         return {"ok": True}
     except HTTPException:
         raise

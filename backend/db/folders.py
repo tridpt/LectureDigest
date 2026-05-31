@@ -93,9 +93,21 @@ def db_delete_folder(folder_id: int, user_id=None):
     conn.close()
 
 
-def db_add_video_to_folder(folder_id: int, video_id: str):
-    """Add a video to a folder."""
+def db_add_video_to_folder(folder_id: int, video_id: str, user_id=None):
+    """Add a video to a folder. If user_id is given, verifies the folder belongs to that user."""
     conn = get_db()
+    # Ownership check — prevent adding to another user's folder (IDOR)
+    if user_id is not None:
+        owner = conn.execute(
+            "SELECT 1 FROM folders WHERE id = ? AND user_id = ?", (folder_id, user_id)
+        ).fetchone()
+    else:
+        owner = conn.execute(
+            "SELECT 1 FROM folders WHERE id = ? AND user_id IS NULL", (folder_id,)
+        ).fetchone()
+    if not owner:
+        conn.close()
+        return False
     now = int(time.time() * 1000)
     conn.execute(
         "INSERT OR IGNORE INTO folder_videos (folder_id, video_id, added_at) VALUES (?, ?, ?)",
@@ -103,17 +115,31 @@ def db_add_video_to_folder(folder_id: int, video_id: str):
     )
     conn.commit()
     conn.close()
+    return True
 
 
-def db_remove_video_from_folder(folder_id: int, video_id: str):
-    """Remove a video from a folder."""
+def db_remove_video_from_folder(folder_id: int, video_id: str, user_id=None):
+    """Remove a video from a folder. If user_id is given, verifies folder ownership."""
     conn = get_db()
+    # Ownership check — prevent removing from another user's folder (IDOR)
+    if user_id is not None:
+        owner = conn.execute(
+            "SELECT 1 FROM folders WHERE id = ? AND user_id = ?", (folder_id, user_id)
+        ).fetchone()
+    else:
+        owner = conn.execute(
+            "SELECT 1 FROM folders WHERE id = ? AND user_id IS NULL", (folder_id,)
+        ).fetchone()
+    if not owner:
+        conn.close()
+        return False
     conn.execute(
         "DELETE FROM folder_videos WHERE folder_id = ? AND video_id = ?",
         (folder_id, video_id)
     )
     conn.commit()
     conn.close()
+    return True
 
 
 def db_get_folder_videos(folder_id: int):
