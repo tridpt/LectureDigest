@@ -14,8 +14,9 @@ import logging
 from fastapi import APIRouter, HTTPException, UploadFile, File, Form, Request, Depends
 from pydantic import BaseModel
 
-from gemini_client import get_genai_client, call_gemini, call_gemini_multi, PRIMARY_MODEL
-from youtube import extract_video_id, get_video_info, get_transcript, get_transcript_with_gemini_fallback, format_seconds
+from gemini_client import get_genai_client, call_gemini, call_gemini_multi, async_call_gemini, async_call_gemini_multi
+import asyncio as _asyncio_top
+from youtube import extract_video_id, get_video_info, get_transcript_with_gemini_fallback, format_seconds
 from database import db_check_rate_limit, db_get_analysis_cache, db_set_analysis_cache
 
 router = APIRouter(prefix="/api", tags=["analyze"])
@@ -224,7 +225,9 @@ async def upload_analyze(
         client = get_genai_client()
         logger.info("Upload: uploading to Gemini Files API...")
 
-        gemini_file = client.files.upload(file=tmp_path, config={"mime_type": mime_type})
+        gemini_file = await _asyncio_top.to_thread(
+            client.files.upload, file=tmp_path, config={"mime_type": mime_type}
+        )
         logger.info("Upload: Gemini file %s, state: %s", gemini_file.name, gemini_file.state)
 
         # Wait for file to be processed
@@ -233,7 +236,7 @@ async def upload_analyze(
         while gemini_file.state.name == "PROCESSING" and waited < max_wait:
             await asyncio.sleep(3)
             waited += 3
-            gemini_file = client.files.get(name=gemini_file.name)
+            gemini_file = await _asyncio_top.to_thread(client.files.get, name=gemini_file.name)
             logger.info("Upload: processing... (%ds)", waited)
 
         if gemini_file.state.name == "FAILED":
@@ -262,10 +265,10 @@ RULES:
 - If there's silence or music, skip those sections
 - Return ONLY the JSON array, no other text"""
 
-        transcript_text = call_gemini_multi(
+        transcript_text = (await async_call_gemini_multi(
             [transcribe_prompt, gemini_file],
             retries=4,
-        ).strip()
+        )).strip()
 
         # Parse transcript
         transcript_text = _strip_code_fences(transcript_text)
@@ -299,7 +302,7 @@ RULES:
             output_language=output_language,
         )
 
-        text = _strip_code_fences(call_gemini(prompt))
+        text = _strip_code_fences(await async_call_gemini(prompt))
         result = json.loads(text)
 
         # Generate a unique ID for uploaded content
@@ -367,13 +370,15 @@ async def analyze_video(request: VideoRequest):
             return cached
 
     # 3. Fetch metadata & transcript
-    video_info = get_video_info(video_id)
+    video_info = await _asyncio_top.to_thread(get_video_info, video_id)
 
     if request.transcript:
         logger.info("Using client-provided transcript (%d segments)", len(request.transcript))
         transcript_data = request.transcript
     else:
-        result = get_transcript_with_gemini_fallback(video_id, request.language)
+        result = await _asyncio_top.to_thread(
+            get_transcript_with_gemini_fallback, video_id, request.language
+        )
         transcript_data = result["transcript"]
         if result.get("gemini_direct"):
             logger.info("Using Gemini direct analysis for %s", video_id)
@@ -392,7 +397,7 @@ async def analyze_video(request: VideoRequest):
     )
 
     try:
-        text = _strip_code_fences(call_gemini(prompt))
+        text = _strip_code_fences(await async_call_gemini(prompt))
         result = json.loads(text)
         result["video_id"] = video_id
         result["thumbnail"] = video_info["thumbnail"]

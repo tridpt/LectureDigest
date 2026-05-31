@@ -132,7 +132,9 @@ def call_gemini_multi(contents: list, retries: int = 4) -> str:
 
 async def _async_call_with_retry(generate_fn, retries: int = 4) -> str:
     """
-    Async retry logic — uses asyncio.sleep instead of blocking time.sleep.
+    Async retry logic — uses asyncio.sleep instead of blocking time.sleep,
+    and runs the blocking Gemini network call in a worker thread so it does
+    not block the event loop.
     generate_fn(client, model) should call client.models.generate_content.
     """
     client = get_genai_client()
@@ -142,7 +144,8 @@ async def _async_call_with_retry(generate_fn, retries: int = 4) -> str:
         last_err = None
         for attempt in range(retries):
             try:
-                text = generate_fn(client, model)
+                # Run the blocking SDK call off the event loop
+                text = await asyncio.to_thread(generate_fn, client, model)
                 if model != PRIMARY_MODEL:
                     logger.warning("Used fallback model: %s", model)
                 return text

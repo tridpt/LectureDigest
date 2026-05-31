@@ -11,7 +11,7 @@ import logging
 from fastapi import APIRouter, HTTPException, Request
 from pydantic import BaseModel
 
-from gemini_client import call_gemini
+from gemini_client import call_gemini, async_call_gemini
 from database import get_db, db_check_rate_limit
 from routes.auth import get_current_user
 
@@ -246,7 +246,7 @@ Rules:
 
     try:
         import re
-        text = call_gemini(prompt)
+        text = await async_call_gemini(prompt)
         text = text.strip()
         if text.startswith('```'):
             text = re.sub(r'^```(?:json)?\s*\n?', '', text)

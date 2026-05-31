@@ -7,11 +7,12 @@ import os
 import re
 import json
 import time
+import asyncio
 
 from fastapi import APIRouter, HTTPException, Request, Depends
 from pydantic import BaseModel
 
-from gemini_client import call_gemini, get_genai_client
+from gemini_client import call_gemini, async_call_gemini, get_genai_client
 from youtube import format_seconds
 from database import db_check_rate_limit
 
@@ -165,7 +166,7 @@ Return ONLY a valid JSON array, no markdown, no extra text:
 correct_index is 0-based (0=A, 1=B, 2=C, 3=D)."""
 
     try:
-        text = call_gemini(prompt)
+        text = await async_call_gemini(prompt)
         text = text.strip()
         if text.startswith('```'):
             text = re.sub(r'^```(?:json)?\s*\n?', '', text)
@@ -227,7 +228,7 @@ User question: {request.message}
 Answer:"""
 
     try:
-        reply = call_gemini(prompt)
+        reply = await async_call_gemini(prompt)
         return {"reply": reply.strip()}
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Chat failed: {str(e)}")
@@ -267,12 +268,18 @@ async def translate_transcript(req: TranslateRequest):
             raise HTTPException(status_code=500, detail=f"Translation error: {e}")
 
     all_translations: list[str] = []
-    for chunk_start in range(0, len(req.transcript), CHUNK_SIZE):
-        chunk = req.transcript[chunk_start: chunk_start + CHUNK_SIZE]
-        translated = translate_chunk(chunk)
-        all_translations.extend(translated)
-        if chunk_start + CHUNK_SIZE < len(req.transcript):
-            time.sleep(0.5)
+
+    def _run_all_chunks() -> list[str]:
+        out: list[str] = []
+        for chunk_start in range(0, len(req.transcript), CHUNK_SIZE):
+            chunk = req.transcript[chunk_start: chunk_start + CHUNK_SIZE]
+            out.extend(translate_chunk(chunk))
+            if chunk_start + CHUNK_SIZE < len(req.transcript):
+                time.sleep(0.5)
+        return out
+
+    # Run the blocking translation loop off the event loop
+    all_translations = await asyncio.to_thread(_run_all_chunks)
 
     result = []
     for i, seg in enumerate(req.transcript):
@@ -415,7 +422,7 @@ RULES:
 - DO NOT use markdown code fences — output plain text only"""
 
     try:
-        notes_text = call_gemini(prompt)
+        notes_text = await async_call_gemini(prompt)
         return {"notes": notes_text.strip()}
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Auto-notes generation failed: {e}")
@@ -467,7 +474,7 @@ RULES:
 - No quotes, no markdown, plain text only"""
 
     try:
-        summary = call_gemini(prompt)
+        summary = await async_call_gemini(prompt)
         return {"summary": summary.strip()[:200]}
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Smart bookmark failed: {e}")
@@ -565,7 +572,7 @@ RULES:
 - Be encouraging but honest"""
 
     try:
-        text = call_gemini(prompt)
+        text = await async_call_gemini(prompt)
         text = text.strip()
         if text.startswith('```'):
             text = re.sub(r'^```(?:json)?\s*\n?', '', text)

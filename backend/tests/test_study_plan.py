@@ -10,7 +10,7 @@ from unittest.mock import patch
 class TestStudyPlan:
     """Test POST /api/study-plan."""
 
-    @patch("routes.study_plan.call_gemini")
+    @patch("routes.study_plan.async_call_gemini")
     def test_generate_plan_success(self, mock_gemini, client):
         mock_gemini.return_value = """{
             "plan_title": "2-Week Python Mastery Plan",
@@ -79,7 +79,7 @@ class TestStudyPlan:
         })
         assert resp.status_code == 400
 
-    @patch("routes.study_plan.call_gemini")
+    @patch("routes.study_plan.async_call_gemini")
     def test_generate_plan_with_goal(self, mock_gemini, client):
         mock_gemini.return_value = """{
             "plan_title": "Goal-Oriented Plan",

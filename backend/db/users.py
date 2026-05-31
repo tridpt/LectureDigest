@@ -2,6 +2,7 @@
 Users CRUD — authentication, profile, GDPR operations.
 """
 import time
+import sqlite3
 import logging
 from .connection import get_db, USE_POSTGRES
 
@@ -9,7 +10,7 @@ logger = logging.getLogger("database")
 
 
 def db_create_user(email: str, display_name: str, password_hash: str, avatar_color: str = '#8b5cf6', google_id: str = '', avatar_url: str = ''):
-    """Create a new user. Returns the user id."""
+    """Create a new user. Returns the user id, or None if the email already exists."""
     conn = get_db()
     now = int(time.time() * 1000)
     try:
@@ -29,9 +30,17 @@ def db_create_user(email: str, display_name: str, password_hash: str, avatar_col
             """, (email.lower().strip(), display_name.strip(), password_hash, avatar_color, google_id, avatar_url, now, now))
             conn.commit()
             user_id = cur.lastrowid
-    except Exception:
+    except Exception as e:
         conn.close()
-        return None  # Email already exists
+        # Detect "duplicate email" (UNIQUE constraint) across both SQLite and PostgreSQL
+        err = str(e).lower()
+        is_duplicate = isinstance(e, sqlite3.IntegrityError) or \
+            "unique" in err or "duplicate" in err
+        if is_duplicate:
+            return None  # Email already exists
+        # Real error (disk, schema, connection) — log it instead of masking as "email exists"
+        logger.error("db_create_user failed: %s", e)
+        raise
     conn.close()
     return user_id
 

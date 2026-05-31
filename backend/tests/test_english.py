@@ -148,7 +148,7 @@ class TestEnglishMissions:
 class TestEnglishGenerateVocab:
     """Test AI vocabulary generation (mocked)."""
 
-    @patch("routes.english.call_gemini")
+    @patch("routes.english.async_call_gemini")
     def test_generate_vocab_mocked(self, mock_gemini, client, auth_headers):
         """Test generate endpoint with mocked Gemini response."""
         mock_gemini.return_value = """[

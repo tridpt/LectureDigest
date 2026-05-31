@@ -10,7 +10,7 @@ from unittest.mock import patch
 class TestQuizRegeneration:
     """Test POST /api/quiz."""
 
-    @patch("routes.ai_tools.call_gemini")
+    @patch("routes.ai_tools.async_call_gemini")
     def test_quiz_regen_success(self, mock_gemini, client):
         mock_gemini.return_value = """[
             {
@@ -45,7 +45,7 @@ class TestQuizRegeneration:
 class TestAIChat:
     """Test POST /api/chat."""
 
-    @patch("routes.ai_tools.call_gemini")
+    @patch("routes.ai_tools.async_call_gemini")
     def test_chat_success(self, mock_gemini, client):
         mock_gemini.return_value = "Python was created by Guido van Rossum in 1991."
 
@@ -114,7 +114,7 @@ class TestExplainConcept:
 class TestAutoNotes:
     """Test POST /api/auto-notes."""
 
-    @patch("routes.ai_tools.call_gemini")
+    @patch("routes.ai_tools.async_call_gemini")
     def test_auto_notes_success(self, mock_gemini, client):
         mock_gemini.return_value = """# Lecture Notes\n\n## Key Points\n- Python is versatile"""
 
@@ -135,7 +135,7 @@ class TestAutoNotes:
 class TestSmartBookmark:
     """Test POST /api/smart-bookmark."""
 
-    @patch("routes.ai_tools.call_gemini")
+    @patch("routes.ai_tools.async_call_gemini")
     def test_smart_bookmark_success(self, mock_gemini, client):
         mock_gemini.return_value = "The speaker introduces the concept of recursion."
 
@@ -153,7 +153,7 @@ class TestSmartBookmark:
 class TestQuizAnalysis:
     """Test POST /api/quiz-analysis."""
 
-    @patch("routes.ai_tools.call_gemini")
+    @patch("routes.ai_tools.async_call_gemini")
     def test_quiz_analysis_success(self, mock_gemini, client):
         mock_gemini.return_value = """{
             "weak_areas": ["recursion"],

@@ -11,9 +11,8 @@ import time
 from fastapi import APIRouter, HTTPException, Request, Depends
 from pydantic import BaseModel
 
-from gemini_client import call_gemini
+from gemini_client import call_gemini, async_call_gemini
 from database import db_check_rate_limit
-
 router = APIRouter(prefix="/api", tags=["study-plan"])
 
 
@@ -197,7 +196,7 @@ RULES:
 - Make the plan realistic and motivating"""
 
     try:
-        text = call_gemini(prompt)
+        text = await async_call_gemini(prompt)
         text = text.strip()
         if text.startswith('```'):
             text = re.sub(r'^```(?:json)?\s*\n?', '', text)

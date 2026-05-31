@@ -10,7 +10,7 @@ import logging
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 
-from gemini_client import call_gemini
+from gemini_client import call_gemini, async_call_gemini
 from youtube import extract_playlist_id, fetch_playlist_videos
 
 router = APIRouter(prefix="/api", tags=["content"])
@@ -114,7 +114,7 @@ REQUIREMENTS:
 - Return ONLY the JSON object — no markdown, no extra text, no code fences"""
 
     try:
-        text = call_gemini(prompt)
+        text = await async_call_gemini(prompt)
         text = text.strip()
         if text.startswith("```"):
             text = re.sub(r"^```(?:json)?\s*\n?", "", text)
@@ -222,7 +222,7 @@ correct_index is 0-based (0=A, 1=B, 2=C, 3=D).
 For cross-video questions, set is_cross_video to true and list multiple video titles in source."""
 
     try:
-        text = call_gemini(prompt)
+        text = await async_call_gemini(prompt)
         text = text.strip()
         if text.startswith('```'):
             text = re.sub(r'^```(?:json)?\s*\n?', '', text)
