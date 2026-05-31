@@ -154,30 +154,30 @@ def _get_user_info(user_id):
     """Get display_name and avatar_url for a user."""
     if str(user_id) == '__system__':
         return {"username": "", "avatar_url": None, "avatar_color": "#8b5cf6"}
-    conn = get_db()
-    row = conn.execute(
-        "SELECT display_name, avatar_url, avatar_color FROM users WHERE id = ?", (user_id,)
-    ).fetchone()
+    with get_db() as conn:
+        row = conn.execute(
+            "SELECT display_name, avatar_url, avatar_color FROM users WHERE id = ?", (user_id,)
+        ).fetchone()
     if row:
         return {"username": row["display_name"] or "User", "avatar_url": row["avatar_url"] or None, "avatar_color": row["avatar_color"] or "#8b5cf6"}
     return {"username": "Unknown", "avatar_url": None, "avatar_color": "#8b5cf6"}
 
 
 def _is_room_member(room_id: str, user_id) -> bool:
-    conn = get_db()
-    row = conn.execute(
-        "SELECT 1 FROM chat_room_members WHERE room_id = ? AND user_id = ?",
-        (room_id, user_id)
-    ).fetchone()
+    with get_db() as conn:
+        row = conn.execute(
+            "SELECT 1 FROM chat_room_members WHERE room_id = ? AND user_id = ?",
+            (room_id, user_id)
+        ).fetchone()
     return row is not None
 
 
 def _get_room(room_id: str):
-    conn = get_db()
-    row = conn.execute(
-        "SELECT * FROM chat_rooms WHERE id = ?",
-        (room_id,)
-    ).fetchone()
+    with get_db() as conn:
+        row = conn.execute(
+            "SELECT * FROM chat_rooms WHERE id = ?",
+            (room_id,)
+        ).fetchone()
     if not row:
         return None
     keys = row.keys()
@@ -191,19 +191,19 @@ def _get_room(room_id: str):
 
 
 def _get_member_count(room_id: str) -> int:
-    conn = get_db()
-    row = conn.execute(
-        "SELECT COUNT(*) as c FROM chat_room_members WHERE room_id = ?", (room_id,)
-    ).fetchone()
+    with get_db() as conn:
+        row = conn.execute(
+            "SELECT COUNT(*) as c FROM chat_room_members WHERE room_id = ?", (room_id,)
+        ).fetchone()
     return row["c"] if row else 0
 
 
 def _get_last_message(room_id: str):
-    conn = get_db()
-    row = conn.execute(
-        "SELECT content, user_id, created_at FROM chat_messages WHERE room_id = ? ORDER BY created_at DESC LIMIT 1",
-        (room_id,)
-    ).fetchone()
+    with get_db() as conn:
+        row = conn.execute(
+            "SELECT content, user_id, created_at FROM chat_messages WHERE room_id = ? ORDER BY created_at DESC LIMIT 1",
+            (room_id,)
+        ).fetchone()
     if row:
         user_info = _get_user_info(row["user_id"])
         return {"content": row["content"], "username": user_info["username"], "created_at": row["created_at"]}
@@ -219,11 +219,11 @@ def _is_room_admin(room_id: str, user_id) -> bool:
     """Check if user is creator or has admin role."""
     if _is_room_creator(room_id, user_id):
         return True
-    conn = get_db()
-    row = conn.execute(
-        "SELECT * FROM chat_room_members WHERE room_id = ? AND user_id = ?",
-        (room_id, user_id)
-    ).fetchone()
+    with get_db() as conn:
+        row = conn.execute(
+            "SELECT * FROM chat_room_members WHERE room_id = ? AND user_id = ?",
+            (room_id, user_id)
+        ).fetchone()
     if not row:
         return False
     try:
@@ -233,29 +233,29 @@ def _is_room_admin(room_id: str, user_id) -> bool:
 
 
 def _is_banned(room_id: str, user_id) -> bool:
-    conn = get_db()
-    row = conn.execute(
-        "SELECT 1 FROM chat_room_bans WHERE room_id = ? AND user_id = ?",
-        (room_id, user_id)
-    ).fetchone()
+    with get_db() as conn:
+        row = conn.execute(
+            "SELECT 1 FROM chat_room_bans WHERE room_id = ? AND user_id = ?",
+            (room_id, user_id)
+        ).fetchone()
     return row is not None
 
 
 def _is_muted(room_id: str, user_id):
     """Check if user is muted. Returns muted_until timestamp or None."""
-    conn = get_db()
-    row = conn.execute(
-        "SELECT muted_until FROM chat_room_mutes WHERE room_id = ? AND user_id = ?",
-        (room_id, user_id)
-    ).fetchone()
-    if not row:
-        return None
-    muted_until = row["muted_until"]
-    if time.time() >= muted_until:
-        # Mute expired — clean up
-        conn.execute("DELETE FROM chat_room_mutes WHERE room_id = ? AND user_id = ?", (room_id, user_id))
-        conn.commit()
-        return None
+    with get_db() as conn:
+        row = conn.execute(
+            "SELECT muted_until FROM chat_room_mutes WHERE room_id = ? AND user_id = ?",
+            (room_id, user_id)
+        ).fetchone()
+        if not row:
+            return None
+        muted_until = row["muted_until"]
+        if time.time() >= muted_until:
+            # Mute expired — clean up
+            conn.execute("DELETE FROM chat_room_mutes WHERE room_id = ? AND user_id = ?", (room_id, user_id))
+            conn.commit()
+            return None
     return muted_until
 
 

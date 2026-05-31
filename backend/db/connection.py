@@ -49,7 +49,7 @@ if USE_POSTGRES:
                 # Rollback to clear aborted transaction state
                 try:
                     self._cur.connection.rollback()
-                except:
+                except Exception:
                     pass
                 raise e
             self.lastrowid = None
@@ -62,7 +62,7 @@ if USE_POSTGRES:
                     row = self._cur.fetchone()
                     if row:
                         self.lastrowid = list(row.values())[0] if isinstance(row, dict) else row[0]
-                except:
+                except Exception:
                     pass
             return self
 
@@ -171,6 +171,14 @@ else:
                 self._conn.rollback()
             self._conn.close()
             return False
+
+        def __del__(self):
+            # Safety net: ensure the underlying SQLite handle is released even if
+            # a caller forgot to close() (mirrors PgConnectionWrapper.__del__).
+            try:
+                self._conn.close()
+            except Exception:
+                pass
 
     def get_db():
         """Get a SQLite connection with row_factory. Supports context manager."""

@@ -54,11 +54,13 @@ def db_get_history(limit=50, user_id=None, before=None):
         }
         try:
             entry["data"] = json.loads(r["data_json"]) if r["data_json"] else {}
-        except:
+        except (json.JSONDecodeError, TypeError) as e:
+            logger.warning("Corrupt data_json for entry %s: %s", r["entry_id"], e)
             entry["data"] = {}
         try:
             entry["transcript"] = json.loads(r["transcript_json"]) if r["transcript_json"] else None
-        except:
+        except (json.JSONDecodeError, TypeError) as e:
+            logger.warning("Corrupt transcript_json for entry %s: %s", r["entry_id"], e)
             entry["transcript"] = None
         result.append(entry)
 

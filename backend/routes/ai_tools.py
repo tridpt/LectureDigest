@@ -24,11 +24,9 @@ router = APIRouter(prefix="/api", tags=["ai-tools"])
 # ═══════════════════════════════════════════════════════
 
 def _get_client_ip(request: Request) -> str:
-    """Extract client IP, respecting X-Forwarded-For for proxies."""
-    forwarded = request.headers.get("X-Forwarded-For", "")
-    if forwarded:
-        return forwarded.split(",")[0].strip()
-    return request.client.host if request.client else "unknown"
+    """Extract client IP for rate limiting (respects TRUST_PROXY)."""
+    from routes.client_ip import get_client_ip
+    return get_client_ip(request)
 
 
 def _make_ai_rate_limiter(endpoint_name: str, max_requests: int = 20, window_secs: int = 300, block_secs: int = 300):

@@ -19,7 +19,7 @@ def db_get_gamification(user_id=None):
     if row:
         try:
             return json.loads(row["data_json"])
-        except:
+        except (json.JSONDecodeError, TypeError):
             return {}
     return {}
 
@@ -56,7 +56,7 @@ def db_get_leaderboard(limit: int = 50):
     for row in rows:
         try:
             g = json.loads(row["data_json"])
-        except:
+        except (json.JSONDecodeError, TypeError):
             g = {}
 
         total_videos = g.get("totalVideos", 0) or 0

@@ -24,11 +24,7 @@ logger = logging.getLogger("analyze")
 
 
 # ── Rate limiting ──
-def _get_client_ip(request: Request) -> str:
-    forwarded = request.headers.get("X-Forwarded-For", "")
-    if forwarded:
-        return forwarded.split(",")[0].strip()
-    return request.client.host if request.client else "unknown"
+from routes.client_ip import get_client_ip as _get_client_ip
 
 def _make_rl(name: str, max_req: int, window: int = 300, block: int = 300):
     async def _check(request: Request):
