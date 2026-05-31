@@ -466,3 +466,118 @@ html.light-mode .db-skel {
 .light-mode .db-date { color: #94a3b8; }
 .light-mode .db-stat-card { background: rgba(255,255,255,0.8); border-color: rgba(0,0,0,0.06); }
 .light-mode .db-header { border-bottom-color: rgba(0,0,0,0.06); }
+
+/* ════════════════════════════════════════ CONTINUE LEARNING ═════ */
+.db-continue-panel {
+    margin-bottom: 16px;
+}
+
+.db-continue-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+    gap: 12px;
+}
+
+.db-cont-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px;
+    border-radius: 12px;
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    cursor: pointer;
+    transition: all 0.18s;
+}
+.db-cont-item:hover {
+    background: rgba(139, 92, 246, 0.08);
+    border-color: rgba(139, 92, 246, 0.25);
+    transform: translateY(-1px);
+}
+
+.db-cont-thumb-wrap {
+    position: relative;
+    flex-shrink: 0;
+    width: 72px;
+    height: 48px;
+    border-radius: 8px;
+    overflow: hidden;
+    background: rgba(0, 0, 0, 0.3);
+}
+.db-cont-thumb {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+.db-cont-pct-badge {
+    position: absolute;
+    bottom: 2px;
+    right: 2px;
+    background: rgba(0, 0, 0, 0.8);
+    color: #fff;
+    font-size: 10px;
+    font-weight: 700;
+    padding: 1px 5px;
+    border-radius: 5px;
+}
+
+.db-cont-body {
+    flex: 1;
+    min-width: 0;
+}
+.db-cont-title {
+    font-size: 13px;
+    font-weight: 600;
+    color: #e2e8f0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    margin-bottom: 5px;
+}
+.db-cont-progress-track {
+    height: 4px;
+    background: rgba(255, 255, 255, 0.08);
+    border-radius: 99px;
+    overflow: hidden;
+    margin-bottom: 4px;
+}
+.db-cont-progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #8b5cf6, #a78bfa);
+    border-radius: 99px;
+}
+.db-cont-sub {
+    font-size: 11px;
+    color: #64748b;
+}
+.db-cont-arrow {
+    flex-shrink: 0;
+    color: #8b5cf6;
+    font-size: 18px;
+    font-weight: 700;
+    opacity: 0;
+    transition: opacity 0.18s;
+}
+.db-cont-item:hover .db-cont-arrow {
+    opacity: 1;
+}
+
+/* SRS due tile variant */
+.db-cont-srs {
+    background: linear-gradient(135deg, rgba(245, 158, 11, 0.12), rgba(239, 68, 68, 0.08));
+    border-color: rgba(245, 158, 11, 0.25);
+}
+.db-cont-srs:hover {
+    border-color: rgba(245, 158, 11, 0.45);
+}
+.db-cont-srs-icon {
+    flex-shrink: 0;
+    width: 48px;
+    height: 48px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 26px;
+    background: rgba(245, 158, 11, 0.15);
+    border-radius: 10px;
+}

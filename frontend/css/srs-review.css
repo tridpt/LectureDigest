@@ -326,3 +326,27 @@
 .light-mode .srs-complete-stat { background: rgba(248,250,252,0.8); border-color: rgba(0,0,0,0.06); }
 .light-mode .srs-banner { background: linear-gradient(135deg, rgba(139,92,246,0.08), rgba(99,102,241,0.05)); border-color: rgba(139,92,246,0.2); }
 .light-mode .srs-video-label { background: rgba(139,92,246,0.08); color: #6d28d9; }
+
+/* ── Email reminder toggle ── */
+.srs-reminder-toggle {
+    min-width: 110px;
+    padding: 8px 14px;
+    border-radius: 10px;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    background: rgba(255, 255, 255, 0.05);
+    color: #94a3b8;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    white-space: nowrap;
+}
+.srs-reminder-toggle:hover {
+    background: rgba(255, 255, 255, 0.1);
+    color: #e2e8f0;
+}
+.srs-reminder-toggle.active {
+    background: rgba(245, 158, 11, 0.15);
+    border-color: rgba(245, 158, 11, 0.4);
+    color: #fbbf24;
+}

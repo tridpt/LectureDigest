@@ -129,6 +129,20 @@ function exportFlashcards(format) {
         content  = '#separator:tab\n#html:false\n#tags column:3\n' + rows.join('\n');
         filename = `${slugify(d.title)}_flashcards_anki.txt`;
         mime     = 'text/plain;charset=utf-8';
+    } else if (format === 'cloze') {
+        // Anki Cloze deletion format — build {{c1::...}} cards from takeaways/highlights/quiz
+        const clozeCards = buildClozeCards(d);
+        if (!clozeCards.length) {
+            alert('Không tạo được thẻ cloze từ nội dung này.');
+            return;
+        }
+        const rows = clozeCards.map(c =>
+            `${c.text.replace(/\t/g, ' ')}\t${(c.extra || '').replace(/\t/g, ' ')}\t${c.tags}`
+        );
+        // Notetype:Cloze tells Anki to import these as Cloze notes
+        content  = '#separator:tab\n#html:false\n#notetype:Cloze\n#tags column:3\n' + rows.join('\n');
+        filename = `${slugify(d.title)}_cloze_anki.txt`;
+        mime     = 'text/plain;charset=utf-8';
     } else {
         // Generic CSV (comma-separated, quoted)
         const header = '"Front","Back","Tags"';
@@ -141,6 +155,67 @@ function exportFlashcards(format) {
     }
 
     downloadFile(content, filename, mime);
+}
+
+// Build Anki cloze-deletion cards: hide the most important term in each sentence.
+function buildClozeCards(d) {
+    const cards = [];
+
+    function makeCloze(sentence, extra, tags) {
+        if (!sentence) return null;
+        const term = _pickClozeTerm(sentence);
+        if (!term) return null;
+        // Replace the first occurrence of the term with a cloze deletion
+        const idx = sentence.indexOf(term);
+        if (idx < 0) return null;
+        const clozed = sentence.slice(0, idx) + '{{c1::' + term + '}}' + sentence.slice(idx + term.length);
+        return { text: clozed, extra: extra || '', tags: tags };
+    }
+
+    // From key takeaways
+    (d.key_takeaways || []).forEach(t => {
+        const c = makeCloze(t, 'Từ: ' + (d.title || 'Lecture'), 'LectureDigest cloze takeaway');
+        if (c) cards.push(c);
+    });
+
+    // From highlights (use description, term hidden)
+    (d.highlights || []).forEach(h => {
+        const c = makeCloze(h.description || '', h.title || '', 'LectureDigest cloze highlight');
+        if (c) cards.push(c);
+    });
+
+    // From quiz: turn the correct answer into a cloze inside the question stem when possible
+    (d.quiz || []).forEach(q => {
+        const correct = q.options?.[q.correct_index];
+        if (!correct) return;
+        // Statement form: "Question — answer." with answer clozed
+        const stem = (q.question || '').replace(/\?+$/, '').trim();
+        const text = stem + ' → {{c1::' + correct + '}}';
+        cards.push({ text: text, extra: q.explanation || '', tags: 'LectureDigest cloze quiz' });
+    });
+
+    return cards;
+}
+
+// Pick the most "important" term in a sentence to hide for cloze.
+// Heuristic: prefer the longest capitalized phrase, else the longest word.
+function _pickClozeTerm(sentence) {
+    if (!sentence) return null;
+    // Strip leading list markers / verbs are fine to keep
+    const clean = sentence.replace(/[""'']/g, '"');
+
+    // 1. Try capitalized multi-word phrases (e.g. "Machine Learning", "Gradient Descent")
+    const capPhrases = clean.match(/\b([A-ZÀ-Ỹ][\wÀ-ỹ]+(?:\s+[A-ZÀ-Ỹ][\wÀ-ỹ]+){0,2})\b/g) || [];
+    // Exclude phrase that starts the sentence only if it's a single short word
+    let candidates = capPhrases.filter(p => p.length >= 4);
+    if (candidates.length) {
+        candidates.sort((a, b) => b.length - a.length);
+        return candidates[0];
+    }
+
+    // 2. Fallback: longest word with 5+ letters
+    const words = (clean.match(/[\wÀ-ỹ]{5,}/g) || []).sort((a, b) => b.length - a.length);
+    return words[0] || null;
 }
 
 function csvQuote(str) {

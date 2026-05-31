@@ -445,3 +445,99 @@ function renderSrsBanner(containerId) {
         el.classList.add('hidden');
     }
 }
+
+
+// ══════════════════════════════════════════════════════
+// EMAIL REMINDER PREFERENCE
+// ══════════════════════════════════════════════════════
+
+var _srsReminderEnabled = false;
+
+// Load preference when the review page opens
+(function patchOpenSrsReviewForReminder() {
+    if (typeof openSrsReview !== 'function') return;
+    var _origOpen = openSrsReview;
+    openSrsReview = function() {
+        _origOpen.apply(this, arguments);
+        _srsLoadReminderPref();
+    };
+})();
+
+function _srsAuthHeaders() {
+    var headers = { 'Content-Type': 'application/json' };
+    try {
+        var token = localStorage.getItem('ld_auth_token');
+        if (token) headers['Authorization'] = 'Bearer ' + token;
+    } catch (e) {}
+    return headers;
+}
+
+function _srsIsLoggedIn() {
+    try { return !!localStorage.getItem('ld_auth_token'); }
+    catch (e) { return false; }
+}
+
+function _srsLoadReminderPref() {
+    var btn = document.getElementById('srsReminderToggle');
+    if (!btn) return;
+    // Only relevant for logged-in users
+    if (!_srsIsLoggedIn()) {
+        btn.style.display = 'none';
+        return;
+    }
+    btn.style.display = '';
+    fetch((window.API_BASE || '') + '/api/srs-reminder/preference', {
+        headers: _srsAuthHeaders()
+    })
+        .then(function(res) { return res.ok ? res.json() : null; })
+        .then(function(data) {
+            if (!data) return;
+            _srsReminderEnabled = !!data.enabled;
+            _srsUpdateReminderBtn(data.smtp_configured);
+        })
+        .catch(function() {});
+}
+
+function _srsUpdateReminderBtn(smtpConfigured) {
+    var btn = document.getElementById('srsReminderToggle');
+    if (!btn) return;
+    if (_srsReminderEnabled) {
+        btn.classList.add('active');
+        btn.innerHTML = '🔔 Đang bật';
+    } else {
+        btn.classList.remove('active');
+        btn.innerHTML = '🔕 Nhắc nhở';
+    }
+    if (smtpConfigured === false) {
+        btn.title = 'Máy chủ chưa cấu hình email — nhắc nhở sẽ chỉ ghi log';
+    } else {
+        btn.title = 'Nhắc nhở ôn tập qua email mỗi ngày';
+    }
+}
+
+function toggleSrsReminder() {
+    if (!_srsIsLoggedIn()) {
+        if (typeof showToast === 'function') showToast('Hãy đăng nhập để bật nhắc nhở qua email', 3000);
+        return;
+    }
+    var newState = !_srsReminderEnabled;
+    fetch((window.API_BASE || '') + '/api/srs-reminder/preference', {
+        method: 'POST',
+        headers: _srsAuthHeaders(),
+        body: JSON.stringify({ enabled: newState })
+    })
+    .then(function(res) { return res.ok ? res.json() : null; })
+    .then(function(data) {
+        if (!data) return;
+        _srsReminderEnabled = !!data.enabled;
+        _srsUpdateReminderBtn();
+        if (typeof showToast === 'function') {
+            showToast(_srsReminderEnabled
+                ? '🔔 Đã bật nhắc nhở ôn tập qua email!'
+                : '🔕 Đã tắt nhắc nhở qua email', 2500);
+        }
+    })
+    .catch(function() {
+        if (typeof showToast === 'function') showToast('Không thể cập nhật cài đặt', 2500);
+    });
+}

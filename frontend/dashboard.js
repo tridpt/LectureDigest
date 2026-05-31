@@ -82,6 +82,7 @@ function renderDashboard() {
 
     var renders = [
         ['renderDbStats',     'dbStatGrid',      function() { renderDbStats(g, history); }],
+        ['renderContinueLearning', 'dbContinueLearning', function() { renderContinueLearning(history); }],
         ['renderWeeklyGoals', 'dbWeeklyGoals',   function() { if (typeof renderWeeklyGoals === 'function') renderWeeklyGoals(); }],
         ['renderDbStreak',    'dbCalendar',       function() { renderDbStreak(g); }],
         ['renderDbPomodoro',  'dbPomoStats',      function() { renderDbPomodoro(g); }],
@@ -637,4 +638,110 @@ function _dashShowSkeleton() {
         }
         badges.innerHTML = cats;
     }
+}
+
+
+// ══════════════════════════════════════════════════════
+// CONTINUE LEARNING WIDGET
+// In-progress videos (watched but not finished) + due SRS cards
+// ══════════════════════════════════════════════════════
+
+function renderContinueLearning(history) {
+    var el = document.getElementById('dbContinueLearning');
+    if (!el) return;
+
+    // Find videos that are in-progress: watched between 5% and 95%
+    var inProgress = [];
+    var seen = {};
+    (history || []).forEach(function(h) {
+        if (!h.video_id || seen[h.video_id]) return;
+        seen[h.video_id] = true;
+        if (typeof loadProgress !== 'function') return;
+        var prog = loadProgress(h.video_id);
+        var pct = prog.watchedPct || 0;
+        if (pct >= 5 && pct < 95) {
+            inProgress.push({
+                video_id: h.video_id,
+                title: h.title || 'Video chưa đặt tên',
+                pct: pct,
+                lastWatched: prog.lastWatched || null
+            });
+        }
+    });
+
+    // Sort by most recently watched
+    inProgress.sort(function(a, b) {
+        var ta = a.lastWatched ? new Date(a.lastWatched).getTime() : 0;
+        var tb = b.lastWatched ? new Date(b.lastWatched).getTime() : 0;
+        return tb - ta;
+    });
+    inProgress = inProgress.slice(0, 4);
+
+    // Due SRS cards count
+    var dueCount = 0;
+    if (typeof srsGetGlobalStats === 'function') {
+        try { dueCount = srsGetGlobalStats().dueCards || 0; } catch (e) {}
+    }
+
+    // Nothing to continue → hide widget
+    if (!inProgress.length && dueCount === 0) {
+        el.classList.add('hidden');
+        el.innerHTML = '';
+        return;
+    }
+
+    var html = '<div class="db-card db-continue-panel">';
+    html += '<h3 class="db-card-title">▶️ Tiếp tục học</h3>';
+    html += '<div class="db-continue-grid">';
+
+    // Due SRS card tile (first, if any)
+    if (dueCount > 0) {
+        html += '<div class="db-cont-item db-cont-srs" onclick="closeDashboard(); openSrsReview();" role="button" tabindex="0">'
+            + '<div class="db-cont-srs-icon">🧠</div>'
+            + '<div class="db-cont-body">'
+            + '<div class="db-cont-title">' + dueCount + ' thẻ cần ôn hôm nay</div>'
+            + '<div class="db-cont-sub">Ôn tập spaced repetition</div>'
+            + '</div>'
+            + '<div class="db-cont-arrow">→</div>'
+            + '</div>';
+    }
+
+    // In-progress video tiles
+    inProgress.forEach(function(v) {
+        var thumb = 'https://img.youtube.com/vi/' + v.video_id + '/mqdefault.jpg';
+        var timeAgo = v.lastWatched ? _dbTimeAgo(v.lastWatched) : '';
+        html += '<div class="db-cont-item" onclick="loadVideoFromDashboard(\'' + v.video_id + '\')" role="button" tabindex="0">'
+            + '<div class="db-cont-thumb-wrap">'
+            + '<img class="db-cont-thumb" src="' + thumb + '" onerror="this.style.display=\'none\'" alt="" loading="lazy">'
+            + '<div class="db-cont-pct-badge">' + v.pct + '%</div>'
+            + '</div>'
+            + '<div class="db-cont-body">'
+            + '<div class="db-cont-title">' + escHtml(v.title) + '</div>'
+            + '<div class="db-cont-progress-track"><div class="db-cont-progress-fill" style="width:' + v.pct + '%"></div></div>'
+            + (timeAgo ? '<div class="db-cont-sub">' + timeAgo + '</div>' : '')
+            + '</div>'
+            + '<div class="db-cont-arrow">→</div>'
+            + '</div>';
+    });
+
+    html += '</div></div>';
+    el.innerHTML = html;
+    el.classList.remove('hidden');
+}
+
+// Relative time helper ("2 giờ trước", "hôm qua", ...)
+function _dbTimeAgo(iso) {
+    try {
+        var then = new Date(iso).getTime();
+        var diff = Date.now() - then;
+        var mins = Math.floor(diff / 60000);
+        if (mins < 1) return 'Vừa xong';
+        if (mins < 60) return mins + ' phút trước';
+        var hours = Math.floor(mins / 60);
+        if (hours < 24) return hours + ' giờ trước';
+        var days = Math.floor(hours / 24);
+        if (days === 1) return 'Hôm qua';
+        if (days < 30) return days + ' ngày trước';
+        return new Date(iso).toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit' });
+    } catch (e) { return ''; }
 }

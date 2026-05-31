@@ -142,6 +142,12 @@ async def lifespan(app):
     db_create_backup()
     if os.getenv("RENDER_EXTERNAL_URL"):
         asyncio.create_task(_keep_alive_ping())
+    # Daily SRS email reminder sweep (no-op for users who haven't opted in)
+    try:
+        from routes.srs_reminder import srs_reminder_loop
+        asyncio.create_task(srs_reminder_loop())
+    except Exception as _e:
+        logger.warning("Could not start SRS reminder loop: %s", _e)
     logger.info(f"🚀 LectureDigest API ready (startup: {_startup_time.time() - _startup_ts:.2f}s)")
     yield
     # ── Shutdown ──
@@ -303,6 +309,7 @@ from routes.study_rooms import router as study_rooms_router
 from routes.notifications import router as notifications_router
 from routes.chat_rooms import router as chat_rooms_router
 from routes.english import router as english_router
+from routes.srs_reminder import router as srs_reminder_router
 
 app.include_router(auth_router)
 app.include_router(analyze_router)
@@ -315,6 +322,7 @@ app.include_router(study_rooms_router)
 app.include_router(notifications_router)
 app.include_router(chat_rooms_router)
 app.include_router(english_router)
+app.include_router(srs_reminder_router)
 
 
 # ═══════════════════════════════════════════════════════
