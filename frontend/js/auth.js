@@ -576,6 +576,60 @@ function openProfileModal() {
     document.querySelectorAll('.profile-accent-option').forEach(function(el) {
         el.classList.toggle('active', el.dataset.accent === currentAccent);
     });
+
+    // Load email reminder preference
+    _profileLoadReminderPref();
+}
+
+// ── Email reminder preference (in profile) ──
+function _profileLoadReminderPref() {
+    var toggle = document.getElementById('profileReminderToggle');
+    var desc = document.getElementById('profileReminderDesc');
+    if (!toggle) return;
+    toggle.checked = false;
+    fetch((window.API_BASE || '') + '/api/srs-reminder/preference', {
+        headers: _profileAuthHeaders()
+    })
+        .then(function(res) { return res.ok ? res.json() : null; })
+        .then(function(data) {
+            if (!data) return;
+            toggle.checked = !!data.enabled;
+            if (desc && data.smtp_configured === false) {
+                desc.textContent = 'Máy chủ chưa cấu hình email — nhắc nhở sẽ chỉ ghi log';
+            }
+        })
+        .catch(function() {});
+}
+
+function _profileAuthHeaders() {
+    var headers = { 'Content-Type': 'application/json' };
+    try {
+        var token = localStorage.getItem('ld_auth_token');
+        if (token) headers['Authorization'] = 'Bearer ' + token;
+    } catch (e) {}
+    return headers;
+}
+
+function profileToggleReminder(checkbox) {
+    var enabled = checkbox.checked;
+    fetch((window.API_BASE || '') + '/api/srs-reminder/preference', {
+        method: 'POST',
+        headers: _profileAuthHeaders(),
+        body: JSON.stringify({ enabled: enabled })
+    })
+        .then(function(res) { return res.ok ? res.json() : null; })
+        .then(function(data) {
+            if (!data) { checkbox.checked = !enabled; return; }
+            if (typeof showToast === 'function') {
+                showToast(data.enabled
+                    ? '🔔 Đã bật nhắc nhở ôn tập qua email!'
+                    : '🔕 Đã tắt nhắc nhở qua email', 2500);
+            }
+        })
+        .catch(function() {
+            checkbox.checked = !enabled;
+            if (typeof showToast === 'function') showToast('Không thể cập nhật cài đặt', 2500);
+        });
 }
 
 function closeProfileModal() {

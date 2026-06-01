@@ -67,6 +67,19 @@
                     <div class="profile-accent-option" data-accent="#ec4899" style="background:#ec4899" role="button" aria-label="Pink" title="Pink" onclick="selectAccentColor(this)"></div>
                 </div>
 
+                <!-- Notifications -->
+                <div class="profile-section-title">🔔 Thông báo</div>
+                <div class="profile-toggle-row">
+                    <div class="profile-toggle-info">
+                        <div class="profile-toggle-label">Nhắc nhở ôn tập qua email</div>
+                        <div class="profile-toggle-desc" id="profileReminderDesc">Gửi email hàng ngày khi có thẻ flashcard cần ôn tập</div>
+                    </div>
+                    <label class="profile-switch">
+                        <input type="checkbox" id="profileReminderToggle" onchange="profileToggleReminder(this)">
+                        <span class="profile-switch-slider"></span>
+                    </label>
+                </div>
+
                 <!-- Change Password (optional) -->
                 <div class="profile-section-title">Đổi mật khẩu (tùy chọn)</div>
                 <div class="auth-field">
