@@ -25,7 +25,7 @@ COPY frontend/ ./frontend/
 
 # ── Health check ──────────────────────────────────
 HEALTHCHECK --interval=30s --timeout=10s --start-period=10s --retries=3 \
-    CMD curl -f http://localhost:${PORT:-8000}/api/health || exit 1
+    CMD curl -f http://localhost:${PORT:-8000}/health || exit 1
 
 # ── Expose default port ───────────────────────────
 EXPOSE 8000

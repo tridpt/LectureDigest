@@ -20,5 +20,22 @@ services:
     envVars:
       - key: GEMINI_API_KEY
         sync: false          # You must set this manually in Render dashboard
+      - key: JWT_SECRET
+        generateValue: true  # Render generates a strong random secret once
+      - key: TRUST_PROXY
+        value: "true"        # Render runs behind a proxy — trust X-Forwarded-For
+      # ── Email (SMTP) — set values in the Render dashboard (sync: false) ──
+      - key: SMTP_HOST
+        sync: false
+      - key: SMTP_PORT
+        sync: false
+      - key: SMTP_USER
+        sync: false
+      - key: SMTP_PASS
+        sync: false
+      - key: SMTP_FROM
+        sync: false
+      - key: APP_BASE_URL
+        sync: false          # e.g. https://lecturedigest.onrender.com
 
-    healthCheckPath: /api/health
+    healthCheckPath: /health
