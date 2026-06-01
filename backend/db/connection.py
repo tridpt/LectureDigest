@@ -23,8 +23,31 @@ if USE_POSTGRES:
     import psycopg2.extras
     import psycopg2.pool
 
-    # Use a connection pool to avoid exhausting Supabase connection limit
-    _pg_pool = psycopg2.pool.SimpleConnectionPool(2, 20, DATABASE_URL, connect_timeout=10)
+    # Use a connection pool to avoid exhausting Supabase connection limit.
+    # Build with a clear, actionable error if the DATABASE_URL is wrong, instead
+    # of crashing the whole app with a raw psycopg2 traceback at import time.
+    try:
+        _pg_pool = psycopg2.pool.SimpleConnectionPool(2, 20, DATABASE_URL, connect_timeout=10)
+        logger.info("PostgreSQL connection pool initialized")
+    except Exception as _pg_err:
+        try:
+            # Extract host for the hint without leaking the password
+            _safe_host = DATABASE_URL.split("@")[-1].split("/")[0]
+        except Exception:
+            _safe_host = "(unparseable)"
+        logger.error("=" * 70)
+        logger.error("Could not connect to PostgreSQL at %s", _safe_host)
+        logger.error("   psycopg2 error: %s", _pg_err)
+        logger.error("   Check your DATABASE_URL environment variable:")
+        logger.error("   - Supabase: use the 'Connection pooling' string (Transaction mode),")
+        logger.error("     host like aws-0-<region>.pooler.supabase.com, user 'postgres.<project-ref>'")
+        logger.error("   - Make sure the project isn't paused and the password is correct")
+        logger.error("   - URL-encode special characters in the password (@ : / etc.)")
+        logger.error("=" * 70)
+        raise RuntimeError(
+            f"Failed to connect to PostgreSQL ({_safe_host}). "
+            f"Check the DATABASE_URL env var. Original error: {_pg_err}"
+        ) from _pg_err
 
     class PgCursorWrapper:
         """Wraps a psycopg2 cursor to behave like sqlite3 cursor (dict access on rows)."""
