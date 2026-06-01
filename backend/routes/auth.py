@@ -8,9 +8,6 @@ import hashlib
 import logging
 import secrets
 import asyncio
-import smtplib
-from email.mime.text import MIMEText
-from email.mime.multipart import MIMEMultipart
 
 from fastapi import APIRouter, HTTPException, Request
 from pydantic import BaseModel, Field
@@ -143,13 +140,7 @@ _RESET_RATE_LIMIT_SECONDS = 60
 
 
 def _send_reset_email(to_email: str, reset_url: str, display_name: str = ""):
-    """Send password reset email via SMTP. Falls back to console logging in dev."""
-    smtp_host = os.getenv("SMTP_HOST", "").strip()
-    smtp_port = int(os.getenv("SMTP_PORT", "587"))
-    smtp_user = os.getenv("SMTP_USER", "").strip()
-    smtp_pass = os.getenv("SMTP_PASS", "").strip()
-    smtp_from = os.getenv("SMTP_FROM", smtp_user).strip()
-
+    """Send password reset email via the configured provider (Resend/SMTP), or log in dev."""
     name = display_name or to_email.split("@")[0]
 
     html_body = f"""\
@@ -178,28 +169,24 @@ def _send_reset_email(to_email: str, reset_url: str, display_name: str = ""):
 
     text_body = f"""Xin chào {name},\n\nĐặt lại mật khẩu LectureDigest:\n{reset_url}\n\nLink hết hạn sau 1 giờ.\nNếu bạn không yêu cầu, hãy bỏ qua email này."""
 
-    if not smtp_host or not smtp_user:
+    from email_sender import send_email, is_email_configured
+
+    if not is_email_configured():
         # Dev mode: print to console
-        logger.info("PASSWORD RESET EMAIL (dev mode — no SMTP configured)")
+        logger.info("PASSWORD RESET EMAIL (dev mode — no email provider configured)")
         logger.info("To: %s | Reset URL: %s", to_email, reset_url)
         return
 
-    # Production: send via SMTP
-    msg = MIMEMultipart("alternative")
-    msg["Subject"] = "🔐 Đặt lại mật khẩu — LectureDigest"
-    msg["From"] = f"LectureDigest <{smtp_from}>"
-    msg["To"] = to_email
-    msg.attach(MIMEText(text_body, "plain", "utf-8"))
-    msg.attach(MIMEText(html_body, "html", "utf-8"))
-
     try:
-        with smtplib.SMTP(smtp_host, smtp_port, timeout=15) as server:
-            server.starttls()
-            server.login(smtp_user, smtp_pass)
-            server.sendmail(smtp_from, to_email, msg.as_string())
+        send_email(
+            to_email,
+            "🔐 Đặt lại mật khẩu — LectureDigest",
+            html_body,
+            text_body,
+        )
         logger.info("Reset email sent to %s", to_email)
     except Exception as e:
-        logger.error("SMTP error: %s", e)
+        logger.error("Email send error: %s", e)
         raise Exception(f"Không thể gửi email: {e}")
 
 

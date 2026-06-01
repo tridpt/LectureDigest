@@ -24,7 +24,12 @@ services:
         generateValue: true  # Render generates a strong random secret once
       - key: TRUST_PROXY
         value: "true"        # Render runs behind a proxy — trust X-Forwarded-For
-      # ── Email (SMTP) — set values in the Render dashboard (sync: false) ──
+      # ── Email — Resend HTTP API (recommended; Render blocks SMTP ports) ──
+      - key: RESEND_API_KEY
+        sync: false          # Get a free key at resend.com
+      - key: EMAIL_FROM
+        sync: false          # e.g. "LectureDigest <onboarding@resend.dev>"
+      # ── Email (SMTP) — only works locally; Render blocks ports 25/465/587 ──
       - key: SMTP_HOST
         sync: false
       - key: SMTP_PORT

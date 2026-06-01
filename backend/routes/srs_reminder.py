@@ -18,10 +18,7 @@ import json
 import time
 import asyncio
 import logging
-import smtplib
 from datetime import datetime
-from email.mime.text import MIMEText
-from email.mime.multipart import MIMEMultipart
 
 from fastapi import APIRouter, HTTPException, Request
 
@@ -70,13 +67,7 @@ def _count_due_cards(user_id: int) -> int:
 # ═══════════════════════════════════════════════════════
 
 def _send_reminder_email(to_email: str, display_name: str, due_count: int, app_url: str):
-    """Send the SRS reminder email via SMTP, or log to console if SMTP not configured."""
-    smtp_host = os.getenv("SMTP_HOST", "").strip()
-    smtp_port = int(os.getenv("SMTP_PORT", "587"))
-    smtp_user = os.getenv("SMTP_USER", "").strip()
-    smtp_pass = os.getenv("SMTP_PASS", "").strip()
-    smtp_from = os.getenv("SMTP_FROM", smtp_user).strip()
-
+    """Send the SRS reminder email via the configured provider (Resend/SMTP), or log if none."""
     name = display_name or to_email.split("@")[0]
     review_url = f"{app_url.rstrip('/')}/review"
 
@@ -107,21 +98,18 @@ def _send_reminder_email(to_email: str, display_name: str, due_count: int, app_u
         f"Bạn có thể tắt nhắc nhở trong cài đặt ứng dụng."
     )
 
-    if not smtp_host or not smtp_user:
-        logger.info("SRS REMINDER (dev mode — no SMTP). To: %s | Due: %d", to_email, due_count)
+    from email_sender import send_email, is_email_configured
+
+    if not is_email_configured():
+        logger.info("SRS REMINDER (dev mode — no email provider). To: %s | Due: %d", to_email, due_count)
         return
 
-    msg = MIMEMultipart("alternative")
-    msg["Subject"] = f"🧠 {due_count} thẻ cần ôn hôm nay — LectureDigest"
-    msg["From"] = f"LectureDigest <{smtp_from}>"
-    msg["To"] = to_email
-    msg.attach(MIMEText(text_body, "plain", "utf-8"))
-    msg.attach(MIMEText(html_body, "html", "utf-8"))
-
-    with smtplib.SMTP(smtp_host, smtp_port, timeout=15) as server:
-        server.starttls()
-        server.login(smtp_user, smtp_pass)
-        server.sendmail(smtp_from, to_email, msg.as_string())
+    send_email(
+        to_email,
+        f"🧠 {due_count} thẻ cần ôn hôm nay — LectureDigest",
+        html_body,
+        text_body,
+    )
     logger.info("SRS reminder sent to %s (%d due)", to_email, due_count)
 
 
@@ -201,8 +189,8 @@ async def get_preference(request: Request):
         raise HTTPException(status_code=401, detail="Vui lòng đăng nhập")
     enabled = db_kv_get(user["id"], _PREF_KEY) == "1"
     due = _count_due_cards(user["id"])
-    smtp_ready = bool(os.getenv("SMTP_HOST", "").strip() and os.getenv("SMTP_USER", "").strip())
-    return {"enabled": enabled, "due_count": due, "smtp_configured": smtp_ready}
+    from email_sender import is_email_configured
+    return {"enabled": enabled, "due_count": due, "smtp_configured": is_email_configured()}
 
 
 @router.post("/preference")
