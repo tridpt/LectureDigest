@@ -161,6 +161,8 @@ window.addEventListener('popstate', function(e) {
         var roomId = path.replace('/chat/', '');
         if (roomId && typeof _crOpenRoomById === 'function') _crOpenRoomById(roomId);
         else if (typeof openChatRooms === 'function') openChatRooms();
+    } else if (path === '/admin') {
+        if (typeof openAdmin === 'function') openAdmin();
     } else {
         showSection('hero');
     }
@@ -257,6 +259,13 @@ window.addEventListener('popstate', function(e) {
     } else if (path === '/study-plan') {
         window.addEventListener('DOMContentLoaded', function() {
             if (typeof openStudyPlan === 'function') openStudyPlan();
+        }, { once: true });
+    } else if (path === '/admin') {
+        window.addEventListener('DOMContentLoaded', function() {
+            // Wait briefly so auth state is restored before opening the admin page
+            setTimeout(function() {
+                if (typeof openAdmin === 'function') openAdmin();
+            }, 400);
         }, { once: true });
     }
 })();
