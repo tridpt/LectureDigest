@@ -150,7 +150,8 @@ def _init_db_postgres(conn):
             email      TEXT PRIMARY KEY,
             reason     TEXT DEFAULT '',
             blocked_by TEXT DEFAULT '',
-            created_at BIGINT NOT NULL
+            created_at BIGINT NOT NULL,
+            expires_at BIGINT DEFAULT NULL
         );
     """)
     # Ensure gamification row
@@ -278,7 +279,8 @@ def _init_db_sqlite(conn):
             email      TEXT PRIMARY KEY,
             reason     TEXT DEFAULT '',
             blocked_by TEXT DEFAULT '',
-            created_at INTEGER NOT NULL
+            created_at INTEGER NOT NULL,
+            expires_at INTEGER DEFAULT NULL
         );
     """)
     # Ensure gamification row exists
@@ -289,6 +291,13 @@ def _init_db_sqlite(conn):
 
     # ── Migration: add user_id columns to support per-user data ──
     _migrate_add_user_id(conn)
+
+    # ── Migration: add expires_at to blocked_emails (timed bans) ──
+    try:
+        conn.execute("ALTER TABLE blocked_emails ADD COLUMN expires_at INTEGER DEFAULT NULL")
+        logger.info("Migration: added expires_at to blocked_emails")
+    except Exception:
+        pass  # Column already exists
 
     # Create Google index (after migration adds the column to existing DBs)
     try:

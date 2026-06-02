@@ -22,7 +22,7 @@ from database import (
     db_delete_reset_tokens_for_email, db_cleanup_expired_tokens,
     db_check_rate_limit, db_reset_rate_limit,
     db_delete_user, db_export_user_data, db_get_leaderboard,
-    db_is_email_blocked,
+    db_is_email_blocked, db_get_block_info,
 )
 
 router = APIRouter(prefix="/api/auth", tags=["auth"])
@@ -87,6 +87,29 @@ def _verify_jwt(token: str) -> dict | None:
         return None
     except pyjwt.InvalidTokenError:
         return None
+
+
+def _block_message(info: dict) -> str:
+    """Build a user-facing message for a blocked account, including reason and expiry."""
+    if not info:
+        return "Tài khoản này đã bị chặn."
+    msg = "Tài khoản này đã bị chặn"
+    if info.get("permanent"):
+        msg += " vĩnh viễn"
+    elif info.get("expires_at"):
+        try:
+            import datetime
+            dt = datetime.datetime.fromtimestamp(info["expires_at"] / 1000)
+            msg += " đến " + dt.strftime("%H:%M %d/%m/%Y")
+        except Exception:
+            pass
+    reason = (info.get("reason") or "").strip()
+    if reason:
+        msg += f". Lý do: {reason}"
+    else:
+        msg += "."
+    msg += " Vui lòng liên hệ quản trị viên."
+    return msg
 
 
 def get_current_user(request: Request) -> dict | None:
@@ -204,8 +227,9 @@ async def register(req: RegisterRequest, request: Request):
             raise HTTPException(status_code=400, detail="Email không hợp lệ")
 
         # Blocklist check
-        if db_is_email_blocked(email):
-            raise HTTPException(status_code=403, detail="Email này đã bị chặn. Vui lòng liên hệ quản trị viên.")
+        _binfo = db_get_block_info(email)
+        if _binfo:
+            raise HTTPException(status_code=403, detail=_block_message(_binfo))
 
         # Rate limiting: prevent mass account creation
         client_ip = request.client.host if request.client else "unknown"
@@ -244,8 +268,9 @@ async def login(req: LoginRequest, request: Request):
         email = req.email.lower().strip()
 
         # Blocklist check
-        if db_is_email_blocked(email):
-            raise HTTPException(status_code=403, detail="Tài khoản này đã bị chặn. Vui lòng liên hệ quản trị viên.")
+        _binfo = db_get_block_info(email)
+        if _binfo:
+            raise HTTPException(status_code=403, detail=_block_message(_binfo))
 
         # Rate limiting: 5 failed attempts per email → block 15 min
         allowed, retry_after = db_check_rate_limit(f"login:{email}", max_attempts=5, window_secs=300, block_secs=900)
@@ -406,8 +431,9 @@ async def google_login(req: GoogleAuthRequest):
         raise HTTPException(status_code=400, detail="Google account has no email")
 
     # Blocklist check
-    if db_is_email_blocked(email):
-        raise HTTPException(status_code=403, detail="Tài khoản này đã bị chặn. Vui lòng liên hệ quản trị viên.")
+    _binfo = db_get_block_info(email)
+    if _binfo:
+        raise HTTPException(status_code=403, detail=_block_message(_binfo))
 
     user = db_get_user_by_google_id(google_sub)
 

@@ -81,4 +81,5 @@ from .cache import db_get_analysis_cache, db_set_analysis_cache, db_delete_analy
 # ── Blocked Emails ──
 from .blocked_emails import (
     db_is_email_blocked, db_block_email, db_unblock_email, db_get_blocked_emails,
+    db_get_block_info,
 )

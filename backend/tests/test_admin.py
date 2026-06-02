@@ -187,3 +187,52 @@ class TestAdminBlockEmail:
         admin_headers, _, _ = admin_setup
         resp = client.post("/api/admin/unblock-email", json={"email": "notblocked@test.com"}, headers=admin_headers)
         assert resp.status_code == 404
+
+    def test_timed_block_has_expiry(self, client, admin_setup):
+        admin_headers, _, _ = admin_setup
+        target = f"timed_{int(time.time()*1000000)}@test.com"
+        resp = client.post("/api/admin/block-email",
+                           json={"email": target, "reason": "test", "duration": "1d"},
+                           headers=admin_headers)
+        assert resp.status_code == 200
+        assert resp.json()["permanent"] is False
+
+        blocked = client.get("/api/admin/blocked-emails", headers=admin_headers).json()["blocked"]
+        entry = next(b for b in blocked if b["email"] == target)
+        assert entry["permanent"] is False
+        assert entry["expires_at"] is not None
+        assert entry["reason"] == "test"
+
+    def test_permanent_block(self, client, admin_setup):
+        admin_headers, _, _ = admin_setup
+        target = f"perm_{int(time.time()*1000000)}@test.com"
+        resp = client.post("/api/admin/block-email",
+                           json={"email": target, "duration": "permanent"},
+                           headers=admin_headers)
+        assert resp.status_code == 200
+        assert resp.json()["permanent"] is True
+
+        blocked = client.get("/api/admin/blocked-emails", headers=admin_headers).json()["blocked"]
+        entry = next(b for b in blocked if b["email"] == target)
+        assert entry["permanent"] is True
+        assert entry["expires_at"] is None
+
+    def test_invalid_duration_rejected(self, client, admin_setup):
+        admin_headers, _, _ = admin_setup
+        resp = client.post("/api/admin/block-email",
+                           json={"email": "x@test.com", "duration": "99years"},
+                           headers=admin_headers)
+        assert resp.status_code == 400
+
+    def test_block_reason_in_login_error(self, client, admin_setup):
+        admin_headers, _, _ = admin_setup
+        email = f"reasontest_{int(time.time()*1000000)}@test.com"
+        pw = "loginpass123"
+        client.post("/api/auth/register", json={"email": email, "password": pw, "display_name": "U"})
+        client.post("/api/admin/block-email",
+                   json={"email": email, "reason": "Spam nhiều lần", "duration": "1w"},
+                   headers=admin_headers)
+        resp = client.post("/api/auth/login", json={"email": email, "password": pw})
+        assert resp.status_code == 403
+        # The reason should surface in the error detail
+        assert "Spam nhiều lần" in resp.json()["detail"]

@@ -153,7 +153,12 @@ function _adminRenderUsers(el, d) {
         var date = u.created_at ? new Date(u.created_at).toLocaleDateString('vi-VN') : '';
         var badges = '';
         if (u.is_admin) badges += '<span class="admin-badge admin-badge-admin">ADMIN</span>';
-        if (u.is_blocked) badges += '<span class="admin-badge admin-badge-blocked">ĐÃ CHẶN</span>';
+        if (u.is_blocked) {
+            var blockTitle = u.block_permanent ? 'Chặn vĩnh viễn' : ('Chặn đến ' + _adminFmtExpiry(u.block_expires_at));
+            if (u.block_reason) blockTitle += ' — ' + u.block_reason;
+            var blockLabel = u.block_permanent ? 'CHẶN ∞' : 'CHẶN ' + _adminBanShort(u.block_expires_at);
+            badges += '<span class="admin-badge admin-badge-blocked" title="' + _adminEsc(blockTitle) + '">' + blockLabel + '</span>';
+        }
         badges += u.is_google
             ? '<span class="admin-badge admin-badge-google">Google</span>'
             : '<span class="admin-badge admin-badge-email">Email</span>';
@@ -238,30 +243,102 @@ function adminDeleteUser(userId, email) {
 
 // ── Block / Unblock email ──
 function adminBlockUser(email) {
-    showConfirm({
-        title: 'Chặn email',
-        message: 'Chặn "' + email + '"?\nNgười này sẽ không thể đăng nhập hoặc đăng ký lại.',
-        confirmText: '🚫 Chặn',
-        cancelText: 'Huỷ',
-        danger: true
-    }).then(function(ok) {
-        if (!ok) return;
-        fetch((window.API_BASE || '') + '/api/admin/block-email', {
-            method: 'POST',
-            headers: _adminAuthHeaders(),
-            body: JSON.stringify({ email: email })
+    _adminShowBlockModal(email);
+}
+
+// Modal: choose ban duration + reason
+function _adminShowBlockModal(email) {
+    var existing = document.getElementById('adminBlockOverlay');
+    if (existing) existing.remove();
+
+    var overlay = document.createElement('div');
+    overlay.id = 'adminBlockOverlay';
+    overlay.className = 'admin-block-overlay';
+
+    var durations = [
+        { key: '1h', label: '1 giờ' },
+        { key: '1d', label: '1 ngày' },
+        { key: '1w', label: '1 tuần' },
+        { key: '1m', label: '1 tháng' },
+        { key: 'permanent', label: 'Vĩnh viễn' }
+    ];
+    var durBtns = durations.map(function(d, i) {
+        return '<button type="button" class="admin-dur-btn' + (d.key === 'permanent' ? ' admin-dur-perm' : '') + (i === 0 ? ' active' : '') + '" '
+            + 'data-dur="' + d.key + '" onclick="_adminPickDuration(this)">' + d.label + '</button>';
+    }).join('');
+
+    overlay.innerHTML =
+        '<div class="admin-block-modal">' +
+            '<div class="admin-block-header">' +
+                '<span class="admin-block-icon">🚫</span>' +
+                '<div class="admin-block-title">Chặn tài khoản</div>' +
+                '<div class="admin-block-email">' + escHtml(email) + '</div>' +
+            '</div>' +
+            '<div class="admin-block-field">' +
+                '<label class="admin-block-label">Thời hạn chặn</label>' +
+                '<div class="admin-dur-grid" id="adminDurGrid">' + durBtns + '</div>' +
+            '</div>' +
+            '<div class="admin-block-field">' +
+                '<label class="admin-block-label">Lý do chặn</label>' +
+                '<textarea class="admin-block-reason" id="adminBlockReason" rows="3" maxlength="300" ' +
+                'placeholder="VD: Spam, vi phạm điều khoản, lạm dụng hệ thống..."></textarea>' +
+            '</div>' +
+            '<div class="admin-block-actions">' +
+                '<button type="button" class="admin-block-cancel" onclick="_adminCloseBlockModal()">Huỷ</button>' +
+                '<button type="button" class="admin-block-confirm" onclick="_adminConfirmBlock(\'' + _adminEsc(email) + '\')">🚫 Chặn</button>' +
+            '</div>' +
+        '</div>';
+
+    overlay.onclick = function(e) { if (e.target === overlay) _adminCloseBlockModal(); };
+    document.body.appendChild(overlay);
+    overlay._selectedDuration = '1h';
+    setTimeout(function() {
+        var ta = document.getElementById('adminBlockReason');
+        if (ta) ta.focus();
+    }, 80);
+}
+
+function _adminPickDuration(btn) {
+    var grid = document.getElementById('adminDurGrid');
+    if (grid) {
+        grid.querySelectorAll('.admin-dur-btn').forEach(function(b) { b.classList.remove('active'); });
+    }
+    btn.classList.add('active');
+    var overlay = document.getElementById('adminBlockOverlay');
+    if (overlay) overlay._selectedDuration = btn.getAttribute('data-dur');
+}
+
+function _adminCloseBlockModal() {
+    var overlay = document.getElementById('adminBlockOverlay');
+    if (overlay) overlay.remove();
+}
+
+function _adminConfirmBlock(email) {
+    var overlay = document.getElementById('adminBlockOverlay');
+    var duration = (overlay && overlay._selectedDuration) || '1h';
+    var reasonEl = document.getElementById('adminBlockReason');
+    var reason = reasonEl ? reasonEl.value.trim() : '';
+
+    fetch((window.API_BASE || '') + '/api/admin/block-email', {
+        method: 'POST',
+        headers: _adminAuthHeaders(),
+        body: JSON.stringify({ email: email, reason: reason, duration: duration })
+    })
+        .then(function(r) { return r.json().then(function(d) { return { ok: r.ok, data: d }; }); })
+        .then(function(res) {
+            _adminCloseBlockModal();
+            if (res.ok) {
+                var label = res.data.permanent ? 'vĩnh viễn' : duration;
+                if (typeof showToast === 'function') showToast('🚫 Đã chặn ' + email + ' (' + label + ')', 2800);
+                _adminLoadUsers();
+            } else {
+                if (typeof showToast === 'function') showToast('❌ ' + (res.data.detail || 'Không thể chặn'), 3000);
+            }
         })
-            .then(function(r) { return r.json().then(function(d) { return { ok: r.ok, data: d }; }); })
-            .then(function(res) {
-                if (res.ok) {
-                    if (typeof showToast === 'function') showToast('🚫 Đã chặn ' + email, 2500);
-                    _adminLoadUsers();
-                } else {
-                    if (typeof showToast === 'function') showToast('❌ ' + (res.data.detail || 'Không thể chặn'), 3000);
-                }
-            })
-            .catch(function() { if (typeof showToast === 'function') showToast('❌ Lỗi khi chặn', 2500); });
-    });
+        .catch(function() {
+            _adminCloseBlockModal();
+            if (typeof showToast === 'function') showToast('❌ Lỗi khi chặn', 2500);
+        });
 }
 
 function adminUnblockUser(email) {
@@ -284,4 +361,24 @@ function adminUnblockUser(email) {
 
 function _adminEsc(s) {
     return String(s || '').replace(/'/g, "\\'").replace(/"/g, '&quot;');
+}
+
+function _adminFmtExpiry(ms) {
+    if (!ms) return '';
+    try {
+        return new Date(ms).toLocaleString('vi-VN', { hour: '2-digit', minute: '2-digit', day: '2-digit', month: '2-digit', year: 'numeric' });
+    } catch (e) { return ''; }
+}
+
+// Short remaining-time label, e.g. "2d", "5h", "30m"
+function _adminBanShort(ms) {
+    if (!ms) return '';
+    var diff = ms - Date.now();
+    if (diff <= 0) return 'hết hạn';
+    var mins = Math.floor(diff / 60000);
+    if (mins < 60) return mins + 'm';
+    var hours = Math.floor(mins / 60);
+    if (hours < 24) return hours + 'h';
+    var days = Math.floor(hours / 24);
+    return days + 'd';
 }

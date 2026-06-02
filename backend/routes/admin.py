@@ -180,7 +180,7 @@ async def admin_list_users(
 
         admins = _admin_emails()
         from database import db_get_blocked_emails
-        blocked_set = {b["email"] for b in db_get_blocked_emails()}
+        blocked_map = {b["email"]: b for b in db_get_blocked_emails()}
         users = []
         for r in rows:
             uid = r["id"]
@@ -189,6 +189,7 @@ async def admin_list_users(
             hist = conn.execute(
                 "SELECT COUNT(*) AS c FROM history WHERE user_id = ?", (uid,)
             ).fetchone()
+            block = blocked_map.get((email or "").lower())
             users.append({
                 "id": uid,
                 "email": email,
@@ -199,7 +200,10 @@ async def admin_list_users(
                 "created_at": r["created_at"],
                 "history_count": hist["c"] if hist else 0,
                 "is_admin": (email or "").lower() in admins,
-                "is_blocked": (email or "").lower() in blocked_set,
+                "is_blocked": block is not None,
+                "block_reason": block["reason"] if block else "",
+                "block_expires_at": block["expires_at"] if block else None,
+                "block_permanent": block["permanent"] if block else False,
             })
 
         return {
@@ -248,6 +252,18 @@ async def admin_delete_user(user_id: int, admin: dict = Depends(require_admin)):
 class BlockEmailRequest(BaseModel):
     email: str
     reason: str = ""
+    duration: str = "permanent"   # one of: 1h, 1d, 1w, 1m, permanent
+
+
+# Map duration keys to milliseconds (None = permanent)
+_DURATION_MS = {
+    "1h": 3600 * 1000,
+    "1d": 24 * 3600 * 1000,
+    "1w": 7 * 24 * 3600 * 1000,
+    "1m": 30 * 24 * 3600 * 1000,
+    "permanent": None,
+    "perm": None,
+}
 
 
 @router.get("/blocked-emails")
@@ -258,7 +274,7 @@ async def admin_list_blocked(admin: dict = Depends(require_admin)):
 
 @router.post("/block-email")
 async def admin_block_email(req: BlockEmailRequest, admin: dict = Depends(require_admin)):
-    """Block an email from logging in or registering."""
+    """Block an email from logging in or registering, optionally for a fixed duration."""
     email = (req.email or "").strip().lower()
     if not email or "@" not in email:
         raise HTTPException(status_code=400, detail="Email không hợp lệ")
@@ -267,9 +283,17 @@ async def admin_block_email(req: BlockEmailRequest, admin: dict = Depends(requir
     if email in _admin_emails():
         raise HTTPException(status_code=403, detail="Không thể chặn tài khoản admin")
 
-    db_block_email(email, reason=req.reason or "", blocked_by=admin["email"])
-    logger.info("Admin %s blocked email %s", admin["email"], email)
-    return {"ok": True, "email": email}
+    duration_key = (req.duration or "permanent").lower()
+    if duration_key not in _DURATION_MS:
+        raise HTTPException(status_code=400, detail="Thời hạn chặn không hợp lệ")
+    duration_ms = _DURATION_MS[duration_key]
+
+    db_block_email(email, reason=req.reason or "", blocked_by=admin["email"], duration_ms=duration_ms)
+    logger.info(
+        "Admin %s blocked email %s (%s) reason=%r",
+        admin["email"], email, duration_key, req.reason or ""
+    )
+    return {"ok": True, "email": email, "duration": duration_key, "permanent": duration_ms is None}
 
 
 @router.post("/unblock-email")
