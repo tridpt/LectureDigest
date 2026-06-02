@@ -310,6 +310,7 @@ from routes.notifications import router as notifications_router
 from routes.chat_rooms import router as chat_rooms_router
 from routes.english import router as english_router
 from routes.srs_reminder import router as srs_reminder_router
+from routes.admin import router as admin_router
 
 app.include_router(auth_router)
 app.include_router(analyze_router)
@@ -323,6 +324,7 @@ app.include_router(notifications_router)
 app.include_router(chat_rooms_router)
 app.include_router(english_router)
 app.include_router(srs_reminder_router)
+app.include_router(admin_router)
 
 
 # ═══════════════════════════════════════════════════════

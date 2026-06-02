@@ -84,3 +84,6 @@ window.openAnalytics = _lazyStub('analytics', 'openAnalytics');
 
 // ── Share Notes ──
 window.openShareNotes = _lazyStub('shareNotes', 'openShareNotes');
+
+// ── Admin Panel ──
+window.openAdmin = _lazyStub('admin', 'openAdmin');

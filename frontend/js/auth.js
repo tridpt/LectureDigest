@@ -164,12 +164,32 @@ function _authUpdateUI() {
                 userAvatar.innerHTML = '<span class="auth-avatar-circle" style="background:' + _authUser.avatar_color + '">' + initials + '</span>';
             }
         }
+        // Reveal admin link if this user is an admin (checked server-side)
+        _authCheckAdminLink();
     } else {
         // Not logged in
         if (loginBtn) loginBtn.classList.remove('hidden');
         if (userAvatar) userAvatar.classList.add('hidden');
         if (userMenu) userMenu.classList.add('hidden');
+        var adminLink = document.getElementById('adminNavLink');
+        if (adminLink) adminLink.style.display = 'none';
     }
+}
+
+// Check admin status server-side and show/hide the admin nav link.
+// Independent of the lazy-loaded admin.js so the link appears right after login.
+function _authCheckAdminLink() {
+    var link = document.getElementById('adminNavLink');
+    if (!link) return;
+    var headers = { 'Content-Type': 'application/json' };
+    try {
+        var token = localStorage.getItem('ld_auth_token');
+        if (token) headers['Authorization'] = 'Bearer ' + token;
+    } catch (e) {}
+    fetch((window.API_BASE || '') + '/api/admin/check', { headers: headers })
+        .then(function(r) { return r.ok ? r.json() : null; })
+        .then(function(data) { link.style.display = (data && data.is_admin) ? '' : 'none'; })
+        .catch(function() { link.style.display = 'none'; });
 }
 
 function _authGetInitials(name) {

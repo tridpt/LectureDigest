@@ -24,6 +24,8 @@ services:
         generateValue: true  # Render generates a strong random secret once
       - key: TRUST_PROXY
         value: "true"        # Render runs behind a proxy — trust X-Forwarded-For
+      - key: ADMIN_EMAILS
+        sync: false          # Comma-separated admin emails, e.g. you@gmail.com
       # ── Email — Resend HTTP API (recommended; Render blocks SMTP ports) ──
       - key: RESEND_API_KEY
         sync: false          # Get a free key at resend.com

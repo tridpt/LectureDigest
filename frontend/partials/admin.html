@@ -1,0 +1,33 @@
+    <!-- ═══════════════════════════════ ADMIN PANEL ══════════════════════════════ -->
+    <section class="admin-page hidden" id="adminSection" aria-label="Trang quản trị">
+        <div class="admin-inner">
+            <!-- Header -->
+            <div class="admin-header">
+                <button type="button" class="bp-back-btn" onclick="closeAdmin()" aria-label="Quay lại">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="18" height="18">
+                        <path d="M19 12H5M12 5l-7 7 7 7" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                </button>
+                <div class="admin-header-center">
+                    <h1 class="admin-title">🛡️ Trang quản trị</h1>
+                    <p class="admin-sub">Thống kê hệ thống & quản lý người dùng</p>
+                </div>
+                <div style="width:64px"></div>
+            </div>
+
+            <!-- Stats -->
+            <div id="adminStats"></div>
+
+            <!-- User management -->
+            <div class="admin-users-panel">
+                <div class="admin-users-header">
+                    <h2 class="admin-users-title">👥 Quản lý người dùng</h2>
+                    <div class="admin-search-wrap">
+                        <input type="text" class="admin-search" placeholder="Tìm theo email hoặc tên..."
+                               oninput="adminSearchUsers(this.value)">
+                    </div>
+                </div>
+                <div id="adminUsersList"></div>
+            </div>
+        </div>
+    </section>
