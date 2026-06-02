@@ -181,6 +181,7 @@ function _adminRenderUsers(el, d) {
             + '<div class="admin-user-info">'
             + '<div class="admin-user-name">' + escHtml(u.display_name || 'Chưa đặt tên') + ' ' + badges + '</div>'
             + '<div class="admin-user-email">' + escHtml(u.email || '') + '</div>'
+            + (u.is_blocked ? _adminBlockDetail(u) : '')
             + '</div>'
             + '<div class="admin-user-meta">'
             + '<span title="Số video phân tích">🎬 ' + (u.history_count || 0) + '</span>'
@@ -267,6 +268,12 @@ function _adminShowBlockModal(email) {
             + 'data-dur="' + d.key + '" onclick="_adminPickDuration(this)">' + d.label + '</button>';
     }).join('');
 
+    // Preset reasons — last one ("Khác") reveals the free-text box
+    var presetReasons = ['Spam', 'Vi phạm điều khoản', 'Lạm dụng hệ thống', 'Nội dung không phù hợp', 'Khác'];
+    var reasonBtns = presetReasons.map(function(rs) {
+        return '<button type="button" class="admin-reason-btn" data-reason="' + _adminEsc(rs) + '" onclick="_adminPickReason(this)">' + escHtml(rs) + '</button>';
+    }).join('');
+
     overlay.innerHTML =
         '<div class="admin-block-modal">' +
             '<div class="admin-block-header">' +
@@ -280,8 +287,9 @@ function _adminShowBlockModal(email) {
             '</div>' +
             '<div class="admin-block-field">' +
                 '<label class="admin-block-label">Lý do chặn</label>' +
-                '<textarea class="admin-block-reason" id="adminBlockReason" rows="3" maxlength="300" ' +
-                'placeholder="VD: Spam, vi phạm điều khoản, lạm dụng hệ thống..."></textarea>' +
+                '<div class="admin-reason-grid" id="adminReasonGrid">' + reasonBtns + '</div>' +
+                '<textarea class="admin-block-reason hidden" id="adminBlockReason" rows="3" maxlength="300" ' +
+                'placeholder="Nhập lý do cụ thể..."></textarea>' +
             '</div>' +
             '<div class="admin-block-actions">' +
                 '<button type="button" class="admin-block-cancel" onclick="_adminCloseBlockModal()">Huỷ</button>' +
@@ -292,10 +300,26 @@ function _adminShowBlockModal(email) {
     overlay.onclick = function(e) { if (e.target === overlay) _adminCloseBlockModal(); };
     document.body.appendChild(overlay);
     overlay._selectedDuration = '1h';
-    setTimeout(function() {
-        var ta = document.getElementById('adminBlockReason');
-        if (ta) ta.focus();
-    }, 80);
+    overlay._selectedReason = '';
+}
+
+function _adminPickReason(btn) {
+    var grid = document.getElementById('adminReasonGrid');
+    if (grid) grid.querySelectorAll('.admin-reason-btn').forEach(function(b) { b.classList.remove('active'); });
+    btn.classList.add('active');
+
+    var overlay = document.getElementById('adminBlockOverlay');
+    var reason = btn.getAttribute('data-reason');
+    var ta = document.getElementById('adminBlockReason');
+
+    if (reason === 'Khác') {
+        // Reveal free-text box, reason comes from textarea
+        if (ta) { ta.classList.remove('hidden'); ta.value = ''; setTimeout(function() { ta.focus(); }, 50); }
+        if (overlay) overlay._selectedReason = '__custom__';
+    } else {
+        if (ta) ta.classList.add('hidden');
+        if (overlay) overlay._selectedReason = reason;
+    }
 }
 
 function _adminPickDuration(btn) {
@@ -316,8 +340,19 @@ function _adminCloseBlockModal() {
 function _adminConfirmBlock(email) {
     var overlay = document.getElementById('adminBlockOverlay');
     var duration = (overlay && overlay._selectedDuration) || '1h';
-    var reasonEl = document.getElementById('adminBlockReason');
-    var reason = reasonEl ? reasonEl.value.trim() : '';
+    var selected = (overlay && overlay._selectedReason) || '';
+    var reason = '';
+
+    if (selected === '__custom__') {
+        var reasonEl = document.getElementById('adminBlockReason');
+        reason = reasonEl ? reasonEl.value.trim() : '';
+        if (!reason) {
+            if (typeof showToast === 'function') showToast('Vui lòng nhập lý do', 2000);
+            return;
+        }
+    } else {
+        reason = selected;
+    }
 
     fetch((window.API_BASE || '') + '/api/admin/block-email', {
         method: 'POST',
@@ -368,6 +403,21 @@ function _adminFmtExpiry(ms) {
     try {
         return new Date(ms).toLocaleString('vi-VN', { hour: '2-digit', minute: '2-digit', day: '2-digit', month: '2-digit', year: 'numeric' });
     } catch (e) { return ''; }
+}
+
+// Block detail box shown under a blocked user's email
+function _adminBlockDetail(u) {
+    var lines = '';
+    lines += '<div class="admin-block-detail-row">🚫 <strong>Lý do:</strong> ' + escHtml(u.block_reason || 'Không ghi rõ') + '</div>';
+    if (u.block_created_at) {
+        lines += '<div class="admin-block-detail-row">📅 <strong>Chặn lúc:</strong> ' + _adminFmtExpiry(u.block_created_at) + '</div>';
+    }
+    if (u.block_permanent) {
+        lines += '<div class="admin-block-detail-row">⏳ <strong>Hết hạn:</strong> Vĩnh viễn</div>';
+    } else if (u.block_expires_at) {
+        lines += '<div class="admin-block-detail-row">⏳ <strong>Hết hạn:</strong> ' + _adminFmtExpiry(u.block_expires_at) + ' (còn ' + _adminBanShort(u.block_expires_at) + ')</div>';
+    }
+    return '<div class="admin-block-detail">' + lines + '</div>';
 }
 
 // Short remaining-time label, e.g. "2d", "5h", "30m"

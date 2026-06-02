@@ -202,6 +202,7 @@ async def admin_list_users(
                 "is_admin": (email or "").lower() in admins,
                 "is_blocked": block is not None,
                 "block_reason": block["reason"] if block else "",
+                "block_created_at": block["created_at"] if block else None,
                 "block_expires_at": block["expires_at"] if block else None,
                 "block_permanent": block["permanent"] if block else False,
             })
