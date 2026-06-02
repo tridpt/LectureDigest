@@ -119,3 +119,105 @@ html.light-mode .btt-btn:hover {
     }
 }
 
+
+/* ════════════════════════════════════════ CONFIRM MODAL ═════ */
+.app-confirm-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.65);
+    backdrop-filter: blur(4px);
+    z-index: 100000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    animation: appConfirmFade 0.18s ease;
+}
+.app-confirm-overlay.app-confirm-closing {
+    animation: appConfirmFadeOut 0.18s ease forwards;
+}
+@keyframes appConfirmFade {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+@keyframes appConfirmFadeOut {
+    from { opacity: 1; }
+    to { opacity: 0; }
+}
+
+.app-confirm-modal {
+    background: var(--bg-secondary, #1a1a2e);
+    border: 1px solid rgba(139, 92, 246, 0.2);
+    border-radius: 18px;
+    padding: 28px 26px 22px;
+    width: 100%;
+    max-width: 400px;
+    text-align: center;
+    box-shadow: 0 24px 60px rgba(0, 0, 0, 0.5);
+    animation: appConfirmPop 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+@keyframes appConfirmPop {
+    from { opacity: 0; transform: scale(0.92) translateY(8px); }
+    to { opacity: 1; transform: scale(1) translateY(0); }
+}
+
+.app-confirm-icon {
+    font-size: 40px;
+    margin-bottom: 12px;
+}
+
+.app-confirm-title {
+    font-size: 18px;
+    font-weight: 800;
+    color: #fff;
+    margin-bottom: 8px;
+}
+.app-confirm-message {
+    font-size: 14px;
+    line-height: 1.5;
+    color: #94a3b8;
+    margin-bottom: 22px;
+    white-space: pre-line;
+}
+
+.app-confirm-actions {
+    display: flex;
+    gap: 10px;
+}
+.app-confirm-actions button {
+    flex: 1;
+    padding: 11px 16px;
+    border-radius: 11px;
+    font-size: 14px;
+    font-weight: 700;
+    cursor: pointer;
+    border: 1px solid transparent;
+    transition: all 0.18s;
+}
+.app-confirm-cancel {
+    background: rgba(255, 255, 255, 0.06);
+    border-color: rgba(255, 255, 255, 0.1);
+    color: #cbd5e1;
+}
+.app-confirm-cancel:hover {
+    background: rgba(255, 255, 255, 0.12);
+    color: #fff;
+}
+.app-confirm-ok {
+    background: linear-gradient(135deg, #8b5cf6, #6d28d9);
+    color: #fff;
+}
+.app-confirm-ok:hover {
+    filter: brightness(1.1);
+}
+.app-confirm-ok.danger {
+    background: linear-gradient(135deg, #ef4444, #b91c1c);
+}
+.app-confirm-icon.danger {
+    animation: appConfirmShake 0.4s ease;
+}
+@keyframes appConfirmShake {
+    0%, 100% { transform: rotate(0); }
+    25% { transform: rotate(-8deg); }
+    75% { transform: rotate(8deg); }
+}

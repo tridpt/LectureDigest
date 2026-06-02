@@ -106,6 +106,74 @@ function _dismissToast(el) {
     setTimeout(function() { if (el.parentNode) el.remove(); }, 250);
 }
 
+// ══════════════════════════════════════════════════════
+// CONFIRM MODAL — themed replacement for window.confirm()
+// Returns a Promise<boolean>. Usage:
+//   showConfirm({ title, message, confirmText, danger }).then(ok => { ... })
+// ══════════════════════════════════════════════════════
+function showConfirm(opts) {
+    opts = opts || {};
+    var title = opts.title || 'Xác nhận';
+    var message = opts.message || 'Bạn có chắc chắn?';
+    var confirmText = opts.confirmText || 'Xác nhận';
+    var cancelText = opts.cancelText || 'Huỷ';
+    var danger = !!opts.danger;
+
+    return new Promise(function(resolve) {
+        // Remove any existing confirm
+        var existing = document.getElementById('appConfirmOverlay');
+        if (existing) existing.remove();
+
+        var overlay = document.createElement('div');
+        overlay.id = 'appConfirmOverlay';
+        overlay.className = 'app-confirm-overlay';
+
+        var esc = function(s) {
+            var d = document.createElement('div');
+            d.textContent = String(s == null ? '' : s);
+            return d.innerHTML;
+        };
+
+        overlay.innerHTML =
+            '<div class="app-confirm-modal" role="dialog" aria-modal="true">' +
+                '<div class="app-confirm-icon ' + (danger ? 'danger' : '') + '">' +
+                    (danger ? '⚠️' : '❓') +
+                '</div>' +
+                '<div class="app-confirm-title">' + esc(title) + '</div>' +
+                '<div class="app-confirm-message">' + esc(message) + '</div>' +
+                '<div class="app-confirm-actions">' +
+                    '<button type="button" class="app-confirm-cancel">' + esc(cancelText) + '</button>' +
+                    '<button type="button" class="app-confirm-ok ' + (danger ? 'danger' : '') + '">' + esc(confirmText) + '</button>' +
+                '</div>' +
+            '</div>';
+
+        document.body.appendChild(overlay);
+
+        var cleanup = function(result) {
+            document.removeEventListener('keydown', onKey);
+            overlay.classList.add('app-confirm-closing');
+            setTimeout(function() { if (overlay.parentNode) overlay.remove(); }, 180);
+            resolve(result);
+        };
+
+        var onKey = function(e) {
+            if (e.key === 'Escape') cleanup(false);
+            if (e.key === 'Enter') cleanup(true);
+        };
+        document.addEventListener('keydown', onKey);
+
+        overlay.querySelector('.app-confirm-ok').onclick = function() { cleanup(true); };
+        overlay.querySelector('.app-confirm-cancel').onclick = function() { cleanup(false); };
+        overlay.onclick = function(e) { if (e.target === overlay) cleanup(false); };
+
+        // Focus the safe (cancel) button by default
+        setTimeout(function() {
+            var btn = overlay.querySelector(danger ? '.app-confirm-cancel' : '.app-confirm-ok');
+            if (btn) btn.focus();
+        }, 50);
+    });
+}
+
 function goHome() {
     // Always go back to hero from any section
     resetToHero();

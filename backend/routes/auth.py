@@ -22,6 +22,7 @@ from database import (
     db_delete_reset_tokens_for_email, db_cleanup_expired_tokens,
     db_check_rate_limit, db_reset_rate_limit,
     db_delete_user, db_export_user_data, db_get_leaderboard,
+    db_is_email_blocked,
 )
 
 router = APIRouter(prefix="/api/auth", tags=["auth"])
@@ -202,6 +203,10 @@ async def register(req: RegisterRequest, request: Request):
         if not email or "@" not in email:
             raise HTTPException(status_code=400, detail="Email không hợp lệ")
 
+        # Blocklist check
+        if db_is_email_blocked(email):
+            raise HTTPException(status_code=403, detail="Email này đã bị chặn. Vui lòng liên hệ quản trị viên.")
+
         # Rate limiting: prevent mass account creation
         client_ip = request.client.host if request.client else "unknown"
         allowed, retry_after = db_check_rate_limit(f"register:{client_ip}", max_attempts=5, window_secs=600, block_secs=1800)
@@ -237,6 +242,10 @@ async def login(req: LoginRequest, request: Request):
     """Login with email and password."""
     try:
         email = req.email.lower().strip()
+
+        # Blocklist check
+        if db_is_email_blocked(email):
+            raise HTTPException(status_code=403, detail="Tài khoản này đã bị chặn. Vui lòng liên hệ quản trị viên.")
 
         # Rate limiting: 5 failed attempts per email → block 15 min
         allowed, retry_after = db_check_rate_limit(f"login:{email}", max_attempts=5, window_secs=300, block_secs=900)
@@ -395,6 +404,10 @@ async def google_login(req: GoogleAuthRequest):
 
     if not email:
         raise HTTPException(status_code=400, detail="Google account has no email")
+
+    # Blocklist check
+    if db_is_email_blocked(email):
+        raise HTTPException(status_code=403, detail="Tài khoản này đã bị chặn. Vui lòng liên hệ quản trị viên.")
 
     user = db_get_user_by_google_id(google_sub)
 

@@ -145,6 +145,13 @@ def _init_db_postgres(conn):
             updated_at BIGINT,
             PRIMARY KEY (user_id, data_key)
         );
+
+        CREATE TABLE IF NOT EXISTS blocked_emails (
+            email      TEXT PRIMARY KEY,
+            reason     TEXT DEFAULT '',
+            blocked_by TEXT DEFAULT '',
+            created_at BIGINT NOT NULL
+        );
     """)
     # Ensure gamification row
     try:
@@ -266,6 +273,13 @@ def _init_db_sqlite(conn):
             created_at  INTEGER NOT NULL
         );
         CREATE INDEX IF NOT EXISTS idx_cache_video_lang ON analysis_cache(video_id, language);
+
+        CREATE TABLE IF NOT EXISTS blocked_emails (
+            email      TEXT PRIMARY KEY,
+            reason     TEXT DEFAULT '',
+            blocked_by TEXT DEFAULT '',
+            created_at INTEGER NOT NULL
+        );
     """)
     # Ensure gamification row exists
     conn.execute(

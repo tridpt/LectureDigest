@@ -195,26 +195,55 @@
     background: rgba(255, 255, 255, 0.08);
     color: #94a3b8;
 }
+.admin-badge-blocked {
+    background: rgba(239, 68, 68, 0.2);
+    color: #fca5a5;
+}
 
-/* Delete button */
-.admin-del-btn {
+/* Action buttons */
+.admin-user-actions {
+    display: flex;
+    gap: 6px;
     flex-shrink: 0;
+}
+.admin-act-btn {
     width: 34px;
     height: 34px;
     border-radius: 8px;
-    border: 1px solid rgba(239, 68, 68, 0.2);
-    background: rgba(239, 68, 68, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    background: rgba(255, 255, 255, 0.05);
     cursor: pointer;
     font-size: 15px;
     transition: all 0.18s;
+}
+.admin-act-btn:hover:not(:disabled) {
+    background: rgba(255, 255, 255, 0.12);
+}
+.admin-act-btn:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+}
+.admin-block-btn:hover {
+    background: rgba(245, 158, 11, 0.2);
+    border-color: rgba(245, 158, 11, 0.4);
+}
+.admin-unblock-btn:hover {
+    background: rgba(16, 185, 129, 0.2);
+    border-color: rgba(16, 185, 129, 0.4);
+}
+.admin-del-btn {
+    border-color: rgba(239, 68, 68, 0.2);
+    background: rgba(239, 68, 68, 0.1);
 }
 .admin-del-btn:hover:not(:disabled) {
     background: rgba(239, 68, 68, 0.25);
     border-color: rgba(239, 68, 68, 0.5);
 }
-.admin-del-btn:disabled {
-    opacity: 0.4;
-    cursor: not-allowed;
+
+/* Blocked user row */
+.admin-user-blocked {
+    border-color: rgba(239, 68, 68, 0.25);
+    background: rgba(239, 68, 68, 0.04);
 }
 
 /* Pager */

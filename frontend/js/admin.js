@@ -153,15 +153,25 @@ function _adminRenderUsers(el, d) {
         var date = u.created_at ? new Date(u.created_at).toLocaleDateString('vi-VN') : '';
         var badges = '';
         if (u.is_admin) badges += '<span class="admin-badge admin-badge-admin">ADMIN</span>';
+        if (u.is_blocked) badges += '<span class="admin-badge admin-badge-blocked">ĐÃ CHẶN</span>';
         badges += u.is_google
             ? '<span class="admin-badge admin-badge-google">Google</span>'
             : '<span class="admin-badge admin-badge-email">Email</span>';
 
-        var delBtn = u.is_admin
-            ? '<button class="admin-del-btn" disabled title="Không thể xóa admin">🔒</button>'
-            : '<button class="admin-del-btn" onclick="adminDeleteUser(' + u.id + ', \'' + _adminEsc(u.email) + '\')" title="Xóa người dùng">🗑️</button>';
+        // Action buttons: block/unblock + delete (admins are protected)
+        var actions = '';
+        if (u.is_admin) {
+            actions = '<button class="admin-act-btn" disabled title="Tài khoản admin được bảo vệ">🔒</button>';
+        } else {
+            if (u.is_blocked) {
+                actions += '<button class="admin-act-btn admin-unblock-btn" onclick="adminUnblockUser(\'' + _adminEsc(u.email) + '\')" title="Bỏ chặn email">✅</button>';
+            } else {
+                actions += '<button class="admin-act-btn admin-block-btn" onclick="adminBlockUser(\'' + _adminEsc(u.email) + '\')" title="Chặn email">🚫</button>';
+            }
+            actions += '<button class="admin-act-btn admin-del-btn" onclick="adminDeleteUser(' + u.id + ', \'' + _adminEsc(u.email) + '\')" title="Xóa người dùng">🗑️</button>';
+        }
 
-        return '<div class="admin-user-row">'
+        return '<div class="admin-user-row' + (u.is_blocked ? ' admin-user-blocked' : '') + '">'
             + avatar
             + '<div class="admin-user-info">'
             + '<div class="admin-user-name">' + escHtml(u.display_name || 'Chưa đặt tên') + ' ' + badges + '</div>'
@@ -171,7 +181,7 @@ function _adminRenderUsers(el, d) {
             + '<span title="Số video phân tích">🎬 ' + (u.history_count || 0) + '</span>'
             + '<span title="Ngày tạo">📅 ' + date + '</span>'
             + '</div>'
-            + delBtn
+            + '<div class="admin-user-actions">' + actions + '</div>'
             + '</div>';
     }).join('');
 
@@ -198,26 +208,78 @@ function adminSearchUsers(value) {
 }
 
 function adminDeleteUser(userId, email) {
-    if (!confirm('Xóa vĩnh viễn người dùng "' + email + '" và toàn bộ dữ liệu của họ?\n\nHành động này KHÔNG THỂ hoàn tác.')) {
-        return;
-    }
-    fetch((window.API_BASE || '') + '/api/admin/users/' + userId, {
-        method: 'DELETE',
-        headers: _adminAuthHeaders()
+    showConfirm({
+        title: 'Xóa người dùng',
+        message: 'Xóa vĩnh viễn "' + email + '" và toàn bộ dữ liệu của họ?\nHành động này KHÔNG THỂ hoàn tác.',
+        confirmText: '🗑️ Xóa vĩnh viễn',
+        cancelText: 'Huỷ',
+        danger: true
+    }).then(function(ok) {
+        if (!ok) return;
+        fetch((window.API_BASE || '') + '/api/admin/users/' + userId, {
+            method: 'DELETE',
+            headers: _adminAuthHeaders()
+        })
+            .then(function(r) { return r.json().then(function(d) { return { ok: r.ok, data: d }; }); })
+            .then(function(res) {
+                if (res.ok) {
+                    if (typeof showToast === 'function') showToast('🗑️ Đã xóa người dùng', 2500);
+                    _adminLoadUsers();
+                    _adminLoadStats();
+                } else {
+                    if (typeof showToast === 'function') showToast('❌ ' + (res.data.detail || 'Không thể xóa'), 3000);
+                }
+            })
+            .catch(function() {
+                if (typeof showToast === 'function') showToast('❌ Lỗi khi xóa', 2500);
+            });
+    });
+}
+
+// ── Block / Unblock email ──
+function adminBlockUser(email) {
+    showConfirm({
+        title: 'Chặn email',
+        message: 'Chặn "' + email + '"?\nNgười này sẽ không thể đăng nhập hoặc đăng ký lại.',
+        confirmText: '🚫 Chặn',
+        cancelText: 'Huỷ',
+        danger: true
+    }).then(function(ok) {
+        if (!ok) return;
+        fetch((window.API_BASE || '') + '/api/admin/block-email', {
+            method: 'POST',
+            headers: _adminAuthHeaders(),
+            body: JSON.stringify({ email: email })
+        })
+            .then(function(r) { return r.json().then(function(d) { return { ok: r.ok, data: d }; }); })
+            .then(function(res) {
+                if (res.ok) {
+                    if (typeof showToast === 'function') showToast('🚫 Đã chặn ' + email, 2500);
+                    _adminLoadUsers();
+                } else {
+                    if (typeof showToast === 'function') showToast('❌ ' + (res.data.detail || 'Không thể chặn'), 3000);
+                }
+            })
+            .catch(function() { if (typeof showToast === 'function') showToast('❌ Lỗi khi chặn', 2500); });
+    });
+}
+
+function adminUnblockUser(email) {
+    fetch((window.API_BASE || '') + '/api/admin/unblock-email', {
+        method: 'POST',
+        headers: _adminAuthHeaders(),
+        body: JSON.stringify({ email: email })
     })
         .then(function(r) { return r.json().then(function(d) { return { ok: r.ok, data: d }; }); })
         .then(function(res) {
             if (res.ok) {
-                if (typeof showToast === 'function') showToast('🗑️ Đã xóa người dùng', 2500);
+                if (typeof showToast === 'function') showToast('✅ Đã bỏ chặn ' + email, 2500);
                 _adminLoadUsers();
-                _adminLoadStats();
             } else {
-                if (typeof showToast === 'function') showToast('❌ ' + (res.data.detail || 'Không thể xóa'), 3000);
+                if (typeof showToast === 'function') showToast('❌ ' + (res.data.detail || 'Không thể bỏ chặn'), 3000);
             }
         })
-        .catch(function() {
-            if (typeof showToast === 'function') showToast('❌ Lỗi khi xóa', 2500);
-        });
+        .catch(function() { if (typeof showToast === 'function') showToast('❌ Lỗi khi bỏ chặn', 2500); });
 }
 
 function _adminEsc(s) {

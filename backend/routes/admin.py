@@ -13,8 +13,12 @@ import time
 import logging
 
 from fastapi import APIRouter, HTTPException, Request, Depends
+from pydantic import BaseModel
 
 from database import get_db, db_delete_user, USE_POSTGRES
+from database import (
+    db_block_email, db_unblock_email, db_get_blocked_emails, db_get_user_by_id,
+)
 from routes.auth import get_current_user
 
 router = APIRouter(prefix="/api/admin", tags=["admin"])
@@ -175,6 +179,8 @@ async def admin_list_users(
         ).fetchall()
 
         admins = _admin_emails()
+        from database import db_get_blocked_emails
+        blocked_set = {b["email"] for b in db_get_blocked_emails()}
         users = []
         for r in rows:
             uid = r["id"]
@@ -193,6 +199,7 @@ async def admin_list_users(
                 "created_at": r["created_at"],
                 "history_count": hist["c"] if hist else 0,
                 "is_admin": (email or "").lower() in admins,
+                "is_blocked": (email or "").lower() in blocked_set,
             })
 
         return {
@@ -232,3 +239,47 @@ async def admin_delete_user(user_id: int, admin: dict = Depends(require_admin)):
 
     logger.info("Admin %s deleted user %s (%s)", admin["email"], user_id, target_email)
     return {"ok": True}
+
+
+# ═══════════════════════════════════════════════════════
+# EMAIL BLOCKLIST
+# ═══════════════════════════════════════════════════════
+
+class BlockEmailRequest(BaseModel):
+    email: str
+    reason: str = ""
+
+
+@router.get("/blocked-emails")
+async def admin_list_blocked(admin: dict = Depends(require_admin)):
+    """List all blocked emails."""
+    return {"blocked": db_get_blocked_emails()}
+
+
+@router.post("/block-email")
+async def admin_block_email(req: BlockEmailRequest, admin: dict = Depends(require_admin)):
+    """Block an email from logging in or registering."""
+    email = (req.email or "").strip().lower()
+    if not email or "@" not in email:
+        raise HTTPException(status_code=400, detail="Email không hợp lệ")
+
+    # Never allow blocking an admin email
+    if email in _admin_emails():
+        raise HTTPException(status_code=403, detail="Không thể chặn tài khoản admin")
+
+    db_block_email(email, reason=req.reason or "", blocked_by=admin["email"])
+    logger.info("Admin %s blocked email %s", admin["email"], email)
+    return {"ok": True, "email": email}
+
+
+@router.post("/unblock-email")
+async def admin_unblock_email(req: BlockEmailRequest, admin: dict = Depends(require_admin)):
+    """Remove an email from the blocklist."""
+    email = (req.email or "").strip().lower()
+    if not email:
+        raise HTTPException(status_code=400, detail="Email không hợp lệ")
+    removed = db_unblock_email(email)
+    if not removed:
+        raise HTTPException(status_code=404, detail="Email không có trong danh sách chặn")
+    logger.info("Admin %s unblocked email %s", admin["email"], email)
+    return {"ok": True, "email": email}

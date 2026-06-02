@@ -124,3 +124,66 @@ class TestAdminDelete:
         admin_headers, _, _ = admin_setup
         resp = client.delete("/api/admin/users/999999", headers=admin_headers)
         assert resp.status_code == 404
+
+
+class TestAdminBlockEmail:
+    def test_block_and_unblock_flow(self, client, admin_setup):
+        admin_headers, _, _ = admin_setup
+        target = f"blockme_{int(time.time()*1000000)}@test.com"
+
+        # Block
+        resp = client.post("/api/admin/block-email", json={"email": target, "reason": "spam"}, headers=admin_headers)
+        assert resp.status_code == 200
+        assert resp.json()["ok"] is True
+
+        # Appears in blocklist
+        resp = client.get("/api/admin/blocked-emails", headers=admin_headers)
+        assert resp.status_code == 200
+        emails = [b["email"] for b in resp.json()["blocked"]]
+        assert target in emails
+
+        # Blocked email cannot register
+        reg = client.post("/api/auth/register", json={
+            "email": target, "password": "whatever123", "display_name": "Blocked"
+        })
+        assert reg.status_code == 403
+
+        # Unblock
+        resp = client.post("/api/admin/unblock-email", json={"email": target}, headers=admin_headers)
+        assert resp.status_code == 200
+
+        # Now registration works
+        reg = client.post("/api/auth/register", json={
+            "email": target, "password": "whatever123", "display_name": "Unblocked"
+        })
+        assert reg.status_code == 200
+
+    def test_block_existing_user_prevents_login(self, client, admin_setup):
+        admin_headers, _, _ = admin_setup
+        email = f"willblock_{int(time.time()*1000000)}@test.com"
+        pw = "loginpass123"
+        # Register + confirm login works
+        client.post("/api/auth/register", json={"email": email, "password": pw, "display_name": "U"})
+        ok = client.post("/api/auth/login", json={"email": email, "password": pw})
+        assert ok.status_code == 200
+
+        # Block, then login must fail with 403
+        client.post("/api/admin/block-email", json={"email": email}, headers=admin_headers)
+        blocked = client.post("/api/auth/login", json={"email": email, "password": pw})
+        assert blocked.status_code == 403
+
+    def test_cannot_block_admin(self, client, admin_setup):
+        admin_headers, _, _ = admin_setup
+        me = client.get("/api/auth/me", headers=admin_headers).json()["user"]
+        resp = client.post("/api/admin/block-email", json={"email": me["email"]}, headers=admin_headers)
+        assert resp.status_code == 403
+
+    def test_normal_user_cannot_block(self, client, admin_setup):
+        _, normal_headers, _ = admin_setup
+        resp = client.post("/api/admin/block-email", json={"email": "x@test.com"}, headers=normal_headers)
+        assert resp.status_code == 403
+
+    def test_unblock_nonexistent(self, client, admin_setup):
+        admin_headers, _, _ = admin_setup
+        resp = client.post("/api/admin/unblock-email", json={"email": "notblocked@test.com"}, headers=admin_headers)
+        assert resp.status_code == 404
