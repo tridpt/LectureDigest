@@ -181,6 +181,21 @@ self.addEventListener('fetch', event => {
     return;
   }
 
+  // App code (JS/CSS) — network-first so updates apply immediately,
+  // fall back to cache only when offline.
+  if (url.origin === location.origin && (url.pathname.endsWith('.js') || url.pathname.endsWith('.css'))) {
+    event.respondWith(
+      fetch(event.request).then(response => {
+        if (response.ok && response.type === 'basic') {
+          const clone = response.clone();
+          caches.open(CACHE_NAME).then(cache => cache.put(event.request, clone));
+        }
+        return response;
+      }).catch(() => caches.match(event.request))
+    );
+    return;
+  }
+
   // Static assets — cache-first, network fallback (stale-while-revalidate)
   event.respondWith(
     caches.match(event.request).then(cached => {
