@@ -257,9 +257,10 @@ class SecurityHeadersMiddleware(BaseHTTPMiddleware):
             response.headers["Cache-Control"] = "no-store"
             response.headers["Pragma"] = "no-cache"
 
-        # Cache static assets (CSS/JS/images) for performance
+        # JS/CSS: revalidate every load so code updates apply immediately.
+        # (Avoids users getting stuck on stale app code after a deploy.)
         if path.endswith(('.css', '.js')):
-            response.headers["Cache-Control"] = "public, max-age=604800"  # 7 days
+            response.headers["Cache-Control"] = "no-cache, must-revalidate"
         elif path.endswith(('.png', '.jpg', '.svg', '.ico', '.webp', '.woff2')):
             response.headers["Cache-Control"] = "public, max-age=2592000"  # 30 days
 

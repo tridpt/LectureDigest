@@ -37,8 +37,28 @@
     if ('serviceWorker' in navigator) {
         window.addEventListener('load', function() {
             navigator.serviceWorker.register('/sw.js')
-                .then(function(reg) { console.log('[PWA] SW registered:', reg.scope); })
+                .then(function(reg) {
+                    console.log('[PWA] SW registered:', reg.scope);
+                    reg.update();
+                    reg.addEventListener('updatefound', function() {
+                        var nw = reg.installing;
+                        if (!nw) return;
+                        nw.addEventListener('statechange', function() {
+                            if (nw.state === 'installed' && navigator.serviceWorker.controller) {
+                                if (nw.postMessage) nw.postMessage('SKIP_WAITING');
+                            }
+                        });
+                    });
+                })
                 .catch(function(err) { console.warn('[PWA] SW failed:', err); });
+
+            // When a new SW takes control, reload once for fresh code
+            var _swReloaded = false;
+            navigator.serviceWorker.addEventListener('controllerchange', function() {
+                if (_swReloaded) return;
+                _swReloaded = true;
+                window.location.reload();
+            });
         });
     }
     </script>

@@ -115,6 +115,13 @@ self.addEventListener('install', event => {
   self.skipWaiting();
 });
 
+// Allow the page to tell a waiting SW to activate immediately
+self.addEventListener('message', event => {
+  if (event.data === 'SKIP_WAITING') {
+    self.skipWaiting();
+  }
+});
+
 // Activate — clean old caches
 self.addEventListener('activate', event => {
   event.waitUntil(
