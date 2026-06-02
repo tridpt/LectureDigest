@@ -83,3 +83,6 @@ from .blocked_emails import (
     db_is_email_blocked, db_block_email, db_unblock_email, db_get_blocked_emails,
     db_get_block_info,
 )
+
+# ── Abuse / Risk Detection ──
+from .abuse import db_get_user_risk

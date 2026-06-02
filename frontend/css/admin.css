@@ -468,3 +468,55 @@
 .admin-block-confirm:hover {
     filter: brightness(1.1);
 }
+
+
+/* ════════════════════════════════════════ RISK BADGES ═════ */
+.admin-risk-high {
+    background: rgba(239, 68, 68, 0.22);
+    color: #fca5a5;
+    animation: adminRiskPulse 1.8s ease-in-out infinite;
+}
+.admin-risk-medium {
+    background: rgba(245, 158, 11, 0.2);
+    color: #fbbf24;
+}
+.admin-risk-low {
+    background: rgba(234, 179, 8, 0.15);
+    color: #fde68a;
+}
+@keyframes adminRiskPulse {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.45); }
+    50% { box-shadow: 0 0 0 4px rgba(239, 68, 68, 0); }
+}
+
+/* Risk detail box (under flagged user) */
+.admin-risk-detail {
+    margin-top: 8px;
+    padding: 8px 11px;
+    border-radius: 9px;
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+}
+.admin-risk-detail-high {
+    background: rgba(239, 68, 68, 0.08);
+    border: 1px solid rgba(239, 68, 68, 0.22);
+}
+.admin-risk-detail-medium {
+    background: rgba(245, 158, 11, 0.07);
+    border: 1px solid rgba(245, 158, 11, 0.22);
+}
+.admin-risk-detail-low {
+    background: rgba(234, 179, 8, 0.05);
+    border: 1px solid rgba(234, 179, 8, 0.18);
+}
+.admin-risk-detail-head {
+    font-size: 12px;
+    font-weight: 700;
+    color: #cbd5e1;
+    margin-bottom: 2px;
+}
+.admin-risk-detail-row {
+    font-size: 12px;
+    color: #cbd5e1;
+}

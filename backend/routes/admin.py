@@ -18,6 +18,7 @@ from pydantic import BaseModel
 from database import get_db, db_delete_user, USE_POSTGRES
 from database import (
     db_block_email, db_unblock_email, db_get_blocked_emails, db_get_user_by_id,
+    db_get_user_risk,
 )
 from routes.auth import get_current_user
 
@@ -190,6 +191,7 @@ async def admin_list_users(
                 "SELECT COUNT(*) AS c FROM history WHERE user_id = ?", (uid,)
             ).fetchone()
             block = blocked_map.get((email or "").lower())
+            risk = db_get_user_risk(uid, email or "")
             users.append({
                 "id": uid,
                 "email": email,
@@ -205,6 +207,8 @@ async def admin_list_users(
                 "block_created_at": block["created_at"] if block else None,
                 "block_expires_at": block["expires_at"] if block else None,
                 "block_permanent": block["permanent"] if block else False,
+                "risk_level": risk["level"],
+                "risk_flags": risk["flags"],
             })
 
         return {
@@ -244,6 +248,45 @@ async def admin_delete_user(user_id: int, admin: dict = Depends(require_admin)):
 
     logger.info("Admin %s deleted user %s (%s)", admin["email"], user_id, target_email)
     return {"ok": True}
+
+
+@router.get("/flagged-users")
+async def admin_flagged_users(admin: dict = Depends(require_admin), limit: int = 50):
+    """List users the system has flagged for unusual behavior (risk-scored)."""
+    conn = get_db()
+    try:
+        rows = conn.execute(
+            """SELECT id, email, display_name, avatar_color, avatar_url, google_id, created_at
+               FROM users ORDER BY created_at DESC LIMIT 500"""
+        ).fetchall()
+    finally:
+        conn.close()
+
+    admins = _admin_emails()
+    flagged = []
+    for r in rows:
+        email = r["email"]
+        if (email or "").lower() in admins:
+            continue
+        risk = db_get_user_risk(r["id"], email or "")
+        if risk["level"] == "none":
+            continue
+        flagged.append({
+            "id": r["id"],
+            "email": email,
+            "display_name": r["display_name"],
+            "avatar_color": r["avatar_color"],
+            "avatar_url": r["avatar_url"] if "avatar_url" in r.keys() else "",
+            "is_google": bool(r["google_id"]) if "google_id" in r.keys() else False,
+            "created_at": r["created_at"],
+            "risk_level": risk["level"],
+            "risk_flags": risk["flags"],
+        })
+
+    # Sort by risk score descending
+    order = {"high": 3, "medium": 2, "low": 1}
+    flagged.sort(key=lambda u: order.get(u["risk_level"], 0), reverse=True)
+    return {"flagged": flagged[:limit], "total": len(flagged)}
 
 
 # ═══════════════════════════════════════════════════════

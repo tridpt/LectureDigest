@@ -159,6 +159,12 @@ function _adminRenderUsers(el, d) {
             var blockLabel = u.block_permanent ? 'CHẶN ∞' : 'CHẶN ' + _adminBanShort(u.block_expires_at);
             badges += '<span class="admin-badge admin-badge-blocked" title="' + _adminEsc(blockTitle) + '">' + blockLabel + '</span>';
         }
+        // Risk flag (system-detected unusual behavior)
+        if (u.risk_level && u.risk_level !== 'none') {
+            var riskTitle = (u.risk_flags || []).map(function(f) { return '• ' + f.label; }).join('\n') || 'Hành vi bất thường';
+            var riskLabel = { high: '⚠️ RỦI RO CAO', medium: '⚠️ NGHI VẤN', low: '⚑ THEO DÕI' }[u.risk_level] || '⚑';
+            badges += '<span class="admin-badge admin-risk-' + u.risk_level + '" title="' + _adminEsc(riskTitle) + '">' + riskLabel + '</span>';
+        }
         badges += u.is_google
             ? '<span class="admin-badge admin-badge-google">Google</span>'
             : '<span class="admin-badge admin-badge-email">Email</span>';
@@ -181,7 +187,7 @@ function _adminRenderUsers(el, d) {
             + '<div class="admin-user-info">'
             + '<div class="admin-user-name">' + escHtml(u.display_name || 'Chưa đặt tên') + ' ' + badges + '</div>'
             + '<div class="admin-user-email">' + escHtml(u.email || '') + '</div>'
-            + (u.is_blocked ? _adminBlockDetail(u) : '')
+            + (u.is_blocked ? _adminBlockDetail(u) : (u.risk_level && u.risk_level !== 'none' ? _adminRiskDetail(u) : ''))
             + '</div>'
             + '<div class="admin-user-meta">'
             + '<span title="Số video phân tích">🎬 ' + (u.history_count || 0) + '</span>'
@@ -418,6 +424,20 @@ function _adminBlockDetail(u) {
         lines += '<div class="admin-block-detail-row">⏳ <strong>Hết hạn:</strong> ' + _adminFmtExpiry(u.block_expires_at) + ' (còn ' + _adminBanShort(u.block_expires_at) + ')</div>';
     }
     return '<div class="admin-block-detail">' + lines + '</div>';
+}
+
+// Risk detail box shown under a flagged (unusual-behavior) user
+function _adminRiskDetail(u) {
+    var flags = u.risk_flags || [];
+    if (!flags.length) return '';
+    var items = flags.map(function(f) {
+        var dot = f.severity === 'high' ? '🔴' : f.severity === 'medium' ? '🟠' : '🟡';
+        return '<div class="admin-risk-detail-row">' + dot + ' ' + escHtml(f.label) + '</div>';
+    }).join('');
+    return '<div class="admin-risk-detail admin-risk-detail-' + u.risk_level + '">'
+        + '<div class="admin-risk-detail-head">⚠️ Hệ thống phát hiện hành vi bất thường</div>'
+        + items
+        + '</div>';
 }
 
 // Short remaining-time label, e.g. "2d", "5h", "30m"
