@@ -108,7 +108,10 @@ function _notifRenderPanel() {
         var icon = _notifIcon(n.type);
         var readClass = n.is_read ? ' notif-read' : '';
 
-        return '<div class="notif-item' + readClass + '" onclick="notifClick(' + n.id + ',\'' + (n.link || '') + '\')">'
+        // id/link live in data attributes (escaped) and the click is wired via a
+        // listener below — never interpolate link into an inline handler, which
+        // mixes HTML + JS escaping and is XSS-prone if link ever becomes dynamic.
+        return '<div class="notif-item' + readClass + '" data-notif-id="' + n.id + '" data-notif-link="' + _notifEsc(n.link || '') + '">'
             + '<div class="notif-icon">' + icon + '</div>'
             + '<div class="notif-content">'
             + '<div class="notif-title">' + _notifEsc(n.title) + '</div>'
@@ -116,6 +119,12 @@ function _notifRenderPanel() {
             + '<div class="notif-time">' + timeStr + '</div>'
             + '</div></div>';
     }).join('');
+
+    body.querySelectorAll('.notif-item[data-notif-id]').forEach(function(item) {
+        item.addEventListener('click', function() {
+            notifClick(parseInt(item.getAttribute('data-notif-id'), 10), item.getAttribute('data-notif-link') || '');
+        });
+    });
 }
 
 function _notifIcon(type) {
@@ -229,9 +238,14 @@ async function notifClearAll() {
 
 function _notifEsc(str) {
     if (!str) return '';
-    var div = document.createElement('div');
-    div.textContent = str;
-    return div.innerHTML;
+    // Escape quotes too so the result is safe inside HTML attributes
+    // (e.g. data-notif-link="..."), not just in text nodes.
+    return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
 }
 
 // ── Init on page load (after auth loads) ──
