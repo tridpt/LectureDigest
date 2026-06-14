@@ -218,9 +218,14 @@ function setLang(btn) {
 // ──────────────────────────────────────
 function esc(str) {
     if (!str && str !== 0) return '';
-    const d = document.createElement('div');
-    d.appendChild(document.createTextNode(String(str)));
-    return d.innerHTML;
+    // Escape quotes too so the result is safe inside HTML attributes
+    // (e.g. aria-label="${esc(x)}"), not just in text nodes.
+    return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
 }
 
 function setText(id, value) {

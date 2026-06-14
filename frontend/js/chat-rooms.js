@@ -2150,9 +2150,14 @@ async function crDeleteRoom() {
 
 function _crEsc(str) {
     if (!str) return '';
-    var div = document.createElement('div');
-    div.textContent = str;
-    return div.innerHTML;
+    // Escape quotes too so the result is safe inside HTML attributes,
+    // not just in text nodes.
+    return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
 }
 
 function _crFormatMentions(escapedText) {
@@ -2261,11 +2266,18 @@ function _crRenderMentionDropdown(members, query, atPos) {
         input.parentElement.appendChild(_crMentionDropdown);
     }
 
+    // Store name in a data attribute (escaped for the attribute context) and
+    // wire the click via a listener — avoids interpolating arbitrary names into
+    // an inline JS handler, which mixes HTML + JS escaping and is XSS-prone.
     _crMentionDropdown.innerHTML = filtered.slice(0, 5).map(function(m) {
-        var safeName = _crEsc(m.display_name).replace(/'/g, "\\'");
-        return '<div class="cr-mention-item" onmousedown="crSelectMention(\'' + safeName + '\',' + atPos + ')">'
-            + _crEsc(m.display_name) + '</div>';
+        return '<div class="cr-mention-item" data-name="' + _crEsc(m.display_name)
+            + '" data-at="' + atPos + '">' + _crEsc(m.display_name) + '</div>';
     }).join('');
+    _crMentionDropdown.querySelectorAll('.cr-mention-item').forEach(function(item) {
+        item.addEventListener('mousedown', function() {
+            crSelectMention(item.getAttribute('data-name'), parseInt(item.getAttribute('data-at'), 10));
+        });
+    });
     _crMentionDropdown.style.display = '';
 }
 
