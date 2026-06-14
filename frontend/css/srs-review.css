@@ -350,3 +350,104 @@
     border-color: rgba(245, 158, 11, 0.4);
     color: #fbbf24;
 }
+
+/* ══════════════════════════════════════════════════════
+   Retention-over-time chart (30-day review history)
+   ══════════════════════════════════════════════════════ */
+.srs-chart-card {
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    border-radius: 14px;
+    padding: 16px 18px;
+    margin-bottom: 20px;
+}
+
+.srs-chart-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 14px;
+    flex-wrap: wrap;
+}
+
+.srs-chart-title {
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--text-primary, #f1f5f9);
+}
+
+.srs-chart-legend {
+    display: flex;
+    gap: 14px;
+    font-size: 11px;
+    color: var(--text-secondary, #94a3b8);
+}
+
+.srs-chart-legend span {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.srs-chart-legend i {
+    width: 10px;
+    height: 10px;
+    border-radius: 3px;
+    display: inline-block;
+}
+
+.srs-dot-good { background: #10b981; }
+.srs-dot-all  { background: rgba(139, 92, 246, 0.45); }
+
+.srs-chart-bars {
+    display: flex;
+    align-items: flex-end;
+    gap: 3px;
+    height: 90px;
+    padding-top: 4px;
+}
+
+.srs-chart-bar-wrap {
+    flex: 1;
+    height: 100%;
+    display: flex;
+    align-items: flex-end;
+    cursor: default;
+}
+
+.srs-chart-bar {
+    width: 100%;
+    min-height: 2px;
+    background: rgba(139, 92, 246, 0.45);
+    border-radius: 3px 3px 0 0;
+    position: relative;
+    display: flex;
+    align-items: flex-end;
+    transition: background 0.2s ease;
+}
+
+.srs-chart-bar-wrap:hover .srs-chart-bar {
+    background: rgba(139, 92, 246, 0.7);
+}
+
+.srs-chart-bar-good {
+    width: 100%;
+    background: #10b981;
+    border-radius: 3px 3px 0 0;
+}
+
+.srs-chart-foot {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin-top: 12px;
+    font-size: 12px;
+    color: var(--text-secondary, #94a3b8);
+    flex-wrap: wrap;
+}
+
+.srs-chart-foot strong {
+    color: #10b981;
+}

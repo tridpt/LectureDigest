@@ -99,7 +99,8 @@ var _EXTRA_SYNC_PREFIXES = [
     'lectureDigest_tags',
     'lectureDigest_progress_',
     'lectureDigest_playlist_',
-    'lectureDigest_weeklyGoals'
+    'lectureDigest_weeklyGoals',
+    'lectureDigest_srsHistory'
 ];
 
 function _isExtraSyncKey(key) {

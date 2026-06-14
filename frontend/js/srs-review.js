@@ -205,6 +205,9 @@ function _renderSrsPage() {
         + '<div class="srs-stat"><div class="srs-stat-num" style="color:#60a5fa">' + stats.retention + '%</div><div class="srs-stat-lbl">Retention</div></div>'
         + '</div>';
 
+    // Retention-over-time chart
+    html += _srsRenderRetentionChart();
+
     // Progress ring + info
     html += '<div class="srs-progress-wrap">'
         + '<div class="srs-ring-wrap">'
@@ -278,6 +281,8 @@ function _renderSrsEmpty(container, stats) {
         + '<div class="srs-stat"><div class="srs-stat-num" style="color:#8b5cf6">' + stats.masteredCards + '</div><div class="srs-stat-lbl">Đã thuộc</div></div>'
         + '<div class="srs-stat"><div class="srs-stat-num" style="color:#60a5fa">' + stats.retention + '%</div><div class="srs-stat-lbl">Retention</div></div>'
         + '</div>';
+
+    html += _srsRenderRetentionChart();
 
     html += '<div class="srs-complete">'
         + '<div class="srs-complete-icon">🎉</div>'
@@ -362,10 +367,99 @@ function srsRateCard(rating) {
     _srsSessionStats[rating]++;
     _srsSessionStats.total++;
 
+    // Log this review into the per-day history (for the retention chart)
+    _srsLogReview(rating);
+
     // Next card
     _srsIndex++;
     _srsFlipped = false;
     _renderSrsPage();
+}
+
+// ── Per-day review history (for the retention-over-time chart) ──
+var SRS_HISTORY_KEY = 'lectureDigest_srsHistory';
+
+function _srsLoadHistory() {
+    try { return JSON.parse(localStorage.getItem(SRS_HISTORY_KEY) || '{}'); }
+    catch (e) { return {}; }
+}
+
+// Record one rated card into today's bucket: { 'YYYY-MM-DD': {hard,ok,easy,total} }
+function _srsLogReview(rating) {
+    var today = new Date().toISOString().split('T')[0];
+    var hist = _srsLoadHistory();
+    var day = hist[today] || { hard: 0, ok: 0, easy: 0, total: 0 };
+    if (rating === 'hard' || rating === 'ok' || rating === 'easy') day[rating]++;
+    day.total++;
+    hist[today] = day;
+
+    // Prune to the last 180 days to keep storage bounded
+    var keys = Object.keys(hist).sort();
+    if (keys.length > 180) {
+        keys.slice(0, keys.length - 180).forEach(function (k) { delete hist[k]; });
+    }
+
+    safeLsSet(SRS_HISTORY_KEY, JSON.stringify(hist));
+
+    // Sync to backend KV store (same mechanism as other extra data)
+    if (typeof dbFetch === 'function') {
+        var extra = {};
+        extra[SRS_HISTORY_KEY] = JSON.stringify(hist);
+        dbFetch('/sync', {
+            method: 'POST',
+            body: JSON.stringify({ history: [], notes: {}, bookmarks: {}, gamification: {}, extra_data: extra })
+        });
+    }
+}
+
+// ── Retention-over-time chart (last 30 days, pure CSS bars) ──
+function _srsRenderRetentionChart() {
+    var hist = _srsLoadHistory();
+    var days = [];
+    var today = new Date();
+    for (var i = 29; i >= 0; i--) {
+        var d = new Date(today);
+        d.setDate(today.getDate() - i);
+        var key = d.toISOString().split('T')[0];
+        var rec = hist[key] || { hard: 0, ok: 0, easy: 0, total: 0 };
+        days.push({ key: key, date: d, rec: rec });
+    }
+
+    var totalReviewed = days.reduce(function (s, d) { return s + d.rec.total; }, 0);
+    if (totalReviewed === 0) return '';  // nothing to show yet
+
+    var maxTotal = days.reduce(function (m, d) { return Math.max(m, d.rec.total); }, 1);
+    var activeDays = days.filter(function (d) { return d.rec.total > 0; }).length;
+
+    // "Recall" = share of reviews rated ok/easy (i.e. not hard) — a rough proxy.
+    var goodSum = days.reduce(function (s, d) { return s + d.rec.ok + d.rec.easy; }, 0);
+    var recallPct = totalReviewed > 0 ? Math.round(goodSum / totalReviewed * 100) : 0;
+
+    var bars = days.map(function (d) {
+        var h = Math.round(d.rec.total / maxTotal * 100);
+        var good = d.rec.ok + d.rec.easy;
+        var goodH = d.rec.total > 0 ? Math.round(good / d.rec.total * h) : 0;
+        var label = d.date.getDate() + '/' + (d.date.getMonth() + 1);
+        var title = label + ': ' + d.rec.total + ' thẻ'
+            + (d.rec.total > 0 ? ' (😰' + d.rec.hard + ' 🙂' + d.rec.ok + ' 😊' + d.rec.easy + ')' : '');
+        return '<div class="srs-chart-bar-wrap" title="' + _escHtml(title) + '">'
+            + '<div class="srs-chart-bar" style="height:' + Math.max(h, 2) + '%">'
+            + (goodH > 0 ? '<div class="srs-chart-bar-good" style="height:' + goodH + '%"></div>' : '')
+            + '</div></div>';
+    }).join('');
+
+    return '<div class="srs-chart-card">'
+        + '<div class="srs-chart-head">'
+        + '<div class="srs-chart-title">📈 Tiến độ ôn tập (30 ngày)</div>'
+        + '<div class="srs-chart-legend">'
+        + '<span><i class="srs-dot-good"></i> Nhớ tốt</span>'
+        + '<span><i class="srs-dot-all"></i> Tổng ôn</span>'
+        + '</div></div>'
+        + '<div class="srs-chart-bars">' + bars + '</div>'
+        + '<div class="srs-chart-foot">'
+        + '<span>' + totalReviewed + ' thẻ trong ' + activeDays + ' ngày</span>'
+        + '<span>Tỉ lệ nhớ tốt: <strong>' + recallPct + '%</strong></span>'
+        + '</div></div>';
 }
 
 // ── Keyboard handler ──
