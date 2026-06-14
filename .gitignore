@@ -46,3 +46,7 @@ uploads/
 
 # Database backups
 backups/
+
+# Node / frontend tests
+node_modules/
+npm-debug.log*
