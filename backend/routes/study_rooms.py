@@ -3,8 +3,6 @@ Collaborative Study Rooms — create rooms, invite members, share progress,
 discuss videos with real-time comment threads.
 """
 
-import os
-import json
 import time
 import secrets
 import logging
@@ -566,14 +564,14 @@ async def change_member_role(room_id: str, target_user_id: int, req: ChangeRoleR
     if req.role == 'moderator':
         create_notification(
             target_user_id, "room_promoted",
-            f"🛡️ Bạn đã được thăng cấp Quản lý",
+            "🛡️ Bạn đã được thăng cấp Quản lý",
             f"Bạn được thăng cấp quản lý trong phòng \"{room_name}\"",
             "/rooms"
         )
     else:
         create_notification(
             target_user_id, "room_demoted",
-            f"👤 Quyền của bạn đã thay đổi",
+            "👤 Quyền của bạn đã thay đổi",
             f"Bạn đã trở thành thành viên thường trong phòng \"{room_name}\"",
             "/rooms"
         )

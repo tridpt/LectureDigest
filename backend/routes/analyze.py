@@ -5,7 +5,6 @@ Analyze routes — YouTube video analysis and file upload analysis.
 import os
 import re
 import json
-import time
 import asyncio
 import hashlib
 import secrets
@@ -14,7 +13,7 @@ import logging
 from fastapi import APIRouter, HTTPException, UploadFile, File, Form, Request, Depends
 from pydantic import BaseModel
 
-from gemini_client import get_genai_client, call_gemini, call_gemini_multi, async_call_gemini, async_call_gemini_multi
+from gemini_client import get_genai_client, async_call_gemini, async_call_gemini_multi
 import asyncio as _asyncio_top
 from youtube import extract_video_id, get_video_info, get_transcript_with_gemini_fallback, format_seconds
 from database import db_check_rate_limit, db_get_analysis_cache, db_set_analysis_cache

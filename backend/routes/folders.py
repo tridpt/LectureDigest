@@ -10,7 +10,7 @@ import logging
 from database import (
     db_get_folders, db_create_folder, db_update_folder, db_delete_folder,
     db_add_video_to_folder, db_remove_video_from_folder,
-    db_get_folder_videos, db_get_all_folder_videos,
+    db_get_all_folder_videos,
 )
 from routes.auth import get_current_user
 

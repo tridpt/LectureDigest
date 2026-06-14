@@ -4,3 +4,29 @@ python_files = "test_*.py"
 python_classes = "Test*"
 python_functions = "test_*"
 addopts = "-v --tb=short"
+
+[tool.ruff]
+target-version = "py313"
+line-length = 120
+
+[tool.ruff.lint]
+# Pyflakes (F) + a curated subset of pycodestyle (E) errors. We intentionally
+# keep this focused on real bugs rather than pure style, so CI stays useful
+# without drowning in noise on an existing codebase.
+select = ["F", "E4", "E7", "E9", "W6"]
+ignore = [
+    # The frontend/backend layering uses deliberate import ordering in main.py
+    # (middleware/route registration after app setup), so allow late imports.
+    "E402",
+    # Bare `except:` is used widely as a best-effort guard around optional/
+    # background work; flagging all of them is not actionable right now.
+    "E722",
+]
+
+[tool.ruff.lint.per-file-ignores]
+# db/__init__.py and database.py deliberately re-export symbols so that
+# `from database import X` keeps working — these "unused" imports are the API.
+"db/__init__.py" = ["F401"]
+"database.py" = ["F401", "F403"]
+# Tests use fixtures and star-ish patterns; unused imports there are harmless.
+"tests/*" = ["F401"]

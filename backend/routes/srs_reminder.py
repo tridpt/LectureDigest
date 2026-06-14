@@ -15,7 +15,6 @@ reminders are logged to the console instead.
 
 import os
 import json
-import time
 import asyncio
 import logging
 from datetime import datetime

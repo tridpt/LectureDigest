@@ -39,7 +39,7 @@ def db_create_backup():
         dst.close()
         src.close()
         logger.info("Backup created: %s (%.1f MB)", backup_name, db_size_mb)
-    except Exception as e:
+    except Exception:
         # Fallback to file copy if backup API fails
         try:
             shutil.copy2(DB_PATH, backup_path)

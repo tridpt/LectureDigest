@@ -11,7 +11,7 @@ import time
 from fastapi import APIRouter, HTTPException, Request, Depends
 from pydantic import BaseModel
 
-from gemini_client import call_gemini, async_call_gemini
+from gemini_client import async_call_gemini
 from database import db_check_rate_limit
 router = APIRouter(prefix="/api", tags=["study-plan"])
 

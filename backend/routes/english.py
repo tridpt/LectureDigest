@@ -11,7 +11,7 @@ import logging
 from fastapi import APIRouter, HTTPException, Request
 from pydantic import BaseModel
 
-from gemini_client import call_gemini, async_call_gemini
+from gemini_client import async_call_gemini
 from database import get_db, db_check_rate_limit
 from routes.auth import get_current_user
 
@@ -1000,7 +1000,7 @@ async def get_xp(request: Request):
         "total_xp": row["total_xp"],
         "progress_pct": progress_pct,
         "can_hint": can_hint,
-        "recent_xp": [{"xp": l["xp_gained"], "source": l["source"]} for l in logs],
+        "recent_xp": [{"xp": lg["xp_gained"], "source": lg["source"]} for lg in logs],
     }
 
 

@@ -1034,7 +1034,6 @@ async def send_message(room_id: str, body: SendMessageBody, request: Request):
     # Check if muted
     muted_until = _is_muted(room_id, user["id"])
     if muted_until:
-        import datetime
         remaining = int(muted_until - time.time())
         if remaining > 3600:
             time_str = f"{remaining // 3600} giờ {(remaining % 3600) // 60} phút"
@@ -1073,8 +1072,6 @@ async def send_message(room_id: str, body: SendMessageBody, request: Request):
     if mentions:
         # Find mentioned users by display_name
         sender_name = user.get("display_name", "Ai đó")
-        room = _get_room(room_id)
-        room_name = room["name"] if room else "phòng chat"
         members = conn.execute(
             "SELECT u.id as user_id, u.display_name FROM users u JOIN chat_room_members crm ON u.id = crm.user_id WHERE crm.room_id = ?",
             (room_id,)
@@ -1123,7 +1120,6 @@ async def delete_message(room_id: str, msg_id: str, request: Request):
     if not msg:
         raise HTTPException(status_code=404, detail="Message not found")
 
-    room = _get_room(room_id)
     is_author = str(msg["user_id"]) == str(user["id"])
     is_admin = _is_room_admin(room_id, user["id"])
 

@@ -52,7 +52,6 @@ class TestDueCardCounting:
         user, token, headers = registered_user
         # Seed SM-2 data via the sync KV store: one due (past) + one future card.
         from database import db_kv_set
-        today = datetime.now().strftime("%Y-%m-%d")
         cards = {
             "card_1": {"nextReview": "2000-01-01"},   # past → due
             "card_2": {"nextReview": "2999-12-31"},   # future → not due

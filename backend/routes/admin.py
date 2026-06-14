@@ -15,10 +15,9 @@ import logging
 from fastapi import APIRouter, HTTPException, Request, Depends
 from pydantic import BaseModel
 
-from database import get_db, db_delete_user, USE_POSTGRES
+from database import get_db, db_delete_user
 from database import (
-    db_block_email, db_unblock_email, db_get_blocked_emails, db_get_user_by_id,
-    db_get_user_risk,
+    db_block_email, db_unblock_email, db_get_blocked_emails, db_get_user_risk,
 )
 from routes.auth import get_current_user
 

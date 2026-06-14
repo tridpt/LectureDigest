@@ -10,7 +10,7 @@ import logging
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 
-from gemini_client import call_gemini, async_call_gemini
+from gemini_client import async_call_gemini
 from youtube import extract_playlist_id, fetch_playlist_videos
 
 router = APIRouter(prefix="/api", tags=["content"])

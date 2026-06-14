@@ -12,7 +12,7 @@ import asyncio
 from fastapi import APIRouter, HTTPException, Request, Depends
 from pydantic import BaseModel
 
-from gemini_client import call_gemini, async_call_gemini, get_genai_client
+from gemini_client import call_gemini, async_call_gemini
 from youtube import format_seconds
 from database import db_check_rate_limit
 
@@ -238,7 +238,6 @@ async def translate_transcript(req: TranslateRequest):
     if not req.transcript:
         raise HTTPException(status_code=400, detail="Transcript is empty")
 
-    client    = get_genai_client()
     SEPARATOR = "|||"
     CHUNK_SIZE = 40
 

@@ -290,8 +290,8 @@ def get_transcript(video_id: str, language: str = "en") -> list:
     # Try manually created then auto-generated for each language
     for lang in lang_priority:
         for finder in [
-            lambda l=lang: transcript_list.find_manually_created_transcript([l]),
-            lambda l=lang: transcript_list.find_generated_transcript([l]),
+            lambda lg=lang: transcript_list.find_manually_created_transcript([lg]),
+            lambda lg=lang: transcript_list.find_generated_transcript([lg]),
         ]:
             try:
                 return _snippets_to_list(finder().fetch())
@@ -327,7 +327,7 @@ def get_transcript_with_gemini_fallback(video_id: str, language: str = "en") -> 
     # All transcript methods failed — try Gemini direct video analysis
     logger.info("All transcript methods failed for %s, trying Gemini direct analysis...", video_id)
     try:
-        from gemini_client import call_gemini_multi, get_genai_client
+        from gemini_client import call_gemini_multi
         from google.genai import types
         import os
         if not os.getenv("GEMINI_API_KEY"):

@@ -120,10 +120,14 @@ def db_full_sync(user_id, local_history, local_notes, local_bookmarks, local_gam
             entry = {"entry_id": r["entry_id"], "video_id": r["video_id"], "url": r["url"],
                      "title": r["title"], "author": r["author"], "thumbnail": r["thumbnail"],
                      "savedAt": r["saved_at"], "lang": r["lang"]}
-            try: entry["data"] = json.loads(r["data_json"]) if r["data_json"] else {}
-            except Exception: entry["data"] = {}
-            try: entry["transcript"] = json.loads(r["transcript_json"]) if r["transcript_json"] else None
-            except Exception: entry["transcript"] = None
+            try:
+                entry["data"] = json.loads(r["data_json"]) if r["data_json"] else {}
+            except Exception:
+                entry["data"] = {}
+            try:
+                entry["transcript"] = json.loads(r["transcript_json"]) if r["transcript_json"] else None
+            except Exception:
+                entry["transcript"] = None
             result_history.append(entry)
 
         # Gamification
@@ -148,7 +152,8 @@ def db_full_sync(user_id, local_history, local_notes, local_bookmarks, local_gam
         result_bookmarks = {}
         for r in brows:
             vid = r["video_id"]
-            if vid not in result_bookmarks: result_bookmarks[vid] = []
+            if vid not in result_bookmarks:
+                result_bookmarks[vid] = []
             bm = {"time": r["time_secs"], "label": r["label"], "createdAt": r["created_at"]}
             try:
                 bm["summary"] = r["summary"] or ""

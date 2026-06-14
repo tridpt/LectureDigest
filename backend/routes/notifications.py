@@ -2,12 +2,10 @@
 Notifications system — store and retrieve user notifications.
 """
 
-import json
 import time
 import logging
 
 from fastapi import APIRouter, HTTPException, Request
-from pydantic import BaseModel
 
 from database import get_db
 from routes.auth import get_current_user

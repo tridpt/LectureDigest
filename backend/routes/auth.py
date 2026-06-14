@@ -22,7 +22,7 @@ from database import (
     db_delete_reset_tokens_for_email, db_cleanup_expired_tokens,
     db_check_rate_limit, db_reset_rate_limit,
     db_delete_user, db_export_user_data, db_get_leaderboard,
-    db_is_email_blocked, db_get_block_info,
+    db_get_block_info,
 )
 
 router = APIRouter(prefix="/api/auth", tags=["auth"])
@@ -384,7 +384,6 @@ async def update_profile(req: UpdateProfileRequest, request: Request):
 @router.post("/avatar-upload")
 async def upload_avatar(request: Request):
     """Upload avatar image. Accepts multipart form with 'file' field."""
-    from fastapi import UploadFile, File
     import base64
 
     user = get_current_user(request)
