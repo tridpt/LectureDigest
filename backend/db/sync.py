@@ -167,7 +167,7 @@ def db_full_sync(user_id, local_history, local_notes, local_bookmarks, local_gam
             erows = conn.execute("SELECT data_key, data_value FROM user_kv_store WHERE user_id=?", (user_id,)).fetchall()
             result_extra = {r["data_key"]: r["data_value"] for r in erows}
 
-        logger.info("Sync OK: %d hist, %d notes, %d bm, %d extra for user %d", len(result_history), len(result_notes), len(result_bookmarks), len(result_extra), user_id)
+        logger.info("Sync OK: %d hist, %d notes, %d bm, %d extra for user %s", len(result_history), len(result_notes), len(result_bookmarks), len(result_extra), user_id)
         return {
             "ok": True,
             "history": result_history,

@@ -250,3 +250,34 @@ class TestSharedNotes:
             "bookmarks": [],
         })
         assert resp.status_code == 400
+
+
+class TestAnonymousSyncRegression:
+    """Regression: db_full_sync used `%d` for user_id in a logger.info call.
+    For an anonymous (not-logged-in) sync, user_id is None, so formatting the
+    log message raised TypeError — but only when INFO logging is enabled, which
+    is why the happy-path test never caught it. The endpoint then returned
+    ok=False even though the data was written and committed.
+
+    This test forces INFO logging so the format string is actually evaluated.
+    """
+
+    def test_anonymous_full_sync_succeeds_with_info_logging(self, client, caplog):
+        import logging
+        payload = {
+            "history": [
+                {"entry_id": "anon_sync_1", "video_id": "av1", "title": "Anon Video"},
+            ],
+            "notes": {"av1": "anon notes"},
+            "bookmarks": {"av1": [{"time": 12, "label": "anon bm"}]},
+            "gamification": {"currentStreak": 1},
+            "extra_data": {},
+        }
+        # No Authorization header → anonymous (user_id is None).
+        with caplog.at_level(logging.INFO, logger="database"):
+            resp = client.post("/api/db/sync", json=payload)
+        assert resp.status_code == 200
+        data = resp.json()
+        assert data["ok"] is True, f"anonymous sync should succeed, got: {data}"
+        assert len(data["history"]) >= 1
+        assert "av1" in data["notes"]
