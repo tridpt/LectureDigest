@@ -273,6 +273,28 @@ Tests run against an isolated temporary SQLite database (see
 `backend/tests/conftest.py`) — they never touch your real data and make no
 network or Gemini calls.
 
+### Frontend tests
+
+```bash
+npm install               # installs vitest + jsdom (dev only)
+npm test                  # run Vitest once
+npm run test:watch        # watch mode
+```
+
+Frontend tests focus on the XSS-escaping helpers and the Markdown study-guide
+builder. They extract individual functions from the real source files (see
+`frontend/tests/extract.js`) so a change that makes an escaper unsafe fails the
+suite. `.github/workflows/frontend-tests.yml` runs them on every push/PR
+touching `frontend/`.
+
+Frontend has its own unit tests (Vitest) covering the XSS escapers and the
+Markdown-export builder:
+
+```bash
+npm install
+npm test                  # Vitest (frontend)
+```
+
 ### Useful env vars for local/dev
 
 | Var | Purpose |
@@ -285,6 +307,11 @@ network or Gemini calls.
 
 `.github/workflows/backend-tests.yml` runs `ruff` + the full `pytest` suite on
 every push to `main` and on pull requests touching `backend/`.
+
+### Architecture
+
+See [ARCHITECTURE.md](ARCHITECTURE.md) for a technical overview — request flow,
+backend/frontend layering, the data model, API surface, caching, and sync.
 
 ### Security
 
