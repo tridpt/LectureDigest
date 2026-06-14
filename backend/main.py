@@ -250,6 +250,33 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
 app.add_middleware(RateLimitMiddleware)
 
 
+# Content-Security-Policy — built once at import. Whitelists only the external
+# origins the app actually uses (YouTube player, Google Sign-In, D3 CDN, Google
+# Fonts, image/avatar hosts, and the transcript Cloudflare Worker).
+_CSP_POLICY = "; ".join([
+    "default-src 'self'",
+    # 'unsafe-inline' required for inline handlers/scripts (see note above).
+    # YouTube + GSI host the player and sign-in libraries; jsdelivr serves D3.
+    "script-src 'self' 'unsafe-inline' https://www.youtube.com https://s.ytimg.com "
+    "https://accounts.google.com https://cdn.jsdelivr.net",
+    # Inline styles + Google Fonts stylesheet.
+    "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
+    "font-src 'self' https://fonts.gstatic.com data:",
+    # Thumbnails, Google avatars, base64 data URLs (uploaded avatars), blobs.
+    "img-src 'self' data: blob: https://img.youtube.com https://i.ytimg.com "
+    "https://*.ggpht.com https://*.googleusercontent.com",
+    # XHR/fetch targets: same-origin API + the transcript worker.
+    "connect-src 'self' https://*.workers.dev https://accounts.google.com",
+    # Embedded players + Google Sign-In iframe.
+    "frame-src https://www.youtube.com https://www.youtube-nocookie.com https://accounts.google.com",
+    "media-src 'self' blob:",
+    "object-src 'none'",
+    "base-uri 'self'",
+    "form-action 'self'",
+    "frame-ancestors 'self'",
+])
+
+
 # ── Security Headers Middleware ──────────────────────────
 class SecurityHeadersMiddleware(BaseHTTPMiddleware):
     """
@@ -276,6 +303,15 @@ class SecurityHeadersMiddleware(BaseHTTPMiddleware):
 
         # Legacy XSS protection for older browsers
         response.headers["X-XSS-Protection"] = "1; mode=block"
+
+        # Content-Security-Policy — defense-in-depth against XSS and data
+        # exfiltration. NOTE: 'unsafe-inline' is required in script-src because
+        # the frontend relies heavily on inline onclick handlers and inline
+        # <script> blocks; removing it would need a full frontend refactor.
+        # Even with that caveat, CSP still blocks loading scripts from
+        # non-whitelisted origins, restricts where data can be sent
+        # (connect-src), forbids plugins (object-src), and hardens framing.
+        response.headers["Content-Security-Policy"] = _CSP_POLICY
 
         # Prevent caching of API responses (HTML/static assets are fine)
         path = request.url.path

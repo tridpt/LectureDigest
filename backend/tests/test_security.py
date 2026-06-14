@@ -131,3 +131,23 @@ class TestBlockedEmailEnforcement:
             "email": target, "password": pw, "display_name": "Again"
         })
         assert reg.status_code == 403
+
+
+class TestSecurityHeaders:
+    """Regression: security headers (incl. CSP) must be present on responses."""
+
+    def test_csp_header_present(self, client):
+        resp = client.get("/health")
+        csp = resp.headers.get("Content-Security-Policy", "")
+        assert csp, "Content-Security-Policy header missing"
+        # Core hardening directives must be present
+        assert "default-src 'self'" in csp
+        assert "object-src 'none'" in csp
+        assert "frame-ancestors 'self'" in csp
+        assert "base-uri 'self'" in csp
+
+    def test_other_security_headers_present(self, client):
+        resp = client.get("/health")
+        assert resp.headers.get("X-Content-Type-Options") == "nosniff"
+        assert resp.headers.get("X-Frame-Options") == "SAMEORIGIN"
+        assert "Referrer-Policy" in resp.headers
