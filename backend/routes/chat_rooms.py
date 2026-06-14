@@ -4,6 +4,7 @@ Users can create/join chat rooms and message each other.
 """
 
 import os
+import re
 import time
 import logging
 import secrets
@@ -1018,8 +1019,14 @@ async def send_message(room_id: str, body: SendMessageBody, request: Request):
     if not user:
         raise HTTPException(status_code=401, detail="Not authenticated")
 
-    if not body.content.strip() and not body.image_url.strip():
+    image_url = body.image_url.strip()
+    if not body.content.strip() and not image_url:
         raise HTTPException(status_code=400, detail="Message must have content or image")
+
+    # image_url must be a server-generated chat upload path, never arbitrary
+    # client input — otherwise a crafted value becomes stored XSS on render.
+    if image_url and not re.fullmatch(r"/uploads/chat/[A-Za-z0-9_]+\.[A-Za-z0-9]+", image_url):
+        raise HTTPException(status_code=400, detail="image_url không hợp lệ")
 
     if not _is_room_member(room_id, user["id"]):
         raise HTTPException(status_code=403, detail="Not a member of this room")
@@ -1053,7 +1060,7 @@ async def send_message(room_id: str, body: SendMessageBody, request: Request):
 
     conn.execute(
         "INSERT INTO chat_messages (id, room_id, user_id, content, image_url, created_at) VALUES (?, ?, ?, ?, ?, ?)",
-        (msg_id, room_id, user["id"], body.content.strip(), body.image_url.strip(), now)
+        (msg_id, room_id, user["id"], body.content.strip(), image_url, now)
     )
     conn.commit()
 
@@ -1062,7 +1069,6 @@ async def send_message(room_id: str, body: SendMessageBody, request: Request):
     room_typing.pop(str(user["id"]), None)
 
     # Detect @mentions and notify
-    import re
     mentions = re.findall(r'@(\S+)', body.content)
     if mentions:
         # Find mentioned users by display_name

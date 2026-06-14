@@ -513,7 +513,7 @@ function _crRenderMessages() {
             html += '<div class="cr-msg-name" onclick="crShowUserProfile(' + msg.user_id + ')" style="cursor:pointer">' + _crEsc(msg.username) + '</div>';
         }
         if (msg.image_url) {
-            html += '<div class="cr-msg-image"><img src="' + _crEsc(msg.image_url) + '" alt="Ảnh" onclick="crViewImage(\'' + _crEsc(msg.image_url) + '\')"></div>';
+            html += '<div class="cr-msg-image"><img src="' + _crEsc(msg.image_url) + '" alt="Ảnh" onclick="crViewImage(this.src)"></div>';
         }
         if (msg.content) {
             html += '<div class="cr-msg-content">' + _crFormatMentions(_crEsc(msg.content)) + '</div>';
@@ -2336,7 +2336,19 @@ function crViewImage(url) {
     var overlay = document.createElement('div');
     overlay.className = 'cr-img-viewer';
     overlay.onclick = function() { overlay.remove(); };
-    overlay.innerHTML = '<img src="' + url + '" alt="Ảnh"><button class="cr-img-viewer-close" onclick="this.parentElement.remove()">✕</button>';
+
+    // Build nodes directly and set src via property (not innerHTML) so the URL
+    // is never parsed as HTML — prevents XSS from a crafted image_url.
+    var img = document.createElement('img');
+    img.alt = 'Ảnh';
+    img.src = url;
+    var closeBtn = document.createElement('button');
+    closeBtn.className = 'cr-img-viewer-close';
+    closeBtn.textContent = '✕';
+    closeBtn.onclick = function() { overlay.remove(); };
+    overlay.appendChild(img);
+    overlay.appendChild(closeBtn);
+
     document.body.appendChild(overlay);
 }
 
