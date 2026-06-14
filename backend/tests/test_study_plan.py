@@ -105,3 +105,33 @@ class TestStudyPlan:
             "videos": [{"video_id": "v1", "title": "Test"}],
         })
         assert resp.status_code == 500
+
+
+class TestStudyPlanMalformedAI:
+    """The endpoint must fail gracefully (500) when Gemini returns non-JSON,
+    rather than leaking a raw traceback or 200-with-garbage."""
+
+    @patch("routes.study_plan.async_call_gemini")
+    def test_malformed_ai_response_returns_500(self, mock_gemini, client):
+        mock_gemini.return_value = "Sorry, I can't do that right now."  # not JSON
+        resp = client.post("/api/study-plan", json={
+            "videos": [{"video_id": "v1", "title": "Intro"}],
+            "output_language": "English",
+        })
+        assert resp.status_code == 500
+
+    @patch("routes.study_plan.async_call_gemini")
+    def test_ai_response_with_code_fences_is_parsed(self, mock_gemini, client):
+        # Gemini often wraps JSON in ```json fences — these must be stripped.
+        mock_gemini.return_value = (
+            "```json\n"
+            '{"plan_title": "Fenced", "overview": "ok", "priority_videos": [], '
+            '"weekly_schedule": [], "recommendations": [], "milestones": []}'
+            "\n```"
+        )
+        resp = client.post("/api/study-plan", json={
+            "videos": [{"video_id": "v1", "title": "Intro"}],
+            "output_language": "English",
+        })
+        assert resp.status_code == 200
+        assert resp.json()["plan_title"] == "Fenced"

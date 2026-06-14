@@ -181,3 +181,34 @@ class TestQuizAnalysis:
             "user_answers": [],
         })
         assert resp.status_code == 400
+
+
+class TestMalformedAIResponses:
+    """Endpoints that parse Gemini JSON must fail gracefully on bad output."""
+
+    @patch("routes.ai_tools.async_call_gemini")
+    def test_quiz_malformed_json_returns_500(self, mock_gemini, client):
+        mock_gemini.return_value = "not valid json at all"
+        resp = client.post("/api/quiz", json={
+            "transcript": [{"text": "content", "start": 0}],
+            "output_language": "English",
+            "title": "T",
+        })
+        assert resp.status_code == 500
+
+    @patch("routes.ai_tools.async_call_gemini")
+    def test_quiz_response_with_code_fences_is_parsed(self, mock_gemini, client):
+        mock_gemini.return_value = (
+            "```json\n"
+            '[{"id":1,"question":"Q?","options":["a","b","c","d"],'
+            '"correct_index":0,"explanation":"e","timestamp":0,'
+            '"timestamp_str":"00:00","difficulty":"easy"}]'
+            "\n```"
+        )
+        resp = client.post("/api/quiz", json={
+            "transcript": [{"text": "content", "start": 0}],
+            "output_language": "English",
+            "title": "T",
+        })
+        assert resp.status_code == 200
+        assert len(resp.json()["quiz"]) >= 1
