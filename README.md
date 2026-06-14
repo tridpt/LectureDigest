@@ -2,6 +2,10 @@
 
 **Transform any YouTube lecture (or uploaded audio/video) into a complete AI-powered study companion — summaries, quizzes, flashcards, mind maps, and more.**
 
+[![Backend Tests](https://github.com/tridpt/LectureDigest/actions/workflows/backend-tests.yml/badge.svg)](https://github.com/tridpt/LectureDigest/actions/workflows/backend-tests.yml)
+[![Frontend Tests](https://github.com/tridpt/LectureDigest/actions/workflows/frontend-tests.yml/badge.svg)](https://github.com/tridpt/LectureDigest/actions/workflows/frontend-tests.yml)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+
 [![Deploy to Render](https://render.com/images/deploy-to-render-button.svg)](https://render.com/deploy)
 
 ---
