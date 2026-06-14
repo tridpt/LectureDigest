@@ -22,7 +22,7 @@ from datetime import datetime
 
 from fastapi import APIRouter, HTTPException, Request
 
-from database import get_db, db_kv_get, db_kv_set
+from database import get_db, db_kv_get, db_kv_set, db_check_rate_limit
 from db.kv_store import db_kv_get_all
 from routes.auth import get_current_user
 
@@ -212,7 +212,17 @@ async def send_test_reminder(request: Request):
     if not user:
         raise HTTPException(status_code=401, detail="Vui lòng đăng nhập")
 
-    full = None
+    # Rate limit: this endpoint sends a real email, so cap it per user to
+    # prevent it being abused as a spam/relay vector (3 per hour).
+    allowed, retry_after = db_check_rate_limit(
+        f"srs_test:{user['id']}", max_attempts=3, window_secs=3600, block_secs=3600
+    )
+    if not allowed:
+        raise HTTPException(
+            status_code=429,
+            detail=f"Bạn đã gửi quá nhiều email thử. Vui lòng thử lại sau {retry_after // 60} phút.",
+        )
+
     conn = get_db()
     urow = conn.execute("SELECT email, display_name FROM users WHERE id = ?", (user["id"],)).fetchone()
     conn.close()

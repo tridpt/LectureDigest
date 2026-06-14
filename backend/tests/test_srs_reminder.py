@@ -67,3 +67,16 @@ class TestDueCardCounting:
     def test_no_cards_means_zero_due(self, client, auth_headers):
         resp = client.get("/api/srs-reminder/preference", headers=auth_headers)
         assert resp.json()["due_count"] == 0
+
+
+class TestTestEndpointRateLimit:
+    """The /test endpoint sends a real email, so it is rate-limited per user."""
+
+    def test_test_endpoint_rate_limited(self, client, auth_headers):
+        # Email is unconfigured in tests, so sends fall back to logging (200 OK).
+        # Allowed budget is 3/hour; the 4th call must be rejected with 429.
+        statuses = []
+        for _ in range(5):
+            statuses.append(client.post("/api/srs-reminder/test", headers=auth_headers).status_code)
+        assert statuses[:3] == [200, 200, 200], statuses
+        assert 429 in statuses[3:], statuses
