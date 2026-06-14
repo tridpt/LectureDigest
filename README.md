@@ -257,6 +257,43 @@ LectureDigest/
 
 ---
 
+## 🧪 Development
+
+### Running tests
+
+```bash
+cd backend
+pip install -r requirements.txt
+pip install ruff          # linter (not a runtime dep)
+pytest                    # full suite (230+ tests)
+ruff check .              # lint
+```
+
+Tests run against an isolated temporary SQLite database (see
+`backend/tests/conftest.py`) — they never touch your real data and make no
+network or Gemini calls.
+
+### Useful env vars for local/dev
+
+| Var | Purpose |
+|---|---|
+| `BCRYPT_ROUNDS` | Password-hash cost factor. Defaults to `12` (production). Tests set it to `4` for speed; you can lower it locally too. Never set it low in production. |
+| `JWT_SECRET` | Signing secret for auth tokens. Required in production. |
+| `TRUST_PROXY` | Set to `true` **only** behind a trusted reverse proxy so rate limiting reads `X-Forwarded-For`. |
+
+### Continuous Integration
+
+`.github/workflows/backend-tests.yml` runs `ruff` + the full `pytest` suite on
+every push to `main` and on pull requests touching `backend/`.
+
+### Security
+
+See [SECURITY.md](SECURITY.md) for hardening decisions (XSS escaping rules, CSP,
+input validation, rate limiting) and how to report a vulnerability. Read it
+before changing auth, input handling, or any code that renders user/AI content.
+
+---
+
 ## 📝 License
 
 MIT
