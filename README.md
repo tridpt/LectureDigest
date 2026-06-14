@@ -10,6 +10,27 @@
 
 ---
 
+## 📸 Screenshots
+
+<!--
+  Drop the image files into docs/screenshots/ using these exact names and they
+  will render here automatically. See docs/screenshots/README.md for guidance.
+-->
+
+| Analyze a lecture | Interactive quiz |
+|---|---|
+| ![Video analysis — summary, chapters, takeaways](docs/screenshots/analysis.png) | ![Interactive quiz](docs/screenshots/quiz.png) |
+
+| Mind map & knowledge graph | Learning dashboard |
+|---|---|
+| ![Mind map](docs/screenshots/mindmap.png) | ![Dashboard — streak, stats, quiz history](docs/screenshots/dashboard.png) |
+
+| Flashcards & spaced repetition | Landing page |
+|---|---|
+| ![Flashcards / SRS review](docs/screenshots/flashcards.png) | ![Hero / landing page](docs/screenshots/hero.png) |
+
+---
+
 ## ✨ Features
 
 ### 📚 Core Analysis
