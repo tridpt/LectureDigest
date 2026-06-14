@@ -1039,9 +1039,14 @@ function _engGetPickedWords(wrapperId) {
 
 function _engEsc(str) {
     if (!str) return '';
-    var div = document.createElement('div');
-    div.textContent = str;
-    return div.innerHTML;
+    // Escape quotes too so the result is safe inside HTML attributes
+    // (e.g. value="..." / data-word="..."), not just in text nodes.
+    return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
 }
 
 // Report mastery (correct/wrong) for a word

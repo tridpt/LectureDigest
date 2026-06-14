@@ -645,12 +645,12 @@ function _srRenderMembers() {
                 } else if (m.role === 'moderator') {
                     adminHtml += '<button class="sr-member-action-btn sr-demote-btn" onclick="srChangeRole(' + m.user_id + ',\'member\')" title="Hạ thành viên">👤</button>';
                 }
-                adminHtml += '<button class="sr-member-action-btn sr-kick-btn" onclick="srKickMember(' + m.user_id + ',\'' + _srEsc(m.display_name) + '\')" title="Kick">❌</button>';
+                adminHtml += '<button class="sr-member-action-btn sr-kick-btn" data-kick-id="' + m.user_id + '" data-kick-name="' + _srEsc(m.display_name) + '" title="Kick">❌</button>';
                 adminHtml += '</div>';
             } else if (myRole === 'moderator' && m.role === 'member') {
                 // Moderator can only kick regular members
                 adminHtml = '<div class="sr-member-actions">';
-                adminHtml += '<button class="sr-member-action-btn sr-kick-btn" onclick="srKickMember(' + m.user_id + ',\'' + _srEsc(m.display_name) + '\')" title="Kick">❌</button>';
+                adminHtml += '<button class="sr-member-action-btn sr-kick-btn" data-kick-id="' + m.user_id + '" data-kick-name="' + _srEsc(m.display_name) + '" title="Kick">❌</button>';
                 adminHtml += '</div>';
             }
         }
@@ -664,6 +664,15 @@ function _srRenderMembers() {
             + adminHtml
             + '</div>';
     }).join('');
+
+    // Wire kick buttons via listeners (name comes from a data attribute) instead
+    // of interpolating user-controlled display names into inline onclick — that
+    // mixes HTML + JS escaping and is XSS-prone.
+    el.querySelectorAll('.sr-kick-btn[data-kick-id]').forEach(function(btn) {
+        btn.addEventListener('click', function() {
+            srKickMember(parseInt(btn.getAttribute('data-kick-id'), 10), btn.getAttribute('data-kick-name'));
+        });
+    });
 }
 
 async function srKickMember(userId, name) {
@@ -891,7 +900,12 @@ async function srSyncMyProgress() {
 
 function _srEsc(str) {
     if (!str) return '';
-    var div = document.createElement('div');
-    div.textContent = str;
-    return div.innerHTML;
+    // Escape quotes too so the result is safe inside HTML attributes
+    // (e.g. data-name="..."), not just in text nodes.
+    return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
 }

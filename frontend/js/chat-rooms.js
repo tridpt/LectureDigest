@@ -841,11 +841,16 @@ function _crConfirmModal(title, message, options) {
                 + '<button class="cr-btn cr-btn-primary" style="padding:8px 16px;font-size:13px" data-val="ok">Xác nhận</button>';
         }
 
+        // Escape title/message — callers may pass user-controlled text (e.g. a
+        // member's display name), which must never be parsed as HTML here.
+        var _esc = (typeof escHtml === 'function')
+            ? escHtml
+            : function (s) { return String(s == null ? '' : s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); };
         var html = '<div class="cr-modal-overlay" id="' + id + '" style="z-index:99999">'
             + '<div class="cr-modal" style="max-width:380px;overflow:visible">'
             + '<div style="padding:24px;text-align:center">'
-            + '<div style="font-size:28px;margin-bottom:12px">' + (title || '⚠️') + '</div>'
-            + '<div style="font-size:14px;color:var(--text-primary,#f1f5f9);font-weight:600;margin-bottom:8px">' + (message || '') + '</div>'
+            + '<div style="font-size:28px;margin-bottom:12px">' + _esc(title || '⚠️') + '</div>'
+            + '<div style="font-size:14px;color:var(--text-primary,#f1f5f9);font-weight:600;margin-bottom:8px">' + _esc(message || '') + '</div>'
             + '<div style="display:flex;gap:8px;justify-content:center;margin-top:20px;flex-wrap:wrap">' + btnsHtml + '</div>'
             + '</div></div></div>';
 
