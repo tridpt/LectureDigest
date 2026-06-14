@@ -38,6 +38,9 @@ window.generateExercises = _lazyStub('exercises', 'generateExercises');
 // ── PDF Export ──
 window.exportPDF = _lazyStub('pdfExport', 'exportPDF');
 
+// ── Markdown Export ──
+window.exportMarkdown = _lazyStub('pdfExport', 'exportMarkdown');
+
 // ── Study Plan ──
 window.openStudyPlan = _lazyStub('studyPlan', 'openStudyPlan');
 
