@@ -230,7 +230,7 @@ function _renderSrsPage() {
 
         // Video label
         html += '<div class="srs-card-area">';
-        html += '<div class="srs-video-label">📺 ' + (card.videoTitle || '').substring(0, 60) + '</div>';
+        html += '<div class="srs-video-label">📺 ' + _escHtml((card.videoTitle || '').substring(0, 60)) + '</div>';
         html += '<div class="srs-counter-badge">Thẻ ' + (_srsIndex + 1) + ' / ' + _srsCards.length + '</div>';
 
         // The card

@@ -289,10 +289,10 @@ function renderDbVideos(history) {
         return '<div class="db-video-item" onclick="loadVideoFromDashboard(\'' + vid + '\')" role="button" tabindex="0">' +
             '<img class="db-vid-thumb" src="' + thumb + '" onerror="this.style.display=\'none\'" alt="" loading="lazy">' +
             '<div class="db-vid-meta">' +
-            '<div class="db-vid-title">' + (h.title || 'Video chưa đặt tên') + '</div>' +
+            '<div class="db-vid-title">' + escHtml(h.title || 'Video chưa đặt tên') + '</div>' +
             '<div class="db-vid-info">' +
             (dateStr ? '<span>📅 ' + dateStr + '</span>' : '') +
-            (h.language ? '<span>🌐 ' + h.language + '</span>' : '') +
+            (h.language ? '<span>🌐 ' + escHtml(h.language) + '</span>' : '') +
             (avgScore != null ? '<span class="db-quiz-tag">🧠 ' + avgScore + '%</span>' : '') +
             '</div></div>' +
             '<div class="db-vid-arrow">›</div>' +

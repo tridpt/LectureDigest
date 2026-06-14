@@ -140,7 +140,7 @@ function renderKnowledgeGraph() {
         history.forEach(function(entry, vi) {
             var t = (entry.title || (entry.data && entry.data.title) || 'Video ' + (vi+1));
             if (t.length > 25) t = t.substring(0, 25) + '...';
-            legendHtml += '<span class="kg-legend-item"><span class="kg-legend-dot" style="background:' + KG_COLORS[vi % KG_COLORS.length] + '"></span>' + t + '</span>';
+            legendHtml += '<span class="kg-legend-item"><span class="kg-legend-dot" style="background:' + KG_COLORS[vi % KG_COLORS.length] + '"></span>' + esc(t) + '</span>';
         });
         legendHtml += '<span class="kg-legend-item"><span class="kg-legend-dot" style="background:#fbbf24"></span>Shared concept</span>';
         legendHtml += '<span class="kg-legend-hint">🖱 Scroll zoom · Keo di chuyen · Click xem chi tiet</span>';
@@ -270,7 +270,7 @@ function showKgDetail(d, graphData) {
 
     if (d.type === 'video') {
         html += '<div class="kg-detail-type kg-detail-type-video">Video</div>';
-        html += '<div class="kg-detail-name">' + d.label + '</div>';
+        html += '<div class="kg-detail-name">' + esc(d.label) + '</div>';
         // Find connected concepts
         var concepts = graphData.nodes.filter(function(n) {
             if (n.type !== 'concept') return false;
@@ -286,13 +286,13 @@ function showKgDetail(d, graphData) {
             html += '<ul class="kg-detail-list">';
             concepts.forEach(function(c) {
                 var shared = c.videos && c.videos.length > 1 ? ' <span style="color:#fbbf24;font-size:10px">(shared)</span>' : '';
-                html += '<li>' + (c.emoji || '') + ' ' + c.label + shared + '</li>';
+                html += '<li>' + esc(c.emoji || '') + ' ' + esc(c.label) + shared + '</li>';
             });
             html += '</ul>';
         }
     } else {
         html += '<div class="kg-detail-type kg-detail-type-concept">Khai niem</div>';
-        html += '<div class="kg-detail-name">' + (d.emoji || '') + ' ' + d.label + '</div>';
+        html += '<div class="kg-detail-name">' + esc(d.emoji || '') + ' ' + esc(d.label) + '</div>';
         // Show which videos
         if (d.videos && d.videos.length) {
             var videoNames = d.videos.map(function(vi) {
@@ -303,7 +303,7 @@ function showKgDetail(d, graphData) {
             html += '<div class="kg-detail-section-title">Videos</div>';
             html += '<ul class="kg-detail-list">';
             videoNames.forEach(function(name, i) {
-                html += '<li style="border-left:3px solid ' + KG_COLORS[d.videos[i] % KG_COLORS.length] + '">' + name + '</li>';
+                html += '<li style="border-left:3px solid ' + KG_COLORS[d.videos[i] % KG_COLORS.length] + '">' + esc(name) + '</li>';
             });
             html += '</ul>';
         }
@@ -321,7 +321,7 @@ function showKgDetail(d, graphData) {
             html += '<div class="kg-detail-section-title">Khai niem lien quan</div>';
             html += '<ul class="kg-detail-list">';
             related.forEach(function(r) {
-                html += '<li>' + (r.emoji || '') + ' ' + r.label + '</li>';
+                html += '<li>' + esc(r.emoji || '') + ' ' + esc(r.label) + '</li>';
             });
             html += '</ul>';
         }

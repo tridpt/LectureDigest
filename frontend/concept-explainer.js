@@ -237,8 +237,13 @@
             const data = await res.json();
 
             if (bodyEl) {
+                // Escape AI output before inserting as HTML, then convert
+                // newlines to <br>. Prevents XSS from a crafted explanation.
+                var _safe = (typeof escapeHtml === 'function')
+                    ? escapeHtml(data.explanation || '')
+                    : String(data.explanation || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
                 bodyEl.innerHTML = '<p class="ce-explanation">' +
-                    data.explanation.replace(/\n/g, '<br>') + '</p>';
+                    _safe.replace(/\n/g, '<br>') + '</p>';
             }
 
             if (footEl) {

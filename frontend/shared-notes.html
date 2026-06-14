@@ -437,7 +437,7 @@
                 var listHtml = bookmarks.map(function(bm) {
                     var videoId = data.video_id && !data.video_id.startsWith('upload_') ? data.video_id : null;
                     var timeLink = videoId
-                        ? '<a href="https://youtube.com/watch?v=' + videoId + '&t=' + (bm.time_secs || 0) + '" target="_blank" class="shared-bm-time">' + escHtml(bm.time_str || '00:00') + '</a>'
+                        ? '<a href="https://youtube.com/watch?v=' + escHtml(videoId) + '&t=' + (parseInt(bm.time_secs, 10) || 0) + '" target="_blank" class="shared-bm-time">' + escHtml(bm.time_str || '00:00') + '</a>'
                         : '<span class="shared-bm-time">' + escHtml(bm.time_str || '00:00') + '</span>';
                     return '<div class="shared-bm-item">' + timeLink +
                            '<span class="shared-bm-label">' + escHtml(bm.label || 'Bookmark') + '</span></div>';
