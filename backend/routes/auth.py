@@ -436,10 +436,12 @@ async def google_login(req: GoogleAuthRequest):
         raise HTTPException(status_code=403, detail=_block_message(_binfo))
 
     user = db_get_user_by_google_id(google_sub)
+    is_new = False
 
     if not user:
         user = db_get_user_by_email(email)
         if user:
+            # Existing email account → link Google identity (not a new account)
             db_update_user(
                 user["id"],
                 google_id=google_sub,
@@ -447,6 +449,8 @@ async def google_login(req: GoogleAuthRequest):
             )
             user = db_get_user_by_id(user["id"])
         else:
+            # No matching Google id or email → brand new account
+            is_new = True
             color_idx = int(hashlib.md5(email.encode()).hexdigest(), 16) % len(_AVATAR_COLORS)
             avatar_color = _AVATAR_COLORS[color_idx]
             user_id = db_create_user(
@@ -467,7 +471,7 @@ async def google_login(req: GoogleAuthRequest):
     return {
         "token": token,
         "user": safe_user,
-        "is_new": not bool(db_get_user_by_google_id(google_sub)),
+        "is_new": is_new,
     }
 
 

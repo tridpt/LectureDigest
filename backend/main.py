@@ -187,13 +187,31 @@ async def global_exception_handler(request, exc):
     )
 
 
-# ── Rate Limiting Middleware (in-memory with DB restore on startup) ─────────────────────────
+# ── Rate Limiting Middleware (in-memory) ─────────────────────────
 from collections import defaultdict
 import time as _rl_time
+from routes.client_ip import get_client_ip
 
 _rate_limit_store = defaultdict(list)  # {ip: [timestamps]} — fast in-memory
 _RATE_LIMIT_MAX = 60  # max requests per window
 _RATE_LIMIT_WINDOW = 60  # window in seconds
+_rl_last_sweep = 0.0  # last time we purged stale IP buckets
+_RL_SWEEP_INTERVAL = 300  # sweep at most every 5 minutes
+
+
+def _sweep_rate_limit_store(now: float):
+    """Drop IP buckets whose timestamps are all outside the window.
+
+    Without this, every IP ever seen leaves a permanent (eventually empty)
+    entry in the dict — a slow memory leak on long-running deploys.
+    """
+    stale = [
+        key for key, hits in _rate_limit_store.items()
+        if not hits or hits[-1] < now - _RATE_LIMIT_WINDOW
+    ]
+    for key in stale:
+        del _rate_limit_store[key]
+
 
 class RateLimitMiddleware(BaseHTTPMiddleware):
     async def dispatch(self, request: Request, call_next):
@@ -205,8 +223,16 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
         if request.url.path == "/health":
             return await call_next(request)
 
-        ip = request.client.host if request.client else "unknown"
+        # Resolve real client IP (respects TRUST_PROXY behind a reverse proxy);
+        # avoids lumping every user behind the proxy into a single shared bucket.
+        ip = get_client_ip(request)
         now = _rl_time.time()
+
+        # Periodically purge stale IP buckets to keep the dict bounded.
+        global _rl_last_sweep
+        if now - _rl_last_sweep > _RL_SWEEP_INTERVAL:
+            _sweep_rate_limit_store(now)
+            _rl_last_sweep = now
 
         # Clean old entries
         _rate_limit_store[ip] = [t for t in _rate_limit_store[ip] if now - t < _RATE_LIMIT_WINDOW]
@@ -391,9 +417,16 @@ _FRONTEND_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "f
 from jinja2 import Environment, FileSystemLoader
 import time as _time2
 
+# auto_reload re-stats template files on every render — handy in dev, wasteful
+# in production. Default to off when running on a known cloud host, else on.
+_JINJA_AUTORELOAD = os.getenv(
+    "JINJA_AUTO_RELOAD",
+    "false" if os.getenv("RENDER_EXTERNAL_URL") else "true",
+).strip().lower() in ("1", "true", "yes", "on")
+
 _jinja_env = Environment(
     loader=FileSystemLoader(_FRONTEND_DIR),
-    auto_reload=True,  # safe for dev; in production, set False
+    auto_reload=_JINJA_AUTORELOAD,
 )
 
 _index_cache = {"html": None, "ts": 0}
