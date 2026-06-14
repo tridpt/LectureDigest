@@ -70,6 +70,20 @@ _AVATAR_COLORS = [
     '#10b981', '#f59e0b', '#ef4444', '#ec4899', '#a855f7'
 ]
 
+# bcrypt work factor. Default 12 is appropriate for production. Tests/CI can set
+# BCRYPT_ROUNDS=4 to keep the (intentionally slow) hashing from dominating the
+# suite runtime — security of the hash is irrelevant for throwaway test users.
+try:
+    _BCRYPT_ROUNDS = int(os.getenv("BCRYPT_ROUNDS", "12"))
+except ValueError:
+    _BCRYPT_ROUNDS = 12
+_BCRYPT_ROUNDS = max(4, min(_BCRYPT_ROUNDS, 15))
+
+
+def _hash_password(password: str) -> str:
+    """Hash a password with bcrypt at the configured work factor."""
+    return bcrypt.hashpw(password.encode("utf-8"), bcrypt.gensalt(rounds=_BCRYPT_ROUNDS)).decode("utf-8")
+
 
 def _create_jwt(user_id: int) -> str:
     payload = {
@@ -241,7 +255,7 @@ async def register(req: RegisterRequest, request: Request):
             raise HTTPException(status_code=409, detail="Email này đã được đăng ký")
 
         loop = asyncio.get_event_loop()
-        pw_hash = await loop.run_in_executor(None, lambda: bcrypt.hashpw(req.password.encode("utf-8"), bcrypt.gensalt()).decode("utf-8"))
+        pw_hash = await loop.run_in_executor(None, lambda: _hash_password(req.password))
 
         color_idx = int(hashlib.md5(email.encode()).hexdigest(), 16) % len(_AVATAR_COLORS)
         avatar_color = _AVATAR_COLORS[color_idx]
@@ -349,7 +363,7 @@ async def update_profile(req: UpdateProfileRequest, request: Request):
                 raise HTTPException(status_code=403, detail="Mật khẩu hiện tại không đúng")
             if len(req.new_password) < 6:
                 raise HTTPException(status_code=400, detail="Mật khẩu mới tối thiểu 6 ký tự")
-            new_hash = await loop.run_in_executor(None, lambda: bcrypt.hashpw(req.new_password.encode("utf-8"), bcrypt.gensalt()).decode("utf-8"))
+            new_hash = await loop.run_in_executor(None, lambda: _hash_password(req.new_password))
 
         db_update_user(
             user["id"],
@@ -535,7 +549,7 @@ async def reset_password(req: ResetPasswordRequest):
         loop = asyncio.get_event_loop()
         new_hash = await loop.run_in_executor(
             None,
-            lambda: bcrypt.hashpw(req.new_password.encode("utf-8"), bcrypt.gensalt()).decode("utf-8")
+            lambda: _hash_password(req.new_password)
         )
 
         db_update_user(user["id"], password_hash=new_hash)

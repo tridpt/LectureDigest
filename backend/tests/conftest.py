@@ -9,6 +9,10 @@ import tempfile
 import pytest
 from fastapi.testclient import TestClient
 
+# Speed up bcrypt for the whole test session — throwaway users don't need a
+# production work factor. Must be set before auth.py is imported.
+os.environ.setdefault("BCRYPT_ROUNDS", "4")
+
 # Ensure backend is importable
 sys.path.insert(0, os.path.dirname(os.path.dirname(__file__)))
 
