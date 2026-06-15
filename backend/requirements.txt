@@ -2,7 +2,7 @@
 fastapi>=0.115.6
 uvicorn[standard]>=0.30.6
 # python-multipart < 0.0.18 has a DoS CVE (GHSA-2jv5-9r88-3w3p / 59gj).
-python-multipart>=0.0.18
+python-multipart>=0.0.32
 youtube-transcript-api>=1.0.0
 google-genai>=1.0.0
 python-dotenv>=1.0.0
