@@ -17,6 +17,7 @@
 import { chromium } from 'playwright';
 import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
+import { readFileSync } from 'node:fs';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const BASE = process.env.BASE_URL || 'http://localhost:8000';
@@ -138,7 +139,20 @@ async function shot(page, name) {
 
 async function main() {
   const browser = await chromium.launch();
-  const page = await browser.newPage({ viewport: { width: VW, height: VH }, deviceScaleFactor: 2 });
+  // bypassCSP so we control resource loading; the headless browser has no
+  // internet, so we intercept the D3 CDN request and serve the local copy.
+  const context = await browser.newContext({
+    viewport: { width: VW, height: VH },
+    deviceScaleFactor: 2,
+    bypassCSP: true,
+  });
+  const d3Src = readFileSync(join(__dirname, '..', '..', 'node_modules', 'd3', 'dist', 'd3.min.js'), 'utf8');
+  await context.route('**/d3@*/**', (route) =>
+    route.fulfill({ status: 200, contentType: 'application/javascript', body: d3Src })
+  );
+  const page = await context.newPage();
+  page.on('console', (m) => { if (m.type() === 'error') console.log('  [console.error]', m.text()); });
+  page.on('pageerror', (e) => console.log('  [pageerror]', e.message));
   await seed(page);
 
   console.log('Capturing screenshots from', BASE);
@@ -149,7 +163,11 @@ async function main() {
   await shot(page, 'hero.png');
 
   // 2. Analysis result page — render from the seeded sample.
+  //    NOTE: `analysisData` is a `let` in core.js (global lexical scope), which
+  //    is NOT the same as `window.analysisData`. Features like the mind map read
+  //    the lexical binding, so we assign it bare (no `window.`) to hit it.
   await page.evaluate((data) => {
+    try { analysisData = data; } catch (e) { window.analysisData = data; }
     window.analysisData = data;
     window._spaVideoId = data.video_id;
     if (typeof clearChat === 'function') clearChat();
@@ -159,17 +177,36 @@ async function main() {
   await page.waitForTimeout(1200);
   await shot(page, 'analysis.png');
 
-  // 3. Quiz — jump to the quiz tab/section if present.
+  // 3. Quiz — the quiz renders into #quizContainer on the results page.
+  //    Scroll it into view (centered) so the card fills the shot.
   await page.evaluate(() => {
-    const q = document.getElementById('quizSection') || document.querySelector('.quiz-section');
-    if (q) q.scrollIntoView();
+    const q = document.getElementById('quizContainer');
+    if (q) q.scrollIntoView({ block: 'center' });
   });
-  await page.waitForTimeout(600);
+  await page.waitForTimeout(700);
   await shot(page, 'quiz.png');
+  // Scroll back to top so the mind-map modal opens over a clean view.
+  await page.evaluate(() => window.scrollTo({ top: 0 }));
 
-  // 4. Mind map
-  await page.evaluate(() => { if (typeof openMindMap === 'function') openMindMap(); });
-  await page.waitForTimeout(2500);
+  // 4. Mind map — the lazy loader fetches D3 from a CDN, which is flaky in a
+  //    headless/offline browser. With bypassCSP on, inject D3 directly, mark it
+  //    as loaded so the lazy loader is a no-op, then render the map.
+  await page.addScriptTag({ content: d3Src });
+  await page.evaluate(() => {
+    // openMindMap shows the modal; renderMindMap (in mindmap.js) draws into #mmSvg.
+    if (typeof openMindMap === 'function') openMindMap();
+  });
+  try {
+    await page.waitForFunction(() => {
+      const svg = document.getElementById('mmSvg');
+      const overlay = document.getElementById('mmModalOverlay');
+      return overlay && !overlay.classList.contains('hidden') &&
+             svg && svg.querySelectorAll('g, circle, path').length > 3;
+    }, { timeout: 15000 });
+  } catch (e) {
+    console.warn('  ! mind map did not render in time — capturing anyway');
+  }
+  await page.waitForTimeout(1200); // let the entrance transition settle
   await shot(page, 'mindmap.png');
   await page.evaluate(() => { if (typeof closeMindMap === 'function') closeMindMap(); });
 
