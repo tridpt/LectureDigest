@@ -16,13 +16,13 @@
 .dashboard-nav-btn:hover {
     background: rgba(30, 64, 175,0.18);
     border-color: rgba(30, 64, 175,0.35);
-    color: #c4b5fd;
+    color: #93b0f0;
 }
 
 /* Page shell */
 .db-page {
     position: fixed; inset: 0; z-index: 500;
-    background: #08081a;
+    background: var(--bg-primary);
     overflow-y: auto;
     scrollbar-width: thin;
     scrollbar-color: rgba(30, 64, 175,0.3) transparent;
@@ -138,7 +138,7 @@
     background: rgba(30, 64, 175,0.35);
     border-color: rgba(30, 64, 175,0.5);
 }
-.db-cal-active .db-cal-dow { color: #c4b5fd; }
+.db-cal-active .db-cal-dow { color: #93b0f0; }
 .db-cal-today {
     outline: 2px solid #f59e0b;
     outline-offset: 1px;
@@ -199,7 +199,7 @@
 }
 .db-bcat-fill   {
     height: 100%; border-radius: 99px;
-    background: linear-gradient(90deg, #1d4ed8, #a855f7);
+    background: linear-gradient(90deg, #1d4ed8, #3b5bb5);
     transition: width 0.6s ease;
 }
 
@@ -461,11 +461,11 @@ html.light-mode .db-skel {
 }
 
 /* Light mode */
-.light-mode .db-page { background: #f8fafc; }
-.light-mode .db-title { color: #1e293b; }
-.light-mode .db-date { color: #94a3b8; }
-.light-mode .db-stat-card { background: rgba(255,255,255,0.8); border-color: rgba(0,0,0,0.06); }
-.light-mode .db-header { border-bottom-color: rgba(0,0,0,0.06); }
+.light-mode .db-page { background: #faf8f3; }
+.light-mode .db-title { color: #1a1a1a; }
+.light-mode .db-date { color: #9ca3af; }
+.light-mode .db-stat-card { background: #ffffff; border-color: rgba(0,0,0,0.08); }
+.light-mode .db-header { border-bottom-color: rgba(0,0,0,0.08); }
 
 /* ════════════════════════════════════════ CONTINUE LEARNING ═════ */
 .db-continue-panel {

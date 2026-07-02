@@ -170,7 +170,7 @@ html.light-mode .chat-clear-btn {
     color: #ef4444;
 }
 html.light-mode .chat-messages {
-    background: #f8f9ff;
+    background: #f5f2ea;
 }
 html.light-mode .chat-messages::-webkit-scrollbar-thumb {
     background: rgba(30, 64, 175,0.2);
@@ -258,7 +258,7 @@ html.light-mode .typing-indicator span { background: #3b5bb5; }
     animation: fadeIn 0.2s ease;
 }
 .vlen-modal {
-    background: #0f0f23;
+    background: #201f2a;
     border: 1px solid rgba(30, 64, 175,0.3);
     border-radius: 20px;
     padding: 36px 32px;

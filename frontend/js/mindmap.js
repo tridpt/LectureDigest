@@ -137,7 +137,7 @@ function renderMindMap() {
 
     // Detect light mode for color adaptation
     const isLight = document.documentElement.classList.contains('light-mode');
-    const strokeBg = isLight ? '#f8f9fc' : '#08081a';
+    const strokeBg = isLight ? '#f8f9fc' : '#191820';
 
     const COLORS_DARK = {
         root:     { node: '#1d4ed8', glow: '#1d4ed8', text: '#f1f1f1'  },

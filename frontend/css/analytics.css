@@ -268,7 +268,7 @@ html.light-mode .an-empty { color: #bbb; }
 }
 
 /* Light mode */
-.light-mode .an-page { background: #f8fafc; }
+.light-mode .an-page { background: #faf8f3; }
 .light-mode .an-title { color: #1e293b; }
 .light-mode .an-card { background: rgba(255,255,255,0.8); border-color: rgba(0,0,0,0.06); }
 .light-mode .an-card-title { color: #1e293b; }

@@ -357,7 +357,7 @@
 
 .cr-msg-menu {
     position: fixed;
-    background: #1e1e3a;
+    background: #27262f;
     border: 1px solid rgba(30, 64, 175, 0.2);
     border-radius: 10px;
     box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
@@ -1213,7 +1213,7 @@ img.cr-member-av {
 
 .cr-member-menu {
     position: fixed;
-    background: #1e1e3a;
+    background: #27262f;
     border: 1px solid rgba(30, 64, 175, 0.2);
     border-radius: 10px;
     box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
@@ -1400,7 +1400,7 @@ img.cr-member-av {
 }
 
 .cr-info-edit-row select.cr-input option {
-    background: #1e1e3a;
+    background: #27262f;
     color: #f1f5f9;
 }
 
@@ -1427,7 +1427,7 @@ img.cr-member-av {
     position: absolute;
     top: calc(100% + 6px);
     right: 0;
-    background: #1e1e3a;
+    background: #27262f;
     border: 1px solid rgba(30, 64, 175, 0.2);
     border-radius: 10px;
     box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
@@ -1539,7 +1539,7 @@ img.cr-member-av {
 }
 
 .cr-select-dark option {
-    background: #1e1e3a;
+    background: #27262f;
     color: #f1f5f9;
 }
 
@@ -1650,7 +1650,7 @@ img.cr-member-av {
     bottom: calc(100% + 8px);
     left: 0;
     width: 280px;
-    background: #1e1e3a;
+    background: #27262f;
     border: 1px solid rgba(30, 64, 175, 0.2);
     border-radius: 12px;
     box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
@@ -1849,7 +1849,7 @@ img.cr-member-av {
     bottom: 100%;
     left: 0;
     right: 0;
-    background: #1e1e3a;
+    background: #27262f;
     border: 1px solid rgba(30, 64, 175, 0.2);
     border-radius: 10px;
     box-shadow: 0 -4px 16px rgba(0, 0, 0, 0.4);

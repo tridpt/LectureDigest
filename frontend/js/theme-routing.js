@@ -51,9 +51,10 @@ function toggleTheme() {
     applyTheme(next);
 }
 
-// Apply saved theme on load (before paint)
+// Apply saved theme on load (before paint).
+// Default to the Editorial paper (light) theme when nothing is saved.
 (function initTheme() {
-    var saved = localStorage.getItem(THEME_KEY) || 'dark';
+    var saved = localStorage.getItem(THEME_KEY) || 'light';
     applyTheme(saved);
 
     // Listen for system theme changes (only relevant when set to "auto")
@@ -346,17 +347,15 @@ document.addEventListener('keydown', function(e) {
 })();
 
 (function initOsThemeSync() {
+    // Default to the Editorial paper (light) theme on first visit, regardless
+    // of the OS colour scheme. Users can still toggle to dark and the choice
+    // is remembered in localStorage.
     var saved = localStorage.getItem('lectureDigest_theme');
     if (!saved) {
-        applyTheme(window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+        applyTheme('light');
     }
-    window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', function(e) {
-        if (!localStorage.getItem('lectureDigest_theme')) applyTheme(e.matches ? 'dark' : 'light');
-    });
-    var _origTT = window.toggleTheme;
     window.toggleTheme = function() {
-        var cur = localStorage.getItem('lectureDigest_theme') ||
-            (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+        var cur = localStorage.getItem('lectureDigest_theme') || 'light';
         var next = cur === 'dark' ? 'light' : 'dark';
         safeLsSet('lectureDigest_theme', next);
         applyTheme(next);
@@ -368,7 +367,7 @@ document.addEventListener('keydown', function(e) {
 // ══════════════════════════════════════════════════════════
 
 var ACCENT_PRESETS = [
-    { name: 'Violet',  hex: '#1e40af', light: '#3b5bb5', dark: '#14307a', glow: 'rgba(30, 64, 175,0.25)' },
+    { name: 'Ink',     hex: '#1e40af', light: '#3b5bb5', dark: '#14307a', glow: 'rgba(30, 64, 175,0.25)' },
     { name: 'Indigo',  hex: '#2554c7', light: '#818cf8', dark: '#1e40af', glow: 'rgba(37, 84, 199,0.25)' },
     { name: 'Blue',    hex: '#3b82f6', light: '#60a5fa', dark: '#2563eb', glow: 'rgba(59,130,246,0.25)' },
     { name: 'Cyan',    hex: '#06b6d4', light: '#22d3ee', dark: '#0891b2', glow: 'rgba(6,182,212,0.25)' },

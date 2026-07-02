@@ -117,7 +117,7 @@ body {
 
 /* Toast base styles (moved from inline JS for theme support) */
 .toast-item {
-    background: #1e1e3a;
+    background: #27262f;
     border: 1px solid rgba(30, 64, 175, 0.4);
     color: #f1f5f9;
     padding: 12px 20px;

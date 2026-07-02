@@ -80,8 +80,10 @@
     <!-- Apply theme before paint to prevent flash -->
     <script>
         (function(){
+            // Default to the Editorial paper (light) theme unless the user
+            // has explicitly chosen dark. Prevents a flash of the wrong theme.
             var t = localStorage.getItem('lectureDigest_theme');
-            if (t === 'light') document.documentElement.classList.add('light-mode');
+            if (t !== 'dark') document.documentElement.classList.add('light-mode');
         })();
     </script>
 </head>
