@@ -77,7 +77,7 @@ html.light-mode ::-webkit-scrollbar-thumb:hover {
     --shadow-glow: none;
 
     --font: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-    --font-serif: 'Fraunces', 'Lora', Georgia, 'Times New Roman', serif;
+    --font-serif: 'Lora', Georgia, 'Times New Roman', serif;
     --font-mono: 'JetBrains Mono', monospace;
 
     --transition: 0.2s ease;
