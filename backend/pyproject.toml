@@ -4,6 +4,13 @@ python_files = "test_*.py"
 python_classes = "Test*"
 python_functions = "test_*"
 addopts = "-v --tb=short"
+filterwarnings = [
+    # Starlette's TestClient warns that using httpx with it is deprecated in
+    # favour of httpx2. This is test-tooling only (no runtime impact) and out
+    # of our control until the FastAPI/Starlette/httpx stack aligns. Silence it
+    # to keep the suite output clean; revisit on the next dependency bump.
+    "ignore:Using `httpx` with `starlette.testclient` is deprecated",
+]
 
 [tool.ruff]
 target-version = "py313"

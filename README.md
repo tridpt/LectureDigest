@@ -111,7 +111,7 @@ docker compose up --build
 ### Option B — Python
 
 ```bash
-# Requirements: Python 3.9+
+# Requirements: Python 3.13+
 cd LectureDigest
 
 # Copy env and add your API key
