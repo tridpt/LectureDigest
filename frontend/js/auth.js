@@ -568,7 +568,7 @@ function openProfileModal() {
     if (preview && _authUser.avatar_url) {
         preview.innerHTML = '<img src="' + _authUser.avatar_url + '" alt="Avatar" style="width:100%;height:100%;object-fit:cover;border-radius:50%">';
     } else if (preview && initial) {
-        preview.style.background = _authUser.avatar_color || '#8b5cf6';
+        preview.style.background = _authUser.avatar_color || '#1e40af';
         initial.textContent = (_authUser.display_name || '?').charAt(0).toUpperCase();
     }
 
@@ -592,7 +592,7 @@ function openProfileModal() {
     if (deleteErr) { deleteErr.textContent = ''; deleteErr.classList.add('hidden'); }
 
     // Set active accent color swatch
-    var currentAccent = typeof getAccentColor === 'function' ? getAccentColor() : '#8b5cf6';
+    var currentAccent = typeof getAccentColor === 'function' ? getAccentColor() : '#1e40af';
     document.querySelectorAll('.profile-accent-option').forEach(function(el) {
         el.classList.toggle('active', el.dataset.accent === currentAccent);
     });

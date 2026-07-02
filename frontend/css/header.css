@@ -97,8 +97,8 @@
 }
 
 .hdr-more-btn:hover {
-    background: rgba(139, 92, 246, 0.18);
-    border-color: rgba(139, 92, 246, 0.35);
+    background: rgba(30, 64, 175, 0.18);
+    border-color: rgba(30, 64, 175, 0.35);
     color: var(--text-primary, #f1f5f9);
 }
 
@@ -108,7 +108,7 @@
     right: 0;
     min-width: 200px;
     background: #1e1e3a;
-    border: 1px solid rgba(139, 92, 246, 0.2);
+    border: 1px solid rgba(30, 64, 175, 0.2);
     border-radius: 12px;
     box-shadow: 0 12px 40px rgba(0, 0, 0, 0.5);
     z-index: 200;
@@ -135,7 +135,7 @@
 }
 
 .hdr-more-item:hover {
-    background: rgba(139, 92, 246, 0.12);
+    background: rgba(30, 64, 175, 0.12);
     color: var(--text-primary, #f1f5f9);
 }
 
@@ -186,8 +186,8 @@ html.light-mode .hdr-more-btn {
 }
 
 html.light-mode .hdr-more-btn:hover {
-    background: rgba(109, 40, 217, 0.08);
-    color: #6d28d9;
+    background: rgba(30, 64, 175, 0.08);
+    color: #14307a;
 }
 
 html.light-mode .hdr-more-panel {
@@ -201,8 +201,8 @@ html.light-mode .hdr-more-item {
 }
 
 html.light-mode .hdr-more-item:hover {
-    background: rgba(109, 40, 217, 0.06);
-    color: #6d28d9;
+    background: rgba(30, 64, 175, 0.06);
+    color: #14307a;
 }
 
 
@@ -224,8 +224,8 @@ html.light-mode .hdr-more-item:hover {
 .sidebar-group-label { font-size: 11px; font-weight: 700; color: var(--text-muted, #64748b); text-transform: uppercase; letter-spacing: 0.5px; padding: 0 8px 8px; }
 
 .sidebar-item { display: flex; align-items: center; gap: 12px; width: 100%; padding: 11px 14px; border: none; background: none; border-radius: 10px; color: var(--text-secondary, #cbd5e1); font-size: 14px; font-weight: 500; cursor: pointer; transition: all 0.15s; text-align: left; }
-.sidebar-item:hover { background: rgba(139,92,246,0.1); color: var(--text-primary, #f1f5f9); }
-.sidebar-item:active { background: rgba(139,92,246,0.15); }
+.sidebar-item:hover { background: rgba(30, 64, 175,0.1); color: var(--text-primary, #f1f5f9); }
+.sidebar-item:active { background: rgba(30, 64, 175,0.15); }
 .sidebar-icon { font-size: 16px; width: 22px; text-align: center; flex-shrink: 0; }
 
 /* Light mode */
@@ -236,7 +236,7 @@ html.light-mode .hdr-more-item:hover {
 .light-mode .sidebar-close:hover { background: rgba(0,0,0,0.04); color: #1e293b; }
 .light-mode .sidebar-group-label { color: #94a3b8; }
 .light-mode .sidebar-item { color: #475569; }
-.light-mode .sidebar-item:hover { background: rgba(139,92,246,0.06); color: #1e293b; }
+.light-mode .sidebar-item:hover { background: rgba(30, 64, 175,0.06); color: #1e293b; }
 .light-mode .sidebar-overlay { background: rgba(0,0,0,0.3); }
 
 @media (max-width: 320px) { .app-sidebar { width: 260px; } }
@@ -245,6 +245,6 @@ html.light-mode .hdr-more-item:hover {
 /* Sidebar toggle button (left of logo) */
 .header-left { display: flex; align-items: center; gap: 4px; }
 .sidebar-toggle-btn { display: flex; align-items: center; justify-content: center; width: 32px; height: 32px; border: none; background: none; color: var(--text-muted, #64748b); cursor: pointer; transition: all 0.2s; flex-shrink: 0; border-radius: 6px; }
-.sidebar-toggle-btn:hover { color: var(--text-primary, #f1f5f9); background: rgba(139,92,246,0.08); }
+.sidebar-toggle-btn:hover { color: var(--text-primary, #f1f5f9); background: rgba(30, 64, 175,0.08); }
 .light-mode .sidebar-toggle-btn { color: #94a3b8; }
-.light-mode .sidebar-toggle-btn:hover { color: #1e293b; background: rgba(139,92,246,0.06); }
+.light-mode .sidebar-toggle-btn:hover { color: #1e293b; background: rgba(30, 64, 175,0.06); }

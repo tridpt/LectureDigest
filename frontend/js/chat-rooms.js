@@ -598,7 +598,7 @@ function _crRenderAvatar(username, avatarUrl) {
         return '<img src="' + _crEsc(avatarUrl) + '" alt="' + _crEsc(username) + '">';
     }
     var initial = (username || '?').charAt(0).toUpperCase();
-    var colors = ['#8b5cf6','#3b82f6','#10b981','#f59e0b','#ef4444','#ec4899','#06b6d4','#6366f1'];
+    var colors = ['#1e40af','#3b82f6','#10b981','#f59e0b','#ef4444','#ec4899','#06b6d4','#2554c7'];
     var colorIdx = 0;
     for (var i = 0; i < (username || '').length; i++) {
         colorIdx += (username || '').charCodeAt(i);
@@ -1112,7 +1112,7 @@ function _crRenderMembersPanel(members, banned) {
         var onlineDotHtml = isOnline ? '<span class="cr-member-online-dot"></span>' : '';
         var avatarHtml = m.avatar_url
             ? '<div class="cr-member-av-wrap">' + onlineDotHtml + '<img class="cr-member-av" src="' + _crEsc(m.avatar_url) + '" alt=""></div>'
-            : '<div class="cr-member-av-wrap">' + onlineDotHtml + '<span class="cr-member-av" style="background:' + (m.avatar_color || '#8b5cf6') + '">' + initial + '</span></div>';
+            : '<div class="cr-member-av-wrap">' + onlineDotHtml + '<span class="cr-member-av" style="background:' + (m.avatar_color || '#1e40af') + '">' + initial + '</span></div>';
         var badge = m.is_creator ? ' <span class="cr-creator-badge">👑</span>'
             : m.role === 'admin' ? ' <span class="cr-admin-badge">🛡️</span>' : '';
         var muteInfo = '';
@@ -2316,7 +2316,7 @@ async function crShowUserProfile(userId) {
         var initial = (user.display_name || '?').charAt(0).toUpperCase();
         var avatarHtml = user.avatar_url
             ? '<img class="cr-profile-avatar-img" src="' + _crEsc(user.avatar_url) + '" alt="">'
-            : '<div class="cr-profile-avatar" style="background:' + (user.avatar_color || '#8b5cf6') + '">' + initial + '</div>';
+            : '<div class="cr-profile-avatar" style="background:' + (user.avatar_color || '#1e40af') + '">' + initial + '</div>';
         var joinDate = user.created_at ? new Date(user.created_at).toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric' }) : '';
 
         var html = '<div class="cr-modal-overlay" id="crProfileModal" onclick="if(event.target===this)this.remove()">'

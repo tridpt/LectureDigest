@@ -11,7 +11,7 @@
     display: flex; flex-direction: column;
     overflow: hidden;
 }
-html.light-mode .mexam-page { background: #eef0ff; }
+html.light-mode .mexam-page { background: #faf8f3; }
 .mexam-inner {
     display: flex; flex-direction: column;
     height: 100%; max-width: 900px;
@@ -49,7 +49,7 @@ html.light-mode .mexam-page { background: #eef0ff; }
 }
 .mexam-selected-count {
     font-size: 13px; font-weight: 600;
-    color: var(--accent); background: rgba(139,92,246,0.12);
+    color: var(--accent); background: rgba(30, 64, 175,0.12);
     padding: 4px 12px; border-radius: 20px;
 }
 .mexam-video-list {
@@ -71,7 +71,7 @@ html.light-mode .mexam-page { background: #eef0ff; }
 }
 .mexam-video-item.selected {
     border-color: var(--accent);
-    background: rgba(139,92,246,0.08);
+    background: rgba(30, 64, 175,0.08);
     box-shadow: 0 0 0 1px var(--accent);
 }
 .mexam-video-check {
@@ -138,7 +138,7 @@ html.light-mode .mexam-page { background: #eef0ff; }
 }
 .mexam-generate-btn:hover:not(:disabled) {
     transform: translateY(-1px);
-    box-shadow: 0 4px 20px rgba(139,92,246,0.4);
+    box-shadow: 0 4px 20px rgba(30, 64, 175,0.4);
 }
 .mexam-generate-btn:disabled {
     opacity: 0.4; cursor: not-allowed;
@@ -185,7 +185,7 @@ html.light-mode .mexam-page { background: #eef0ff; }
     color: var(--text-secondary);
 }
 .mexam-timer {
-    background: rgba(139,92,246,0.12);
+    background: rgba(30, 64, 175,0.12);
     padding: 4px 10px; border-radius: 8px;
     color: var(--accent) !important;
     font-variant-numeric: tabular-nums;
@@ -255,11 +255,11 @@ html.light-mode .mexam-page { background: #eef0ff; }
 }
 .mexam-opt:hover {
     border-color: var(--accent);
-    background: rgba(139,92,246,0.06);
+    background: rgba(30, 64, 175,0.06);
 }
 .mexam-opt.selected {
     border-color: var(--accent);
-    background: rgba(139,92,246,0.1);
+    background: rgba(30, 64, 175,0.1);
 }
 .mexam-opt.correct {
     border-color: #10b981;
@@ -289,7 +289,7 @@ html.light-mode .mexam-page { background: #eef0ff; }
 .mexam-explanation {
     margin-top: 14px; padding: 14px;
     border-radius: 10px;
-    background: rgba(139,92,246,0.06);
+    background: rgba(30, 64, 175,0.06);
     border-left: 3px solid var(--accent);
     font-size: 13px; color: var(--text-secondary);
     line-height: 1.5;
@@ -333,7 +333,7 @@ html.light-mode .mexam-page { background: #eef0ff; }
     display: flex; flex-direction: column;
     align-items: center; justify-content: center;
     border: 6px solid var(--accent);
-    background: rgba(139,92,246,0.06);
+    background: rgba(30, 64, 175,0.06);
 }
 .mexam-score-num {
     font-size: 42px; font-weight: 900;

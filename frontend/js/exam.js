@@ -383,7 +383,7 @@ function _mexamRenderResults() {
                 else if (d < 0) diffBadge = ' <span style="color:#f87171;font-size:11px;font-weight:700">▼' + d + '%</span>';
                 else diffBadge = ' <span style="color:#fbbf24;font-size:11px">= 0%</span>';
             }
-            attemptsHtml += '<div class="mexam-attempt-row' + (isLatest ? ' latest' : '') + '" style="display:flex;align-items:center;gap:12px;padding:10px 14px;border-radius:10px;background:' + (isLatest ? 'rgba(139,92,246,0.08)' : 'rgba(255,255,255,0.03)') + ';border:1px solid ' + (isLatest ? 'rgba(139,92,246,0.2)' : 'var(--border)') + ';margin-bottom:6px;">' +
+            attemptsHtml += '<div class="mexam-attempt-row' + (isLatest ? ' latest' : '') + '" style="display:flex;align-items:center;gap:12px;padding:10px 14px;border-radius:10px;background:' + (isLatest ? 'rgba(30, 64, 175,0.08)' : 'rgba(255,255,255,0.03)') + ';border:1px solid ' + (isLatest ? 'rgba(30, 64, 175,0.2)' : 'var(--border)') + ';margin-bottom:6px;">' +
                 '<div style="font-size:12px;font-weight:700;color:var(--text-secondary);min-width:65px;">Lần ' + (a + 1) + '</div>' +
                 '<div style="font-size:20px;font-weight:900;color:' + (attPct >= 60 ? '#10b981' : attPct >= 40 ? '#fbbf24' : '#f87171') + ';min-width:55px;">' + attPct + '%</div>' +
                 '<div style="font-size:11px;color:var(--text-secondary);">' + attGrade + ' · ' + att.correctAnswers + '/' + total + ' · ' + attMins + 'm' + attSecs + 's' + diffBadge + '</div>' +
@@ -570,9 +570,9 @@ function _mexamRenderHistory() {
                 '<div class="mexam-hist-diff-bar">' +
                     (e.videoTitles || []).slice(0, 2).map(function(t) {
                         var short = t.length > 20 ? t.substring(0, 20) + '…' : t;
-                        return '<span class="mexam-hist-diff-chip" style="background:rgba(139,92,246,0.12);color:var(--accent)">' + escHtml(short) + '</span>';
+                        return '<span class="mexam-hist-diff-chip" style="background:rgba(30, 64, 175,0.12);color:var(--accent)">' + escHtml(short) + '</span>';
                     }).join('') +
-                    ((e.videoTitles || []).length > 2 ? '<span class="mexam-hist-diff-chip" style="background:rgba(139,92,246,0.12);color:var(--accent)">+' + ((e.videoTitles || []).length - 2) + '</span>' : '') +
+                    ((e.videoTitles || []).length > 2 ? '<span class="mexam-hist-diff-chip" style="background:rgba(30, 64, 175,0.12);color:var(--accent)">+' + ((e.videoTitles || []).length - 2) + '</span>' : '') +
                 '</div>' +
             '</div>' +
             '<div class="mexam-hist-actions">' +
@@ -700,15 +700,15 @@ function _mexamBuildAndDownload(examData, answers, elapsed) {
         '<title>' + escHtml(examData.exam_title || 'Multi-Video Exam') + '</title>' +
         '<style>' +
         'body{font-family:system-ui,sans-serif;max-width:800px;margin:40px auto;padding:0 20px;color:#1a1a2e;line-height:1.6}' +
-        'h1{text-align:center;color:#7c3aed;font-size:24px}' +
+        'h1{text-align:center;color:#1d4ed8;font-size:24px}' +
         '.meta{text-align:center;color:#666;margin-bottom:30px;font-size:14px}' +
-        '.score{text-align:center;font-size:48px;font-weight:900;color:#7c3aed;margin:20px 0}' +
+        '.score{text-align:center;font-size:48px;font-weight:900;color:#1d4ed8;margin:20px 0}' +
         '.stats{display:flex;justify-content:center;gap:20px;margin-bottom:30px;flex-wrap:wrap}' +
         '.stat{background:#f5f3ff;border-radius:10px;padding:10px 16px;text-align:center}' +
         '.stat-num{font-size:20px;font-weight:800}' +
         '.stat-label{font-size:11px;color:#666}' +
         '.q{margin-bottom:24px;padding:16px;border:1px solid #e5e7eb;border-radius:12px}' +
-        '.q-num{font-weight:700;color:#7c3aed;margin-right:6px}' +
+        '.q-num{font-weight:700;color:#1d4ed8;margin-right:6px}' +
         '.q-text{font-size:15px;font-weight:600;margin-bottom:10px}' +
         '.q-badges{margin-bottom:8px}' +
         '.badge{display:inline-block;font-size:10px;padding:2px 8px;border-radius:6px;margin-right:4px;font-weight:700}' +
@@ -717,7 +717,7 @@ function _mexamBuildAndDownload(examData, answers, elapsed) {
         '.opt{padding:8px 12px;border:1px solid #e5e7eb;border-radius:8px;margin:4px 0;font-size:13px}' +
         '.opt.correct{border-color:#10b981;background:#ecfdf5}.opt.wrong{border-color:#ef4444;background:#fef2f2}' +
         '.opt.user{font-weight:700}' +
-        '.explain{margin-top:8px;padding:10px;background:#f5f3ff;border-left:3px solid #7c3aed;border-radius:6px;font-size:12px;color:#555}' +
+        '.explain{margin-top:8px;padding:10px;background:#f5f3ff;border-left:3px solid #1d4ed8;border-radius:6px;font-size:12px;color:#555}' +
         'hr{border:none;border-top:1px solid #eee;margin:30px 0}' +
         '@media print{body{margin:20px}h1{font-size:18px}.q{break-inside:avoid}}' +
         '</style></head><body>' +

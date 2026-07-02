@@ -368,8 +368,8 @@ document.addEventListener('keydown', function(e) {
 // ══════════════════════════════════════════════════════════
 
 var ACCENT_PRESETS = [
-    { name: 'Violet',  hex: '#8b5cf6', light: '#a78bfa', dark: '#6d28d9', glow: 'rgba(139,92,246,0.25)' },
-    { name: 'Indigo',  hex: '#6366f1', light: '#818cf8', dark: '#4f46e5', glow: 'rgba(99,102,241,0.25)' },
+    { name: 'Violet',  hex: '#1e40af', light: '#3b5bb5', dark: '#14307a', glow: 'rgba(30, 64, 175,0.25)' },
+    { name: 'Indigo',  hex: '#2554c7', light: '#818cf8', dark: '#1e40af', glow: 'rgba(37, 84, 199,0.25)' },
     { name: 'Blue',    hex: '#3b82f6', light: '#60a5fa', dark: '#2563eb', glow: 'rgba(59,130,246,0.25)' },
     { name: 'Cyan',    hex: '#06b6d4', light: '#22d3ee', dark: '#0891b2', glow: 'rgba(6,182,212,0.25)' },
     { name: 'Emerald', hex: '#10b981', light: '#34d399', dark: '#059669', glow: 'rgba(16,185,129,0.25)' },
@@ -406,13 +406,13 @@ function setAccentColor(hex) {
 }
 
 function getAccentColor() {
-    return localStorage.getItem(ACCENT_KEY) || '#8b5cf6';
+    return localStorage.getItem(ACCENT_KEY) || '#1e40af';
 }
 
 // Apply saved accent on load
 (function initAccent() {
     var saved = localStorage.getItem(ACCENT_KEY);
-    if (saved && saved !== '#8b5cf6') {
+    if (saved && saved !== '#1e40af') {
         applyAccentColor(saved);
     }
 })();

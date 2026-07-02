@@ -94,21 +94,21 @@ function seekToBookmark(secs) {
         flash.id = 'bmFlashOverlay';
         flash.style.cssText =
             'position:absolute;inset:0;border-radius:12px;pointer-events:none;z-index:10;'
-            + 'border:2px solid rgba(139,92,246,0);transition:border-color 0.1s,opacity 0.5s;opacity:0;';
+            + 'border:2px solid rgba(30, 64, 175,0);transition:border-color 0.1s,opacity 0.5s;opacity:0;';
         // Ensure wrapper is positioned
         wrapper.style.position = 'relative';
         wrapper.appendChild(flash);
     }
 
     // Animate: flash in then fade out
-    flash.style.borderColor = 'rgba(139,92,246,0.9)';
+    flash.style.borderColor = 'rgba(30, 64, 175,0.9)';
     flash.style.opacity = '1';
-    flash.style.boxShadow = 'inset 0 0 0 3px rgba(139,92,246,0.4), 0 0 24px rgba(139,92,246,0.5)';
+    flash.style.boxShadow = 'inset 0 0 0 3px rgba(30, 64, 175,0.4), 0 0 24px rgba(30, 64, 175,0.5)';
     flash.style.transition = 'none';
 
     setTimeout(() => {
         flash.style.transition = 'border-color 0.6s ease, opacity 0.6s ease, box-shadow 0.6s ease';
-        flash.style.borderColor = 'rgba(139,92,246,0)';
+        flash.style.borderColor = 'rgba(30, 64, 175,0)';
         flash.style.opacity = '0';
         flash.style.boxShadow = 'none';
     }, 300);

@@ -54,7 +54,7 @@
 .admin-stat-card {
     background: rgba(255, 255, 255, 0.03);
     border: 1px solid rgba(255, 255, 255, 0.06);
-    border-left: 3px solid var(--ac, #8b5cf6);
+    border-left: 3px solid var(--ac, #1e40af);
     border-radius: 12px;
     padding: 14px 16px;
 }
@@ -113,7 +113,7 @@
     transition: border-color 0.2s;
 }
 .admin-search:focus {
-    border-color: rgba(139, 92, 246, 0.5);
+    border-color: rgba(30, 64, 175, 0.5);
 }
 
 /* User rows */
@@ -266,7 +266,7 @@
     transition: all 0.18s;
 }
 .admin-page-btn:hover:not(:disabled) {
-    background: rgba(139, 92, 246, 0.18);
+    background: rgba(30, 64, 175, 0.18);
     color: #c4b5fd;
 }
 .admin-page-btn:disabled {

@@ -9,9 +9,9 @@
     gap: 4px;
     padding: 4px 10px;
     border-radius: 8px;
-    border: 1px solid rgba(139, 92, 246, 0.2);
-    background: rgba(139, 92, 246, 0.08);
-    color: var(--accent, #8b5cf6);
+    border: 1px solid rgba(30, 64, 175, 0.2);
+    background: rgba(30, 64, 175, 0.08);
+    color: var(--accent, #1e40af);
     font-size: 12px;
     font-weight: 500;
     cursor: pointer;
@@ -20,8 +20,8 @@
 }
 
 .tts-btn:hover {
-    background: rgba(139, 92, 246, 0.18);
-    border-color: rgba(139, 92, 246, 0.4);
+    background: rgba(30, 64, 175, 0.18);
+    border-color: rgba(30, 64, 175, 0.4);
     transform: translateY(-1px);
 }
 
@@ -69,7 +69,7 @@
     background: rgba(30, 30, 46, 0.92);
     backdrop-filter: blur(12px);
     -webkit-backdrop-filter: blur(12px);
-    border: 1px solid rgba(139, 92, 246, 0.25);
+    border: 1px solid rgba(30, 64, 175, 0.25);
     border-radius: 28px;
     box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
     z-index: 9000;
@@ -90,7 +90,7 @@
     height: 32px;
     border-radius: 50%;
     border: none;
-    background: rgba(139, 92, 246, 0.15);
+    background: rgba(30, 64, 175, 0.15);
     color: #c4b5fd;
     font-size: 14px;
     cursor: pointer;
@@ -101,7 +101,7 @@
 }
 
 .tts-controls .tts-ctrl-btn:hover {
-    background: rgba(139, 92, 246, 0.3);
+    background: rgba(30, 64, 175, 0.3);
     color: #fff;
 }
 
@@ -125,13 +125,13 @@
 
 /* ── Light Mode ── */
 html.light-mode .tts-btn {
-    background: rgba(139, 92, 246, 0.06);
-    border-color: rgba(139, 92, 246, 0.15);
-    color: #7c3aed;
+    background: rgba(30, 64, 175, 0.06);
+    border-color: rgba(30, 64, 175, 0.15);
+    color: #1d4ed8;
 }
 
 html.light-mode .tts-btn:hover {
-    background: rgba(139, 92, 246, 0.12);
+    background: rgba(30, 64, 175, 0.12);
 }
 
 html.light-mode .tts-btn.tts-playing {
@@ -141,17 +141,17 @@ html.light-mode .tts-btn.tts-playing {
 
 html.light-mode .tts-controls {
     background: rgba(255, 255, 255, 0.95);
-    border-color: rgba(139, 92, 246, 0.2);
+    border-color: rgba(30, 64, 175, 0.2);
     box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
 }
 
 html.light-mode .tts-controls .tts-ctrl-btn {
-    background: rgba(139, 92, 246, 0.1);
-    color: #7c3aed;
+    background: rgba(30, 64, 175, 0.1);
+    color: #1d4ed8;
 }
 
 html.light-mode .tts-controls .tts-ctrl-label {
-    color: #6d28d9;
+    color: #14307a;
 }
 
 

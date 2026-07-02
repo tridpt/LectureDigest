@@ -14,8 +14,8 @@
     cursor: pointer; transition: all 0.18s; white-space: nowrap;
 }
 .dashboard-nav-btn:hover {
-    background: rgba(139,92,246,0.18);
-    border-color: rgba(139,92,246,0.35);
+    background: rgba(30, 64, 175,0.18);
+    border-color: rgba(30, 64, 175,0.35);
     color: #c4b5fd;
 }
 
@@ -25,7 +25,7 @@
     background: #08081a;
     overflow-y: auto;
     scrollbar-width: thin;
-    scrollbar-color: rgba(139,92,246,0.3) transparent;
+    scrollbar-color: rgba(30, 64, 175,0.3) transparent;
 }
 .db-page.hidden { display: none !important; }
 .db-inner {
@@ -52,12 +52,12 @@
 .db-header-right { flex-shrink: 0; }
 .db-badges-shortcut {
     padding: 7px 14px; border-radius: 10px;
-    border: 1px solid rgba(139,92,246,0.25);
-    background: rgba(139,92,246,0.08);
-    color: #a78bfa; font-size: 12px; font-weight: 600;
+    border: 1px solid rgba(30, 64, 175,0.25);
+    background: rgba(30, 64, 175,0.08);
+    color: #3b5bb5; font-size: 12px; font-weight: 600;
     cursor: pointer; transition: all 0.18s;
 }
-.db-badges-shortcut:hover { background: rgba(139,92,246,0.18); }
+.db-badges-shortcut:hover { background: rgba(30, 64, 175,0.18); }
 
 /* Stat grid */
 .db-stat-grid {
@@ -72,7 +72,7 @@
     padding: 18px 14px;
     display: flex; align-items: center; gap: 12px;
     transition: all 0.18s;
-    border-top: 2px solid var(--card-accent, #8b5cf6);
+    border-top: 2px solid var(--card-accent, #1e40af);
 }
 .db-stat-card:hover {
     background: rgba(255,255,255,0.07);
@@ -135,8 +135,8 @@
 .db-cal-dow  { font-size: 8px; color: #444; }
 .db-cal-cell:hover { transform: scale(1.15); }
 .db-cal-active {
-    background: rgba(139,92,246,0.35);
-    border-color: rgba(139,92,246,0.5);
+    background: rgba(30, 64, 175,0.35);
+    border-color: rgba(30, 64, 175,0.5);
 }
 .db-cal-active .db-cal-dow { color: #c4b5fd; }
 .db-cal-today {
@@ -180,7 +180,7 @@
 .db-vid-info span { font-size: 11px; color: #555; }
 .db-quiz-tag   { color: #10b981 !important; font-weight: 600; }
 .db-vid-arrow  { font-size: 22px; color: #444; flex-shrink: 0; }
-.db-video-item:hover .db-vid-arrow { color: #8b5cf6; }
+.db-video-item:hover .db-vid-arrow { color: #1e40af; }
 
 /* Badge category rows */
 .db-badge-cats  { display: flex; flex-direction: column; gap: 18px; }
@@ -199,7 +199,7 @@
 }
 .db-bcat-fill   {
     height: 100%; border-radius: 99px;
-    background: linear-gradient(90deg, #7c3aed, #a855f7);
+    background: linear-gradient(90deg, #1d4ed8, #a855f7);
     transition: width 0.6s ease;
 }
 
@@ -210,7 +210,7 @@
 }
 
 /* ── Light mode overrides ── */
-html.light-mode .db-page               { background: #eef0ff; }
+html.light-mode .db-page               { background: #faf8f3; }
 html.light-mode .db-page.hidden        { display: none !important; }
 html.light-mode .db-title              { color: #1e1b4b; }
 html.light-mode .db-date               { color: #9ca3af; }
@@ -224,8 +224,8 @@ html.light-mode .db-card-title         { color: #9ca3af; }
 html.light-mode .db-sn-lbl             { color: #9ca3af; }
 html.light-mode .db-sn-sep             { background: rgba(0,0,0,0.08); }
 html.light-mode .db-cal-cell           { background: rgba(0,0,0,0.04); border-color: rgba(0,0,0,0.06); }
-html.light-mode .db-cal-active         { background: rgba(109,40,217,0.2); border-color: rgba(109,40,217,0.35); }
-html.light-mode .db-cal-active .db-cal-dow { color: #6d28d9; }
+html.light-mode .db-cal-active         { background: rgba(30, 64, 175,0.2); border-color: rgba(30, 64, 175,0.35); }
+html.light-mode .db-cal-active .db-cal-dow { color: #14307a; }
 html.light-mode .db-cal-dow            { color: #bbb; }
 html.light-mode .db-qbar-track         { background: rgba(0,0,0,0.07); }
 html.light-mode .db-qbar-label         { color: #9ca3af; }
@@ -239,8 +239,8 @@ html.light-mode .db-bcat-count         { color: #9ca3af; }
 html.light-mode .db-bcat-track         { background: rgba(0,0,0,0.07); }
 html.light-mode .db-empty              { color: #bbb; }
 html.light-mode .dashboard-nav-btn     { border-color: rgba(0,0,0,0.12); background: rgba(0,0,0,0.05); color: #4b5563; }
-html.light-mode .dashboard-nav-btn:hover { background: rgba(109,40,217,0.08); color: #6d28d9; }
-html.light-mode .db-badges-shortcut    { background: rgba(109,40,217,0.07); border-color: rgba(109,40,217,0.18); color: #7c3aed; }
+html.light-mode .dashboard-nav-btn:hover { background: rgba(30, 64, 175,0.08); color: #14307a; }
+html.light-mode .db-badges-shortcut    { background: rgba(30, 64, 175,0.07); border-color: rgba(30, 64, 175,0.18); color: #1d4ed8; }
 
 /* ── Pomodoro Focus Card ── */
 .db-pomo-panel { }
@@ -280,11 +280,11 @@ html.light-mode .db-badges-shortcut    { background: rgba(109,40,217,0.07); bord
 }
 .db-pomo-msg {
     font-size: 12px;
-    color: #a78bfa;
+    color: #3b5bb5;
     text-align: center;
     padding: 8px 12px;
-    background: rgba(139, 92, 246, 0.06);
-    border: 1px solid rgba(139, 92, 246, 0.12);
+    background: rgba(30, 64, 175, 0.06);
+    border: 1px solid rgba(30, 64, 175, 0.12);
     border-radius: 10px;
     margin-bottom: 12px;
 }
@@ -333,9 +333,9 @@ html.light-mode .db-pomo-stat-item {
     border-color: rgba(0, 0, 0, 0.06);
 }
 html.light-mode .db-pomo-msg {
-    background: rgba(109, 40, 217, 0.06);
-    border-color: rgba(109, 40, 217, 0.12);
-    color: #7c3aed;
+    background: rgba(30, 64, 175, 0.06);
+    border-color: rgba(30, 64, 175, 0.12);
+    color: #1d4ed8;
 }
 
 /* ── Card Error Boundary ── */
@@ -490,8 +490,8 @@ html.light-mode .db-skel {
     transition: all 0.18s;
 }
 .db-cont-item:hover {
-    background: rgba(139, 92, 246, 0.08);
-    border-color: rgba(139, 92, 246, 0.25);
+    background: rgba(30, 64, 175, 0.08);
+    border-color: rgba(30, 64, 175, 0.25);
     transform: translateY(-1px);
 }
 
@@ -543,7 +543,7 @@ html.light-mode .db-skel {
 }
 .db-cont-progress-fill {
     height: 100%;
-    background: linear-gradient(90deg, #8b5cf6, #a78bfa);
+    background: linear-gradient(90deg, #1e40af, #3b5bb5);
     border-radius: 99px;
 }
 .db-cont-sub {
@@ -552,7 +552,7 @@ html.light-mode .db-skel {
 }
 .db-cont-arrow {
     flex-shrink: 0;
-    color: #8b5cf6;
+    color: #1e40af;
     font-size: 18px;
     font-weight: 700;
     opacity: 0;

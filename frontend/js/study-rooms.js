@@ -216,7 +216,7 @@ async function srLoadComments() {
         var initial = (c.display_name || '?').charAt(0).toUpperCase();
         var avatarHtml = c.avatar_url
             ? '<img class="sr-msg-avatar-img" src="' + c.avatar_url + '" alt="">'
-            : '<div class="sr-msg-avatar" style="background:' + (c.avatar_color || '#8b5cf6') + '">' + initial + '</div>';
+            : '<div class="sr-msg-avatar" style="background:' + (c.avatar_color || '#1e40af') + '">' + initial + '</div>';
 
         // Owner/moderator can delete any message, user can delete their own
         var canDelete = canModerate || c.user_id === myId;
@@ -266,7 +266,7 @@ async function srPostComment() {
 
         var userName = (_authUser && _authUser.display_name) || 'Bạn';
         var initial = userName.charAt(0).toUpperCase();
-        var avatarColor = (_authUser && _authUser.avatar_color) || '#8b5cf6';
+        var avatarColor = (_authUser && _authUser.avatar_color) || '#1e40af';
         var tempId = 'temp_' + Date.now();
 
         var tempHtml = '<div class="sr-msg sr-msg-sending" id="' + tempId + '">'
@@ -629,7 +629,7 @@ function _srRenderMembers() {
         var initial = (m.display_name || '?').charAt(0).toUpperCase();
         var avatarHtml = m.avatar_url
             ? '<img class="sr-member-avatar-img" src="' + m.avatar_url + '" alt="">'
-            : '<div class="sr-member-avatar" style="background:' + (m.avatar_color || '#8b5cf6') + '">' + initial + '</div>';
+            : '<div class="sr-member-avatar" style="background:' + (m.avatar_color || '#1e40af') + '">' + initial + '</div>';
 
         var roleLabel = m.role === 'owner' ? '👑 Chủ phòng' : m.role === 'moderator' ? '🛡️ Quản lý' : '👤 Thành viên';
         var joinDate = new Date(m.joined_at).toLocaleDateString('vi-VN');

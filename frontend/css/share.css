@@ -6,12 +6,12 @@
 .share-btn {
     display: flex; align-items: center; gap: 7px;
     padding: 9px 16px; border-radius: 10px;
-    border: 1px solid rgba(139,92,246,0.35);
-    background: rgba(139,92,246,0.1); color: #c4b5fd;
+    border: 1px solid rgba(30, 64, 175,0.35);
+    background: rgba(30, 64, 175,0.1); color: #c4b5fd;
     font-size: 13px; font-weight: 500; cursor: pointer;
     transition: all 0.2s; white-space: nowrap;
 }
-.share-btn:hover { background: rgba(139,92,246,0.22); border-color: #7c3aed; }
+.share-btn:hover { background: rgba(30, 64, 175,0.22); border-color: #1d4ed8; }
 .share-btn svg { width: 15px; height: 15px; }
 .share-modal-overlay {
     position: fixed; inset: 0; background: rgba(0,0,0,0.7);
@@ -39,8 +39,8 @@
 .share-modal-close:hover { background: rgba(239,68,68,0.15); color: #f87171; }
 .share-preview-card {
     margin: 16px; border-radius: 14px;
-    border: 1px solid rgba(139,92,246,0.2);
-    background: linear-gradient(135deg, rgba(139,92,246,0.08), rgba(99,102,241,0.04));
+    border: 1px solid rgba(30, 64, 175,0.2);
+    background: linear-gradient(135deg, rgba(30, 64, 175,0.08), rgba(37, 84, 199,0.04));
     padding: 18px; display: flex; flex-direction: column; gap: 10px;
 }
 .share-preview-badge { font-size: 11px; font-weight: 600; letter-spacing: 0.06em; color: #c4b5fd; text-transform: uppercase; }
@@ -64,8 +64,8 @@
 }
 .share-action-btn svg { width: 15px; height: 15px; flex-shrink: 0; }
 .share-action-btn:hover { background: rgba(255,255,255,0.1); }
-.share-action-native { background: rgba(139,92,246,0.15); border-color: rgba(139,92,246,0.3); color: #c4b5fd; }
-.share-action-native:hover { background: rgba(139,92,246,0.25); }
+.share-action-native { background: rgba(30, 64, 175,0.15); border-color: rgba(30, 64, 175,0.3); color: #c4b5fd; }
+.share-action-native:hover { background: rgba(30, 64, 175,0.25); }
 .share-action-copy:hover { background: rgba(234,179,8,0.12); border-color: rgba(234,179,8,0.3); color: #fde047; }
 .share-action-link:hover { background: rgba(16,185,129,0.12); border-color: rgba(16,185,129,0.3); color: #34d399; }
 @media (max-width: 480px) {

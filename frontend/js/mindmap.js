@@ -23,12 +23,12 @@ function buildMindMapData(d) {
         root.children.push({
             name: '📑 Chapters',
             type: 'category',
-            color: '#4f46e5',
+            color: '#1e40af',
             children: d.chapters.map(c => ({
                 name: truncate(c.title, 999),
                 type: 'chapter',
                 extra: c.timestamp_str || '',
-                color: '#4f46e5'
+                color: '#1e40af'
             }))
         });
     }
@@ -140,17 +140,17 @@ function renderMindMap() {
     const strokeBg = isLight ? '#f8f9fc' : '#08081a';
 
     const COLORS_DARK = {
-        root:     { node: '#7c3aed', glow: '#7c3aed', text: '#f1f1f1'  },
-        category: { node: '#7c3aed', glow: '#9333ea', text: '#e9d5ff'  },
-        chapter:  { node: '#4338ca', glow: '#6366f1', text: '#c7d2fe'  },
+        root:     { node: '#1d4ed8', glow: '#1d4ed8', text: '#f1f1f1'  },
+        category: { node: '#1d4ed8', glow: '#9333ea', text: '#e9d5ff'  },
+        chapter:  { node: '#14307a', glow: '#2554c7', text: '#c7d2fe'  },
         takeaway: { node: '#0e7490', glow: '#22d3ee', text: '#a5f3fc'  },
         highlight:{ node: '#92400e', glow: '#f59e0b', text: '#fde68a'  },
         term:     { node: '#065f46', glow: '#10b981', text: '#a7f3d0'  },
     };
     const COLORS_LIGHT = {
-        root:     { node: '#7c3aed', glow: '#7c3aed', text: '#1e1b4b'  },
-        category: { node: '#7c3aed', glow: '#9333ea', text: '#3730a3'  },
-        chapter:  { node: '#4338ca', glow: '#6366f1', text: '#312e81'  },
+        root:     { node: '#1d4ed8', glow: '#1d4ed8', text: '#1e1b4b'  },
+        category: { node: '#1d4ed8', glow: '#9333ea', text: '#102a5c'  },
+        chapter:  { node: '#14307a', glow: '#2554c7', text: '#0f2350'  },
         takeaway: { node: '#0e7490', glow: '#22d3ee', text: '#155e75'  },
         highlight:{ node: '#92400e', glow: '#f59e0b', text: '#78350f'  },
         term:     { node: '#065f46', glow: '#10b981', text: '#064e3b'  },
@@ -259,7 +259,7 @@ function renderMindMap() {
               .attr('text-anchor', 'middle')
               .attr('font-size', '11px')
               .attr('font-weight', '600')
-              .attr('fill', isLight ? '#4c1d95' : '#c4b5fd')
+              .attr('fill', isLight ? '#102a5c' : '#c4b5fd')
               .attr('font-family', 'Inter, system-ui, sans-serif')
               .style('paint-order', 'stroke')
               .style('stroke', strokeBg)

@@ -567,7 +567,7 @@ function showSmallFeedback(text) {
     var el = document.createElement('div');
     el.id = 'sm2Feedback';
     el.style.cssText = 'position:absolute;bottom:100px;left:50%;transform:translateX(-50%);' +
-        'background:rgba(139,92,246,0.9);color:white;padding:6px 16px;border-radius:8px;' +
+        'background:rgba(30, 64, 175,0.9);color:white;padding:6px 16px;border-radius:8px;' +
         'font-size:12px;font-weight:600;z-index:9999;white-space:nowrap;' +
         'animation:fadeIn 0.2s ease;pointer-events:none;';
     el.textContent = text;

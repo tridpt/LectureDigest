@@ -59,7 +59,7 @@ function exportPDF() {
             var ts = typeof bm.time === 'number' ? fmtSecs(bm.time) : (bm.timestamp_str || '');
             var lbl = bm.label || bm.note || bm.title || '';
             return '<div style="display:flex;gap:10px;padding:6px 0;border-bottom:1px solid #f3f4f6;font-size:10.5pt">'
-                + '<span style="background:#ede9fe;color:#5b21b6;padding:2px 8px;border-radius:4px;font-size:9.5pt;font-weight:700;white-space:nowrap;font-family:Courier New,monospace">'
+                + '<span style="background:#ede9fe;color:#14307a;padding:2px 8px;border-radius:4px;font-size:9.5pt;font-weight:700;white-space:nowrap;font-family:Courier New,monospace">'
                 + ts + '</span>'
                 + '<span style="color:#374151">' + lbl + '</span></div>';
           }).join('')
@@ -87,7 +87,7 @@ function exportPDF() {
 
   /* ── Cover ── */
   .cover {
-    background: linear-gradient(135deg, #6d28d9 0%, #4338ca 100%);
+    background: linear-gradient(135deg, #14307a 0%, #14307a 100%);
     color: white;
     padding: 36px 40px;
     border-radius: 16px;
@@ -113,7 +113,7 @@ function exportPDF() {
   .section-title {
     font-size: 12pt;
     font-weight: 700;
-    color: #5b21b6;
+    color: #14307a;
     margin-bottom: 14px;
     padding-bottom: 8px;
     border-bottom: 2px solid #ede9fe;
@@ -143,7 +143,7 @@ function exportPDF() {
     align-items: flex-start;
   }
   .ts {
-    background: #ede9fe; color: #5b21b6;
+    background: #ede9fe; color: #14307a;
     padding: 3px 9px; border-radius: 5px;
     font-size: 9.5pt; font-weight: 700;
     white-space: nowrap; flex-shrink: 0;
@@ -170,7 +170,7 @@ function exportPDF() {
   }
   .qnum {
     display: inline-flex; align-items: center; justify-content: center;
-    background: #6d28d9; color: white;
+    background: #14307a; color: white;
     width: 22px; height: 22px; border-radius: 50%;
     font-size: 9.5pt; font-weight: 700;
     flex-shrink: 0; margin-top: 1px;
@@ -214,7 +214,7 @@ function exportPDF() {
     font-size: 9pt; margin-top: 48px;
     padding-top: 16px; border-top: 1px solid #e5e7eb;
   }
-  .footer a { color: #6d28d9; text-decoration: none; }
+  .footer a { color: #14307a; text-decoration: none; }
 
   /* ── Print ── */
   @media print {
