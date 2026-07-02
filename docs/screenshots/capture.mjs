@@ -118,7 +118,7 @@ async function seed(page) {
     localStorage.setItem('lectureDigest_history', JSON.stringify([payload.entry]));
     localStorage.setItem('lectureDigest_gamification', JSON.stringify(payload.gamif));
     localStorage.setItem('lectureDigest_srsHistory', JSON.stringify(payload.srs));
-    localStorage.setItem('lectureDigest_theme', 'dark');
+    localStorage.setItem('lectureDigest_theme', 'light');
     // Seed SM-2 data so the SRS review deck has cards.
     const sm2 = {};
     payload.entry.data.quiz.forEach((q, i) => {
