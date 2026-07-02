@@ -17,7 +17,7 @@
     background: rgba(7,7,18,0.95);
     backdrop-filter: blur(20px);
     -webkit-backdrop-filter: blur(20px);
-    border-top: 1px solid rgba(139,92,246,0.15);
+    border-top: 1px solid rgba(30, 64, 175,0.15);
     padding: 6px 8px calc(6px + env(safe-area-inset-bottom, 0px));
     box-shadow: 0 -4px 30px rgba(0,0,0,0.4);
 }
@@ -55,7 +55,7 @@ html.light-mode .mobile-bottom-nav {
 .mob-nav-btn.active,
 .mob-nav-btn:active {
     color: var(--accent);
-    background: rgba(139,92,246,0.12);
+    background: rgba(30, 64, 175,0.12);
 }
 
 @media (max-width: 640px) {

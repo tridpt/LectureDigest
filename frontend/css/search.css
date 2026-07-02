@@ -26,7 +26,7 @@
     max-width: 94vw;
     max-height: 65vh;
     background: #12122a;
-    border: 1px solid rgba(139, 92, 246, 0.2);
+    border: 1px solid rgba(30, 64, 175, 0.2);
     border-radius: 16px;
     box-shadow: 0 32px 80px rgba(0, 0, 0, 0.8), 0 0 0 1px rgba(255,255,255,0.03);
     display: flex;
@@ -45,7 +45,7 @@
     align-items: center;
     gap: 10px;
     padding: 14px 18px;
-    border-bottom: 1px solid rgba(139, 92, 246, 0.12);
+    border-bottom: 1px solid rgba(30, 64, 175, 0.12);
 }
 .gsearch-icon {
     flex-shrink: 0;
@@ -132,7 +132,7 @@
 }
 .gsearch-item:hover,
 .gsearch-item.active {
-    background: rgba(139, 92, 246, 0.1);
+    background: rgba(30, 64, 175, 0.1);
 }
 .gsearch-item-icon {
     width: 36px;
@@ -144,7 +144,7 @@
     font-size: 16px;
     flex-shrink: 0;
 }
-.gsearch-item-icon.video { background: rgba(139, 92, 246, 0.12); }
+.gsearch-item-icon.video { background: rgba(30, 64, 175, 0.12); }
 .gsearch-item-icon.note  { background: rgba(16, 185, 129, 0.12); }
 .gsearch-item-icon.transcript { background: rgba(59, 130, 246, 0.12); }
 .gsearch-item-icon.bookmark { background: rgba(245, 158, 11, 0.12); }
@@ -163,7 +163,7 @@
     margin-bottom: 2px;
 }
 .gsearch-item-title mark {
-    background: rgba(139, 92, 246, 0.35);
+    background: rgba(30, 64, 175, 0.35);
     color: inherit;
     border-radius: 2px;
     padding: 0 1px;
@@ -176,7 +176,7 @@
     text-overflow: ellipsis;
 }
 .gsearch-item-sub mark {
-    background: rgba(139, 92, 246, 0.25);
+    background: rgba(30, 64, 175, 0.25);
     color: inherit;
     border-radius: 2px;
     padding: 0 1px;
@@ -188,7 +188,7 @@
     border-radius: 4px;
     font-weight: 600;
 }
-.gsearch-item-badge.video { background: rgba(139,92,246,0.15); color: var(--accent-light); }
+.gsearch-item-badge.video { background: rgba(30, 64, 175,0.15); color: var(--accent-light); }
 .gsearch-item-badge.note  { background: rgba(16,185,129,0.15); color: #34d399; }
 .gsearch-item-badge.transcript { background: rgba(59,130,246,0.15); color: #60a5fa; }
 .gsearch-item-badge.bookmark { background: rgba(245,158,11,0.15); color: #fbbf24; }
@@ -229,14 +229,14 @@
 .gsearch-trigger:hover {
     border-color: var(--accent);
     color: var(--text-primary);
-    background: rgba(139, 92, 246, 0.08);
+    background: rgba(30, 64, 175, 0.08);
 }
 .gsearch-trigger svg { width: 14px; height: 14px; flex-shrink: 0; }
 .gsearch-trigger .gsearch-trigger-kbd {
     font-size: 9px;
     padding: 1px 5px;
     border-radius: 3px;
-    background: rgba(139, 92, 246, 0.12);
+    background: rgba(30, 64, 175, 0.12);
     color: var(--accent-light);
     font-family: var(--font-mono, monospace);
     font-weight: 600;
@@ -254,23 +254,23 @@
    PAGE-LEVEL HIGHLIGHT (after search result click)
    ═══════════════════════════════════════════════ */
 .gsearch-page-highlight {
-    outline: 2px solid rgba(139, 92, 246, 0.6) !important;
+    outline: 2px solid rgba(30, 64, 175, 0.6) !important;
     outline-offset: 3px;
-    background: rgba(139, 92, 246, 0.08) !important;
+    background: rgba(30, 64, 175, 0.08) !important;
     border-radius: 6px;
     animation: gsearchPulse 1s ease-in-out 3;
     position: relative;
     z-index: 1;
 }
 @keyframes gsearchPulse {
-    0%   { outline-color: rgba(139, 92, 246, 0.6); box-shadow: 0 0 0 0 rgba(139, 92, 246, 0.3); }
-    50%  { outline-color: rgba(139, 92, 246, 0.9); box-shadow: 0 0 20px 4px rgba(139, 92, 246, 0.2); }
-    100% { outline-color: rgba(139, 92, 246, 0.6); box-shadow: 0 0 0 0 rgba(139, 92, 246, 0.3); }
+    0%   { outline-color: rgba(30, 64, 175, 0.6); box-shadow: 0 0 0 0 rgba(30, 64, 175, 0.3); }
+    50%  { outline-color: rgba(30, 64, 175, 0.9); box-shadow: 0 0 20px 4px rgba(30, 64, 175, 0.2); }
+    100% { outline-color: rgba(30, 64, 175, 0.6); box-shadow: 0 0 0 0 rgba(30, 64, 175, 0.3); }
 }
 
 /* Injected text mark */
 .gsearch-text-mark {
-    background: rgba(139, 92, 246, 0.35);
+    background: rgba(30, 64, 175, 0.35);
     color: inherit;
     border-radius: 2px;
     padding: 1px 3px;
@@ -278,19 +278,19 @@
     animation: gsearchMarkPulse 0.8s ease-in-out 3;
 }
 @keyframes gsearchMarkPulse {
-    0%   { background: rgba(139, 92, 246, 0.35); }
-    50%  { background: rgba(139, 92, 246, 0.65); }
-    100% { background: rgba(139, 92, 246, 0.35); }
+    0%   { background: rgba(30, 64, 175, 0.35); }
+    50%  { background: rgba(30, 64, 175, 0.65); }
+    100% { background: rgba(30, 64, 175, 0.35); }
 }
 
 
 
 /* ── Light mode ── */
-.light-mode .gsearch-modal { background: #fff; border-color: rgba(139,92,246,0.15); box-shadow: 0 20px 60px rgba(0,0,0,0.15); }
+.light-mode .gsearch-modal { background: #fff; border-color: rgba(30, 64, 175,0.15); box-shadow: 0 20px 60px rgba(0,0,0,0.15); }
 .light-mode .gsearch-input { background: #f8fafc; border-color: rgba(0,0,0,0.08); color: #1e293b; }
 .light-mode .gsearch-input::placeholder { color: #94a3b8; }
 .light-mode .gsearch-result { color: #1e293b; }
-.light-mode .gsearch-result:hover { background: rgba(139,92,246,0.04); }
+.light-mode .gsearch-result:hover { background: rgba(30, 64, 175,0.04); }
 .light-mode .gsearch-result-title { color: #1e293b; }
 .light-mode .gsearch-result-sub { color: #64748b; }
 .light-mode .gsearch-empty { color: #64748b; }

@@ -188,8 +188,8 @@
 .ex-hint {
     font-size: 12px;
     color: var(--text-muted);
-    background: rgba(139, 92, 246, 0.06);
-    border-left: 3px solid rgba(139, 92, 246, 0.3);
+    background: rgba(30, 64, 175, 0.06);
+    border-left: 3px solid rgba(30, 64, 175, 0.3);
     padding: 6px 12px;
     border-radius: 0 6px 6px 0;
     margin-bottom: 10px;
@@ -240,7 +240,7 @@
 }
 .ex-tf-btn.selected {
     border-color: var(--accent);
-    background: rgba(139, 92, 246, 0.08);
+    background: rgba(30, 64, 175, 0.08);
 }
 .ex-tf-btn.correct {
     border-color: var(--success) !important;
@@ -295,7 +295,7 @@
 }
 .ex-match-card.matched {
     border-color: var(--accent);
-    background: rgba(139, 92, 246, 0.06);
+    background: rgba(30, 64, 175, 0.06);
 }
 .ex-match-card.correct {
     border-color: var(--success) !important;
@@ -323,7 +323,7 @@
     color: #f59e0b;
 }
 .ex-match-num {
-    background: rgba(139, 92, 246, 0.15);
+    background: rgba(30, 64, 175, 0.15);
     color: var(--accent-light);
 }
 
@@ -382,7 +382,7 @@
 }
 .ex-sa-textarea:focus {
     border-color: var(--accent);
-    box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.15);
+    box-shadow: 0 0 0 3px rgba(30, 64, 175, 0.15);
 }
 .ex-sa-textarea:disabled {
     opacity: 0.7;
@@ -390,8 +390,8 @@
 }
 
 .ex-sa-model-answer {
-    background: rgba(139, 92, 246, 0.06);
-    border: 1px solid rgba(139, 92, 246, 0.2);
+    background: rgba(30, 64, 175, 0.06);
+    border: 1px solid rgba(30, 64, 175, 0.2);
     border-radius: var(--radius-md);
     padding: 14px;
     margin-bottom: 12px;
@@ -411,7 +411,7 @@
 .ex-sa-keypoints {
     margin-top: 10px;
     padding-top: 10px;
-    border-top: 1px solid rgba(139, 92, 246, 0.15);
+    border-top: 1px solid rgba(30, 64, 175, 0.15);
     font-size: 12px;
     color: var(--text-secondary);
 }
@@ -492,7 +492,7 @@
     transition: all var(--transition);
     margin-top: 4px;
 }
-.ex-check-btn:hover:not(:disabled) { transform: translateY(-1px); box-shadow: 0 4px 12px rgba(109, 40, 217, 0.35); }
+.ex-check-btn:hover:not(:disabled) { transform: translateY(-1px); box-shadow: 0 4px 12px rgba(30, 64, 175, 0.35); }
 .ex-check-btn:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
 
 .ex-reset-btn {
@@ -509,7 +509,7 @@
 }
 .ex-reset-btn:hover { border-color: var(--text-secondary); color: var(--text-primary); }
 
-.ex-reveal-btn { background: linear-gradient(135deg, #6366f1, #4f46e5); }
+.ex-reveal-btn { background: linear-gradient(135deg, #2554c7, #1e40af); }
 
 /* ── Loading & Empty ── */
 .ex-loading {
@@ -582,6 +582,6 @@
     background: rgba(0, 0, 0, 0.01);
 }
 .light-mode .ex-sa-model-answer {
-    background: rgba(139, 92, 246, 0.04);
+    background: rgba(30, 64, 175, 0.04);
 }
 .light-mode .ex-feedback.correct { color: #047857; }

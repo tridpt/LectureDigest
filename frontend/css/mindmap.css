@@ -6,12 +6,12 @@
 .mindmap-btn {
     display: flex; align-items: center; gap: 7px;
     padding: 9px 16px; border-radius: 10px;
-    border: 1px solid rgba(99,102,241,0.35);
-    background: rgba(99,102,241,0.1); color: #a5b4fc;
+    border: 1px solid rgba(37, 84, 199,0.35);
+    background: rgba(37, 84, 199,0.1); color: #a5b4fc;
     font-size: 13px; font-weight: 500; cursor: pointer;
     transition: all 0.2s; white-space: nowrap;
 }
-.mindmap-btn:hover { background: rgba(99,102,241,0.22); border-color: #6366f1; }
+.mindmap-btn:hover { background: rgba(37, 84, 199,0.22); border-color: #2554c7; }
 .mindmap-btn svg { width: 15px; height: 15px; }
 
 .mm-modal-overlay {
@@ -48,7 +48,7 @@
     color: #aaa; font-size: 12px; cursor: pointer; transition: all 0.15s;
 }
 .mm-ctrl-btn:hover { background: rgba(255,255,255,0.12); color: #f1f1f1; }
-.mm-download-btn:hover { background: rgba(99,102,241,0.2); border-color: #6366f1; color: #a5b4fc; }
+.mm-download-btn:hover { background: rgba(37, 84, 199,0.2); border-color: #2554c7; color: #a5b4fc; }
 .mm-modal-close {
     background: rgba(255,255,255,0.07); border: none;
     color: #888; width: 28px; height: 28px;
@@ -63,7 +63,7 @@
     background: #080812;
     background-image:
         radial-gradient(ellipse at center, #0f1035 0%, #080812 60%),
-        radial-gradient(circle, rgba(139,92,246,0.08) 1px, transparent 1px);
+        radial-gradient(circle, rgba(30, 64, 175,0.08) 1px, transparent 1px);
     background-size: 100% 100%, 28px 28px;
 }
 .mm-canvas-area svg { cursor: grab; }
@@ -72,7 +72,7 @@
 .mm-tooltip {
     position: absolute; pointer-events: none;
     background: rgba(15,15,30,0.95);
-    border: 1px solid rgba(139,92,246,0.3);
+    border: 1px solid rgba(30, 64, 175,0.3);
     border-radius: 8px; padding: 7px 11px;
     font-size: 12px; color: #e2e8f0; line-height: 1.5;
     max-width: 280px; white-space: pre-line;

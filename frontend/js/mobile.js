@@ -12,7 +12,7 @@ function mobScrollTo(elementId) {
         el.scrollIntoView({ behavior: 'smooth', block: 'start' });
         // Brief highlight effect
         el.style.transition = 'box-shadow 0.3s';
-        el.style.boxShadow = '0 0 0 2px rgba(139,92,246,0.5)';
+        el.style.boxShadow = '0 0 0 2px rgba(30, 64, 175,0.5)';
         setTimeout(function() { el.style.boxShadow = ''; }, 1500);
     }
 }

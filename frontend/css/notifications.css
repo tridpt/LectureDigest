@@ -20,7 +20,7 @@
 }
 
 .notif-bell-btn:hover {
-    border-color: rgba(139, 92, 246, 0.3);
+    border-color: rgba(30, 64, 175, 0.3);
     color: var(--text-primary, #f1f5f9);
 }
 
@@ -50,7 +50,7 @@
     width: 360px;
     max-height: 480px;
     background: #1e1e3a;
-    border: 1px solid rgba(139, 92, 246, 0.2);
+    border: 1px solid rgba(30, 64, 175, 0.2);
     border-radius: 16px;
     box-shadow: 0 16px 48px rgba(0, 0, 0, 0.5);
     z-index: 8000;
@@ -90,8 +90,8 @@
 }
 
 .notif-action-btn:hover {
-    background: rgba(139, 92, 246, 0.1);
-    color: #a78bfa;
+    background: rgba(30, 64, 175, 0.1);
+    color: #3b5bb5;
 }
 
 .notif-panel-body {
@@ -111,7 +111,7 @@
 }
 
 .notif-item:hover {
-    background: rgba(139, 92, 246, 0.06);
+    background: rgba(30, 64, 175, 0.06);
 }
 
 .notif-item.notif-read {
@@ -119,7 +119,7 @@
 }
 
 .notif-item:not(.notif-read) {
-    background: rgba(139, 92, 246, 0.04);
+    background: rgba(30, 64, 175, 0.04);
 }
 
 .notif-icon {
@@ -177,7 +177,7 @@
 }
 
 .light-mode .notif-item:not(.notif-read) {
-    background: rgba(139, 92, 246, 0.03);
+    background: rgba(30, 64, 175, 0.03);
 }
 
 .light-mode .notif-bell-btn {

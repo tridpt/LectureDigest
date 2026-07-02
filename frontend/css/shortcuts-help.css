@@ -22,14 +22,14 @@
 /* Modal */
 .kbhelp-modal {
     background: #12122a;
-    border: 1px solid rgba(139, 92, 246, 0.2);
+    border: 1px solid rgba(30, 64, 175, 0.2);
     border-radius: 20px;
     width: 90%;
     max-width: 560px;
     max-height: 80vh;
     display: flex;
     flex-direction: column;
-    box-shadow: 0 24px 64px rgba(0, 0, 0, 0.6), 0 0 0 1px rgba(139, 92, 246, 0.1);
+    box-shadow: 0 24px 64px rgba(0, 0, 0, 0.6), 0 0 0 1px rgba(30, 64, 175, 0.1);
     transform: scale(0.95) translateY(10px);
     transition: transform 0.2s ease;
 }
@@ -76,7 +76,7 @@
     overflow-y: auto;
     flex: 1;
     scrollbar-width: thin;
-    scrollbar-color: rgba(139, 92, 246, 0.3) transparent;
+    scrollbar-color: rgba(30, 64, 175, 0.3) transparent;
     display: grid;
     grid-template-columns: 1fr 1fr;
     gap: 18px;
@@ -94,7 +94,7 @@
 .kbhelp-section-title {
     font-size: 12px;
     font-weight: 700;
-    color: #a78bfa;
+    color: #3b5bb5;
     text-transform: uppercase;
     letter-spacing: 0.05em;
     margin: 0 0 4px;
@@ -169,8 +169,8 @@ html.light-mode .kbhelp-overlay {
 }
 html.light-mode .kbhelp-modal {
     background: #fff;
-    border-color: rgba(109, 40, 217, 0.15);
-    box-shadow: 0 24px 64px rgba(0, 0, 0, 0.15), 0 0 0 1px rgba(109, 40, 217, 0.08);
+    border-color: rgba(30, 64, 175, 0.15);
+    box-shadow: 0 24px 64px rgba(0, 0, 0, 0.15), 0 0 0 1px rgba(30, 64, 175, 0.08);
 }
 html.light-mode .kbhelp-title { color: #1e1b4b; }
 html.light-mode .kbhelp-header { border-bottom-color: rgba(0, 0, 0, 0.06); }
@@ -183,7 +183,7 @@ html.light-mode .kbhelp-close:hover {
     background: rgba(0, 0, 0, 0.06);
     color: #374151;
 }
-html.light-mode .kbhelp-section-title { color: #7c3aed; }
+html.light-mode .kbhelp-section-title { color: #1d4ed8; }
 html.light-mode .kbhelp-kbd {
     border-color: rgba(0, 0, 0, 0.12);
     background: rgba(0, 0, 0, 0.04);

@@ -12,15 +12,15 @@
 }
 .footer-inner { max-width: 600px; margin: 0 auto; }
 .footer-brand { margin: 0 0 10px; font-size: 14px; font-weight: 600; color: var(--text-secondary, #94a3b8); }
-.footer-accent { color: #a78bfa; }
+.footer-accent { color: #3b5bb5; }
 .footer-links { display: flex; justify-content: center; gap: 16px; margin-bottom: 10px; flex-wrap: wrap; }
 .footer-link { display: inline-flex; align-items: center; gap: 5px; color: var(--text-secondary, #94a3b8); text-decoration: none; font-size: 12px; font-weight: 500; transition: color 0.2s; }
-.footer-link:hover { color: #a78bfa; }
+.footer-link:hover { color: #3b5bb5; }
 .footer-link svg { flex-shrink: 0; }
 .footer-copy { margin: 0; font-size: 11px; color: var(--text-muted, #64748b); }
 .light-mode .footer-brand { color: #475569; }
 .light-mode .footer-link { color: #64748b; }
-.light-mode .footer-link:hover { color: #7c3aed; }
+.light-mode .footer-link:hover { color: #1d4ed8; }
 .light-mode .footer-copy { color: #94a3b8; }
 
 /* ═══════════════════════════════════════════════
@@ -62,15 +62,15 @@
     width: 44px;
     height: 44px;
     border-radius: 14px;
-    border: 1px solid rgba(139, 92, 246, 0.25);
+    border: 1px solid rgba(30, 64, 175, 0.25);
     background: rgba(18, 18, 42, 0.85);
     backdrop-filter: blur(12px);
-    color: #a78bfa;
+    color: #3b5bb5;
     cursor: pointer;
     display: flex;
     align-items: center;
     justify-content: center;
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(139, 92, 246, 0.08);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(30, 64, 175, 0.08);
     opacity: 0;
     pointer-events: none;
     transform: translateY(16px);
@@ -82,11 +82,11 @@
     transform: translateY(0);
 }
 .btt-btn:hover {
-    background: rgba(139, 92, 246, 0.2);
-    border-color: rgba(139, 92, 246, 0.5);
+    background: rgba(30, 64, 175, 0.2);
+    border-color: rgba(30, 64, 175, 0.5);
     color: #c4b5fd;
     transform: translateY(-2px);
-    box-shadow: 0 8px 28px rgba(139, 92, 246, 0.25), 0 0 0 1px rgba(139, 92, 246, 0.15);
+    box-shadow: 0 8px 28px rgba(30, 64, 175, 0.25), 0 0 0 1px rgba(30, 64, 175, 0.15);
 }
 .btt-btn:active {
     transform: translateY(0);
@@ -98,14 +98,14 @@
 /* Light mode */
 html.light-mode .btt-btn {
     background: rgba(255, 255, 255, 0.9);
-    border-color: rgba(109, 40, 217, 0.15);
-    color: #7c3aed;
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08), 0 0 0 1px rgba(109, 40, 217, 0.06);
+    border-color: rgba(30, 64, 175, 0.15);
+    color: #1d4ed8;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08), 0 0 0 1px rgba(30, 64, 175, 0.06);
 }
 html.light-mode .btt-btn:hover {
-    background: rgba(109, 40, 217, 0.08);
-    border-color: rgba(109, 40, 217, 0.3);
-    color: #6d28d9;
+    background: rgba(30, 64, 175, 0.08);
+    border-color: rgba(30, 64, 175, 0.3);
+    color: #14307a;
 }
 
 /* Mobile: smaller + closer to edge */
@@ -147,7 +147,7 @@ html.light-mode .btt-btn:hover {
 
 .app-confirm-modal {
     background: var(--bg-secondary, #1a1a2e);
-    border: 1px solid rgba(139, 92, 246, 0.2);
+    border: 1px solid rgba(30, 64, 175, 0.2);
     border-radius: 18px;
     padding: 28px 26px 22px;
     width: 100%;
@@ -204,7 +204,7 @@ html.light-mode .btt-btn:hover {
     color: #fff;
 }
 .app-confirm-ok {
-    background: linear-gradient(135deg, #8b5cf6, #6d28d9);
+    background: linear-gradient(135deg, #1e40af, #14307a);
     color: #fff;
 }
 .app-confirm-ok:hover {

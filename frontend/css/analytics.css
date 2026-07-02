@@ -57,10 +57,10 @@
 .an-hm-cell:hover { transform: scale(1.4); z-index: 2; }
 
 .an-hm-l0 { background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.05); }
-.an-hm-l1 { background: rgba(139,92,246,0.2); border: 1px solid rgba(139,92,246,0.3); }
-.an-hm-l2 { background: rgba(139,92,246,0.4); border: 1px solid rgba(139,92,246,0.5); }
-.an-hm-l3 { background: rgba(139,92,246,0.6); border: 1px solid rgba(139,92,246,0.7); }
-.an-hm-l4 { background: rgba(139,92,246,0.85); border: 1px solid rgba(139,92,246,0.9); }
+.an-hm-l1 { background: rgba(30, 64, 175,0.2); border: 1px solid rgba(30, 64, 175,0.3); }
+.an-hm-l2 { background: rgba(30, 64, 175,0.4); border: 1px solid rgba(30, 64, 175,0.5); }
+.an-hm-l3 { background: rgba(30, 64, 175,0.6); border: 1px solid rgba(30, 64, 175,0.7); }
+.an-hm-l4 { background: rgba(30, 64, 175,0.85); border: 1px solid rgba(30, 64, 175,0.9); }
 .an-hm-future { background: transparent; border: 1px solid transparent; }
 .an-hm-today { outline: 2px solid #f59e0b; outline-offset: 1px; }
 
@@ -137,8 +137,8 @@
     transition: all 0.3s;
 }
 .an-wr-day-bar.active {
-    background: linear-gradient(90deg, #7c3aed, #a855f7);
-    box-shadow: 0 0 8px rgba(139,92,246,0.3);
+    background: linear-gradient(90deg, #1d4ed8, #a855f7);
+    box-shadow: 0 0 8px rgba(30, 64, 175,0.3);
 }
 
 /* ═══════════════════════════════════════════════════
@@ -213,10 +213,10 @@
    LIGHT MODE
    ═══════════════════════════════════════════════════ */
 html.light-mode .an-hm-l0 { background: rgba(0,0,0,0.04); border-color: rgba(0,0,0,0.06); }
-html.light-mode .an-hm-l1 { background: rgba(109,40,217,0.15); border-color: rgba(109,40,217,0.25); }
-html.light-mode .an-hm-l2 { background: rgba(109,40,217,0.3); border-color: rgba(109,40,217,0.4); }
-html.light-mode .an-hm-l3 { background: rgba(109,40,217,0.5); border-color: rgba(109,40,217,0.6); }
-html.light-mode .an-hm-l4 { background: rgba(109,40,217,0.75); border-color: rgba(109,40,217,0.85); }
+html.light-mode .an-hm-l1 { background: rgba(30, 64, 175,0.15); border-color: rgba(30, 64, 175,0.25); }
+html.light-mode .an-hm-l2 { background: rgba(30, 64, 175,0.3); border-color: rgba(30, 64, 175,0.4); }
+html.light-mode .an-hm-l3 { background: rgba(30, 64, 175,0.5); border-color: rgba(30, 64, 175,0.6); }
+html.light-mode .an-hm-l4 { background: rgba(30, 64, 175,0.75); border-color: rgba(30, 64, 175,0.85); }
 html.light-mode .an-trend-avg { color: #6b7280; }
 html.light-mode .an-trend-avg strong { color: #1e1b4b; }
 html.light-mode .an-trend-chart { background: rgba(0,0,0,0.03); }

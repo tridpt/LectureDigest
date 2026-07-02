@@ -176,13 +176,13 @@ function _anRenderQuizTrend(history) {
             '<svg viewBox="0 0 ' + W + ' ' + H + '" preserveAspectRatio="xMidYMid meet">' +
                 '<defs>' +
                     '<linearGradient id="anTrendGrad" x1="0" y1="0" x2="0" y2="1">' +
-                        '<stop offset="0%" stop-color="#8b5cf6" stop-opacity="0.3"/>' +
-                        '<stop offset="100%" stop-color="#8b5cf6" stop-opacity="0.02"/>' +
+                        '<stop offset="0%" stop-color="#1e40af" stop-opacity="0.3"/>' +
+                        '<stop offset="100%" stop-color="#1e40af" stop-opacity="0.02"/>' +
                     '</linearGradient>' +
                 '</defs>' +
                 gridHtml +
                 '<path d="' + areaD + '" fill="url(#anTrendGrad)"/>' +
-                '<path d="' + pathD + '" fill="none" stroke="#8b5cf6" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>' +
+                '<path d="' + pathD + '" fill="none" stroke="#1e40af" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>' +
                 dotsHtml +
             '</svg>' +
         '</div>' +
@@ -361,7 +361,7 @@ function _anRenderStudyHours(g) {
 
     var maxCount = Math.max.apply(null, dowCount) || 1;
     var DOW = ['CN','T2','T3','T4','T5','T6','T7'];
-    var COLORS = ['#ef4444','#f59e0b','#10b981','#3b82f6','#8b5cf6','#ec4899','#f97316'];
+    var COLORS = ['#ef4444','#f59e0b','#10b981','#3b82f6','#1e40af','#ec4899','#f97316'];
 
     // Find most active day
     var bestDay = 0;
@@ -378,5 +378,5 @@ function _anRenderStudyHours(g) {
                 '</div>';
             }).join('') +
         '</div>' +
-        '<div class="an-sh-insight">Bạn học nhiều nhất vào <strong style="color:#8b5cf6">' + DOW[bestDay] + '</strong></div>';
+        '<div class="an-sh-insight">Bạn học nhiều nhất vào <strong style="color:#1e40af">' + DOW[bestDay] + '</strong></div>';
 }

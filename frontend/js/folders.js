@@ -8,7 +8,7 @@ var _folderVideos = {};   // { folderId: [videoId, ...] }
 var _activeFolderId = null; // null = show all
 
 var FOLDER_ICONS = ['📁','📚','💻','📊','🔬','🌍','💰','🎨','🎵','🏃','📐','🧪','🎓','📝','🔧','⚡','🎯','🌟','💡','🧠'];
-var FOLDER_COLORS = ['#8b5cf6','#6366f1','#3b82f6','#0ea5e9','#14b8a6','#10b981','#f59e0b','#ef4444','#ec4899','#f97316'];
+var FOLDER_COLORS = ['#1e40af','#2554c7','#3b82f6','#0ea5e9','#14b8a6','#10b981','#f59e0b','#ef4444','#ec4899','#f97316'];
 
 // ── API helpers ────────────────────────────────────────
 function _folderFetch(endpoint, opts) {
@@ -186,7 +186,7 @@ function openFolderModal(folderId) {
     var isEdit = !!existing;
 
     var selIcon = existing ? existing.icon : '📁';
-    var selColor = existing ? existing.color : '#8b5cf6';
+    var selColor = existing ? existing.color : '#1e40af';
 
     var overlay = document.createElement('div');
     overlay.className = 'folder-modal-overlay';
@@ -233,7 +233,7 @@ function openFolderModal(folderId) {
 }
 
 var _selectedFolderIcon = '📁';
-var _selectedFolderColor = '#8b5cf6';
+var _selectedFolderColor = '#1e40af';
 
 function selectFolderIcon(el, icon) {
     _selectedFolderIcon = icon;
@@ -270,7 +270,7 @@ function saveFolder(folderId) {
     var iconEl = document.querySelector('#folderIconGrid .folder-icon-option.selected');
     var colorEl = document.querySelector('#folderColorGrid .folder-color-option.selected');
     var icon = iconEl ? iconEl.dataset.icon : '📁';
-    var color = colorEl ? colorEl.dataset.color : '#8b5cf6';
+    var color = colorEl ? colorEl.dataset.color : '#1e40af';
 
     closeFolderModal();
 

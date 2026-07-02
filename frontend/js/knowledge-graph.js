@@ -11,8 +11,8 @@ var _kgShowLabels = true;
 var _kgSimulation = null;
 
 var KG_COLORS = [
-    '#8b5cf6','#3b82f6','#10b981','#f59e0b','#ef4444',
-    '#ec4899','#06b6d4','#84cc16','#f97316','#6366f1',
+    '#1e40af','#3b82f6','#10b981','#f59e0b','#ef4444',
+    '#ec4899','#06b6d4','#84cc16','#f97316','#2554c7',
     '#14b8a6','#e879f9','#facc15','#fb7185','#38bdf8'
 ];
 

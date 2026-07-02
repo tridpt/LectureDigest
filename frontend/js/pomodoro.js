@@ -252,7 +252,7 @@ function renderPomodoro() {
         ringEl.style.strokeDasharray = circumference;
         ringEl.style.strokeDashoffset = circumference * (1 - pct);
         ringEl.style.stroke = pomoState.mode === 'focus'
-            ? 'var(--accent-primary, #8b5cf6)'
+            ? 'var(--accent-primary, #1e40af)'
             : '#10b981';
     }
 

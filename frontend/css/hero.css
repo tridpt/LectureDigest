@@ -22,8 +22,8 @@
     letter-spacing: 0.8px;
     text-transform: uppercase;
     color: var(--accent-light);
-    background: rgba(139, 92, 246, 0.1);
-    border: 1px solid rgba(139, 92, 246, 0.25);
+    background: rgba(30, 64, 175, 0.1);
+    border: 1px solid rgba(30, 64, 175, 0.25);
     padding: 6px 16px;
     border-radius: 20px;
     margin-bottom: 28px;
@@ -38,12 +38,8 @@
 }
 
 .gradient-text {
-    background: linear-gradient(135deg, #a78bfa 0%, #60a5fa 50%, #a78bfa 100%);
-    background-size: 200% auto;
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-    animation: gradShift 5s ease infinite;
+    color: var(--accent-light);
+    -webkit-text-fill-color: currentColor;
 }
 @keyframes gradShift {
     0%   { background-position: 0% center; }
@@ -70,8 +66,8 @@
     transition: border-color var(--transition), box-shadow var(--transition);
 }
 .search-box:focus-within {
-    border-color: rgba(139, 92, 246, 0.55);
-    box-shadow: 0 0 0 4px rgba(139, 92, 246, 0.1), var(--shadow-glow);
+    border-color: rgba(30, 64, 175, 0.55);
+    box-shadow: 0 0 0 4px rgba(30, 64, 175, 0.1), var(--shadow-glow);
 }
 .search-input-wrapper {
     display: flex;
@@ -94,7 +90,7 @@
     display: flex;
     align-items: center;
     gap: 8px;
-    background: linear-gradient(135deg, var(--accent), var(--accent-dark));
+    background: var(--accent);
     color: white;
     border: none;
     padding: 13px 26px;
@@ -105,10 +101,10 @@
     cursor: pointer;
     transition: all var(--transition);
     white-space: nowrap;
-    box-shadow: 0 4px 16px rgba(109, 40, 217, 0.4);
+    box-shadow: none;
 }
-.search-btn:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(109, 40, 217, 0.55); }
-.search-btn:active { transform: translateY(0); }
+.search-btn:hover { background: var(--accent-dark); box-shadow: 0 2px 10px rgba(30, 64, 175, 0.25); }
+.search-btn:active { transform: none; }
 .search-btn:disabled { opacity: 0.55; cursor: not-allowed; transform: none; }
 .btn-icon { width: 16px; height: 16px; }
 .search-hint {
@@ -152,12 +148,12 @@
     white-space: nowrap;
 }
 .lang-btn:hover {
-    border-color: rgba(139, 92, 246, 0.4);
+    border-color: rgba(30, 64, 175, 0.4);
     color: var(--text-primary);
-    background: rgba(139, 92, 246, 0.08);
+    background: rgba(30, 64, 175, 0.08);
 }
 .lang-btn.active {
-    background: rgba(139, 92, 246, 0.15);
+    background: rgba(30, 64, 175, 0.15);
     border-color: var(--accent);
     color: var(--accent-light);
     font-weight: 600;

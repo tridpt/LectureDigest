@@ -153,7 +153,7 @@ function renderHistoryPanel(filter) {
         var titleText = escHtml(h.title || 'Untitled');
         if (q) {
             var re = new RegExp('(' + q.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + ')', 'gi');
-            titleText = titleText.replace(re, '<mark style="background:rgba(139,92,246,.35);color:inherit;border-radius:2px">$1</mark>');
+            titleText = titleText.replace(re, '<mark style="background:rgba(30, 64, 175,.35);color:inherit;border-radius:2px">$1</mark>');
         }
         return '<div class="hist-item" data-id="' + h.video_id + '">' +
             '<img class="hist-thumb" src="' + h.thumbnail + '" alt="' + escHtml(h.title) + '" loading="lazy"' +

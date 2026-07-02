@@ -201,7 +201,7 @@ function _renderSrsPage() {
     html += '<div class="srs-stats-row">'
         + '<div class="srs-stat"><div class="srs-stat-num" style="color:#f59e0b">' + stats.dueCards + '</div><div class="srs-stat-lbl">Cần ôn</div></div>'
         + '<div class="srs-stat"><div class="srs-stat-num" style="color:#10b981">' + stats.reviewedToday + '</div><div class="srs-stat-lbl">Đã ôn hôm nay</div></div>'
-        + '<div class="srs-stat"><div class="srs-stat-num" style="color:#8b5cf6">' + stats.masteredCards + '</div><div class="srs-stat-lbl">Đã thuộc</div></div>'
+        + '<div class="srs-stat"><div class="srs-stat-num" style="color:#1e40af">' + stats.masteredCards + '</div><div class="srs-stat-lbl">Đã thuộc</div></div>'
         + '<div class="srs-stat"><div class="srs-stat-num" style="color:#60a5fa">' + stats.retention + '%</div><div class="srs-stat-lbl">Retention</div></div>'
         + '</div>';
 
@@ -278,7 +278,7 @@ function _renderSrsEmpty(container, stats) {
     var html = '<div class="srs-stats-row">'
         + '<div class="srs-stat"><div class="srs-stat-num" style="color:#f59e0b">0</div><div class="srs-stat-lbl">Cần ôn</div></div>'
         + '<div class="srs-stat"><div class="srs-stat-num" style="color:#10b981">' + stats.reviewedToday + '</div><div class="srs-stat-lbl">Đã ôn hôm nay</div></div>'
-        + '<div class="srs-stat"><div class="srs-stat-num" style="color:#8b5cf6">' + stats.masteredCards + '</div><div class="srs-stat-lbl">Đã thuộc</div></div>'
+        + '<div class="srs-stat"><div class="srs-stat-num" style="color:#1e40af">' + stats.masteredCards + '</div><div class="srs-stat-lbl">Đã thuộc</div></div>'
         + '<div class="srs-stat"><div class="srs-stat-num" style="color:#60a5fa">' + stats.retention + '%</div><div class="srs-stat-lbl">Retention</div></div>'
         + '</div>';
 

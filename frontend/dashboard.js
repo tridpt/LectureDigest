@@ -151,7 +151,7 @@ function renderDbStats(g, history) {
     const earnedCount = (g.earnedBadges || []).length;
 
     const cards = [
-        { icon: '🎬', label: 'Video đã học',    value: g.totalVideos   || 0,  sub: 'lần phân tích',   color: '#8b5cf6' },
+        { icon: '🎬', label: 'Video đã học',    value: g.totalVideos   || 0,  sub: 'lần phân tích',   color: '#1e40af' },
         { icon: '🔥', label: 'Streak hiện tại', value: g.currentStreak || 0,  sub: 'ngày liên tiếp',  color: '#f59e0b' },
         { icon: '🧠', label: 'Quiz đã làm',     value: g.totalQuizzes  || 0,  sub: 'bài kiểm tra',    color: '#10b981' },
         { icon: '⭐', label: 'Điểm quiz TB',    value: avgScore != null ? avgScore + '%' : 'N/A', sub: 'trung bình', color: '#60a5fa' },
@@ -184,7 +184,7 @@ function renderDbStreak(g) {
             '<span class="db-sn-lbl">🔥 Hiện tại</span></div>' +
             '<div class="db-sn-sep"></div>' +
             '<div class="db-sn-item">' +
-            '<span class="db-sn-val" style="color:#8b5cf6">' + (g.longestStreak || 0) + '</span>' +
+            '<span class="db-sn-val" style="color:#1e40af">' + (g.longestStreak || 0) + '</span>' +
             '<span class="db-sn-lbl">🏆 Kỷ lục</span></div>' +
             '<div class="db-sn-sep"></div>' +
             '<div class="db-sn-item">' +
@@ -357,7 +357,7 @@ function renderDbPomodoro(g) {
 
     // Build the stats grid
     var html = '<div class="db-pomo-grid">';
-    html += _dbPomoStatItem('🎯', sessions, 'Phiên focus', '#8b5cf6');
+    html += _dbPomoStatItem('🎯', sessions, 'Phiên focus', '#1e40af');
     html += _dbPomoStatItem('⏱️', totalMin + ' ph', 'Tổng focus', '#f59e0b');
     html += _dbPomoStatItem('📊', avgPerSess + ' ph', 'TB / phiên', '#10b981');
     html += _dbPomoStatItem('🕐', totalHours + 'h', 'Giờ tập trung', '#60a5fa');
@@ -488,7 +488,7 @@ function buildSm2Stats() {
     }
     var avgEf = efCount?(efSum/efCount).toFixed(2):'N/A';
     return '<div class="stats-sm2-grid">'
-        +'<div class="stats-sm2-item"><div class="stats-sm2-num" style="color:#8b5cf6">'+totalCards+'</div><div class="stats-sm2-lbl">Tong card</div></div>'
+        +'<div class="stats-sm2-item"><div class="stats-sm2-num" style="color:#1e40af">'+totalCards+'</div><div class="stats-sm2-lbl">Tong card</div></div>'
         +'<div class="stats-sm2-item"><div class="stats-sm2-num" style="color:#f59e0b">'+totalDue+'</div><div class="stats-sm2-lbl">Can on hom nay</div></div>'
         +'<div class="stats-sm2-item"><div class="stats-sm2-num" style="color:#10b981">'+totalReviewed+'</div><div class="stats-sm2-lbl">Da on</div></div>'
         +'<div class="stats-sm2-item"><div class="stats-sm2-num" style="color:#60a5fa">'+avgEf+'</div><div class="stats-sm2-lbl">EF trung binh</div></div>'

@@ -15,7 +15,7 @@
     overflow: hidden;
 }
 html.light-mode .kg-page {
-    background: #eef0ff;
+    background: #faf8f3;
 }
 .kg-inner {
     display: flex;
@@ -50,7 +50,7 @@ html.light-mode .kg-page {
     padding: 6px 14px;
     border-radius: 8px;
     border: 1px solid var(--border);
-    background: rgba(139,92,246,0.06);
+    background: rgba(30, 64, 175,0.06);
     color: var(--text-secondary);
     font-family: var(--font);
     font-size: 12px;
@@ -59,8 +59,8 @@ html.light-mode .kg-page {
     transition: all 0.2s;
 }
 .kg-ctrl-btn:hover {
-    background: rgba(139,92,246,0.15);
-    border-color: rgba(139,92,246,0.4);
+    background: rgba(30, 64, 175,0.15);
+    border-color: rgba(30, 64, 175,0.4);
     color: var(--accent);
 }
 .kg-body {
@@ -102,7 +102,7 @@ html.light-mode .kg-page {
     max-height: calc(100% - 32px);
     background: rgba(22,22,42,0.92);
     backdrop-filter: blur(16px);
-    border: 1px solid rgba(139,92,246,0.25);
+    border: 1px solid rgba(30, 64, 175,0.25);
     border-radius: 16px;
     padding: 20px;
     overflow-y: auto;
@@ -137,7 +137,7 @@ html.light-mode .kg-page {
     letter-spacing: 0.5px;
     margin-bottom: 10px;
 }
-.kg-detail-type-video { background: rgba(139,92,246,0.15); color: #a78bfa; }
+.kg-detail-type-video { background: rgba(30, 64, 175,0.15); color: #3b5bb5; }
 .kg-detail-type-concept { background: rgba(16,185,129,0.15); color: #34d399; }
 .kg-detail-name {
     font-size: 16px;
@@ -171,14 +171,14 @@ html.light-mode .kg-page {
     padding: 6px 10px;
     border-radius: 8px;
     margin-bottom: 4px;
-    background: rgba(139,92,246,0.05);
-    border: 1px solid rgba(139,92,246,0.08);
+    background: rgba(30, 64, 175,0.05);
+    border: 1px solid rgba(30, 64, 175,0.08);
     cursor: pointer;
     transition: all 0.2s;
 }
 .kg-detail-list li:hover {
-    background: rgba(139,92,246,0.12);
-    border-color: rgba(139,92,246,0.25);
+    background: rgba(30, 64, 175,0.12);
+    border-color: rgba(30, 64, 175,0.25);
 }
 
 /* Legend */
@@ -213,7 +213,7 @@ html.light-mode .kg-page {
 
 /* D3 graph styles */
 .kg-link {
-    stroke: rgba(139,92,246,0.15);
+    stroke: rgba(30, 64, 175,0.15);
     stroke-width: 1.5;
     fill: none;
 }

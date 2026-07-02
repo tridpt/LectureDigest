@@ -99,7 +99,7 @@ function _adminRenderStats(el, d) {
 
     html += '<div class="admin-section-label">👥 Người dùng</div>';
     html += '<div class="admin-stat-grid">';
-    html += _adminStatCard('👤', u.total || 0, 'Tổng người dùng', '#8b5cf6');
+    html += _adminStatCard('👤', u.total || 0, 'Tổng người dùng', '#1e40af');
     html += _adminStatCard('🆕', u.new_7d || 0, 'Mới (7 ngày)', '#10b981');
     html += _adminStatCard('📅', u.new_30d || 0, 'Mới (30 ngày)', '#06b6d4');
     html += _adminStatCard('🔑', u.google || 0, 'Google', '#f59e0b');
@@ -108,8 +108,8 @@ function _adminRenderStats(el, d) {
 
     html += '<div class="admin-section-label">📚 Nội dung</div>';
     html += '<div class="admin-stat-grid">';
-    html += _adminStatCard('🎬', c.distinct_videos || 0, 'Video đã phân tích', '#8b5cf6');
-    html += _adminStatCard('📊', c.history_entries || 0, 'Lượt phân tích', '#6366f1');
+    html += _adminStatCard('🎬', c.distinct_videos || 0, 'Video đã phân tích', '#1e40af');
+    html += _adminStatCard('📊', c.history_entries || 0, 'Lượt phân tích', '#2554c7');
     html += _adminStatCard('📝', c.notes || 0, 'Ghi chú', '#10b981');
     html += _adminStatCard('🔖', c.bookmarks || 0, 'Bookmark', '#f59e0b');
     html += _adminStatCard('🔗', c.shared_notes || 0, 'Note chia sẻ', '#06b6d4');
@@ -148,7 +148,7 @@ function _adminRenderUsers(el, d) {
     var rows = users.map(function(u) {
         var avatar = u.avatar_url
             ? '<img class="admin-user-avatar" src="' + u.avatar_url + '" alt="">'
-            : '<div class="admin-user-avatar" style="background:' + (u.avatar_color || '#8b5cf6') + '">'
+            : '<div class="admin-user-avatar" style="background:' + (u.avatar_color || '#1e40af') + '">'
                 + (u.display_name || '?').charAt(0).toUpperCase() + '</div>';
         var date = u.created_at ? new Date(u.created_at).toLocaleDateString('vi-VN') : '';
         var badges = '';

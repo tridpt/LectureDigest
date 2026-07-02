@@ -47,9 +47,9 @@
 }
 
 .sp-regen-btn {
-    background: rgba(139, 92, 246, 0.15);
-    border: 1px solid rgba(139, 92, 246, 0.3);
-    color: #a78bfa;
+    background: rgba(30, 64, 175, 0.15);
+    border: 1px solid rgba(30, 64, 175, 0.3);
+    color: #3b5bb5;
     padding: 8px 14px;
     border-radius: 10px;
     font-size: 13px;
@@ -59,14 +59,14 @@
 }
 
 .sp-regen-btn:hover {
-    background: rgba(139, 92, 246, 0.25);
-    border-color: rgba(139, 92, 246, 0.5);
+    background: rgba(30, 64, 175, 0.25);
+    border-color: rgba(30, 64, 175, 0.5);
 }
 
 /* ── Config Panel ── */
 .sp-config {
     background: rgba(30, 30, 58, 0.6);
-    border: 1px solid rgba(139, 92, 246, 0.2);
+    border: 1px solid rgba(30, 64, 175, 0.2);
     border-radius: 16px;
     padding: 24px;
     margin-bottom: 24px;
@@ -104,12 +104,12 @@
 
 .sp-config-field input[type="range"] {
     width: 100%;
-    accent-color: #8b5cf6;
+    accent-color: #1e40af;
 }
 
 .sp-config-field input[type="text"] {
     background: rgba(15, 15, 30, 0.5);
-    border: 1px solid rgba(139, 92, 246, 0.2);
+    border: 1px solid rgba(30, 64, 175, 0.2);
     border-radius: 10px;
     padding: 10px 14px;
     color: var(--text-primary, #f1f5f9);
@@ -119,13 +119,13 @@
 }
 
 .sp-config-field input[type="text"]:focus {
-    border-color: rgba(139, 92, 246, 0.5);
+    border-color: rgba(30, 64, 175, 0.5);
 }
 
 .sp-range-val {
     font-size: 20px;
     font-weight: 800;
-    color: #a78bfa;
+    color: #3b5bb5;
     text-align: center;
 }
 
@@ -133,7 +133,7 @@
     display: block;
     width: 100%;
     padding: 14px 24px;
-    background: linear-gradient(135deg, #8b5cf6, #6d28d9);
+    background: linear-gradient(135deg, #1e40af, #14307a);
     border: none;
     border-radius: 12px;
     color: #fff;
@@ -145,7 +145,7 @@
 
 .sp-generate-btn:hover {
     transform: translateY(-1px);
-    box-shadow: 0 8px 24px rgba(139, 92, 246, 0.3);
+    box-shadow: 0 8px 24px rgba(30, 64, 175, 0.3);
 }
 
 .sp-generate-btn:disabled {
@@ -163,8 +163,8 @@
 .sp-loading-spinner {
     width: 48px;
     height: 48px;
-    border: 4px solid rgba(139, 92, 246, 0.2);
-    border-top-color: #8b5cf6;
+    border: 4px solid rgba(30, 64, 175, 0.2);
+    border-top-color: #1e40af;
     border-radius: 50%;
     margin: 0 auto 16px;
     animation: spSpin 0.8s linear infinite;
@@ -181,8 +181,8 @@
 
 /* ── Overview Card ── */
 .sp-overview-card {
-    background: linear-gradient(135deg, rgba(139, 92, 246, 0.1), rgba(59, 130, 246, 0.08));
-    border: 1px solid rgba(139, 92, 246, 0.25);
+    background: linear-gradient(135deg, rgba(30, 64, 175, 0.1), rgba(59, 130, 246, 0.08));
+    border: 1px solid rgba(30, 64, 175, 0.25);
     border-radius: 16px;
     padding: 24px;
     margin-bottom: 24px;
@@ -244,7 +244,7 @@
 }
 
 .sp-priority-item:hover {
-    border-color: rgba(139, 92, 246, 0.3);
+    border-color: rgba(30, 64, 175, 0.3);
 }
 
 .sp-priority-high { border-left: 3px solid #f87171; }
@@ -294,25 +294,25 @@
 }
 
 .sp-week-tab:hover {
-    border-color: rgba(139, 92, 246, 0.3);
+    border-color: rgba(30, 64, 175, 0.3);
     color: var(--text-primary, #f1f5f9);
 }
 
 .sp-week-tab.sp-week-active {
-    background: rgba(139, 92, 246, 0.2);
-    border-color: rgba(139, 92, 246, 0.5);
-    color: #a78bfa;
+    background: rgba(30, 64, 175, 0.2);
+    border-color: rgba(30, 64, 175, 0.5);
+    color: #3b5bb5;
 }
 
 /* ── Schedule ── */
 .sp-week-theme {
-    background: rgba(139, 92, 246, 0.08);
-    border: 1px solid rgba(139, 92, 246, 0.15);
+    background: rgba(30, 64, 175, 0.08);
+    border: 1px solid rgba(30, 64, 175, 0.15);
     border-radius: 10px;
     padding: 10px 16px;
     font-size: 14px;
     font-weight: 600;
-    color: #a78bfa;
+    color: #3b5bb5;
     margin-bottom: 16px;
 }
 
@@ -372,8 +372,8 @@
 }
 
 .sp-task:hover {
-    background: rgba(139, 92, 246, 0.06);
-    border-color: rgba(139, 92, 246, 0.2);
+    background: rgba(30, 64, 175, 0.06);
+    border-color: rgba(30, 64, 175, 0.2);
 }
 
 .sp-task.sp-task-done {
@@ -512,7 +512,7 @@
 
 .sp-progress-fill {
     height: 100%;
-    background: linear-gradient(90deg, #8b5cf6, #6d28d9);
+    background: linear-gradient(90deg, #1e40af, #14307a);
     border-radius: 5px;
     transition: width 0.4s ease;
 }
@@ -520,7 +520,7 @@
 .sp-progress-text {
     font-size: 14px;
     font-weight: 700;
-    color: #a78bfa;
+    color: #3b5bb5;
     min-width: 40px;
 }
 
@@ -565,22 +565,22 @@
 }
 
 .sp-banner-create {
-    background: rgba(139, 92, 246, 0.08);
-    border: 1px dashed rgba(139, 92, 246, 0.3);
+    background: rgba(30, 64, 175, 0.08);
+    border: 1px dashed rgba(30, 64, 175, 0.3);
 }
 
 .sp-banner-create:hover {
-    background: rgba(139, 92, 246, 0.12);
-    border-color: rgba(139, 92, 246, 0.5);
+    background: rgba(30, 64, 175, 0.12);
+    border-color: rgba(30, 64, 175, 0.5);
 }
 
 .sp-banner-active {
-    background: rgba(139, 92, 246, 0.08);
-    border: 1px solid rgba(139, 92, 246, 0.2);
+    background: rgba(30, 64, 175, 0.08);
+    border: 1px solid rgba(30, 64, 175, 0.2);
 }
 
 .sp-banner-active:hover {
-    background: rgba(139, 92, 246, 0.12);
+    background: rgba(30, 64, 175, 0.12);
 }
 
 .sp-banner-icon {
@@ -614,7 +614,7 @@
 
 .sp-banner-fill {
     height: 100%;
-    background: #8b5cf6;
+    background: #1e40af;
     border-radius: 3px;
     transition: width 0.3s;
 }
@@ -670,18 +670,18 @@
 }
 
 .light-mode .sp-overview-card {
-    background: linear-gradient(135deg, rgba(139, 92, 246, 0.06), rgba(59, 130, 246, 0.04));
-    border-color: rgba(139, 92, 246, 0.15);
+    background: linear-gradient(135deg, rgba(30, 64, 175, 0.06), rgba(59, 130, 246, 0.04));
+    border-color: rgba(30, 64, 175, 0.15);
 }
 
 .light-mode .sp-banner-create {
-    background: rgba(139, 92, 246, 0.04);
-    border-color: rgba(139, 92, 246, 0.2);
+    background: rgba(30, 64, 175, 0.04);
+    border-color: rgba(30, 64, 175, 0.2);
 }
 
 .light-mode .sp-banner-active {
-    background: rgba(139, 92, 246, 0.04);
-    border-color: rgba(139, 92, 246, 0.15);
+    background: rgba(30, 64, 175, 0.04);
+    border-color: rgba(30, 64, 175, 0.15);
 }
 
 
@@ -701,8 +701,8 @@
 }
 
 .sp-history-btn {
-    background: rgba(139, 92, 246, 0.15);
-    border: 1px solid rgba(139, 92, 246, 0.3);
+    background: rgba(30, 64, 175, 0.15);
+    border: 1px solid rgba(30, 64, 175, 0.3);
     color: #c4b5fd;
     padding: 8px 14px;
     border-radius: 10px;
@@ -713,8 +713,8 @@
     white-space: nowrap;
 }
 .sp-history-btn:hover {
-    background: rgba(139, 92, 246, 0.25);
-    border-color: rgba(139, 92, 246, 0.5);
+    background: rgba(30, 64, 175, 0.25);
+    border-color: rgba(30, 64, 175, 0.5);
     color: #e9d5ff;
 }
 
@@ -741,7 +741,7 @@
 .sp-history-modal {
     background: var(--bg-secondary, #1a1a2e);
     border-radius: 20px;
-    border: 1px solid rgba(139, 92, 246, 0.2);
+    border: 1px solid rgba(30, 64, 175, 0.2);
     width: 100%;
     max-width: 640px;
     max-height: 80vh;
@@ -802,8 +802,8 @@
     transition: all 0.2s;
 }
 .sp-history-item:hover {
-    background: rgba(139, 92, 246, 0.06);
-    border-color: rgba(139, 92, 246, 0.2);
+    background: rgba(30, 64, 175, 0.06);
+    border-color: rgba(30, 64, 175, 0.2);
 }
 
 .sp-history-item-header {
@@ -842,7 +842,7 @@
 
 .sp-history-bar-fill {
     height: 100%;
-    background: linear-gradient(90deg, #8b5cf6, #a78bfa);
+    background: linear-gradient(90deg, #1e40af, #3b5bb5);
     border-radius: 99px;
     transition: width 0.3s ease;
 }

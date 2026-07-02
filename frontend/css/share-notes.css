@@ -4,11 +4,11 @@
 
 /* ── Share Button in Notes Card ── */
 .notes-share-btn {
-    background: rgba(139, 92, 246, 0.12) !important;
+    background: rgba(30, 64, 175, 0.12) !important;
     color: var(--accent-light) !important;
 }
 .notes-share-btn:hover {
-    background: rgba(139, 92, 246, 0.25) !important;
+    background: rgba(30, 64, 175, 0.25) !important;
 }
 
 /* ── Modal Overlay ── */
@@ -103,8 +103,8 @@
 }
 
 .share-notes-check:hover {
-    border-color: rgba(139, 92, 246, 0.3);
-    background: rgba(139, 92, 246, 0.04);
+    border-color: rgba(30, 64, 175, 0.3);
+    background: rgba(30, 64, 175, 0.04);
 }
 
 .share-notes-check input[type="checkbox"] {
@@ -143,12 +143,12 @@
     font-weight: 700;
     cursor: pointer;
     transition: all var(--transition);
-    box-shadow: 0 4px 16px rgba(109, 40, 217, 0.4);
+    box-shadow: 0 4px 16px rgba(30, 64, 175, 0.4);
 }
 
 .share-notes-generate-btn:hover:not(:disabled) {
     transform: translateY(-2px);
-    box-shadow: 0 8px 24px rgba(109, 40, 217, 0.55);
+    box-shadow: 0 8px 24px rgba(30, 64, 175, 0.55);
 }
 
 .share-notes-generate-btn:disabled {
@@ -195,7 +195,7 @@
 
 .share-notes-link:focus {
     border-color: var(--accent);
-    box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.1);
+    box-shadow: 0 0 0 3px rgba(30, 64, 175, 0.1);
 }
 
 .share-notes-copy-btn {
@@ -203,8 +203,8 @@
     align-items: center;
     gap: 6px;
     padding: 10px 16px;
-    background: rgba(139, 92, 246, 0.12);
-    border: 1px solid rgba(139, 92, 246, 0.25);
+    background: rgba(30, 64, 175, 0.12);
+    border: 1px solid rgba(30, 64, 175, 0.25);
     border-radius: var(--radius-md);
     color: var(--accent-light);
     font-family: var(--font);
@@ -216,7 +216,7 @@
 }
 
 .share-notes-copy-btn:hover {
-    background: rgba(139, 92, 246, 0.2);
+    background: rgba(30, 64, 175, 0.2);
 }
 
 .share-notes-hint {

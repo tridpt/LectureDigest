@@ -5,7 +5,7 @@
 const WEEKLY_GOALS_KEY = 'lectureDigest_weeklyGoals';
 
 const DEFAULT_GOALS = {
-    videos:   { target: 3,  label: 'Video phân tích', icon: '🎬', color: '#8b5cf6' },
+    videos:   { target: 3,  label: 'Video phân tích', icon: '🎬', color: '#1e40af' },
     quizzes:  { target: 5,  label: 'Quiz hoàn thành', icon: '🧠', color: '#10b981' },
     pomodoro: { target: 5,  label: 'Phiên Pomodoro',  icon: '🍅', color: '#ef4444' },
     studyDays:{ target: 5,  label: 'Ngày học',        icon: '📅', color: '#f59e0b' },

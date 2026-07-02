@@ -95,7 +95,7 @@ function engRenderCharts(data) {
     var total = data.total_words || 1;
     var segments = [
         { label: 'Mới', count: m.new, color: '#94a3b8' },
-        { label: 'Quen', count: m.familiar, color: '#a78bfa' },
+        { label: 'Quen', count: m.familiar, color: '#3b5bb5' },
         { label: 'Khá', count: m.good, color: '#60a5fa' },
         { label: 'Giỏi', count: m.great, color: '#10b981' },
         { label: 'Thành thạo', count: m.mastered, color: '#fbbf24' },
@@ -1820,7 +1820,7 @@ async function engShowLeaderboard() {
             var initial = (e.display_name || '?').charAt(0).toUpperCase();
             var avatarHtml = e.avatar_url
                 ? '<img src="' + e.avatar_url + '" class="eng-lb-avatar-img">'
-                : '<div class="eng-lb-avatar" style="background:' + (e.avatar_color || '#8b5cf6') + '">' + initial + '</div>';
+                : '<div class="eng-lb-avatar" style="background:' + (e.avatar_color || '#1e40af') + '">' + initial + '</div>';
 
             html += '<div class="eng-lb-row' + (isMe ? ' eng-lb-me' : '') + '">'
                 + '<span class="eng-lb-rank">' + medal + '</span>'
@@ -1833,7 +1833,7 @@ async function engShowLeaderboard() {
                 + '</div>';
         });
         html += '</div>';
-        if (myRank) html += '<div style="text-align:center;margin-top:12px;font-size:12px;color:#a78bfa">Bạn đang ở vị trí #' + myRank + '</div>';
+        if (myRank) html += '<div style="text-align:center;margin-top:12px;font-size:12px;color:#3b5bb5">Bạn đang ở vị trí #' + myRank + '</div>';
         contentEl.innerHTML = html;
     } catch(e) {
         var contentEl = overlay.querySelector('#engLbContent');

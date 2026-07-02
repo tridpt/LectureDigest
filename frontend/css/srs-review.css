@@ -4,8 +4,8 @@
 
 /* ── Review Banner (shown on dashboard/results) ── */
 .srs-banner {
-    background: linear-gradient(135deg, rgba(139,92,246,0.15), rgba(99,102,241,0.1));
-    border: 1px solid rgba(139,92,246,0.25);
+    background: linear-gradient(135deg, rgba(30, 64, 175,0.15), rgba(37, 84, 199,0.1));
+    border: 1px solid rgba(30, 64, 175,0.25);
     border-radius: 16px;
     padding: 16px 20px;
     display: flex;
@@ -17,8 +17,8 @@
     animation: srsBannerIn 0.4s ease;
 }
 .srs-banner:hover {
-    background: linear-gradient(135deg, rgba(139,92,246,0.22), rgba(99,102,241,0.15));
-    border-color: rgba(139,92,246,0.4);
+    background: linear-gradient(135deg, rgba(30, 64, 175,0.22), rgba(37, 84, 199,0.15));
+    border-color: rgba(30, 64, 175,0.4);
     transform: translateY(-1px);
 }
 @keyframes srsBannerIn { from { opacity:0; transform:translateY(8px); } }
@@ -27,7 +27,7 @@
     font-size: 28px;
     width: 48px; height: 48px;
     display: flex; align-items: center; justify-content: center;
-    background: rgba(139,92,246,0.2);
+    background: rgba(30, 64, 175,0.2);
     border-radius: 12px;
     flex-shrink: 0;
 }
@@ -42,7 +42,7 @@
 }
 .srs-banner-btn {
     padding: 8px 18px;
-    background: linear-gradient(135deg, #8b5cf6, #7c3aed);
+    background: linear-gradient(135deg, #1e40af, #1d4ed8);
     color: white;
     border: none; border-radius: 10px;
     font-size: 13px; font-weight: 600;
@@ -51,7 +51,7 @@
     white-space: nowrap;
     flex-shrink: 0;
 }
-.srs-banner-btn:hover { transform: scale(1.04); box-shadow: 0 4px 16px rgba(139,92,246,0.35); }
+.srs-banner-btn:hover { transform: scale(1.04); box-shadow: 0 4px 16px rgba(30, 64, 175,0.35); }
 .srs-banner.srs-banner-done {
     background: linear-gradient(135deg, rgba(16,185,129,0.12), rgba(5,150,105,0.08));
     border-color: rgba(16,185,129,0.25);
@@ -80,7 +80,7 @@
 .srs-header-center { flex: 1; text-align: center; }
 .srs-page-title {
     font-size: 22px; font-weight: 800;
-    background: linear-gradient(135deg, #a78bfa, #8b5cf6);
+    background: linear-gradient(135deg, #3b5bb5, #1e40af);
     -webkit-background-clip: text; -webkit-text-fill-color: transparent;
     background-clip: text;
     margin: 0;
@@ -130,7 +130,7 @@
 .srs-ring-svg { transform: rotate(-90deg); }
 .srs-ring-bg { fill: none; stroke: rgba(255,255,255,0.06); stroke-width: 8; }
 .srs-ring-fill {
-    fill: none; stroke: #8b5cf6; stroke-width: 8;
+    fill: none; stroke: #1e40af; stroke-width: 8;
     stroke-linecap: round;
     transition: stroke-dashoffset 0.8s cubic-bezier(0.4,0,0.2,1);
 }
@@ -155,7 +155,7 @@
     font-size: 11px;
     color: var(--text-muted);
     padding: 4px 12px;
-    background: rgba(139,92,246,0.1);
+    background: rgba(30, 64, 175,0.1);
     border-radius: 20px;
     display: inline-block;
     margin-bottom: 10px;
@@ -190,8 +190,8 @@
     text-align: center;
 }
 .srs-review-front {
-    background: linear-gradient(135deg, rgba(139,92,246,0.1), rgba(99,102,241,0.06));
-    border: 1px solid rgba(139,92,246,0.15);
+    background: linear-gradient(135deg, rgba(30, 64, 175,0.1), rgba(37, 84, 199,0.06));
+    border: 1px solid rgba(30, 64, 175,0.15);
 }
 .srs-review-back {
     background: linear-gradient(135deg, rgba(16,185,129,0.08), rgba(5,150,105,0.05));
@@ -279,7 +279,7 @@
 .srs-complete-stat-lbl { font-size: 11px; color: var(--text-muted); }
 .srs-complete-btn {
     padding: 10px 28px;
-    background: linear-gradient(135deg, #8b5cf6, #7c3aed);
+    background: linear-gradient(135deg, #1e40af, #1d4ed8);
     color: white; border: none; border-radius: 12px;
     font-size: 14px; font-weight: 600;
     cursor: pointer; transition: all 0.2s;
@@ -311,7 +311,7 @@
 .light-mode .srs-progress-wrap { background: rgba(255,255,255,0.8); border-color: rgba(0,0,0,0.08); }
 .light-mode .srs-ring-bg { stroke: rgba(0,0,0,0.08); }
 .light-mode .srs-review-card { border-color: rgba(0,0,0,0.1); }
-.light-mode .srs-review-front { background: linear-gradient(135deg, rgba(139,92,246,0.06), rgba(99,102,241,0.04)); border-color: rgba(139,92,246,0.15); }
+.light-mode .srs-review-front { background: linear-gradient(135deg, rgba(30, 64, 175,0.06), rgba(37, 84, 199,0.04)); border-color: rgba(30, 64, 175,0.15); }
 .light-mode .srs-review-back { background: linear-gradient(135deg, rgba(16,185,129,0.06), rgba(5,150,105,0.04)); border-color: rgba(16,185,129,0.15); }
 .light-mode .srs-review-text { color: #1e293b; }
 .light-mode .srs-rate-btn { border-color: rgba(0,0,0,0.12); background: rgba(255,255,255,0.9); color: #1e293b; box-shadow: 0 1px 3px rgba(0,0,0,0.06); }
@@ -324,8 +324,8 @@
 .light-mode .srs-rate-easy .srs-rate-sub { color: #059669 !important; }
 .light-mode .srs-complete { background: rgba(255,255,255,0.8); border-color: rgba(0,0,0,0.08); }
 .light-mode .srs-complete-stat { background: rgba(248,250,252,0.8); border-color: rgba(0,0,0,0.06); }
-.light-mode .srs-banner { background: linear-gradient(135deg, rgba(139,92,246,0.08), rgba(99,102,241,0.05)); border-color: rgba(139,92,246,0.2); }
-.light-mode .srs-video-label { background: rgba(139,92,246,0.08); color: #6d28d9; }
+.light-mode .srs-banner { background: linear-gradient(135deg, rgba(30, 64, 175,0.08), rgba(37, 84, 199,0.05)); border-color: rgba(30, 64, 175,0.2); }
+.light-mode .srs-video-label { background: rgba(30, 64, 175,0.08); color: #14307a; }
 
 /* ── Email reminder toggle ── */
 .srs-reminder-toggle {
@@ -398,7 +398,7 @@
 }
 
 .srs-dot-good { background: #10b981; }
-.srs-dot-all  { background: rgba(139, 92, 246, 0.45); }
+.srs-dot-all  { background: rgba(30, 64, 175, 0.45); }
 
 .srs-chart-bars {
     display: flex;
@@ -419,7 +419,7 @@
 .srs-chart-bar {
     width: 100%;
     min-height: 2px;
-    background: rgba(139, 92, 246, 0.45);
+    background: rgba(30, 64, 175, 0.45);
     border-radius: 3px 3px 0 0;
     position: relative;
     display: flex;
@@ -428,7 +428,7 @@
 }
 
 .srs-chart-bar-wrap:hover .srs-chart-bar {
-    background: rgba(139, 92, 246, 0.7);
+    background: rgba(30, 64, 175, 0.7);
 }
 
 .srs-chart-bar-good {

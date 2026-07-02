@@ -9,7 +9,7 @@
 var TAG_KEY = 'lectureDigest_tags';
 var PREDEFINED_TAGS = [
     { id: 'programming', label: 'Lap trinh',  color: '#3b82f6', icon: '\ud83d\udcbb' },
-    { id: 'math',        label: 'Toan',       color: '#8b5cf6', icon: '\ud83d\udcca' },
+    { id: 'math',        label: 'Toan',       color: '#1e40af', icon: '\ud83d\udcca' },
     { id: 'science',     label: 'Khoa hoc',   color: '#10b981', icon: '\ud83d\udd2c' },
     { id: 'language',    label: 'Ngon ngu',    color: '#f59e0b', icon: '\ud83c\udf0d' },
     { id: 'business',    label: 'Kinh doanh',  color: '#ef4444', icon: '\ud83d\udcb0' },

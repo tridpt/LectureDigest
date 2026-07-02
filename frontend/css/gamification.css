@@ -5,8 +5,8 @@
 /* ═══════════════════════════════════════ STREAK CARD ═══ */
 .streak-card {
     padding: 14px 16px 10px;
-    background: linear-gradient(135deg, rgba(124,58,237,0.12), rgba(8,8,26,0));
-    border: 1px solid rgba(124,58,237,0.2);
+    background: linear-gradient(135deg, rgba(29, 78, 216,0.12), rgba(8,8,26,0));
+    border: 1px solid rgba(29, 78, 216,0.2);
 }
 .streak-main {
     display: flex; align-items: center; gap: 12px;
@@ -25,15 +25,15 @@
 .streak-unit  { font-size: 12px; color: #888; margin-bottom: 2px; }
 .streak-meta  { flex: 1; display: flex; flex-direction: column; gap: 2px; }
 .streak-label { font-size: 11px; color: #888; }
-.streak-best  { font-size: 11px; color: #a78bfa; font-weight: 500; }
+.streak-best  { font-size: 11px; color: #3b5bb5; font-weight: 500; }
 .badges-open-btn {
     flex-shrink: 0; padding: 6px 10px; border-radius: 10px;
-    border: 1px solid rgba(139,92,246,0.25);
-    background: rgba(139,92,246,0.08);
+    border: 1px solid rgba(30, 64, 175,0.25);
+    background: rgba(30, 64, 175,0.08);
     color: #c4b5fd; font-size: 13px; cursor: pointer;
     transition: all 0.15s; display: flex; align-items: center; gap: 4px;
 }
-.badges-open-btn:hover { background: rgba(139,92,246,0.2); }
+.badges-open-btn:hover { background: rgba(30, 64, 175,0.2); }
 /* 7-day mini calendar */
 .streak-week {
     display: flex; gap: 5px; margin-top: 10px;
@@ -66,12 +66,12 @@
 }
 .badges-modal-overlay.bm-show { opacity: 1; }
 .badges-modal {
-    background: #0f0f23; border: 1px solid rgba(139,92,246,0.25);
+    background: #0f0f23; border: 1px solid rgba(30, 64, 175,0.25);
     border-radius: 20px; width: 90%; max-width: 640px;
     max-height: 80vh; overflow-y: auto;
     box-shadow: 0 24px 80px rgba(0,0,0,0.6);
     transform: translateY(24px); transition: transform 0.3s ease;
-    scrollbar-width: thin; scrollbar-color: rgba(139,92,246,0.3) transparent;
+    scrollbar-width: thin; scrollbar-color: rgba(30, 64, 175,0.3) transparent;
 }
 .badges-modal-overlay.bm-show .badges-modal { transform: translateY(0); }
 .badges-modal-header {
@@ -113,10 +113,10 @@
     cursor: default;
 }
 .badge-earned {
-    background: rgba(139,92,246,0.12);
-    border: 1px solid rgba(139,92,246,0.3);
+    background: rgba(30, 64, 175,0.12);
+    border: 1px solid rgba(30, 64, 175,0.3);
 }
-.badge-earned:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(139,92,246,0.2); }
+.badge-earned:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(30, 64, 175,0.2); }
 .badge-locked {
     background: rgba(255,255,255,0.03);
     border: 1px solid rgba(255,255,255,0.07);
@@ -137,8 +137,8 @@
 /* Badge unlock toast */
 .badge-toast {
     position: fixed; bottom: 80px; left: 50%; transform: translateX(-50%) translateY(20px);
-    background: linear-gradient(135deg, #1e1b4b, #312e81);
-    border: 1px solid rgba(139,92,246,0.4);
+    background: linear-gradient(135deg, #1e1b4b, #0f2350);
+    border: 1px solid rgba(30, 64, 175,0.4);
     border-radius: 14px; padding: 12px 18px;
     display: flex; align-items: center; gap: 12px;
     box-shadow: 0 8px 32px rgba(0,0,0,0.5);
@@ -149,7 +149,7 @@
 .badge-toast.bt-show { opacity: 1; transform: translateX(-50%) translateY(0); }
 .bt-icon { font-size: 28px; }
 .bt-text { display: flex; flex-direction: column; }
-.bt-text strong { font-size: 11px; color: #a78bfa; font-weight: 700; text-transform: uppercase; }
+.bt-text strong { font-size: 11px; color: #3b5bb5; font-weight: 700; text-transform: uppercase; }
 .bt-text span    { font-size: 13px; color: #f1f1f1; font-weight: 500; }
 /* Badge hover tooltip (inline, to the right) */
 .badge-item {
@@ -162,7 +162,7 @@
     top: 50%;
     transform: translateY(-50%);
     background: #1a1a3e;
-    border: 1px solid rgba(139,92,246,0.35);
+    border: 1px solid rgba(30, 64, 175,0.35);
     border-radius: 10px;
     padding: 8px 12px;
     font-size: 11px;
@@ -186,7 +186,7 @@
     top: 50%;
     transform: translateY(-50%);
     border: 5px solid transparent;
-    border-right-color: rgba(139,92,246,0.35);
+    border-right-color: rgba(30, 64, 175,0.35);
     pointer-events: none;
     opacity: 0;
     transition: opacity 0.18s ease;
@@ -205,13 +205,13 @@
     left: auto;
     right: calc(100% + 4px);
     border-right-color: transparent;
-    border-left-color: rgba(139,92,246,0.35);
+    border-left-color: rgba(30, 64, 175,0.35);
 }
 /* Floating badge tooltip (JS-positioned, body-level) */
 #badgeTooltip {
     position: fixed;
     background: #16163a;
-    border: 1px solid rgba(139,92,246,0.4);
+    border: 1px solid rgba(30, 64, 175,0.4);
     border-radius: 10px;
     padding: 9px 13px;
     font-size: 12px;

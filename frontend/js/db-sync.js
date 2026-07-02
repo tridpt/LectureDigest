@@ -119,8 +119,8 @@ function _showSyncOverlay() {
         'justify-content:center;background:rgba(15,15,35,0.85);backdrop-filter:blur(6px);' +
         'transition:opacity 0.3s ease;';
     overlay.innerHTML = '<div style="text-align:center;color:#e2e8f0;">' +
-        '<div style="width:40px;height:40px;margin:0 auto 16px;border:3px solid rgba(139,92,246,0.3);' +
-        'border-top-color:#8b5cf6;border-radius:50%;animation:spin 0.8s linear infinite;"></div>' +
+        '<div style="width:40px;height:40px;margin:0 auto 16px;border:3px solid rgba(30, 64, 175,0.3);' +
+        'border-top-color:#1e40af;border-radius:50%;animation:spin 0.8s linear infinite;"></div>' +
         '<div style="font-size:16px;font-weight:600;margin-bottom:6px;">Đang đồng bộ dữ liệu...</div>' +
         '<div style="font-size:13px;opacity:0.6;">Vui lòng đợi trong giây lát</div>' +
         '</div>';

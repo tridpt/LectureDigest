@@ -1,59 +1,16 @@
 /* ════════════════════════════════════════════════
-   Ambient Background Effects
+   Ambient Background — Editorial (flat, quiet)
    ════════════════════════════════════════════════ */
 
-/* ═══════════════════════════════════════════════
-   AMBIENT BACKGROUND
-   ═══════════════════════════════════════════════ */
+/* Dark academia: warm charcoal wash, no neon orbs. */
 .bg-gradient {
     position: fixed;
     inset: 0;
-    background:
-        radial-gradient(ellipse 90% 60% at 15% 0%, rgba(139, 92, 246, 0.13) 0%, transparent 55%),
-        radial-gradient(ellipse 70% 55% at 85% 95%, rgba(96, 165, 250, 0.09) 0%, transparent 55%),
-        linear-gradient(180deg, #070712 0%, #0b0b1e 100%);
+    background: linear-gradient(180deg, #191820 0%, #1e1c27 100%);
     z-index: -2;
     pointer-events: none;
 }
 
-.bg-orbs {
-    position: fixed;
-    inset: 0;
-    z-index: -1;
-    pointer-events: none;
-    overflow: hidden;
-}
-
-.orb {
-    position: absolute;
-    border-radius: 50%;
-    filter: blur(90px);
-    animation: orbFloat 25s infinite ease-in-out;
-}
-
-.orb-1 {
-    width: 500px; height: 500px;
-    background: radial-gradient(circle, rgba(139, 92, 246, 0.12) 0%, transparent 70%);
-    top: -150px; left: -150px;
-    animation-delay: 0s;
-}
-.orb-2 {
-    width: 700px; height: 700px;
-    background: radial-gradient(circle, rgba(59, 130, 246, 0.07) 0%, transparent 70%);
-    bottom: -250px; right: -150px;
-    animation-delay: -12s;
-}
-.orb-3 {
-    width: 350px; height: 350px;
-    background: radial-gradient(circle, rgba(167, 139, 250, 0.08) 0%, transparent 70%);
-    top: 50%; left: 50%;
-    transform: translate(-50%, -50%);
-    animation-delay: -6s;
-}
-
-@keyframes orbFloat {
-    0%, 100% { transform: translate(0, 0) scale(1); }
-    33%       { transform: translate(40px, -40px) scale(1.06); }
-    66%       { transform: translate(-25px, 25px) scale(0.94); }
-}
-
+/* Orbs removed for the editorial look. */
+.bg-orbs { display: none; }
+.orb { display: none; }

@@ -22,38 +22,39 @@
 }
 
 ::-webkit-scrollbar-thumb {
-    background: rgba(139, 92, 246, 0.25);
+    background: rgba(30, 64, 175, 0.25);
     border-radius: 3px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-    background: rgba(139, 92, 246, 0.45);
+    background: rgba(30, 64, 175, 0.45);
 }
 
 * {
     scrollbar-width: thin;
-    scrollbar-color: rgba(139, 92, 246, 0.25) transparent;
+    scrollbar-color: rgba(30, 64, 175, 0.25) transparent;
 }
 
 html.light-mode ::-webkit-scrollbar-thumb {
-    background: rgba(139, 92, 246, 0.2);
+    background: rgba(30, 64, 175, 0.2);
 }
 
 html.light-mode ::-webkit-scrollbar-thumb:hover {
-    background: rgba(139, 92, 246, 0.35);
+    background: rgba(30, 64, 175, 0.35);
 }
 
 :root {
-    --bg-primary: #070712;
-    --bg-card: rgba(255, 255, 255, 0.04);
-    --bg-card-hover: rgba(255, 255, 255, 0.07);
-    --border: rgba(255, 255, 255, 0.08);
-    --border-accent: rgba(139, 92, 246, 0.4);
+    /* Dark = "dark academia" companion to the Editorial light theme */
+    --bg-primary: #191820;
+    --bg-card: #201f2a;
+    --bg-card-hover: #27262f;
+    --border: rgba(255, 255, 255, 0.09);
+    --border-accent: rgba(59, 91, 181, 0.5);
 
-    --accent: #8b5cf6;
-    --accent-light: #a78bfa;
-    --accent-dark: #6d28d9;
-    --accent-glow: rgba(139, 92, 246, 0.25);
+    --accent: #1e40af;
+    --accent-light: #3b5bb5;
+    --accent-dark: #14307a;
+    --accent-glow: rgba(30, 64, 175, 0.25);
 
     --blue: #60a5fa;
 
@@ -67,15 +68,16 @@ html.light-mode ::-webkit-scrollbar-thumb:hover {
     --error-bg: rgba(239, 68, 68, 0.12);
     --warning: #f59e0b;
 
-    --radius-sm: 8px;
-    --radius-md: 12px;
-    --radius-lg: 16px;
-    --radius-xl: 24px;
+    --radius-sm: 4px;
+    --radius-md: 6px;
+    --radius-lg: 8px;
+    --radius-xl: 12px;
 
-    --shadow-card: 0 4px 24px rgba(0, 0, 0, 0.5);
-    --shadow-glow: 0 0 60px rgba(139, 92, 246, 0.15);
+    --shadow-card: 0 1px 3px rgba(0, 0, 0, 0.4), 0 10px 30px rgba(0, 0, 0, 0.25);
+    --shadow-glow: none;
 
     --font: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    --font-serif: 'Fraunces', 'Lora', Georgia, 'Times New Roman', serif;
     --font-mono: 'JetBrains Mono', monospace;
 
     --transition: 0.2s ease;
@@ -116,7 +118,7 @@ body {
 /* Toast base styles (moved from inline JS for theme support) */
 .toast-item {
     background: #1e1e3a;
-    border: 1px solid rgba(139, 92, 246, 0.4);
+    border: 1px solid rgba(30, 64, 175, 0.4);
     color: #f1f5f9;
     padding: 12px 20px;
     border-radius: 12px;
@@ -134,7 +136,7 @@ body {
 /* Light mode toast */
 html.light-mode .toast-item {
     background: #fff;
-    border-color: rgba(109, 40, 217, 0.2);
+    border-color: rgba(30, 64, 175, 0.2);
     color: #1e1b4b;
     box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
 }
@@ -159,3 +161,20 @@ html.light-mode .toast-item {
 .light-mode .skeleton { background: rgba(0,0,0,0.04); }
 .light-mode .skeleton::after { background: linear-gradient(90deg, transparent, rgba(0,0,0,0.03), transparent); }
 .light-mode .skeleton-card { border-color: rgba(0,0,0,0.05); }
+
+/* ════════════════════════════════════════════════
+   Editorial theme — serif headings
+   ════════════════════════════════════════════════ */
+.hero-title,
+.card-title,
+.video-title,
+.feature-title,
+.section-title,
+.bp-title,
+.an-title,
+.about-title,
+h1, h2 {
+    font-family: var(--font-serif);
+    letter-spacing: -0.4px;
+    font-weight: 600;
+}

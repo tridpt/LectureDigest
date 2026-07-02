@@ -9,12 +9,12 @@
     right: 24px;
     width: 280px;
     background: rgba(15, 15, 35, 0.95);
-    border: 1px solid rgba(139, 92, 246, 0.25);
+    border: 1px solid rgba(30, 64, 175, 0.25);
     border-radius: 20px;
     padding: 20px;
     z-index: 900;
     backdrop-filter: blur(20px);
-    box-shadow: 0 12px 48px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(139, 92, 246, 0.1) inset;
+    box-shadow: 0 12px 48px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(30, 64, 175, 0.1) inset;
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
@@ -87,7 +87,7 @@
 
 .pomo-ring-progress {
     fill: none;
-    stroke: var(--accent-primary, #8b5cf6);
+    stroke: var(--accent-primary, #1e40af);
     stroke-width: 6;
     stroke-linecap: round;
     transition: stroke-dashoffset 0.5s ease, stroke 0.3s;
@@ -115,7 +115,7 @@
     transition: color 0.3s;
 }
 
-.pomo-status-focus { color: #a78bfa; }
+.pomo-status-focus { color: #3b5bb5; }
 .pomo-status-break { color: #34d399; }
 .pomo-status-paused { color: #fbbf24; }
 
@@ -160,15 +160,15 @@
     padding: 0;
 }
 .pomo-preset-btn:hover {
-    background: rgba(139, 92, 246, 0.15);
-    border-color: rgba(139, 92, 246, 0.3);
+    background: rgba(30, 64, 175, 0.15);
+    border-color: rgba(30, 64, 175, 0.3);
     color: #c4b5fd;
 }
 .pomo-preset-btn.pomo-preset-active {
-    background: linear-gradient(135deg, rgba(139, 92, 246, 0.25), rgba(79, 70, 229, 0.25));
-    border-color: rgba(139, 92, 246, 0.5);
+    background: linear-gradient(135deg, rgba(30, 64, 175, 0.25), rgba(30, 64, 175, 0.25));
+    border-color: rgba(30, 64, 175, 0.5);
     color: #e9d5ff;
-    box-shadow: 0 0 8px rgba(139, 92, 246, 0.15);
+    box-shadow: 0 0 8px rgba(30, 64, 175, 0.15);
 }
 .pomo-preset-btn:disabled {
     opacity: 0.4;
@@ -199,16 +199,16 @@
 }
 
 .pomo-ctrl-btn:hover {
-    background: rgba(139, 92, 246, 0.2);
-    border-color: rgba(139, 92, 246, 0.4);
+    background: rgba(30, 64, 175, 0.2);
+    border-color: rgba(30, 64, 175, 0.4);
 }
 
 .pomo-ctrl-btn.pomo-start-btn {
-    background: linear-gradient(135deg, rgba(139, 92, 246, 0.3), rgba(79, 70, 229, 0.3));
-    border-color: rgba(139, 92, 246, 0.5);
+    background: linear-gradient(135deg, rgba(30, 64, 175, 0.3), rgba(30, 64, 175, 0.3));
+    border-color: rgba(30, 64, 175, 0.5);
 }
 .pomo-ctrl-btn.pomo-start-btn:hover {
-    background: linear-gradient(135deg, rgba(139, 92, 246, 0.5), rgba(79, 70, 229, 0.5));
+    background: linear-gradient(135deg, rgba(30, 64, 175, 0.5), rgba(30, 64, 175, 0.5));
 }
 
 .pomo-ctrl-btn.pomo-pause-btn { border-color: rgba(251, 191, 36, 0.3); }
@@ -250,8 +250,8 @@
     width: 28px; height: 28px;
     border-radius: 7px;
     border: none;
-    background: linear-gradient(135deg, rgba(139, 92, 246, 0.15), rgba(79, 70, 229, 0.15));
-    color: #a78bfa;
+    background: linear-gradient(135deg, rgba(30, 64, 175, 0.15), rgba(30, 64, 175, 0.15));
+    color: #3b5bb5;
     cursor: pointer;
     display: flex; align-items: center; justify-content: center;
     transition: all 0.2s;
@@ -259,7 +259,7 @@
     position: relative;
 }
 .auto-notes-btn:hover {
-    background: linear-gradient(135deg, rgba(139, 92, 246, 0.3), rgba(79, 70, 229, 0.3));
+    background: linear-gradient(135deg, rgba(30, 64, 175, 0.3), rgba(30, 64, 175, 0.3));
     color: #c4b5fd;
     transform: scale(1.05);
 }
@@ -274,8 +274,8 @@
 .auto-notes-btn.auto-notes-loading::after {
     content: '';
     width: 14px; height: 14px;
-    border: 2px solid rgba(139, 92, 246, 0.2);
-    border-top-color: #a78bfa;
+    border: 2px solid rgba(30, 64, 175, 0.2);
+    border-top-color: #3b5bb5;
     border-radius: 50%;
     animation: autoNotesSpin 0.7s linear infinite;
 }
@@ -302,20 +302,20 @@
     white-space: nowrap;
 }
 .pomo-header-btn:hover {
-    background: rgba(139, 92, 246, 0.15);
-    border-color: rgba(139, 92, 246, 0.3);
-    color: #a78bfa;
+    background: rgba(30, 64, 175, 0.15);
+    border-color: rgba(30, 64, 175, 0.3);
+    color: #3b5bb5;
 }
 .pomo-header-btn svg { width: 12px; height: 12px; }
 .pomo-header-btn .pomo-mini-time {
     font-family: 'JetBrains Mono', monospace;
     font-size: 11px;
-    color: #a78bfa;
+    color: #3b5bb5;
     font-weight: 600;
 }
 .pomo-header-btn.pomo-active {
-    border-color: rgba(139, 92, 246, 0.4);
-    background: rgba(139, 92, 246, 0.12);
+    border-color: rgba(30, 64, 175, 0.4);
+    background: rgba(30, 64, 175, 0.12);
 }
 .pomo-header-btn.pomo-active .pomo-mini-time {
     animation: pomoPulse 2s ease-in-out infinite;
@@ -329,7 +329,7 @@
 /* ═══ LIGHT MODE ═══ */
 html.light-mode .pomo-panel {
     background: rgba(255, 255, 255, 0.97);
-    border-color: rgba(109, 40, 217, 0.15);
+    border-color: rgba(30, 64, 175, 0.15);
     box-shadow: 0 12px 48px rgba(0, 0, 0, 0.12);
 }
 html.light-mode .pomo-panel.pomo-break-mode {
@@ -346,11 +346,11 @@ html.light-mode .pomo-ctrl-btn {
     border-color: rgba(0, 0, 0, 0.1);
     color: #374151;
 }
-html.light-mode .pomo-ctrl-btn:hover { background: rgba(109, 40, 217, 0.1); }
+html.light-mode .pomo-ctrl-btn:hover { background: rgba(30, 64, 175, 0.1); }
 html.light-mode .pomo-ctrl-btn.pomo-start-btn {
-    background: rgba(109, 40, 217, 0.1);
-    border-color: rgba(109, 40, 217, 0.3);
-    color: #6d28d9;
+    background: rgba(30, 64, 175, 0.1);
+    border-color: rgba(30, 64, 175, 0.3);
+    color: #14307a;
 }
 html.light-mode .pomo-stats { border-top-color: rgba(0, 0, 0, 0.06); }
 html.light-mode .pomo-preset-btn {
@@ -358,25 +358,25 @@ html.light-mode .pomo-preset-btn {
     border-color: rgba(0, 0, 0, 0.08);
     color: #6b7280;
 }
-html.light-mode .pomo-preset-btn:hover { background: rgba(109, 40, 217, 0.08); color: #6d28d9; }
+html.light-mode .pomo-preset-btn:hover { background: rgba(30, 64, 175, 0.08); color: #14307a; }
 html.light-mode .pomo-preset-btn.pomo-preset-active {
-    background: rgba(109, 40, 217, 0.12);
-    border-color: rgba(109, 40, 217, 0.35);
-    color: #5b21b6;
+    background: rgba(30, 64, 175, 0.12);
+    border-color: rgba(30, 64, 175, 0.35);
+    color: #14307a;
 }
-html.light-mode .auto-notes-btn { background: rgba(109, 40, 217, 0.08); color: #7c3aed; }
-html.light-mode .auto-notes-btn:hover { background: rgba(109, 40, 217, 0.15); }
+html.light-mode .auto-notes-btn { background: rgba(30, 64, 175, 0.08); color: #1d4ed8; }
+html.light-mode .auto-notes-btn:hover { background: rgba(30, 64, 175, 0.15); }
 html.light-mode .pomo-header-btn {
     background: rgba(0, 0, 0, 0.04);
     border-color: rgba(0, 0, 0, 0.08);
     color: #6b7280;
 }
 html.light-mode .pomo-header-btn:hover {
-    background: rgba(109, 40, 217, 0.08);
-    border-color: rgba(109, 40, 217, 0.2);
-    color: #6d28d9;
+    background: rgba(30, 64, 175, 0.08);
+    border-color: rgba(30, 64, 175, 0.2);
+    color: #14307a;
 }
-html.light-mode .pomo-header-btn .pomo-mini-time { color: #7c3aed; }
+html.light-mode .pomo-header-btn .pomo-mini-time { color: #1d4ed8; }
 
 /* ═══ RESPONSIVE ═══ */
 @media (max-width: 768px) {
