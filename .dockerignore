@@ -13,10 +13,20 @@ venv/
 env/
 ENV/
 
-# Secrets — NEVER include in Docker image
+# Secrets & local data — NEVER include in Docker image
 backend/.env
 *.env
 !backend/.env.example
+backend/.jwt_secret
+backend/*.sqlite3
+backend/*.sqlite3-shm
+backend/*.sqlite3-wal
+backend/*.db
+backend/*.db-shm
+backend/*.db-wal
+backend/backups/
+backend/uploads/
+backend/.pytest_cache/
 
 # IDEs & OS
 .vscode/

@@ -178,12 +178,19 @@ app.add_middleware(
 
 @app.exception_handler(Exception)
 async def global_exception_handler(request, exc):
-    """Catch all unhandled exceptions and return JSON instead of plain text 500."""
+    """Catch all unhandled exceptions and return JSON instead of plain text 500.
+
+    The full traceback is logged server-side with a correlation id, but the
+    client only ever receives a generic message so we never leak internal
+    paths, SQL, or stack details.
+    """
     import traceback
-    logger.error("Unhandled error: %s\n%s", str(exc), traceback.format_exc())
+    import uuid
+    error_id = uuid.uuid4().hex[:12]
+    logger.error("Unhandled error [%s]: %s\n%s", error_id, str(exc), traceback.format_exc())
     return JSONResponse(
         status_code=500,
-        content={"detail": str(exc) if str(exc) else "Internal server error"}
+        content={"detail": "Internal server error", "error_id": error_id},
     )
 
 
@@ -432,11 +439,32 @@ async def health_check():
 
 _UPLOADS_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), "uploads"))
 
+
+def _safe_join(base_dir: str, relative_path: str):
+    """Resolve *relative_path* inside *base_dir*, blocking path traversal.
+
+    Returns the absolute target path only if it is genuinely contained within
+    *base_dir*. Uses ``Path.is_relative_to`` (via ``os.path.commonpath``) rather
+    than a naive ``startswith`` check, which is vulnerable to prefix confusion
+    (e.g. ``/app/uploads_evil`` starts with ``/app/uploads``). Returns ``None``
+    when the path escapes the base directory.
+    """
+    base = os.path.abspath(base_dir)
+    target = os.path.abspath(os.path.join(base, relative_path))
+    try:
+        if os.path.commonpath([base, target]) != base:
+            return None
+    except ValueError:
+        # Different drives on Windows, etc. — treat as escape.
+        return None
+    return target
+
+
 @app.get("/uploads/{file_path:path}", include_in_schema=False)
 async def serve_upload(file_path: str):
     """Serve uploaded files (chat images)."""
-    target = os.path.abspath(os.path.join(_UPLOADS_DIR, file_path))
-    if not target.startswith(_UPLOADS_DIR):
+    target = _safe_join(_UPLOADS_DIR, file_path)
+    if target is None:
         raise HTTPException(status_code=403, detail="Forbidden")
     if not os.path.isfile(target):
         raise HTTPException(status_code=404, detail="Not found")
@@ -553,18 +581,17 @@ if os.path.isdir(_FRONTEND_DIR):
         """
         # Uploaded files are handled by serve_upload route
         if full_path.startswith("uploads/"):
-            target = os.path.abspath(os.path.join(_UPLOADS_DIR, full_path[8:]))
-            if not target.startswith(_UPLOADS_DIR):
+            target = _safe_join(_UPLOADS_DIR, full_path[8:])
+            if target is None:
                 raise HTTPException(status_code=403, detail="Forbidden")
             if os.path.isfile(target):
                 return FileResponse(target)
             raise HTTPException(status_code=404, detail="Not found")
 
         # Try to serve the actual file
-        target = os.path.join(_FRONTEND_DIR, full_path)
         # Security: prevent path traversal
-        target = os.path.abspath(target)
-        if not target.startswith(_FRONTEND_DIR):
+        target = _safe_join(_FRONTEND_DIR, full_path)
+        if target is None:
             raise HTTPException(status_code=403, detail="Forbidden")
         if os.path.isfile(target):
             ext = os.path.splitext(target)[1].lower()

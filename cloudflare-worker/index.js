@@ -12,9 +12,18 @@ export default {
     };
     if (request.method === 'OPTIONS') return new Response(null, { status: 204, headers: cors });
 
+    // Only GET is supported (OPTIONS handled above).
+    if (request.method !== 'GET') {
+      return json({ error: 'Method not allowed' }, 405, cors);
+    }
+
     const { searchParams } = new URL(request.url);
     const videoId = searchParams.get('videoId');
-    if (!videoId || videoId === 'null') return json({ error: 'Missing ?videoId=' }, 400, cors);
+    // YouTube video ids are exactly 11 chars: [A-Za-z0-9_-]. Validate strictly
+    // so the worker can't be turned into an open fetch proxy for arbitrary ids.
+    if (!videoId || !/^[A-Za-z0-9_-]{11}$/.test(videoId)) {
+      return json({ error: 'Invalid or missing ?videoId= (expected 11-char YouTube id)' }, 400, cors);
+    }
 
     const errors = [];
 
