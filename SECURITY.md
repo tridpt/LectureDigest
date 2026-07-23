@@ -68,9 +68,34 @@ refactoring the frontend to external handlers — do that before tightening it.
   from storing `"><img onerror=...>` and turning it into stored XSS for everyone
   in the room. Keep this validation if you touch the message-send path.
 - **Request body size limits** — JSON payloads capped at 10 MB, file uploads at
-  200 MB (`BodySizeLimitMiddleware`).
+  200 MB (`BodySizeLimitMiddleware`). The limit is enforced **both** from the
+  declared `Content-Length` **and** by counting bytes as the body streams in, so
+  a chunked request that omits or understates `Content-Length` cannot bypass the
+  cap and exhaust memory. The middleware is pure-ASGI (not `BaseHTTPMiddleware`)
+  precisely so it can see and abort the request stream.
 - **Path traversal** — the `/uploads/` route and SPA catch-all resolve the
-  absolute path and verify it stays within the allowed directory.
+  absolute path through the `_safe_join` helper, which uses
+  `os.path.commonpath` (not a naive `startswith`) to confirm the target stays
+  inside the allowed directory. `startswith` alone is vulnerable to
+  prefix-confusion (e.g. `/app/uploads_evil` "starts with" `/app/uploads`); do
+  not revert to it.
+
+### Error Handling
+
+The global exception handler (`backend/main.py`) never returns raw exception
+text to clients. The full traceback is logged server-side with a short random
+`error_id`, and the client receives only a generic `"Internal server error"`
+plus that `error_id` for correlation. This avoids leaking internal paths, SQL,
+or stack details. Keep this behaviour when adding new error handling.
+
+### Transcript Worker
+
+The optional Cloudflare Worker (`cloudflare-worker/index.js`) only accepts
+`GET` and validates `videoId` against a strict 11-character YouTube id regex
+(`[A-Za-z0-9_-]{11}`) before making any upstream request, so it can't be turned
+into an open fetch proxy for arbitrary ids. If you add endpoints to the worker,
+keep the method check and input validation, and consider adding rate limiting
+and origin restrictions before exposing it publicly.
 
 ### Authentication & Accounts
 
@@ -100,13 +125,16 @@ the authenticated user or check ownership explicitly.
 
 ### Secrets
 
-`.env`, `.jwt_secret`, `*.sqlite3`, and `backups/` are gitignored. Never commit
-real keys. Use `backend/.env.example` as the template.
+`.env`, `.jwt_secret`, `*.sqlite3`, `*.db`, `backups/`, and `uploads/` are
+gitignored **and** excluded from the Docker build context via `.dockerignore`,
+so secrets and local user data never end up committed or baked into an image.
+Never commit real keys. Use `backend/.env.example` as the template.
 
 ## Testing
 
 Security regressions are covered by `backend/tests/test_security.py`
-(image_url validation, path traversal, blocked-email enforcement, security
-headers incl. CSP). Run the full suite with `pytest` from `backend/` before
-shipping changes to auth, input handling, or rendering. CI runs these on every
-push/PR via `.github/workflows/backend-tests.yml`.
+(image_url validation, path traversal, `_safe_join` prefix-confusion, body-size
+limit, blocked-email enforcement, security headers incl. CSP). Run the full
+suite with `pytest` from `backend/` before shipping changes to auth, input
+handling, or rendering. CI runs these on every push/PR via
+`.github/workflows/backend-tests.yml`.

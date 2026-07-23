@@ -28,7 +28,7 @@ jobs:
           node-version: "22"
 
       - name: Install dependencies
-        run: npm install
+        run: npm ci
 
       - name: Run frontend tests (Vitest)
         run: npm test
