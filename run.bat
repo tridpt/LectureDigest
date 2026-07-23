@@ -21,15 +21,30 @@ if not exist .env (
     exit /b 1
 )
 
-echo  [1/2] Installing Python dependencies...
-pip install -r requirements.txt -q
+REM ── Create an isolated virtual environment on first run ──
+set "VENV_DIR=%~dp0.venv"
+if not exist "%VENV_DIR%\Scripts\python.exe" (
+    echo  [1/3] Creating virtual environment ^(.venv^)...
+    python -m venv "%VENV_DIR%"
+    if %errorlevel% neq 0 (
+        echo  [ERROR] Failed to create venv. Make sure Python 3.13+ is installed and on PATH.
+        pause
+        exit /b 1
+    )
+)
+
+set "PYTHON=%VENV_DIR%\Scripts\python.exe"
+
+echo  [2/3] Installing Python dependencies into .venv...
+"%PYTHON%" -m pip install --upgrade pip -q
+"%PYTHON%" -m pip install -r requirements.txt -q
 if %errorlevel% neq 0 (
-    echo  [ERROR] Failed to install dependencies. Make sure Python/pip is installed.
+    echo  [ERROR] Failed to install dependencies.
     pause
     exit /b 1
 )
 
-echo  [2/2] Starting LectureDigest API server on http://localhost:8000
+echo  [3/3] Starting LectureDigest API server on http://localhost:8000
 echo.
 echo  -----------------------------------------------
 echo   Open frontend\index.html in your browser
@@ -39,6 +54,6 @@ echo.
 
 start "" "http://localhost:8000"
 
-uvicorn main:app --reload --host 0.0.0.0 --port 8000
+"%PYTHON%" -m uvicorn main:app --reload --host 0.0.0.0 --port 8000
 
 pause

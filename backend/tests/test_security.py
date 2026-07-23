@@ -97,6 +97,58 @@ class TestUploadPathTraversal:
         assert resp.status_code == 404
 
 
+class TestSafeJoin:
+    """Regression: the `_safe_join` helper must contain every path inside its
+    base dir, using commonpath rather than a naive `startswith` that a
+    prefix-confusion attack (e.g. `/base_evil`) could defeat."""
+
+    def test_normal_paths_resolve_inside_base(self, tmp_path):
+        from main import _safe_join
+        base = str(tmp_path / "uploads")
+        assert _safe_join(base, "chat/a.png") is not None
+        assert _safe_join(base, "a.png") is not None
+
+    @pytest.mark.parametrize("evil", [
+        "../secret.py",
+        "../../etc/passwd",
+        "chat/../../main.py",
+        "/etc/passwd",
+    ])
+    def test_traversal_returns_none(self, tmp_path, evil):
+        from main import _safe_join
+        base = str(tmp_path / "uploads")
+        assert _safe_join(base, evil) is None, f"{evil!r} escaped the base dir"
+
+    def test_prefix_confusion_sibling_dir_blocked(self, tmp_path):
+        # A sibling directory that shares a string prefix (uploads vs
+        # uploads_evil) must NOT be treated as inside the base.
+        from main import _safe_join
+        base = str(tmp_path / "uploads")
+        assert _safe_join(base, "../uploads_evil/x.png") is None
+
+
+class TestBodySizeLimit:
+    """Regression: oversized request bodies must be rejected with 413, both from
+    the declared Content-Length and (via the streaming counter) when it lies."""
+
+    def test_oversized_content_length_rejected(self, client):
+        # 11 MB declared on a JSON endpoint whose cap is 10 MB.
+        oversized = str(11 * 1024 * 1024)
+        resp = client.post(
+            "/api/analyze",
+            content=b"x" * 16,
+            headers={"content-length": oversized, "content-type": "application/json"},
+        )
+        assert resp.status_code == 413, resp.text
+        assert "too large" in resp.json()["detail"].lower()
+
+    def test_normal_request_not_blocked(self, client):
+        # A small, well-formed request must flow through (it may 4xx for other
+        # reasons, but must never be a 413 body-size rejection).
+        resp = client.post("/api/analyze", json={"url": "not-a-real-url"})
+        assert resp.status_code != 413
+
+
 class TestBlockedEmailEnforcement:
     """Regression: a blocked email must be rejected at both login and register,
     and the block check happens before rate limiting reveals account existence."""
