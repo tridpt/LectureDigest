@@ -18,6 +18,7 @@ Route modules:
 
 import os
 import sys
+import json
 import asyncio
 from contextlib import asynccontextmanager
 import time as _startup_time
@@ -140,18 +141,28 @@ async def lifespan(app):
     # ── Startup ──
     init_db()
     db_create_backup()
+
+    # Keep references to background tasks so we can cancel them cleanly on
+    # shutdown — otherwise they leak and asyncio warns about pending tasks.
+    background_tasks: list[asyncio.Task] = []
+
     if os.getenv("RENDER_EXTERNAL_URL"):
-        asyncio.create_task(_keep_alive_ping())
+        background_tasks.append(asyncio.create_task(_keep_alive_ping()))
     # Daily SRS email reminder sweep (no-op for users who haven't opted in)
     try:
         from routes.srs_reminder import srs_reminder_loop
-        asyncio.create_task(srs_reminder_loop())
+        background_tasks.append(asyncio.create_task(srs_reminder_loop()))
     except Exception as _e:
         logger.warning("Could not start SRS reminder loop: %s", _e)
     logger.info(f"🚀 LectureDigest API ready (startup: {_startup_time.time() - _startup_ts:.2f}s)")
     yield
     # ── Shutdown ──
     logger.info("LectureDigest API shutting down")
+    for task in background_tasks:
+        task.cancel()
+    # Wait for cancellations to settle; swallow the resulting CancelledErrors.
+    if background_tasks:
+        await asyncio.gather(*background_tasks, return_exceptions=True)
 
 
 app = FastAPI(title="LectureDigest API", version="1.0.0", lifespan=lifespan)
@@ -344,22 +355,90 @@ app.add_middleware(GZipMiddleware, minimum_size=500)
 _MAX_BODY_BYTES = 10 * 1024 * 1024       # 10 MB for JSON API payloads
 _MAX_UPLOAD_BYTES = 200 * 1024 * 1024    # 200 MB for file uploads
 
-class BodySizeLimitMiddleware(BaseHTTPMiddleware):
-    """Reject oversized request bodies to prevent abuse and OOM."""
 
-    async def dispatch(self, request: Request, call_next):
-        content_length = request.headers.get("content-length")
-        if content_length:
-            size = int(content_length)
-            path = request.url.path
-            limit = _MAX_UPLOAD_BYTES if path == "/api/analyze-file" else _MAX_BODY_BYTES
-            if size > limit:
-                limit_mb = limit // (1024 * 1024)
-                return JSONResponse(
-                    status_code=413,
-                    content={"detail": f"Request body too large (max {limit_mb}MB)"},
-                )
-        return await call_next(request)
+class _BodyTooLarge(Exception):
+    """Raised internally when a streaming request body exceeds its limit."""
+
+
+async def _send_json_response(send, status: int, payload: dict):
+    body = json.dumps(payload).encode()
+    await send({
+        "type": "http.response.start",
+        "status": status,
+        "headers": [
+            (b"content-type", b"application/json"),
+            (b"content-length", str(len(body)).encode()),
+        ],
+    })
+    await send({"type": "http.response.body", "body": body})
+
+
+async def _send_too_large(send, limit: int):
+    limit_mb = limit // (1024 * 1024)
+    await _send_json_response(
+        send, 413, {"detail": f"Request body too large (max {limit_mb}MB)"}
+    )
+
+
+class BodySizeLimitMiddleware:
+    """Reject oversized request bodies to prevent abuse and OOM.
+
+    Pure-ASGI (not BaseHTTPMiddleware) so it can enforce the cap *while the body
+    streams in*, not just from the declared ``Content-Length``. A chunked or
+    dishonest request that omits/understates ``Content-Length`` is still counted
+    byte-by-byte and aborted the moment it crosses the limit — closing the
+    memory-exhaustion bypass that a header-only check leaves open.
+    """
+
+    def __init__(self, app):
+        self.app = app
+
+    async def __call__(self, scope, receive, send):
+        if scope["type"] != "http":
+            await self.app(scope, receive, send)
+            return
+
+        path = scope.get("path", "")
+        limit = _MAX_UPLOAD_BYTES if path == "/api/analyze-file" else _MAX_BODY_BYTES
+
+        # Fast path: reject up front when the declared size already exceeds the cap.
+        headers = dict(scope.get("headers") or [])
+        content_length = headers.get(b"content-length")
+        if content_length is not None:
+            try:
+                if int(content_length) > limit:
+                    await _send_too_large(send, limit)
+                    return
+            except ValueError:
+                await _send_json_response(send, 400, {"detail": "Invalid Content-Length"})
+                return
+
+        received = 0
+        response_started = False
+
+        async def limited_receive():
+            nonlocal received
+            message = await receive()
+            if message["type"] == "http.request":
+                received += len(message.get("body", b""))
+                if received > limit:
+                    raise _BodyTooLarge()
+            return message
+
+        async def send_wrapper(message):
+            nonlocal response_started
+            if message["type"] == "http.response.start":
+                response_started = True
+            await send(message)
+
+        try:
+            await self.app(scope, limited_receive, send_wrapper)
+        except _BodyTooLarge:
+            # Only safe to emit our own response if the app hasn't started one.
+            if not response_started:
+                await _send_too_large(send, limit)
+            else:
+                raise
 
 app.add_middleware(BodySizeLimitMiddleware)
 

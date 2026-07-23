@@ -219,20 +219,27 @@ docker compose logs -f app       # view logs
 ```
 LectureDigest/
 ├── backend/
-│   ├── main.py              # FastAPI app — all API routes
+│   ├── main.py              # FastAPI app — bootstrap, middleware, SPA serving
+│   ├── routes/              # API routes, split into ~15 router modules
+│   │   ├── auth.py          # Auth, Google OAuth, password reset
+│   │   ├── analyze.py       # Video / file analysis
+│   │   ├── sync.py          # Cloud sync
+│   │   ├── srs_reminder.py  # Spaced-repetition email reminders
+│   │   └── ...              # ai_tools, content, and more
 │   ├── database.py          # SQLite database (users, sync, shared notes)
+│   ├── gemini_client.py     # Gemini client + model fallback
 │   ├── requirements.txt     # Python dependencies
 │   └── .env                 # API keys & config (never commit!)
 ├── frontend/
 │   ├── index.html           # Main SPA shell (1600+ lines)
-│   ├── css/                 # 35 modular CSS files
+│   ├── css/                 # ~50 modular CSS files
 │   │   ├── base.css         # CSS variables & design tokens
 │   │   ├── theme.css        # Dark/Light mode theming
 │   │   ├── hero.css         # Landing page hero section
 │   │   ├── quiz.css         # Quiz card styling
-│   │   ├── ...              # And 30+ more modules
+│   │   ├── ...              # And 45+ more modules
 │   │   └── mobile.css       # Responsive breakpoints
-│   ├── js/                  # 28 modular JS files
+│   ├── js/                  # ~45 modular JS files
 │   │   ├── core.js          # App initialization & routing
 │   │   ├── analyze.js       # Video analysis flow
 │   │   ├── quiz.js          # Quiz engine
